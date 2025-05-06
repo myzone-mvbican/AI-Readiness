@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import SurveyStep from "./survey-step";
 import SurveySummaryComponent from "./survey-summary";
-import SurveyCompletion from "./survey-completion";
+import SurveyCompletionNew from "./survey-completion-new";
 import { loadSurveyData } from "@/lib/survey-data";
 import { useToast } from "@/hooks/use-toast";
 
@@ -98,9 +98,9 @@ export default function SurveyForm({ onComplete }: SurveyFormProps) {
     );
   }
 
-  // If on completion screen, render the SurveyCompletion component
+  // If on completion screen, render the SurveyCompletionNew component
   if (showCompletion) {
-    return <SurveyCompletion surveyData={formData} sections={sections} />;
+    return <SurveyCompletionNew surveyData={formData} sections={sections} />;
   }
 
   return (
