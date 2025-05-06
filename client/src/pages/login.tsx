@@ -110,22 +110,20 @@ export default function LoginPage() {
           <div className="flex flex-col items-center gap-6">
             {/* Google Sign-In Option */}
             <div className="w-full">
-              <Button 
-                className="w-full flex items-center justify-center bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 shadow-sm"
-                variant="outline"
+              <div className="w-full flex items-center justify-center border border-gray-300 rounded-md py-2 bg-white hover:bg-gray-50 cursor-pointer"
                 onClick={() => {
                   // Trigger Google login programmatically
                   document.querySelector<HTMLDivElement>("[id^='google_btn']")?.click();
                 }}
               >
-                <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" fill="#4285F4"/>
-                  <path d="M6.52 7.013V10.3h3.84c-.507 1.787-1.973 2.827-3.84 2.827-2.387 0-4.333-1.92-4.333-4.307s1.947-4.307 4.333-4.307c1.013 0 1.92.387 2.627 1.147l2.307-2.307C10.333 1.44 8.413.667 6.52.667 2.973.667 0 3.64 0 7.187s2.973 6.52 6.52 6.52c3.84 0 6.4-2.667 6.4-6.4 0-.48-.053-.96-.16-1.414H6.52v1.12z" fill="#34A853"/>
-                  <path d="M.89 5.867V8.8h3.027c-.387-1.12-1.147-1.92-2.44-2.293L.89 5.867z" fill="#FBBC05"/>
-                  <path d="M6.52 7.013V4.393h6.4c-.053-.347-.267-1.027-.56-1.5C11.307 1.6 9.173.667 6.52.667 2.973.667 0 3.64 0 7.187s2.973 6.52 6.52 6.52c3.84 0 6.4-2.667 6.4-6.4 0-.48-.053-.96-.16-1.414H6.52v1.12z" fill="#EA4335"/>
-                </svg>
-                Sign in with Google
-              </Button>
+                <img 
+                  src="https://developers.google.com/identity/images/g-logo.png" 
+                  alt="Google logo" 
+                  className="w-6 h-6 mr-2"
+                />
+                <span className="text-gray-700 font-medium">Sign in with Google</span>
+              </div>
+              
               <div className="hidden">
                 <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
                   <GoogleLogin
@@ -197,7 +195,7 @@ export default function LoginPage() {
                   <Input
                     id="company"
                     type="text"
-                    placeholder="Acme Inc."
+                    placeholder="MyZone AI"
                     {...register("company")}
                     className={errors.company ? "border-red-500" : ""}
                   />
@@ -247,14 +245,15 @@ export default function LoginPage() {
                     <SelectContent>
                       <SelectItem value="technology">Technology / Software</SelectItem>
                       <SelectItem value="healthcare">Healthcare</SelectItem>
-                      <SelectItem value="education">Education</SelectItem>
-                      <SelectItem value="finance">Finance</SelectItem>
-                      <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                      <SelectItem value="retail">Retail</SelectItem>
-                      <SelectItem value="transportation">Transportation</SelectItem>
-                      <SelectItem value="energy">Energy</SelectItem>
-                      <SelectItem value="government">Government</SelectItem>
-                      <SelectItem value="media">Media / Entertainment</SelectItem>
+                      <SelectItem value="finance">Finance / Insurance</SelectItem>
+                      <SelectItem value="retail">Retail / E-commerce</SelectItem>
+                      <SelectItem value="manufacturing">Manufacturing / Industrial</SelectItem>
+                      <SelectItem value="education">Education / Training</SelectItem>
+                      <SelectItem value="professional">Professional Services</SelectItem>
+                      <SelectItem value="construction">Construction / Real Estate</SelectItem>
+                      <SelectItem value="hospitality">Hospitality / Food & Beverage</SelectItem>
+                      <SelectItem value="transportation">Transportation / Logistics</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                   {errors.industry && (

@@ -22,7 +22,7 @@ export default function Home() {
                     size="lg" 
                     className="bg-blue-600 hover:bg-blue-700 text-white transition-colors rounded-md shadow-md px-6 py-3 w-full sm:w-auto"
                   >
-                    Login
+                    Start Assessment
                     <ChevronRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
