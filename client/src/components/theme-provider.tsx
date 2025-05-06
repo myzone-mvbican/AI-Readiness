@@ -1,9 +1,9 @@
 import * as React from "react"
 import { ThemeProvider as NextThemesProvider } from "next-themes"
 
-type ThemeProviderProps = {
+interface ThemeProviderProps {
   children: React.ReactNode;
-  attribute?: string;
+  attribute?: string | "class" | "data-theme";
   defaultTheme?: string;
   enableSystem?: boolean;
   storageKey?: string;
