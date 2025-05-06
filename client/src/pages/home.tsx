@@ -4,22 +4,26 @@ import { ChevronRight } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col">
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-blue-50 via-white to-blue-50 py-16 md:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container">
           <div className="text-center md:text-left md:flex md:items-center md:justify-between">
             <div className="md:max-w-2xl">
               <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-blue-700">
                 MyZone AI Readiness Survey
               </h1>
-              <p className="mt-6 text-lg md:text-xl text-gray-600 max-w-3xl">
-                Welcome! This AI Readiness Assessment should be completed quarterly as one of your foundational AI KPIs (Key Performance Indicators). It takes approximately 10 minutes to complete. You can save your results as a PDF or compare with industry benchmarks.
+              <p className="mt-6 text-lg md:text-xl text-gray-600 max-w-3xl md:pe-8">
+                Welcome! This AI Readiness Assessment should be completed
+                quarterly as one of your foundational AI KPIs (Key Performance
+                Indicators). It takes approximately 10 minutes to complete. You
+                can save your results as a PDF or compare with industry
+                benchmarks.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row justify-start space-y-4 sm:space-y-0 sm:space-x-4">
                 <Link href="/login">
-                  <Button 
-                    size="lg" 
+                  <Button
+                    size="lg"
                     className="bg-blue-600 hover:bg-blue-700 text-white transition-colors rounded-md shadow-md px-6 py-3 w-full sm:w-auto"
                   >
                     Start Assessment
@@ -41,10 +45,16 @@ export default function Home() {
               <div className="relative w-full h-80 rounded-lg shadow-md overflow-hidden bg-white">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 p-8 flex items-center justify-center">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-gray-800">AI Readiness</div>
-                    <div className="mt-2 text-xl text-gray-600">Benchmark your organization</div>
+                    <div className="text-3xl font-bold text-gray-800">
+                      AI Readiness
+                    </div>
+                    <div className="mt-2 text-xl text-gray-600">
+                      Benchmark your organization
+                    </div>
                     <div className="mt-4 inline-flex items-center justify-center w-24 h-24 rounded-full bg-white shadow-lg">
-                      <div className="text-3xl font-bold text-primary-500">KPI</div>
+                      <div className="text-3xl font-bold text-primary-500">
+                        KPI
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -53,33 +63,49 @@ export default function Home() {
           </div>
         </div>
       </div>
-      
+
       {/* Features Section */}
       <div className="py-12 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container">
           <div className="text-center">
-            <h2 className="text-3xl font-extrabold text-gray-900">Benefits of the Assessment</h2>
+            <h2 className="text-3xl font-extrabold text-gray-900">
+              Benefits of the Assessment
+            </h2>
             <p className="mt-4 text-lg text-gray-600">
-              Understand your organization's AI readiness and get actionable insights
+              Understand your organization's AI readiness and get actionable
+              insights
             </p>
           </div>
           <div className="mt-12 grid gap-8 md:grid-cols-3">
             {/* Feature 1 */}
             <div className="bg-blue-50 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="text-primary-500 text-2xl font-semibold mb-3">Benchmark</div>
-              <p className="text-gray-700">Compare your AI readiness with industry standards and competitors</p>
+              <div className="text-primary-500 text-2xl font-semibold mb-3">
+                Benchmark
+              </div>
+              <p className="text-gray-700">
+                Compare your AI readiness with industry standards and
+                competitors
+              </p>
             </div>
-            
+
             {/* Feature 2 */}
             <div className="bg-blue-50 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="text-primary-500 text-2xl font-semibold mb-3">Track Progress</div>
-              <p className="text-gray-700">Monitor your improvement over time with quarterly assessments</p>
+              <div className="text-primary-500 text-2xl font-semibold mb-3">
+                Track Progress
+              </div>
+              <p className="text-gray-700">
+                Monitor your improvement over time with quarterly assessments
+              </p>
             </div>
-            
+
             {/* Feature 3 */}
             <div className="bg-blue-50 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="text-primary-500 text-2xl font-semibold mb-3">Get Insights</div>
-              <p className="text-gray-700">Receive tailored recommendations to improve your AI capabilities</p>
+              <div className="text-primary-500 text-2xl font-semibold mb-3">
+                Get Insights
+              </div>
+              <p className="text-gray-700">
+                Receive tailored recommendations to improve your AI capabilities
+              </p>
             </div>
           </div>
         </div>
