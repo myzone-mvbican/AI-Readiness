@@ -10,6 +10,7 @@ import LoginPage from "@/pages/login";
 import SurveyPage from "@/pages/survey";
 import Dashboard from "@/pages/dashboard";
 import DashboardHome from "@/pages/dashboard-home";
+import DashboardAssessments from "@/pages/dashboard-assessments";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 
@@ -23,7 +24,7 @@ function Router() {
       <Switch>
         <Route path="/dashboard" component={DashboardHome} />
         <Route path="/dashboard/surveys/new" component={Dashboard} />
-        <Route path="/dashboard/assessments" component={DashboardHome} />
+        <Route path="/dashboard/assessments" component={DashboardAssessments} />
         <Route path="/dashboard/:rest*" component={DashboardHome} />
         <Route component={NotFound} />
       </Switch>
