@@ -21,7 +21,7 @@ export default function Home() {
                 benchmarks.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row justify-start space-y-4 sm:space-y-0 sm:space-x-4">
-                <Link href="/login">
+                <Link href="/dashboard/assessments/new">
                   <Button
                     size="lg"
                     className="bg-blue-600 hover:bg-blue-700 text-white transition-colors rounded-md shadow-md px-6 py-3 w-full sm:w-auto"
@@ -30,7 +30,7 @@ export default function Home() {
                     <ChevronRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
-                <Link href="/survey">
+                <Link href="/about">
                   <Button
                     variant="outline"
                     size="lg"

@@ -53,7 +53,8 @@ export default function Dashboard() {
     // You could send this data to your backend here
     toast({
       title: "Survey Completed",
-      description: "Your AI Readiness Assessment has been submitted successfully!",
+      description:
+        "Your AI Readiness Assessment has been submitted successfully!",
     });
 
     // Navigate or reset based on your needs
@@ -65,26 +66,11 @@ export default function Dashboard() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">New Assessment</h1>
           <p className="text-muted-foreground mt-2 mb-6">
-            Complete this assessment to evaluate your organization's AI readiness
+            Complete this assessment to evaluate your organization's AI
+            readiness
           </p>
         </div>
-
-        <Card>
-          <CardContent className="p-6">
-            <div>
-              <h2 className="text-xl font-semibold mb-4">
-                MyZone AI Readiness Assessment
-              </h2>
-              <p className="text-muted-foreground mb-6">
-                This assessment will help you understand your organization's
-                readiness for AI adoption. Please answer all questions honestly
-                to get the most accurate assessment.
-              </p>
-
-              <SurveyForm onComplete={handleSurveyComplete} />
-            </div>
-          </CardContent>
-        </Card>
+        <SurveyForm onComplete={handleSurveyComplete} />
       </div>
     </DashboardLayout>
   );

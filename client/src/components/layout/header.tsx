@@ -11,9 +11,9 @@ export default function Header() {
           </div>
         </Link>
         <nav className="hidden md:flex space-x-8">
-          <Link href="/survey">
+          <Link href="/about">
             <span className="text-blue-800 hover:text-blue-600 font-medium cursor-pointer transition-colors">
-              About Survey
+              About
             </span>
           </Link>
           <Link href="/dashboard">

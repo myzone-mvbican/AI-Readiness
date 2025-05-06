@@ -8,29 +8,29 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import LoginPage from "@/pages/login";
 import SurveyPage from "@/pages/survey";
-import Dashboard from "@/pages/dashboard";
+import SurveyNew from "@/pages/dashboard-survey-new";
+import SurveysList from "@/pages/dashboard-surveys";
 import DashboardHome from "@/pages/dashboard-home";
-import DashboardAssessments from "@/pages/dashboard-assessments";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 
 function Router() {
   const [location] = useLocation();
   const isDashboardRoute = location.startsWith("/dashboard");
-  
+
   // If we're on a dashboard route, don't show the normal layout
   if (isDashboardRoute) {
     return (
       <Switch>
         <Route path="/dashboard" component={DashboardHome} />
-        <Route path="/dashboard/surveys/new" component={Dashboard} />
-        <Route path="/dashboard/assessments" component={DashboardAssessments} />
+        <Route path="/dashboard/assessments/new" component={SurveyNew} />
+        <Route path="/dashboard/assessments" component={SurveysList} />
         <Route path="/dashboard/:rest*" component={DashboardHome} />
         <Route component={NotFound} />
       </Switch>
     );
   }
-  
+
   // For all other routes, use the normal layout with header and footer
   return (
     <div className="min-h-screen flex flex-col">
@@ -39,7 +39,7 @@ function Router() {
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/login" component={LoginPage} />
-          <Route path="/survey" component={SurveyPage} />
+          <Route path="/about" component={SurveyPage} />
           <Route component={NotFound} />
         </Switch>
       </main>
@@ -48,16 +48,20 @@ function Router() {
   );
 }
 
+import { ThemeProvider } from "@/components/theme-provider";
+
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <GoogleOAuthProvider clientId="GOOGLE_CLIENT_ID_PLACEHOLDER">
-          <Toaster />
-          <Router />
-        </GoogleOAuthProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <GoogleOAuthProvider clientId="GOOGLE_CLIENT_ID_PLACEHOLDER">
+            <Toaster />
+            <Router />
+          </GoogleOAuthProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 
