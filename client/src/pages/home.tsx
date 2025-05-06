@@ -17,20 +17,24 @@ export default function Home() {
                 Welcome! This AI Readiness Assessment should be completed quarterly as one of your foundational AI KPIs (Key Performance Indicators). It takes approximately 10 minutes to complete. You can save your results as a PDF or compare with industry benchmarks.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row justify-center md:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
-                <Button 
-                  size="lg" 
-                  className="bg-primary-500 hover:bg-primary-600 text-white transition-colors rounded-md"
-                >
-                  Start Assessment
-                  <ChevronRight className="ml-2 h-5 w-5" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="border-primary-500 text-primary-500 hover:bg-primary-50 transition-colors rounded-md"
-                >
-                  Learn More
-                </Button>
+                <Link href="/login">
+                  <Button 
+                    size="lg" 
+                    className="bg-primary-500 hover:bg-primary-600 text-white transition-colors rounded-md"
+                  >
+                    Start Assessment
+                    <ChevronRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link href="/survey">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="border-primary-500 text-primary-500 hover:bg-primary-50 transition-colors rounded-md"
+                  >
+                    Learn More
+                  </Button>
+                </Link>
               </div>
             </div>
             <div className="hidden md:block md:w-1/3 lg:w-2/5">
