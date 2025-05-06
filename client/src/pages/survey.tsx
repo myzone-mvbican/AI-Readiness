@@ -34,13 +34,14 @@ export default function SurveyPage() {
         </Card>
         
         <div className="text-center">
-          <Button 
-            size="lg" 
-            className="bg-primary-500 hover:bg-primary-600 text-white transition-colors"
-            onClick={() => window.location.href = "/login"}
-          >
-            Begin Assessment
-          </Button>
+          <a href="/login">
+            <Button 
+              size="lg" 
+              className="bg-blue-600 hover:bg-blue-700 text-white transition-colors shadow-md px-8 py-4 text-lg font-medium rounded-md animate-pulse"
+            >
+              Begin Assessment
+            </Button>
+          </a>
           <p className="mt-4 text-sm text-gray-500">
             Your data will be saved and used anonymously for benchmarking purposes.
           </p>

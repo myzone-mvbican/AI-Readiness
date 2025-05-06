@@ -3,7 +3,7 @@ import logoPath from "@/assets/logo.svg";
 
 export default function Header() {
   return (
-    <header className="bg-gradient-to-r from-primary-500 to-blue-600 py-4 px-4 sm:px-6 lg:px-8 shadow-lg sticky top-0 z-50">
+    <header className="bg-white py-4 px-4 sm:px-6 lg:px-8 shadow-lg sticky top-0 z-50 border-b border-gray-200">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <Link href="/">
           <div className="flex items-center cursor-pointer">
@@ -12,13 +12,13 @@ export default function Header() {
         </Link>
         <nav className="hidden md:flex space-x-8">
           <Link href="/">
-            <span className="text-white hover:text-blue-100 font-medium cursor-pointer">Home</span>
+            <span className="text-blue-800 hover:text-blue-600 font-medium cursor-pointer transition-colors">Home</span>
           </Link>
           <Link href="/survey">
-            <span className="text-white hover:text-blue-100 font-medium cursor-pointer">Survey</span>
+            <span className="text-blue-800 hover:text-blue-600 font-medium cursor-pointer transition-colors">Survey</span>
           </Link>
           <Link href="/login">
-            <span className="text-white hover:text-blue-100 font-medium cursor-pointer">Login</span>
+            <span className="text-blue-800 hover:text-blue-600 font-medium cursor-pointer transition-colors">Login</span>
           </Link>
         </nav>
       </div>
