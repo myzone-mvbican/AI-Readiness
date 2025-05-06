@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "wouter";
+import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginFormValues } from "@/schemas/validation-schemas";
@@ -8,13 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
 export default function LoginPage() {
   const { toast } = useToast();
-  const [_, navigate] = useNavigate();
+  const [_, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const {
@@ -42,7 +42,7 @@ export default function LoginPage() {
       console.log("Form submitted:", data);
       
       // Redirect to survey page
-      navigate("/survey");
+      setLocation("/survey");
       
       toast({
         title: "Login successful!",
@@ -74,7 +74,7 @@ export default function LoginPage() {
       });
       
       // Redirect to survey page
-      navigate("/survey");
+      setLocation("/survey");
     } catch (error) {
       console.error("Error with Google login:", error);
       
