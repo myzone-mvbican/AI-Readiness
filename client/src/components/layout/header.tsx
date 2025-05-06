@@ -3,7 +3,7 @@ import logoPath from "@/assets/logo.svg";
 
 export default function Header() {
   return (
-    <header className="bg-white py-4 px-4 sm:px-6 lg:px-8 shadow-lg sticky top-0 z-50 border-b border-gray-200">
+    <header className="bg-white py-4 px-4 sm:px-6 lg:px-8 shadow-sm sticky top-0 z-50 border-b border-gray-100">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <Link href="/">
           <div className="flex items-center cursor-pointer">
