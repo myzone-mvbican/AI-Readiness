@@ -1,0 +1,96 @@
+Now I want to implement the next stage of the app:
+
+🔧 Global Layout Updates
+Update the Header component:
+
+Add a placeholder logo (/logo.svg).
+
+Make it sticky at the top.
+
+Use Tailwind for styling with a responsive flex layout.
+
+Update the Footer:
+
+Simplify to just a copyright notice:
+© 2025 MyZone AI. All rights reserved.
+
+Link the text "MyZone AI" to https://myzone.ai.
+
+Keep it minimal, styled with Tailwind.
+
+🏠 Homepage Implementation
+Design a visually appealing Hero Section for the homepage with the following content:
+
+Headline:
+MyZone AI Readiness Survey
+
+Subtext:
+Welcome! This AI Readiness Assessment should be completed quarterly as one of your foundational AI KPIs (Key Performance Indicators). It takes approximately 10 minutes to complete. You can save your results as a PDF or compare with industry benchmarks.
+
+Use Tailwind for layout and typography. Incorporate responsive and modern design.
+
+🔐 Login Functionality
+Implement two login options:
+
+Option 1: Google Sign-In
+Use @react-oauth/google or a similar library for Google authentication.
+
+Show the Google Sign-In button on the homepage.
+
+After login, redirect to /dashboard.
+
+Option 2: Custom Login Form
+Use react-hook-form + zod for form handling and validation.
+
+Fields:
+
+Name (text)
+
+Email (email)
+
+Company (text)
+
+Number of employees (select):
+
+Options:
+1-9, 10-49, 50-149, 150-499, 500-999, 1000+
+
+Industry (select with 10 options):
+
+Technology / Software
+
+Healthcare
+
+Education
+
+Finance
+
+Manufacturing
+
+Retail
+
+Transportation
+
+Energy
+
+Government
+
+Media / Entertainment
+
+Style with Tailwind and validate all fields.
+
+After successful form submission, redirect to /dashboard.
+
+Please:
+
+Show full file structure if new components or pages are added.
+
+Provide zod schema for validation.
+
+Use .scss file for any global custom styles (in parallel with Tailwind).
+
+Include brief Tailwind utility explanations as comments when non-obvious.
+
+Make sure everything is responsive and mobile-friendly.
+
+Output clean code blocks with filenames. No need to implement survey logic yet—just the login funnel and dashboard redirection.

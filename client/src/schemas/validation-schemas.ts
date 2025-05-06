@@ -20,4 +20,26 @@ export const registrationSchema = z.object({
   path: ["confirmPassword"],
 });
 
+export const loginSchema = z.object({
+  name: z.string()
+    .min(2, { message: "Name must be at least 2 characters" })
+    .max(50, { message: "Name cannot exceed 50 characters" }),
+  
+  email: z.string()
+    .email({ message: "Please enter a valid email address" }),
+  
+  company: z.string()
+    .min(2, { message: "Company name must be at least 2 characters" })
+    .max(100, { message: "Company name cannot exceed 100 characters" }),
+  
+  employeeCount: z.string({
+    required_error: "Please select number of employees",
+  }),
+  
+  industry: z.string({
+    required_error: "Please select your industry",
+  }),
+});
+
 export type RegistrationFormValues = z.infer<typeof registrationSchema>;
+export type LoginFormValues = z.infer<typeof loginSchema>;
