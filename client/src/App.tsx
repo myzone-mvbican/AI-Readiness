@@ -15,7 +15,7 @@ function Router() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-grow w-full mx-auto py-8">
+      <main className="flex-grow w-full mx-auto">
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/login" component={LoginPage} />
