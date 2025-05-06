@@ -1,4 +1,5 @@
-import React, { useRef, useEffect } from "react";
+import * as React from "react";
+import { useRef } from "react";
 import { Form } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -25,8 +26,13 @@ export default function SurveyStep({
   isLastStep = false
 }: SurveyStepProps) {
   // Create refs for each question for scrolling
-  const questionRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const questionRefs = useRef<Array<React.RefObject<HTMLDivElement>>>([]);
   const HEADER_OFFSET = 80; // Adjust based on your header height
+
+  // Initialize refs for each question
+  React.useEffect(() => {
+    questionRefs.current = section.questions.map(() => React.createRef<HTMLDivElement>());
+  }, [section.questions]);
 
   // Create dynamic schema based on questions in this section
   const schema = createSurveyStepSchema(section.questions);
@@ -39,11 +45,8 @@ export default function SurveyStep({
     mode: "onChange"
   });
   
-  const { handleSubmit, control, formState, watch } = form;
-  const { isValid, errors } = formState;
-  
-  // Watch for changes to scroll to the next unanswered question
-  const formValues = watch();
+  const { handleSubmit, control, formState } = form;
+  const { isValid } = formState;
   
   // Handle form submission
   const onSubmit = (data: FormValues) => {
@@ -58,10 +61,10 @@ export default function SurveyStep({
     if (currentIndex < section.questions.length - 1) {
       const nextQuestionRef = questionRefs.current[currentIndex + 1];
       
-      if (nextQuestionRef) {
+      if (nextQuestionRef && nextQuestionRef.current) {
         setTimeout(() => {
           window.scrollTo({
-            top: nextQuestionRef.offsetTop - HEADER_OFFSET,
+            top: nextQuestionRef.current!.offsetTop - HEADER_OFFSET,
             behavior: "smooth"
           });
         }, 300);
@@ -81,7 +84,7 @@ export default function SurveyStep({
               question={question}
               control={control}
               onAnswered={handleQuestionAnswered}
-              questionRef={(el) => questionRefs.current[index] = el}
+              questionRef={questionRefs.current[index]}
             />
           ))}
           

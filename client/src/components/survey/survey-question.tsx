@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { RatingOption, ratingOptions, SurveyQuestion } from "@/schemas/survey-schema";
@@ -19,8 +19,6 @@ export default function SurveyQuestionItem({
   onAnswered,
   questionRef
 }: SurveyQuestionProps) {
-  const radioRefs = useRef<(HTMLInputElement | null)[]>([]);
-  
   // When a radio button is selected, trigger the onAnswered callback
   const handleRadioChange = (value: RatingOption) => {
     if (onAnswered) {
@@ -67,10 +65,9 @@ export default function SurveyQuestionItem({
                 value={field.value}
                 className="flex flex-col sm:flex-row sm:space-x-6 space-y-2 sm:space-y-0 mt-3"
               >
-                {ratingOptions.map((option, index) => (
+                {ratingOptions.map((option) => (
                   <div key={option} className="flex items-center space-x-2">
                     <RadioGroupItem 
-                      ref={el => radioRefs.current[index] = el} 
                       value={option} 
                       id={`${question.number}-${option}`} 
                     />
