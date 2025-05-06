@@ -11,7 +11,6 @@ import {
   Menu,
   PlusCircle,
   Settings,
-  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,7 +30,6 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  SheetClose,
 } from "@/components/ui/sheet";
 
 interface DashboardLayoutProps {
@@ -39,7 +37,7 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [location] = useLocation();
   
   // Check for mobile viewport
@@ -67,265 +65,243 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     return false;
   };
 
-  return (
-    <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-      <div className="hidden border-r bg-muted/40 md:block">
-        <div className="flex h-full max-h-screen flex-col gap-2">
-          <div className="flex h-14 items-center justify-between border-b px-4">
-            <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+  // Menu items for reuse
+  const menuItems = (
+    <nav className="grid gap-1 px-2">
+      <Link 
+        href="/dashboard" 
+        className={cn(
+          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+          isRouteActive("/dashboard") && !isRouteActive("/dashboard/") && "bg-muted font-semibold"
+        )}
+      >
+        <Home className="h-4 w-4" />
+        {!isCollapsed && <span>Dashboard</span>}
+      </Link>
+      <Link 
+        href="/dashboard/assessments" 
+        className={cn(
+          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+          isRouteActive("/dashboard/assessments") && "bg-muted font-semibold"
+        )}
+      >
+        <ClipboardCheck className="h-4 w-4" />
+        {!isCollapsed && <span>Assessments</span>}
+      </Link>
+      <Link 
+        href="/dashboard/reports" 
+        className={cn(
+          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+          isRouteActive("/dashboard/reports") && "bg-muted font-semibold"
+        )}
+      >
+        <BarChart3 className="h-4 w-4" />
+        {!isCollapsed && <span>Reports</span>}
+      </Link>
+    </nav>
+  );
+
+  // Bottom nav items for reuse
+  const bottomNavItems = (
+    <nav className="grid gap-1">
+      <Link 
+        href="/dashboard/settings" 
+        className={cn(
+          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+          isRouteActive("/dashboard/settings") && "bg-muted font-semibold"
+        )}
+      >
+        <Settings className="h-4 w-4" />
+        {!isCollapsed && <span>Settings</span>}
+      </Link>
+      <Link 
+        href="/dashboard/help" 
+        className={cn(
+          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+          isRouteActive("/dashboard/help") && "bg-muted font-semibold"
+        )}
+      >
+        <HelpCircle className="h-4 w-4" />
+        {!isCollapsed && <span>Get Help</span>}
+      </Link>
+    </nav>
+  );
+
+  // Account dropdown for reuse
+  const accountDropdown = (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="w-full justify-start">
+          <div className="flex items-center gap-2">
+            {!isCollapsed && (
+              <>
+                <div className="flex flex-col text-left">
+                  <span className="text-sm font-medium">Account</span>
+                  <span className="text-xs text-muted-foreground">
+                    Manage your account
+                  </span>
+                </div>
+                <ChevronDown className="ml-auto h-4 w-4" />
+              </>
+            )}
+            {isCollapsed && (
+              <Settings className="h-5 w-5" />
+            )}
+          </div>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" side="right" className="w-56">
+        <DropdownMenuItem>
+          <Settings className="mr-2 h-4 w-4" />
+          <span>Account</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Logout</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
+  // Render mobile layout
+  if (isMobile) {
+    return (
+      <div className="flex h-screen flex-col">
+        {/* Mobile Header */}
+        <header className="border-b h-14 flex items-center px-4 justify-between">
+          <div className="flex items-center">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle navigation</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[240px] sm:w-[300px]">
+                <SheetHeader className="border-b pb-4">
+                  <SheetTitle className="flex justify-between items-center">
+                    <div className="flex w-full items-center justify-between">
+                      <Link href="/dashboard" className="flex items-center gap-2">
+                        <img src={logoPath} alt="Logo" className="w-[100px] h-auto" />
+                      </Link>
+                      <ThemeToggle />
+                    </div>
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-col justify-between h-full py-4">
+                  <div className="flex-1">
+                    <div className="mb-4">
+                      <Link href="/dashboard/surveys/new">
+                        <Button variant="default" className="w-full">
+                          <PlusCircle className="h-4 w-4 mr-2" />
+                          <span>Start New Survey</span>
+                        </Button>
+                      </Link>
+                    </div>
+                    <ScrollArea className="flex-1 py-2">
+                      {menuItems}
+                    </ScrollArea>
+                  </div>
+                  <div>
+                    <div className="py-2">
+                      {bottomNavItems}
+                    </div>
+                    <Separator className="my-2" />
+                    <div className="px-2 py-2">
+                      {accountDropdown}
+                    </div>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+            <Link href="/dashboard" className="ml-2">
               <img src={logoPath} alt="Logo" className="w-[120px] h-auto" />
             </Link>
-            <ThemeToggle />
           </div>
-          <div className="flex-1 overflow-auto py-2">
-            <nav className="grid items-start px-2 text-sm font-medium">
-              <Link 
-                href="/dashboard/surveys/new"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-              >
-                <PlusCircle className="h-4 w-4" />
-                Start New Survey
-              </Link>
-              <Separator className="my-2" />
-              <Link 
-                href="/dashboard"
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
-                  isRouteActive("/dashboard") && !isRouteActive("/dashboard/") 
-                    ? "bg-muted font-semibold text-primary" 
-                    : "text-muted-foreground"
-                )}
-              >
-                <Home className="h-4 w-4" />
-                Dashboard
-              </Link>
-              <Link 
-                href="/dashboard/assessments"
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
-                  isRouteActive("/dashboard/assessments")
-                    ? "bg-muted font-semibold text-primary" 
-                    : "text-muted-foreground"
-                )}
-              >
-                <ClipboardCheck className="h-4 w-4" />
-                Assessments
-              </Link>
-              <Link 
-                href="/dashboard/reports"
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
-                  isRouteActive("/dashboard/reports")
-                    ? "bg-muted font-semibold text-primary" 
-                    : "text-muted-foreground"
-                )}
-              >
-                <BarChart3 className="h-4 w-4" />
-                Reports
-              </Link>
-            </nav>
+        </header>
+        {/* Content */}
+        <main className="flex-1 overflow-auto p-4">{children}</main>
+      </div>
+    );
+  }
+
+  // Desktop layout
+  return (
+    <div className="h-screen flex">
+      {/* Sidebar */}
+      <div
+        className={cn(
+          "flex flex-col bg-muted/40 border-r h-full w-64 transition-all duration-300",
+          isCollapsed && "w-16",
+        )}
+      >
+        {/* Logo and Quick Create */}
+        <div className="py-4 px-4 border-b">
+          <div className="flex items-center justify-between mb-4">
+            {!isCollapsed ? (
+              <div className="flex items-center justify-between w-full">
+                <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
+                  <img src={logoPath} alt="Logo" className="w-[120px] h-auto" />
+                </Link>
+                <ThemeToggle />
+              </div>
+            ) : (
+              <>
+                <Link href="/dashboard" className="flex items-center justify-center">
+                  <img src={logoPath} alt="Logo" className="h-6 w-6" />
+                </Link>
+                <ThemeToggle />
+              </>
+            )}
           </div>
-          <div className="mt-auto">
-            <nav className="grid items-start px-2 text-sm font-medium">
-              <Link 
-                href="/dashboard/settings"
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
-                  isRouteActive("/dashboard/settings")
-                    ? "bg-muted font-semibold text-primary" 
-                    : "text-muted-foreground"
-                )}
+          <div>
+            <Link href="/dashboard/surveys/new">
+              <Button
+                variant="default"
+                size={isCollapsed ? "icon" : "default"}
+                className={cn("w-full", isCollapsed && "w-auto")}
               >
-                <Settings className="h-4 w-4" />
-                Settings
-              </Link>
-              <Link 
-                href="/dashboard/help"
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
-                  isRouteActive("/dashboard/help")
-                    ? "bg-muted font-semibold text-primary" 
-                    : "text-muted-foreground"
-                )}
-              >
-                <HelpCircle className="h-4 w-4" />
-                Help
-              </Link>
-            </nav>
-            <Separator className="my-2" />
-            <div className="p-4">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-start">
-                    <div className="flex flex-col items-start text-left">
-                      <span className="text-sm font-medium">Account</span>
-                      <span className="text-xs text-muted-foreground">
-                        Manage your account
-                      </span>
-                    </div>
-                    <ChevronDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Account</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Logout</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+                <PlusCircle className="h-4 w-4 mr-2" />
+                {!isCollapsed && <span>Start New Survey</span>}
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <ScrollArea className="flex-1 py-2">
+          {menuItems}
+        </ScrollArea>
+
+        {/* Bottom section */}
+        <div className="mt-auto border-t">
+          <div className="py-2 px-2">
+            {bottomNavItems}
+          </div>
+          <Separator />
+          <div className="px-4 py-4">
+            {accountDropdown}
           </div>
         </div>
       </div>
-      <div className="flex flex-col">
-        <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:px-6">
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle Menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-[240px] sm:w-[280px] pr-0">
-              <SheetHeader className="border-b pb-4">
-                <SheetTitle className="flex items-center justify-between">
-                  <Link href="/dashboard" className="flex items-center gap-2">
-                    <img src={logoPath} alt="Logo" className="w-[100px] h-auto" />
-                  </Link>
-                  <div className="flex items-center gap-2">
-                    <ThemeToggle />
-                    <SheetClose className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
-                      <X className="h-4 w-4" />
-                      <span className="sr-only">Close</span>
-                    </SheetClose>
-                  </div>
-                </SheetTitle>
-              </SheetHeader>
-              <div className="flex flex-col h-full py-4 overflow-auto">
-                <div className="px-2 mb-4">
-                  <Link href="/dashboard/surveys/new" onClick={() => setIsOpen(false)}>
-                    <Button variant="default" className="w-full">
-                      <PlusCircle className="h-4 w-4 mr-2" />
-                      <span>Start New Survey</span>
-                    </Button>
-                  </Link>
-                </div>
-                <Separator className="mb-4" />
-                <nav className="grid gap-1 px-2 group text-sm">
-                  <Link 
-                    href="/dashboard"
-                    onClick={() => setIsOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
-                      isRouteActive("/dashboard") && !isRouteActive("/dashboard/") 
-                        ? "bg-muted font-semibold text-primary" 
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    <Home className="h-4 w-4" />
-                    Dashboard
-                  </Link>
-                  <Link 
-                    href="/dashboard/assessments"
-                    onClick={() => setIsOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
-                      isRouteActive("/dashboard/assessments")
-                        ? "bg-muted font-semibold text-primary" 
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    <ClipboardCheck className="h-4 w-4" />
-                    Assessments
-                  </Link>
-                  <Link 
-                    href="/dashboard/reports"
-                    onClick={() => setIsOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
-                      isRouteActive("/dashboard/reports")
-                        ? "bg-muted font-semibold text-primary" 
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    <BarChart3 className="h-4 w-4" />
-                    Reports
-                  </Link>
-                </nav>
-                <div className="mt-auto">
-                  <nav className="grid gap-1 px-2 text-sm">
-                    <Link 
-                      href="/dashboard/settings"
-                      onClick={() => setIsOpen(false)}
-                      className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
-                        isRouteActive("/dashboard/settings")
-                          ? "bg-muted font-semibold text-primary" 
-                          : "text-muted-foreground"
-                      )}
-                    >
-                      <Settings className="h-4 w-4" />
-                      Settings
-                    </Link>
-                    <Link 
-                      href="/dashboard/help"
-                      onClick={() => setIsOpen(false)}
-                      className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
-                        isRouteActive("/dashboard/help")
-                          ? "bg-muted font-semibold text-primary" 
-                          : "text-muted-foreground"
-                      )}
-                    >
-                      <HelpCircle className="h-4 w-4" />
-                      Help
-                    </Link>
-                  </nav>
-                  <Separator className="my-2" />
-                  <div className="p-2">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="w-full justify-start">
-                          <div className="flex flex-col items-start text-left">
-                            <span className="text-sm font-medium">Account</span>
-                            <span className="text-xs text-muted-foreground">
-                              Manage your account
-                            </span>
-                          </div>
-                          <ChevronDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuItem>
-                          <Settings className="mr-2 h-4 w-4" />
-                          <span>Account</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>
-                          <LogOut className="mr-2 h-4 w-4" />
-                          <span>Logout</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
-          <div className="w-full flex-1">
-            <div className="font-semibold text-lg h-9 md:hidden">
-              <img src={logoPath} alt="Logo" className="w-[120px] h-auto" />
-            </div>
-          </div>
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="border-b h-14 flex items-center px-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            aria-label="Toggle sidebar"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
         </header>
-        <main className="flex-1 overflow-auto p-4 md:p-6">
-          {children}
-        </main>
+
+        {/* Content */}
+        <main className="flex-1 overflow-auto p-6">{children}</main>
       </div>
     </div>
   );
