@@ -10,17 +10,17 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center md:text-left md:flex md:items-center md:justify-between">
             <div className="md:max-w-2xl">
-              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-blue-600">
+              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-blue-700">
                 MyZone AI Readiness Survey
               </h1>
               <p className="mt-6 text-lg md:text-xl text-gray-600 max-w-3xl">
                 Welcome! This AI Readiness Assessment should be completed quarterly as one of your foundational AI KPIs (Key Performance Indicators). It takes approximately 10 minutes to complete. You can save your results as a PDF or compare with industry benchmarks.
               </p>
-              <div className="mt-8 flex flex-col sm:flex-row justify-center md:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
+              <div className="mt-8 flex flex-col sm:flex-row justify-start space-y-4 sm:space-y-0 sm:space-x-4">
                 <Link href="/login">
                   <Button 
                     size="lg" 
-                    className="bg-primary-500 hover:bg-primary-600 text-white transition-colors rounded-md"
+                    className="bg-blue-600 hover:bg-blue-700 text-white transition-colors rounded-md shadow-md px-6 py-3 w-full sm:w-auto"
                   >
                     Start Assessment
                     <ChevronRight className="ml-2 h-5 w-5" />
@@ -30,9 +30,17 @@ export default function Home() {
                   <Button
                     variant="outline"
                     size="lg"
-                    className="border-primary-500 text-primary-500 hover:bg-primary-50 transition-colors rounded-md"
+                    className="border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors rounded-md w-full sm:w-auto"
                   >
                     Learn More
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button
+                    size="lg"
+                    className="bg-blue-500 hover:bg-blue-600 text-white transition-colors rounded-md shadow-md w-full sm:w-auto"
+                  >
+                    Take the Survey
                   </Button>
                 </Link>
               </div>
