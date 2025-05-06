@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import LoginPage from "@/pages/login";
 import SurveyPage from "@/pages/survey";
+import Dashboard from "@/pages/dashboard";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 
@@ -20,6 +21,7 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/login" component={LoginPage} />
           <Route path="/survey" component={SurveyPage} />
+          <Route path="/dashboard" component={Dashboard} />
           <Route component={NotFound} />
         </Switch>
       </main>
