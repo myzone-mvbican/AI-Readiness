@@ -37,9 +37,9 @@ export default function SurveyPage() {
           <a href="/login">
             <Button 
               size="lg" 
-              className="bg-blue-600 hover:bg-blue-700 text-white transition-colors shadow-md px-8 py-4 text-lg font-medium rounded-md animate-pulse"
+              className="bg-blue-600 hover:bg-blue-700 text-white transition-colors shadow-md px-8 py-4 text-lg font-medium rounded-md"
             >
-              Begin Assessment
+              Login to Start
             </Button>
           </a>
           <p className="mt-4 text-sm text-gray-500">
