@@ -1,53 +1,33 @@
 import { SurveyQuestion, SurveySection } from "@/schemas/survey-schema";
+import Papa from 'papaparse';
 
-// Simple CSV parsing function for browser
+// Function to parse CSV data using PapaParse
 export const parseCSV = (csvData: string): SurveyQuestion[] => {
   try {
-    // Skip the header row
-    const lines = csvData.split('\n').filter(line => line.trim());
-    const headers = lines[0].split(',');
+    // Parse the CSV data using PapaParse
+    const result = Papa.parse(csvData, {
+      header: true,
+      skipEmptyLines: true
+    });
     
-    // Extract questions from CSV rows (skip header row)
-    const questions: SurveyQuestion[] = [];
-    
-    for (let i = 1; i < lines.length; i++) {
-      // Handle commas within quoted fields
-      let currentLine = lines[i];
-      let inQuotes = false;
-      let currentField = '';
-      let fields: string[] = [];
-      
-      for (let j = 0; j < currentLine.length; j++) {
-        const char = currentLine[j];
-        
-        if (char === '"' && (j === 0 || currentLine[j-1] !== '\\')) {
-          inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
-          fields.push(currentField);
-          currentField = '';
-        } else {
-          currentField += char;
-        }
-      }
-      
-      // Add the last field
-      fields.push(currentField);
-      
-      // Create question object
-      if (fields.length >= 4) {
-        const questionNumber = parseInt(fields[0], 10);
-        if (!isNaN(questionNumber)) {
-          questions.push({
-            number: questionNumber,
-            category: fields[1] ? fields[1].trim() : '',
-            question: fields[2] ? fields[2].trim() : '',
-            details: fields[3] ? fields[3].trim().replace(/^"|"$/g, '') : ''
-          });
-        }
-      }
+    if (result.errors && result.errors.length > 0) {
+      console.error("PapaParse errors:", result.errors);
     }
     
-    return questions;
+    // Map the parsed data to our SurveyQuestion type
+    return result.data
+      .map((row: any) => {
+        const questionNumber = parseInt(row["Question Number"], 10);
+        if (isNaN(questionNumber)) return null;
+        
+        return {
+          number: questionNumber,
+          category: row["Category"] ? row["Category"].trim() : '',
+          question: row["Question Summary"] ? row["Question Summary"].trim() : '',
+          details: row["Question Details"] ? row["Question Details"].trim() : ''
+        };
+      })
+      .filter((q: SurveyQuestion | null): q is SurveyQuestion => q !== null);
   } catch (error) {
     console.error("Error parsing CSV data:", error);
     return [];
@@ -55,7 +35,9 @@ export const parseCSV = (csvData: string): SurveyQuestion[] => {
 };
 
 // Function to group questions by category
-export const groupQuestionsByCategory = (questions: SurveyQuestion[]): SurveySection[] => {
+export const groupQuestionsByCategory = (
+  questions: SurveyQuestion[],
+): SurveySection[] => {
   const categoriesMap: Record<string, SurveyQuestion[]> = {};
 
   questions.forEach((question) => {
@@ -67,7 +49,7 @@ export const groupQuestionsByCategory = (questions: SurveyQuestion[]): SurveySec
 
   return Object.entries(categoriesMap).map(([category, questions]) => ({
     category,
-    questions: questions.sort((a, b) => a.number - b.number)
+    questions: questions.sort((a, b) => a.number - b.number),
   }));
 };
 
