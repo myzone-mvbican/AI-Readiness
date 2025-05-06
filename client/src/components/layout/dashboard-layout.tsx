@@ -181,9 +181,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <SheetContent side="left" className="w-[240px] sm:w-[300px]">
                 <SheetHeader className="border-b pb-4">
                   <SheetTitle className="flex justify-between items-center">
-                    <Link href="/dashboard" className="flex items-center gap-2">
-                      <img src={logoPath} alt="Logo" className="w-[100px] h-auto" />
-                    </Link>
+                    <div className="flex w-full items-center justify-between">
+                      <Link href="/dashboard" className="flex items-center gap-2">
+                        <img src={logoPath} alt="Logo" className="w-[100px] h-auto" />
+                      </Link>
+                      <ThemeToggle />
+                    </div>
                   </SheetTitle>
                 </SheetHeader>
                 <div className="flex flex-col justify-between h-full py-4">
@@ -205,8 +208,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       {bottomNavItems}
                     </div>
                     <Separator className="my-2" />
-                    <div className="flex justify-between items-center px-2 py-2">
-                      <ThemeToggle />
+                    <div className="px-2 py-2">
                       {accountDropdown}
                     </div>
                   </div>
@@ -217,7 +219,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <img src={logoPath} alt="Logo" className="w-[120px] h-auto" />
             </Link>
           </div>
-          <ThemeToggle />
         </header>
         {/* Content */}
         <main className="flex-1 overflow-auto p-4">{children}</main>
@@ -237,19 +238,24 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       >
         {/* Logo and Quick Create */}
         <div className="py-4 px-4 border-b">
-          <div className="flex items-center justify-between">
-            {!isCollapsed && (
-              <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
-                <img src={logoPath} alt="Logo" className="w-[150px] h-auto" />
-              </Link>
-            )}
-            {isCollapsed && (
-              <Link href="/dashboard" className="flex items-center justify-center">
-                <img src={logoPath} alt="Logo" className="h-6 w-6" />
-              </Link>
+          <div className="flex items-center justify-between mb-4">
+            {!isCollapsed ? (
+              <div className="flex items-center justify-between w-full">
+                <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
+                  <img src={logoPath} alt="Logo" className="w-[120px] h-auto" />
+                </Link>
+                <ThemeToggle />
+              </div>
+            ) : (
+              <>
+                <Link href="/dashboard" className="flex items-center justify-center">
+                  <img src={logoPath} alt="Logo" className="h-6 w-6" />
+                </Link>
+                <ThemeToggle />
+              </>
             )}
           </div>
-          <div className="mt-4">
+          <div>
             <Link href="/dashboard/surveys/new">
               <Button
                 variant="default"
@@ -274,8 +280,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             {bottomNavItems}
           </div>
           <Separator />
-          <div className="flex items-center justify-between px-4 py-4">
-            <ThemeToggle />
+          <div className="px-4 py-4">
             {accountDropdown}
           </div>
         </div>
@@ -284,7 +289,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="border-b h-14 flex items-center px-4 justify-between">
+        <header className="border-b h-14 flex items-center px-4">
           <Button
             variant="ghost"
             size="icon"
@@ -293,15 +298,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          
-          <div className="flex items-center gap-2">
-            <Link href="/dashboard/surveys/new">
-              <Button variant="outline" size="sm">
-                <PlusCircle className="h-4 w-4 mr-2" />
-                New Assessment
-              </Button>
-            </Link>
-          </div>
         </header>
 
         {/* Content */}
