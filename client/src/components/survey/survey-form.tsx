@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import SurveyStep from "./survey-step";
 import SurveySummaryComponent from "./survey-summary";
+import SurveyCompletion from "./survey-completion";
 import { loadSurveyData } from "@/lib/survey-data";
 import { useToast } from "@/hooks/use-toast";
 
@@ -17,6 +18,7 @@ export default function SurveyForm({ onComplete }: SurveyFormProps) {
   const [formData, setFormData] = useState<SurveySummary>({});
   const [loading, setLoading] = useState(true);
   const [showSummary, setShowSummary] = useState(false);
+  const [showCompletion, setShowCompletion] = useState(false);
   const { toast } = useToast();
 
   // Load survey data on mount
@@ -82,10 +84,9 @@ export default function SurveyForm({ onComplete }: SurveyFormProps) {
       description: "Your AI Readiness Assessment has been submitted successfully!",
     });
     
-    // Reset the form (optional)
-    // setFormData({});
-    // setCurrentStep(0);
-    // setShowSummary(false);
+    // Show completion screen with results
+    setShowSummary(false);
+    setShowCompletion(true);
   };
 
   if (loading) {
@@ -95,6 +96,11 @@ export default function SurveyForm({ onComplete }: SurveyFormProps) {
         <span className="ml-2 text-gray-600">Loading survey questions...</span>
       </div>
     );
+  }
+
+  // If on completion screen, render the SurveyCompletion component
+  if (showCompletion) {
+    return <SurveyCompletion surveyData={formData} sections={sections} />;
   }
 
   return (

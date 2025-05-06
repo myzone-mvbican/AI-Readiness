@@ -5,7 +5,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { z } from "zod";
-import { createSurveyStepSchema, SurveyQuestion, SurveySection, SurveyStepFormValues } from "@/schemas/survey-schema";
+import {
+  createSurveyStepSchema,
+  SurveyQuestion,
+  SurveySection,
+  SurveyStepFormValues,
+} from "@/schemas/survey-schema";
 import SurveyQuestionItem from "./survey-question";
 
 interface SurveyStepProps {
@@ -17,55 +22,59 @@ interface SurveyStepProps {
   isLastStep?: boolean;
 }
 
-export default function SurveyStep({ 
-  section, 
-  onNextStep, 
+export default function SurveyStep({
+  section,
+  onNextStep,
   onPrevStep,
   initialData = {},
   isFirstStep = false,
-  isLastStep = false
+  isLastStep = false,
 }: SurveyStepProps) {
   // Create refs for each question for scrolling
   const questionRefs = useRef<Array<React.RefObject<HTMLDivElement>>>([]);
-  const HEADER_OFFSET = 80; // Adjust based on your header height
+  const HEADER_OFFSET = 120; // Adjust based on your header height
 
   // Initialize refs for each question
   React.useEffect(() => {
-    questionRefs.current = section.questions.map(() => React.createRef<HTMLDivElement>());
+    questionRefs.current = section.questions.map(() =>
+      React.createRef<HTMLDivElement>(),
+    );
   }, [section.questions]);
 
   // Create dynamic schema based on questions in this section
   const schema = createSurveyStepSchema(section.questions);
   type FormValues = z.infer<typeof schema>;
-  
+
   // Initialize the form with react-hook-form and zod validation
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: initialData as any,
-    mode: "onChange"
+    mode: "onChange",
   });
-  
+
   const { handleSubmit, control, formState } = form;
   const { isValid } = formState;
-  
+
   // Handle form submission
   const onSubmit = (data: FormValues) => {
     onNextStep(data);
   };
-  
+
   // Handle smooth scrolling to the next question when a question is answered
   const handleQuestionAnswered = (answeredQuestionNumber: number) => {
     // Find the next unanswered question
-    const currentIndex = section.questions.findIndex(q => q.number === answeredQuestionNumber);
-    
+    const currentIndex = section.questions.findIndex(
+      (q) => q.number === answeredQuestionNumber,
+    );
+
     if (currentIndex < section.questions.length - 1) {
       const nextQuestionRef = questionRefs.current[currentIndex + 1];
-      
+
       if (nextQuestionRef && nextQuestionRef.current) {
         setTimeout(() => {
           window.scrollTo({
             top: nextQuestionRef.current!.offsetTop - HEADER_OFFSET,
-            behavior: "smooth"
+            behavior: "smooth",
           });
         }, 300);
       }
@@ -74,8 +83,10 @@ export default function SurveyStep({
 
   return (
     <div className="my-6">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">{section.category}</h2>
-      
+      <h2 className="text-2xl font-bold mb-6 text-gray-800">
+        {section.category}
+      </h2>
+
       <Form {...form}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {section.questions.map((question, index) => (
@@ -87,21 +98,17 @@ export default function SurveyStep({
               questionRef={questionRefs.current[index]}
             />
           ))}
-          
+
           <div className="flex justify-between pt-4">
             {!isFirstStep && (
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={onPrevStep}
-              >
+              <Button type="button" variant="outline" onClick={onPrevStep}>
                 Previous
               </Button>
             )}
-            
+
             <div className="ml-auto">
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={!isValid}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >

@@ -1,0 +1,87 @@
+I want to build a survey results page similar to the visual reference (completion screen with a radar chart and score summary).
+
+📊 Page Requirements
+Use shadcn/ui components wherever applicable (Cards, Buttons, Alerts, etc.).
+
+🧱 Layout Structure:
+Use a centered layout within a Card or Container from shadcn.
+
+Add a heading:
+Survey Complete!
+
+Show the overall score:
+
+yaml
+Copy
+Edit
+Your AI Readiness Score: 60%
+Use large blue text for the score.
+
+🕸️ Radar Chart:
+Render a radar chart using a charting library (e.g., recharts, chart.js, or nivo).
+
+Axes/metrics should include:
+
+Strategy & Vision
+
+Culture & Change-Readiness
+
+Skills & Literacy
+
+Data & Information
+
+Technology & Integration
+
+Governance & Risk
+
+Implementation
+
+Plot the user’s score per category.
+
+Title: Readiness Breakdown
+
+⚠️ Error Message (Conditional)
+If the PDF generation fails, show an Alert from shadcn with:
+
+vbnet
+Copy
+Edit
+There was an error generating your report. Please try again later.
+Style it as variant="destructive" inside a Card.
+
+📄 Detailed Recommendations
+Below the chart, render recommendations as a list of expandable or stylized Card or Accordion components:
+
+For each category, show:
+
+Title: (e.g., Skills & Literacy)
+
+Summary: (1–2 lines of feedback)
+
+Badge for performance level (e.g., Medium: 3.0 / 5) using Badge with yellow variant.
+
+You can use dummy recommendation text like:
+
+“Some departments show good AI literacy but gaps exist. Implement skills assessment and a more comprehensive learning program.”
+
+🎯 Action Buttons
+Add at the bottom:
+
+Back to Home button (links to /dashboard)
+
+Retake Survey button (links to /dashboard/surveys/new)
+
+Download PDF (button, no actual logic yet)
+
+Share Results (optional, dummy button)
+
+Use Button from shadcn and align buttons horizontally with spacing.
+
+🛑 Do Not:
+Do not generate the form itself — only render the results.
+
+Do not integrate real chart data — mock values are fine.
+
+Do not build the PDF logic — placeholder button only.
+
+The page should be fully responsive, styled with Tailwind + shadcn/ui, and visually consistent with the existing dashboard layout. 
