@@ -29,44 +29,14 @@ export default function DashboardHome() {
           </p>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2">
-          {/* Welcome / Info Card */}
-          <Card className="col-span-1">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-medium">MyZone AI Readiness</CardTitle>
-              <CardDescription>
-                Your hub for AI assessment and strategy planning
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col text-sm text-muted-foreground space-y-4">
-                <p>
-                  Use this dashboard to assess your organization's readiness for AI implementation, 
-                  track progress over time, and compare your results against industry benchmarks.
-                </p>
-                <p>
-                  Complete regular assessments to identify areas of improvement and get recommendations 
-                  tailored to your organization's specific needs.
-                </p>
-                <div className="flex flex-wrap gap-2 pt-2">
-                  <Button variant="outline" size="sm" className="justify-start">
-                    <BarChart3 className="mr-2 h-4 w-4" />
-                    <span>View Reports</span>
-                  </Button>
-                  <Button variant="outline" size="sm" className="justify-start">
-                    <TrendingUp className="mr-2 h-4 w-4" />
-                    <span>Industry Benchmarks</span>
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {/* Start New Assessment Card */}
           <Card className="col-span-1">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-medium">Start New Assessment</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-center text-lg font-medium">
+                Start New Assessment
+              </CardTitle>
+              <CardDescription className="text-center">
                 Create a new AI readiness assessment for your organization
               </CardDescription>
             </CardHeader>
@@ -79,9 +49,37 @@ export default function DashboardHome() {
                   Complete the Q2 2025 assessment to measure your organization's
                   AI readiness
                 </p>
-                <Link href="/dashboard/surveys/new">
+                <Link href="/dashboard/assessments/new">
                   <Button className="w-full">Create New Assessment</Button>
                 </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Actions */}
+          <Card className="col-span-1">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-medium">
+                Quick Actions
+              </CardTitle>
+              <CardDescription>
+                Frequently used tools and actions
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-2">
+                <Button variant="outline" className="justify-start">
+                  <ClipboardCheck className="mr-2 h-4 w-4" />
+                  <span>View Previous Assessments</span>
+                </Button>
+                <Button variant="outline" className="justify-start">
+                  <BarChart3 className="mr-2 h-4 w-4" />
+                  <span>Generate Report</span>
+                </Button>
+                <Button variant="outline" className="justify-start">
+                  <TrendingUp className="mr-2 h-4 w-4" />
+                  <span>Compare with Industry</span>
+                </Button>
               </div>
             </CardContent>
           </Card>

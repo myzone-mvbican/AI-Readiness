@@ -8,11 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import {
-  DownloadCloud,
-  Eye,
-  Trash2,
-} from "lucide-react";
+import { DownloadCloud, Eye, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,7 +80,6 @@ export default function DashboardAssessments() {
               View and manage your AI readiness assessments
             </p>
           </div>
-          <Button>New Assessment</Button>
         </div>
 
         <div className="rounded-md border">
@@ -101,10 +96,14 @@ export default function DashboardAssessments() {
             <TableBody>
               {assessments.map((assessment) => (
                 <TableRow key={assessment.id}>
-                  <TableCell className="font-medium">{assessment.name}</TableCell>
+                  <TableCell className="font-medium">
+                    {assessment.name}
+                  </TableCell>
                   <TableCell>
                     <Badge
-                      variant={assessment.status === "Done" ? "default" : "outline"}
+                      variant={
+                        assessment.status === "Done" ? "default" : "outline"
+                      }
                       className={
                         assessment.status === "Done"
                           ? "bg-green-100 text-green-800 hover:bg-green-100"
@@ -118,8 +117,10 @@ export default function DashboardAssessments() {
                     <div className="flex items-center">
                       <span className="font-medium">{assessment.score}</span>
                       <span className="text-muted-foreground mx-1">vs</span>
-                      <span className="text-muted-foreground">{assessment.industryAvg}</span>
-                      
+                      <span className="text-muted-foreground">
+                        {assessment.industryAvg}
+                      </span>
+
                       {assessment.score < assessment.industryAvg ? (
                         <span className="ml-2 text-red-500">↓</span>
                       ) : (
