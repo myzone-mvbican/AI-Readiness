@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-blue-50 via-white to-blue-50 py-16 md:py-24">
+      <div className="bg-gradient-to-br from-blue-50 via-white to-blue-50 pt-0 pb-16 md:pb-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center md:text-left md:flex md:items-center md:justify-between">
             <div className="md:max-w-2xl">
@@ -35,18 +35,10 @@ export default function Home() {
                     Learn More
                   </Button>
                 </Link>
-                <Link href="/login">
-                  <Button
-                    size="lg"
-                    className="bg-blue-500 hover:bg-blue-600 text-white transition-colors rounded-md shadow-md w-full sm:w-auto"
-                  >
-                    Take the Survey
-                  </Button>
-                </Link>
               </div>
             </div>
             <div className="hidden md:block md:w-1/3 lg:w-2/5">
-              <div className="relative w-full h-80 rounded-lg shadow-xl overflow-hidden bg-white">
+              <div className="relative w-full h-80 rounded-lg shadow-md overflow-hidden bg-white">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 p-8 flex items-center justify-center">
                   <div className="text-center">
                     <div className="text-3xl font-bold text-gray-800">AI Readiness</div>
