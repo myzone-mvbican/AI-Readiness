@@ -111,6 +111,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }) 
       : () => Promise.resolve(null),
     enabled: !!token,
+    staleTime: 1000 * 60 * 1, // Consider data fresh for only 1 minute
+    refetchOnWindowFocus: true, // Refetch when window regains focus
+    refetchOnMount: true, // Always refetch when component using the query mounts
   });
 
   const loginMutation = useMutation({
