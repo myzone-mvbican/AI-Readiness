@@ -1,14 +1,16 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
-import { Redirect, Route } from "wouter";
+import { Redirect, Route, RouteComponentProps } from "wouter";
+
+type ProtectedRouteProps = {
+  path: string;
+  component: React.ComponentType<any>;
+};
 
 export function ProtectedRoute({
   path,
   component: Component,
-}: {
-  path: string;
-  component: React.ComponentType;
-}) {
+}: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
 
   // While checking authentication status, show a loading spinner
@@ -32,5 +34,9 @@ export function ProtectedRoute({
   }
 
   // If authenticated, render the protected component
-  return <Route path={path} component={Component} />;
+  return (
+    <Route path={path}>
+      {(params) => <Component {...params} />}
+    </Route>
+  );
 }

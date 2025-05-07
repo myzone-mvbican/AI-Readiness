@@ -27,11 +27,11 @@ function Router() {
   if (isDashboardRoute) {
     return (
       <Switch>
-        <Route path="/dashboard" component={DashboardHome} />
-        <Route path="/dashboard/assessments/new" component={SurveyNew} />
-        <Route path="/dashboard/assessments" component={SurveysList} />
-        <Route path="/dashboard/settings" component={SettingsPage} />
-        <Route path="/dashboard/:rest*" component={DashboardHome} />
+        <ProtectedRoute path="/dashboard" component={DashboardHome} />
+        <ProtectedRoute path="/dashboard/assessments/new" component={SurveyNew} />
+        <ProtectedRoute path="/dashboard/assessments" component={SurveysList} />
+        <ProtectedRoute path="/dashboard/settings" component={SettingsPage} />
+        <ProtectedRoute path="/dashboard/:rest*" component={DashboardHome} />
         <Route component={NotFound} />
       </Switch>
     );
