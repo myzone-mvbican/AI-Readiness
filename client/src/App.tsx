@@ -9,12 +9,16 @@ import Home from "@/pages/home";
 import AuthPage from "@/pages/auth";
 import SurveyPage from "@/pages/survey";
 import SurveyNew from "@/pages/dashboard-survey-new";
-import SurveysList from "@/pages/dashboard-surveys";
 import DashboardHome from "@/pages/dashboard-home";
+import SurveysPage from "@/pages/dashboard-surveys";
+import AdminSurveysPage from "@/pages/dashboard-admin-surveys";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
+
+// Import the team-aware protected route
+import { AdminProtectedRoute } from "./lib/admin-protected-route";
 
 // Make sure the dashboard settings page is properly imported
 import SettingsPage from "./pages/dashboard-settings";
@@ -29,8 +33,9 @@ function Router() {
       <Switch>
         <ProtectedRoute path="/dashboard" component={DashboardHome} />
         <ProtectedRoute path="/dashboard/assessments/new" component={SurveyNew} />
-        <ProtectedRoute path="/dashboard/assessments" component={SurveysList} />
+        <ProtectedRoute path="/dashboard/assessments" component={SurveysPage} />
         <ProtectedRoute path="/dashboard/settings" component={SettingsPage} />
+        <AdminProtectedRoute path="/dashboard/surveys" component={SurveysPage} />
         <ProtectedRoute path="/dashboard/:rest*" component={DashboardHome} />
         <Route component={NotFound} />
       </Switch>
