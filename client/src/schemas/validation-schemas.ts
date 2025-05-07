@@ -8,18 +8,6 @@ export const signupSchema = z.object({
   email: z.string()
     .email({ message: "Please enter a valid email address" }),
   
-  company: z.string()
-    .min(2, { message: "Company name must be at least 2 characters" })
-    .max(100, { message: "Company name cannot exceed 100 characters" }),
-  
-  employeeCount: z.string({
-    required_error: "Please select number of employees",
-  }),
-  
-  industry: z.string({
-    required_error: "Please select your industry",
-  }),
-  
   password: z.string()
     .min(8, { message: "Password must be at least 8 characters" })
     .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter" })

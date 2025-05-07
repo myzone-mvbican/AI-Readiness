@@ -43,9 +43,6 @@ export default function SignupPage() {
     defaultValues: {
       name: "",
       email: "",
-      company: "",
-      employeeCount: "",
-      industry: "",
       password: "",
       confirmPassword: "",
     },
@@ -59,9 +56,6 @@ export default function SignupPage() {
       const response = await apiRequest("POST", "/api/register", {
         name: data.name,
         email: data.email,
-        company: data.company,
-        employeeCount: data.employeeCount,
-        industry: data.industry,
         password: data.password,
       });
 
@@ -163,118 +157,7 @@ export default function SignupPage() {
               )}
             </div>
 
-            {/* Company field */}
-            <div className="space-y-1">
-              <Label
-                htmlFor="company"
-                className="text-sm font-medium text-gray-700"
-              >
-                Company
-              </Label>
-              <Input
-                id="company"
-                type="text"
-                placeholder="MyZone AI"
-                {...register("company")}
-                className={errors.company ? "border-red-500" : ""}
-              />
-              {errors.company && (
-                <p className="text-sm text-red-500">
-                  {errors.company.message}
-                </p>
-              )}
-            </div>
 
-            {/* Employee Count field */}
-            <div className="space-y-1">
-              <Label
-                htmlFor="employeeCount"
-                className="text-sm font-medium text-gray-700"
-              >
-                Number of Employees
-              </Label>
-              <Select
-                onValueChange={(value) => setValue("employeeCount", value)}
-                defaultValue=""
-              >
-                <SelectTrigger
-                  id="employeeCount"
-                  className={errors.employeeCount ? "border-red-500" : ""}
-                >
-                  <SelectValue placeholder="Select company size" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1-9">1-9</SelectItem>
-                  <SelectItem value="10-49">10-49</SelectItem>
-                  <SelectItem value="50-149">50-149</SelectItem>
-                  <SelectItem value="150-499">150-499</SelectItem>
-                  <SelectItem value="500-999">500-999</SelectItem>
-                  <SelectItem value="1000+">1000+</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.employeeCount && (
-                <p className="text-sm text-red-500">
-                  {errors.employeeCount.message}
-                </p>
-              )}
-            </div>
-
-            {/* Industry field */}
-            <div className="space-y-1">
-              <Label
-                htmlFor="industry"
-                className="text-sm font-medium text-gray-700"
-              >
-                Industry
-              </Label>
-              <Select
-                onValueChange={(value) => setValue("industry", value)}
-                defaultValue=""
-              >
-                <SelectTrigger
-                  id="industry"
-                  className={errors.industry ? "border-red-500" : ""}
-                >
-                  <SelectValue placeholder="Select your industry" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="technology">
-                    Technology / Software
-                  </SelectItem>
-                  <SelectItem value="healthcare">Healthcare</SelectItem>
-                  <SelectItem value="finance">
-                    Finance / Insurance
-                  </SelectItem>
-                  <SelectItem value="retail">
-                    Retail / E-commerce
-                  </SelectItem>
-                  <SelectItem value="manufacturing">
-                    Manufacturing / Industrial
-                  </SelectItem>
-                  <SelectItem value="education">
-                    Education / Training
-                  </SelectItem>
-                  <SelectItem value="professional">
-                    Professional Services
-                  </SelectItem>
-                  <SelectItem value="construction">
-                    Construction / Real Estate
-                  </SelectItem>
-                  <SelectItem value="hospitality">
-                    Hospitality / Food & Beverage
-                  </SelectItem>
-                  <SelectItem value="transportation">
-                    Transportation / Logistics
-                  </SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.industry && (
-                <p className="text-sm text-red-500">
-                  {errors.industry.message}
-                </p>
-              )}
-            </div>
 
             {/* Password field */}
             <div className="space-y-1">
