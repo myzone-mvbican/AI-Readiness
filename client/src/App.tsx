@@ -35,7 +35,7 @@ function Router() {
         <ProtectedRoute path="/dashboard/assessments/new" component={SurveyNew} />
         <ProtectedRoute path="/dashboard/assessments" component={SurveysPage} />
         <ProtectedRoute path="/dashboard/settings" component={SettingsPage} />
-        <AdminProtectedRoute path="/dashboard/surveys" component={SurveysPage} />
+        <AdminProtectedRoute path="/dashboard/surveys" component={AdminSurveysPage} />
         <ProtectedRoute path="/dashboard/:rest*" component={DashboardHome} />
         <Route component={NotFound} />
       </Switch>
