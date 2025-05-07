@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -324,21 +324,27 @@ export default function SettingsPage() {
                     >
                       Employee Count
                     </Label>
-                    <Select
-                      defaultValue={user?.employeeCount || undefined}
-                      onValueChange={(value) => setValue("employeeCount", value as any)}
-                    >
-                      <SelectTrigger id="employeeCount" className={errors.employeeCount ? "border-red-500" : ""}>
-                        <SelectValue placeholder="Select employee count" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1-9">1-9 employees</SelectItem>
-                        <SelectItem value="10-49">10-49 employees</SelectItem>
-                        <SelectItem value="50-249">50-249 employees</SelectItem>
-                        <SelectItem value="250-999">250-999 employees</SelectItem>
-                        <SelectItem value="1000+">1000+ employees</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Controller
+                      name="employeeCount"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger id="employeeCount" className={errors.employeeCount ? "border-red-500" : ""}>
+                            <SelectValue placeholder="Select employee count" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1-9">1-9 employees</SelectItem>
+                            <SelectItem value="10-49">10-49 employees</SelectItem>
+                            <SelectItem value="50-249">50-249 employees</SelectItem>
+                            <SelectItem value="250-999">250-999 employees</SelectItem>
+                            <SelectItem value="1000+">1000+ employees</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
                     {errors.employeeCount && (
                       <p className="text-sm text-red-500">
                         {errors.employeeCount.message}
@@ -354,26 +360,32 @@ export default function SettingsPage() {
                     >
                       Industry
                     </Label>
-                    <Select
-                      defaultValue={user?.industry || undefined}
-                      onValueChange={(value) => setValue("industry", value as any)}
-                    >
-                      <SelectTrigger id="industry" className={errors.industry ? "border-red-500" : ""}>
-                        <SelectValue placeholder="Select industry" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="technology">Technology / Software</SelectItem>
-                        <SelectItem value="healthcare">Healthcare</SelectItem>
-                        <SelectItem value="finance">Finance / Insurance</SelectItem>
-                        <SelectItem value="retail">Retail / E-commerce</SelectItem>
-                        <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                        <SelectItem value="education">Education</SelectItem>
-                        <SelectItem value="government">Government</SelectItem>
-                        <SelectItem value="energy">Energy / Utilities</SelectItem>
-                        <SelectItem value="transportation">Transportation / Logistics</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Controller
+                      name="industry"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger id="industry" className={errors.industry ? "border-red-500" : ""}>
+                            <SelectValue placeholder="Select industry" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="technology">Technology / Software</SelectItem>
+                            <SelectItem value="healthcare">Healthcare</SelectItem>
+                            <SelectItem value="finance">Finance / Insurance</SelectItem>
+                            <SelectItem value="retail">Retail / E-commerce</SelectItem>
+                            <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                            <SelectItem value="education">Education</SelectItem>
+                            <SelectItem value="government">Government</SelectItem>
+                            <SelectItem value="energy">Energy / Utilities</SelectItem>
+                            <SelectItem value="transportation">Transportation / Logistics</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
                     {errors.industry && (
                       <p className="text-sm text-red-500">
                         {errors.industry.message}
