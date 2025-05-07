@@ -7,6 +7,7 @@ declare global {
     interface Request {
       user?: {
         id: number;
+        role?: string;
       };
     }
   }
@@ -55,8 +56,11 @@ export const authenticate = async (
       });
     }
     
-    // Add user ID to request
-    req.user = { id: user.id };
+    // Add user ID and role to request
+    req.user = { 
+      id: user.id,
+      role: user.role || 'client'
+    };
     
     next();
   } catch (error) {

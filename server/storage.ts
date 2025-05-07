@@ -199,11 +199,19 @@ export class DatabaseStorage implements IStorage {
 // For backward compatibility with existing code
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
+  private teams: Map<number, Team>;
+  private userTeams: Map<number, UserTeam>;
   currentId: number;
+  currentTeamId: number;
+  currentUserTeamId: number;
 
   constructor() {
     this.users = new Map();
+    this.teams = new Map();
+    this.userTeams = new Map();
     this.currentId = 1;
+    this.currentTeamId = 1;
+    this.currentUserTeamId = 1;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -219,6 +227,8 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentId++;
     const hashedPassword = await this.hashPassword(insertUser.password);
+    const role = this.isAdmin(insertUser.email) ? "admin" : "client";
+    
     const user: User = { 
       id,
       name: insertUser.name, 
@@ -227,6 +237,7 @@ export class MemStorage implements IStorage {
       company: insertUser.company || null,
       employeeCount: insertUser.employeeCount || null,
       industry: insertUser.industry || null,
+      role: role,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -264,9 +275,61 @@ export class MemStorage implements IStorage {
     return bcrypt.hash(password, salt);
   }
 
+  // Team operations
+  async createTeam(teamData: InsertTeam): Promise<Team> {
+    const id = this.currentTeamId++;
+    const team: Team = {
+      id,
+      name: teamData.name,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.teams.set(id, team);
+    return team;
+  }
+
+  async getTeam(id: number): Promise<Team | undefined> {
+    return this.teams.get(id);
+  }
+
+  async getTeamsByUserId(userId: number): Promise<TeamWithRole[]> {
+    const userTeamEntries = Array.from(this.userTeams.values()).filter(
+      (userTeam) => userTeam.userId === userId
+    );
+    
+    const teamsWithRoles: TeamWithRole[] = userTeamEntries.map(userTeam => {
+      const team = this.teams.get(userTeam.teamId);
+      if (!team) return null;
+      
+      return {
+        ...team,
+        role: userTeam.role
+      };
+    }).filter(Boolean) as TeamWithRole[];
+    
+    return teamsWithRoles;
+  }
+
+  async addUserToTeam(userTeamData: InsertUserTeam): Promise<UserTeam> {
+    const id = this.currentUserTeamId++;
+    const userTeam: UserTeam = {
+      id,
+      userId: userTeamData.userId,
+      teamId: userTeamData.teamId,
+      role: userTeamData.role || "client",
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.userTeams.set(id, userTeam);
+    return userTeam;
+  }
+
   generateToken(user: User): string {
     return jwt.sign(
-      { userId: user.id },
+      { 
+        userId: user.id,
+        role: user.role || "client"
+      },
       process.env.JWT_SECRET!,
       { expiresIn: '7d' }
     );
@@ -274,11 +337,15 @@ export class MemStorage implements IStorage {
 
   verifyToken(token: string): { userId: number } | null {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number };
-      return decoded;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number, role?: string };
+      return { userId: decoded.userId };
     } catch (error) {
       return null;
     }
+  }
+
+  isAdmin(email: string): boolean {
+    return ADMIN_EMAILS.includes(email.toLowerCase());
   }
 }
 
