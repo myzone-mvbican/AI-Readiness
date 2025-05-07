@@ -1,4 +1,4 @@
-const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 
 const baseUrl = 'http://localhost:5000';
 
@@ -82,8 +82,25 @@ async function runTests() {
   
   // Test signup
   console.log('\n--- Testing Signup ---');
-  const token = await testSignup();
+  const signupEmail = `test${Date.now()}@example.com`;
+  const password = 'password123';
   
+  const signupResponse = await fetch(`${baseUrl}/api/signup`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      name: 'Test User',
+      email: signupEmail,
+      password: password,
+    }),
+  });
+  
+  const signupData = await signupResponse.json();
+  console.log('Signup response:', signupData);
+  
+  const token = signupData.token;
   if (!token) {
     console.log('Signup failed, skipping remaining tests.');
     return;
@@ -92,6 +109,16 @@ async function runTests() {
   // Test get user with token from signup
   console.log('\n--- Testing Get User ---');
   await testGetUser(token);
+  
+  // Test login with the newly created user
+  console.log('\n--- Testing Login ---');
+  const loginToken = await testLogin(signupEmail, password);
+  
+  if (loginToken) {
+    console.log('Login successful!');
+  } else {
+    console.log('Login failed.');
+  }
 }
 
 runTests();
