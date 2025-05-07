@@ -87,6 +87,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear auth state
       setToken(null);
       queryClient.setQueryData(["/api/user"], null);
+      
+      // Also clear team selection and any team data
+      localStorage.removeItem("selectedTeam");
+      localStorage.removeItem("userData");
+      queryClient.removeQueries({ queryKey: ["/api/teams"] });
 
       // Show toast message
       toast({
@@ -210,6 +215,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.success && data.token) {
         setToken(data.token);
         queryClient.setQueryData(["/api/user"], data.user);
+        
+        // Invalidate teams query to ensure we get fresh data including the
+        // automatically assigned Client team during registration
+        queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
+        
+        // Clear any previously selected team to force auto-selection
+        localStorage.removeItem("selectedTeam");
+        
         toast({
           title: "Registration successful",
           description: "Your account has been created successfully.",
@@ -247,6 +260,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Clear query cache
       queryClient.setQueryData(["/api/user"], null);
+      queryClient.removeQueries({ queryKey: ["/api/teams"] });
 
       // Show success toast
       toast({
