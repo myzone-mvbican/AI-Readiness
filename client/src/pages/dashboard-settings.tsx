@@ -100,167 +100,183 @@ export default function SettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="px-4 py-8 max-w-4xl mx-auto">
+      <div className="container px-4 py-8 max-w-7xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">Account Settings</h1>
         
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle>Profile Information</CardTitle>
-            <CardDescription>
-              Update your account profile information and password
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent>
-            {updateSuccess && (
-              <Alert className="mb-6 bg-green-50 border-green-200">
-                <AlertCircle className="h-4 w-4 text-green-500" />
-                <AlertTitle>Success</AlertTitle>
-                <AlertDescription>
-                  Your profile has been updated successfully.
-                </AlertDescription>
-              </Alert>
-            )}
-          
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Name field */}
-              <div className="space-y-1">
-                <Label
-                  htmlFor="name"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Full Name
-                </Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="John Doe"
-                  {...register("name")}
-                  className={errors.name ? "border-red-500" : ""}
-                />
-                {errors.name && (
-                  <p className="text-sm text-red-500">
-                    {errors.name.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Email field (disabled) */}
-              <div className="space-y-1">
-                <Label
-                  htmlFor="email"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Email Address
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={mockUserData.email}
-                  disabled
-                  className="bg-gray-100 cursor-not-allowed"
-                />
-                <p className="text-xs text-gray-500">
-                  Email address cannot be changed
+        {updateSuccess && (
+          <Alert className="mb-6 bg-green-50 border-green-200">
+            <AlertCircle className="h-4 w-4 text-green-500" />
+            <AlertTitle>Success</AlertTitle>
+            <AlertDescription>
+              Your profile has been updated successfully.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        <form onSubmit={handleSubmit(onSubmit)}>
+          {/* Two-column settings layout */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            
+            {/* Profile section */}
+            <div className="md:col-span-1">
+              <div className="sticky top-6">
+                <h2 className="text-lg font-semibold text-gray-800">Profile Information</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Update your personal information and password
                 </p>
               </div>
-
-              {/* Password field (optional) */}
-              <div className="space-y-1">
-                <Label
-                  htmlFor="password"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  New Password
-                </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Leave blank to keep current password"
-                  {...register("password")}
-                  className={errors.password ? "border-red-500" : ""}
-                />
-                {errors.password && (
-                  <p className="text-sm text-red-500">
-                    {errors.password.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Confirm Password field (shown only if password is entered) */}
-              {showConfirmPassword && (
-                <div className="space-y-1">
-                  <Label
-                    htmlFor="confirmPassword"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Confirm New Password
-                  </Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    placeholder="Confirm your new password"
-                    {...register("confirmPassword")}
-                    className={errors.confirmPassword ? "border-red-500" : ""}
-                  />
-                  {errors.confirmPassword && (
-                    <p className="text-sm text-red-500">
-                      {errors.confirmPassword.message}
-                    </p>
-                  )}
-                </div>
-              )}
+            </div>
             
-              <CardFooter className="flex justify-end px-0 pb-0">
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  {isSubmitting ? "Saving Changes..." : "Save Changes"}
-                </Button>
-              </CardFooter>
-            </form>
-          </CardContent>
-        </Card>
-        
-        {/* Additional account information or other settings could go here */}
-        <Card className="shadow-sm mt-8">
-          <CardHeader>
-            <CardTitle>Company Information</CardTitle>
-            <CardDescription>
-              Your organization details (read-only)
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Label className="text-sm font-medium text-gray-700">Company</Label>
-                <div className="mt-1 p-2 bg-gray-50 rounded border">
-                  {mockUserData.company}
-                </div>
-              </div>
-              
-              <div>
-                <Label className="text-sm font-medium text-gray-700">Employee Count</Label>
-                <div className="mt-1 p-2 bg-gray-50 rounded border">
-                  {mockUserData.employeeCount}
-                </div>
-              </div>
-              
-              <div>
-                <Label className="text-sm font-medium text-gray-700">Industry</Label>
-                <div className="mt-1 p-2 bg-gray-50 rounded border">
-                  {mockUserData.industry === "technology" ? "Technology / Software" : 
-                   mockUserData.industry === "healthcare" ? "Healthcare" : 
-                   mockUserData.industry === "finance" ? "Finance / Insurance" : 
-                   mockUserData.industry}
-                </div>
+            <div className="md:col-span-3 space-y-6">
+              <Card className="shadow-sm">
+                <CardContent className="p-6">
+                  {/* Name field */}
+                  <div className="space-y-1 mb-6">
+                    <Label
+                      htmlFor="name"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Full Name
+                    </Label>
+                    <Input
+                      id="name"
+                      type="text"
+                      placeholder="John Doe"
+                      {...register("name")}
+                      className={errors.name ? "border-red-500" : ""}
+                    />
+                    {errors.name && (
+                      <p className="text-sm text-red-500">
+                        {errors.name.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Email field (disabled) */}
+                  <div className="space-y-1 mb-6">
+                    <Label
+                      htmlFor="email"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Email Address
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={mockUserData.email}
+                      disabled
+                      className="bg-gray-100 cursor-not-allowed"
+                    />
+                    <p className="text-xs text-gray-500">
+                      Email address cannot be changed
+                    </p>
+                  </div>
+
+                  {/* Password field (optional) */}
+                  <div className="space-y-1 mb-6">
+                    <Label
+                      htmlFor="password"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      New Password
+                    </Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Leave blank to keep current password"
+                      {...register("password")}
+                      className={errors.password ? "border-red-500" : ""}
+                    />
+                    {errors.password && (
+                      <p className="text-sm text-red-500">
+                        {errors.password.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Confirm Password field (shown only if password is entered) */}
+                  {showConfirmPassword && (
+                    <div className="space-y-1">
+                      <Label
+                        htmlFor="confirmPassword"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Confirm New Password
+                      </Label>
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        placeholder="Confirm your new password"
+                        {...register("confirmPassword")}
+                        className={errors.confirmPassword ? "border-red-500" : ""}
+                      />
+                      {errors.confirmPassword && (
+                        <p className="text-sm text-red-500">
+                          {errors.confirmPassword.message}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Company Information section */}
+            <div className="md:col-span-1">
+              <div className="sticky top-6">
+                <h2 className="text-lg font-semibold text-gray-800">Company Information</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Your organization details
+                </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+            
+            <div className="md:col-span-3">
+              <Card className="shadow-sm">
+                <CardContent className="p-6">
+                  <div className="space-y-6">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">Company</Label>
+                      <div className="mt-1 p-2 bg-gray-50 rounded border">
+                        {mockUserData.company}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">Employee Count</Label>
+                      <div className="mt-1 p-2 bg-gray-50 rounded border">
+                        {mockUserData.employeeCount}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">Industry</Label>
+                      <div className="mt-1 p-2 bg-gray-50 rounded border">
+                        {mockUserData.industry === "technology" ? "Technology / Software" : 
+                         mockUserData.industry === "healthcare" ? "Healthcare" : 
+                         mockUserData.industry === "finance" ? "Finance / Insurance" : 
+                         mockUserData.industry}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+          
+          {/* Save settings button - full width at the bottom */}
+          <div className="mt-10 border-t pt-6">
+            <div className="flex justify-end">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+              >
+                {isSubmitting ? "Saving Changes..." : "Save Changes"}
+              </Button>
+            </div>
+          </div>
+        </form>
       </div>
     </DashboardLayout>
   );
