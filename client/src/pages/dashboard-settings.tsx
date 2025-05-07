@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { DashboardLayout } from "@/components/layout/dashboard";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -14,60 +14,119 @@ import {
   settingsSchema,
   type SettingsFormValues,
 } from "@/schemas/validation-schemas";
-
-// Mock user data - in a real app, this would come from your auth context or API
-const mockUserData = {
-  id: 1,
-  name: "John Doe",
-  email: "john@example.com",
-  company: "Acme Inc",
-  employeeCount: "10-49",
-  industry: "technology",
-};
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue 
+} from "@/components/ui/select";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function SettingsPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [updateSuccess, setUpdateSuccess] = useState(false);
-
+  const [initialFormData, setInitialFormData] = useState<SettingsFormValues | null>(null);
+  
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isDirty },
     watch,
+    setValue,
+    reset,
+    control,
   } = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
-      name: mockUserData.name,
+      name: "",
+      company: "",
+      employeeCount: undefined,
+      industry: undefined,
       password: "",
       confirmPassword: "",
     },
   });
 
+  // Load user data when available
+  useEffect(() => {
+    if (user) {
+      const formData = {
+        name: user.name || "",
+        company: user.company || "",
+        employeeCount: user.employeeCount as any || undefined,
+        industry: user.industry as any || undefined,
+        password: "",
+        confirmPassword: "",
+      };
+      
+      // Set initial form data for dirty check comparison
+      setInitialFormData(formData);
+      
+      // Reset form with user data
+      reset(formData);
+    }
+  }, [user, reset]);
+  
   const password = watch("password");
   const showConfirmPassword = password && password.length > 0;
 
   const onSubmit = async (data: SettingsFormValues) => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to update your profile",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       setIsSubmitting(true);
       setUpdateSuccess(false);
 
-      // Prepare update data - only include non-empty fields
+      // Prepare update data - only include fields that have changed
       const updateData: Record<string, any> = {};
 
-      if (data.name) updateData.name = data.name;
+      if (data.name !== initialFormData?.name) updateData.name = data.name;
+      if (data.company !== initialFormData?.company) updateData.company = data.company;
+      if (data.employeeCount !== initialFormData?.employeeCount) updateData.employeeCount = data.employeeCount;
+      if (data.industry !== initialFormData?.industry) updateData.industry = data.industry;
+      
+      // Only include password if it's not empty
       if (data.password) updateData.password = data.password;
 
       // Submit to API
       const response = await apiRequest(
         "PUT",
-        `/api/users/${mockUserData.id}`,
+        `/api/user`,
         updateData,
       );
       const result = await response.json();
 
       if (response.ok) {
         setUpdateSuccess(true);
+        
+        // Update the user data in the auth context
+        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        
+        // Update initial form data to reflect the new state
+        setInitialFormData({
+          ...initialFormData as SettingsFormValues,
+          ...updateData,
+          password: "",
+          confirmPassword: "",
+        });
+        
+        // Reset form with updated data but clear password fields
+        reset({
+          ...data,
+          password: "",
+          confirmPassword: "",
+        });
+        
         toast({
           title: "Profile updated",
           description: "Your profile has been updated successfully",
@@ -161,7 +220,7 @@ export default function SettingsPage() {
                   <Input
                     id="email"
                     type="email"
-                    value={mockUserData.email}
+                    value={user?.email || ""}
                     disabled
                     className="bg-gray-100 cursor-not-allowed"
                   />
@@ -235,37 +294,91 @@ export default function SettingsPage() {
             <Card className="shadow-sm">
               <CardContent className="p-6">
                 <div className="space-y-6">
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">
+                  {/* Company field */}
+                  <div className="space-y-1">
+                    <Label 
+                      htmlFor="company"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Company
                     </Label>
-                    <div className="mt-1 p-2 bg-gray-50 rounded border">
-                      {mockUserData.company}
-                    </div>
+                    <Input
+                      id="company"
+                      type="text"
+                      placeholder="Your company name"
+                      {...register("company")}
+                      className={errors.company ? "border-red-500" : ""}
+                    />
+                    {errors.company && (
+                      <p className="text-sm text-red-500">
+                        {errors.company.message}
+                      </p>
+                    )}
                   </div>
 
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">
+                  {/* Employee Count field */}
+                  <div className="space-y-1">
+                    <Label 
+                      htmlFor="employeeCount"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Employee Count
                     </Label>
-                    <div className="mt-1 p-2 bg-gray-50 rounded border">
-                      {mockUserData.employeeCount}
-                    </div>
+                    <Select
+                      defaultValue={user?.employeeCount || undefined}
+                      onValueChange={(value) => setValue("employeeCount", value as any)}
+                    >
+                      <SelectTrigger id="employeeCount" className={errors.employeeCount ? "border-red-500" : ""}>
+                        <SelectValue placeholder="Select employee count" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1-9">1-9 employees</SelectItem>
+                        <SelectItem value="10-49">10-49 employees</SelectItem>
+                        <SelectItem value="50-249">50-249 employees</SelectItem>
+                        <SelectItem value="250-999">250-999 employees</SelectItem>
+                        <SelectItem value="1000+">1000+ employees</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {errors.employeeCount && (
+                      <p className="text-sm text-red-500">
+                        {errors.employeeCount.message}
+                      </p>
+                    )}
                   </div>
 
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">
+                  {/* Industry field */}
+                  <div className="space-y-1">
+                    <Label 
+                      htmlFor="industry"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Industry
                     </Label>
-                    <div className="mt-1 p-2 bg-gray-50 rounded border">
-                      {mockUserData.industry === "technology"
-                        ? "Technology / Software"
-                        : mockUserData.industry === "healthcare"
-                          ? "Healthcare"
-                          : mockUserData.industry === "finance"
-                            ? "Finance / Insurance"
-                            : mockUserData.industry}
-                    </div>
+                    <Select
+                      defaultValue={user?.industry || undefined}
+                      onValueChange={(value) => setValue("industry", value as any)}
+                    >
+                      <SelectTrigger id="industry" className={errors.industry ? "border-red-500" : ""}>
+                        <SelectValue placeholder="Select industry" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="technology">Technology / Software</SelectItem>
+                        <SelectItem value="healthcare">Healthcare</SelectItem>
+                        <SelectItem value="finance">Finance / Insurance</SelectItem>
+                        <SelectItem value="retail">Retail / E-commerce</SelectItem>
+                        <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                        <SelectItem value="education">Education</SelectItem>
+                        <SelectItem value="government">Government</SelectItem>
+                        <SelectItem value="energy">Energy / Utilities</SelectItem>
+                        <SelectItem value="transportation">Transportation / Logistics</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {errors.industry && (
+                      <p className="text-sm text-red-500">
+                        {errors.industry.message}
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -278,7 +391,7 @@ export default function SettingsPage() {
           <div className="flex justify-end">
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !isDirty}
               className="bg-blue-600 hover:bg-blue-700 text-white px-8"
             >
               {isSubmitting ? "Saving Changes..." : "Save Changes"}
