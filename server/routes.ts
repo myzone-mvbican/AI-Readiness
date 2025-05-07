@@ -47,6 +47,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create the new user
       const user = await storage.createUser(req.body);
       
+      // Auto-assign user to the "Client" team
+      try {
+        // Check if user's email is part of the myzone.ai domain (admin users)
+        const isMyZoneEmail = user.email.endsWith('@myzone.ai');
+        
+        // Determine which team to assign: 
+        // - If it's a myzone.ai email, they already get admin role from isAdmin check
+        // - Otherwise, find or create the standard "Client" team and assign them
+        if (!isMyZoneEmail) {
+          // Look for the Client team
+          let clientTeam = await storage.getTeamByName("Client");
+          
+          // If Client team doesn't exist, create it
+          if (!clientTeam) {
+            clientTeam = await storage.createTeam({
+              name: "Client",
+              createdAt: new Date(),
+              updatedAt: new Date()
+            });
+            console.log("Created default Client team");
+          }
+          
+          // Add user to the Client team
+          await storage.addUserToTeam({
+            userId: user.id,
+            teamId: clientTeam.id,
+            role: "client",
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+          
+          console.log(`Auto-assigned user ${user.email} to Client team`);
+        }
+      } catch (teamError) {
+        console.error("Error assigning user to team:", teamError);
+        // Continue with user creation even if team assignment fails
+      }
+      
       // Generate JWT token
       const token = storage.generateToken(user);
       
