@@ -9,6 +9,8 @@ import {
   PlusCircle,
   ScrollText,
   FileSpreadsheet,
+  Users,
+  Shield,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -83,15 +85,63 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Admin-only menu items that are only shown when the current team has admin role
   const adminNavItems = isTeamAdmin ? [
     {
-      title: "Surveys",
-      url: "/dashboard/surveys",
+      title: "Manage Surveys",
+      url: "/dashboard/admin/surveys",
       icon: FileSpreadsheet,
+    },
+    {
+      title: "User Management",
+      url: "/dashboard/admin/users",
+      icon: Users,
+    },
+    {
+      title: "System Settings",
+      url: "/dashboard/admin/settings",
+      icon: Shield,
     }
   ] : [];
   
-  // Force reactive update when team selection changes
+  // Monitor changes to selected team from localStorage
   React.useEffect(() => {
-    // This is just to ensure the component re-renders when team selection changes
+    // Listen for storage events to detect team changes in other tabs/windows
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'selectedTeam') {
+        try {
+          const newTeam = event.newValue ? JSON.parse(event.newValue) : null;
+          setSelectedTeam(newTeam);
+        } catch (e) {
+          console.error("Error parsing team from storage event:", e);
+        }
+      }
+    };
+
+    // Add storage event listener
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Check for team changes periodically (300ms interval)
+    const checkTeamInterval = setInterval(() => {
+      const savedTeam = localStorage.getItem('selectedTeam');
+      if (savedTeam) {
+        try {
+          const parsedTeam = JSON.parse(savedTeam);
+          // Only update if the team has actually changed
+          if (JSON.stringify(parsedTeam) !== JSON.stringify(selectedTeam)) {
+            setSelectedTeam(parsedTeam);
+          }
+        } catch (e) {
+          console.error("Error checking team:", e);
+        }
+      } else if (selectedTeam !== null) {
+        // Team data was removed
+        setSelectedTeam(null);
+      }
+    }, 300);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(checkTeamInterval);
+    };
   }, [selectedTeam]);
 
   // Check if a route is active
