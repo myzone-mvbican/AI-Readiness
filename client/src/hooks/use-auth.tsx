@@ -1,11 +1,12 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { useLocation } from "wouter";
 import {
   useQuery,
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
 import { User } from "@shared/schema";
-import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
+import { getQueryFn, apiRequest, queryClient, UNAUTHORIZED_EVENT } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 type AuthContextType = {
@@ -47,6 +48,7 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  const [_, setLocation] = useLocation();
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
 
   // Load token from localStorage on initial render
@@ -65,6 +67,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('token');
     }
   }, [token]);
+  
+  // Listen for unauthorized events (token expiration)
+  useEffect(() => {
+    const handleUnauthorized = (event: CustomEvent) => {
+      // Clear auth state
+      setToken(null);
+      queryClient.setQueryData(["/api/user"], null);
+      
+      // Show toast message
+      toast({
+        title: "Session expired",
+        description: event.detail?.message || "Your session has expired. Please log in again.",
+        variant: "destructive",
+      });
+      
+      // Redirect to login page
+      setLocation("/auth");
+    };
+
+    // Add event listener for unauthorized events
+    window.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized as EventListener);
+    
+    // Cleanup function
+    return () => {
+      window.removeEventListener(UNAUTHORIZED_EVENT, handleUnauthorized as EventListener);
+    };
+  }, [toast, setLocation]);
 
   const {
     data: user,
