@@ -8,6 +8,7 @@ import {
   BarChart3,
   PlusCircle,
   ScrollText,
+  FileSpreadsheet,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -42,6 +43,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [location] = useLocation();
   const { user } = useAuth();
   
+  // Get the currently selected team from localStorage
+  const [selectedTeam, setSelectedTeam] = React.useState<{ id: number, name: string, role: string } | null>(null);
+  
+  // Load selected team from local storage on mount
+  React.useEffect(() => {
+    const savedTeam = localStorage.getItem('selectedTeam');
+    if (savedTeam) {
+      try {
+        setSelectedTeam(JSON.parse(savedTeam));
+      } catch (e) {
+        console.error("Error parsing saved team:", e);
+      }
+    }
+  }, []);
+  
+  // Check if current team is an admin team
+  const isTeamAdmin = selectedTeam?.role === 'admin';
+
   // Navigation items
   const navItems = [
     {
@@ -60,6 +79,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: BarChart3,
     },
   ];
+  
+  // Admin-only menu items that are only shown when the current team has admin role
+  const adminNavItems = isTeamAdmin ? [
+    {
+      title: "Surveys",
+      url: "/dashboard/surveys",
+      icon: FileSpreadsheet,
+    }
+  ] : [];
 
   // Check if a route is active
   const isRouteActive = (route: string) => {
@@ -73,11 +101,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   };
 
   // User profile data - use authenticated user if available, otherwise default
-  const userData = user ? {
-    name: user.name,
-    email: user.email,
-    avatar: profileImage, // Using default profile image
-  } : defaultUser;
+  const userData = user
+    ? {
+        name: user.name,
+        email: user.email,
+        avatar: profileImage, // Using default profile image
+      }
+    : defaultUser;
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -99,22 +129,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <NavMain items={navItems} isRouteActive={isRouteActive} />
+        <NavMain items={[...navItems, ...adminNavItems]} isRouteActive={isRouteActive} />
         <SidebarMenu className="py-2 px-2 mt-auto">
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              className={cn(
-                "bg-muted hover:bg-accent",
-                isRouteActive("/dashboard/settings") && "bg-accent",
-              )}
-              asChild
-            >
-              <Link href="/dashboard/settings">
-                <Settings2 />
-                <span>Settings</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
               className={cn(

@@ -1,7 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown, PlusCircle, Building } from "lucide-react";
+import { 
+  Check, 
+  ChevronsUpDown, 
+  PlusCircle, 
+  Building,
+  ShieldCheck,
+  Briefcase 
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,22 +38,15 @@ import { TeamWithRole } from "@shared/schema";
 const defaultTeams: TeamWithRole[] = [
   { 
     id: 1, 
-    name: 'Acme Inc', 
+    name: 'Client', 
     role: 'client', 
     createdAt: new Date(),
     updatedAt: new Date() 
   },
   { 
     id: 2, 
-    name: 'Acme Corp.', 
+    name: 'Administrator', 
     role: 'admin', 
-    createdAt: new Date(),
-    updatedAt: new Date() 
-  },
-  { 
-    id: 3, 
-    name: 'Evil Corp.', 
-    role: 'client', 
     createdAt: new Date(),
     updatedAt: new Date() 
   },
@@ -149,27 +149,33 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
     localStorage.setItem('selectedTeam', JSON.stringify(team));
   };
 
+  // Check if user has any admin team
+  const hasAdminRole = availableTeams.some(team => team.role === 'admin');
+  
+  // Determine if the team switcher should be disabled (single team)
+  const singleTeam = availableTeams.length <= 1;
+  
   return (
     <Dialog open={showNewTeamDialog} onOpenChange={setShowNewTeamDialog}>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={singleTeam ? false : open} onOpenChange={!singleTeam ? setOpen : undefined}>
         <PopoverTrigger asChild>
           <Button
-            variant="outline"
+            variant={singleTeam ? "ghost" : "outline"}
             role="combobox"
             aria-expanded={open}
             aria-label="Select a team"
             className={cn("w-full justify-between", className)}
+            disabled={singleTeam}
           >
-            <Building className="mr-2 h-4 w-4" />
+            {selectedTeam?.role === 'admin' ? (
+              <ShieldCheck className="mr-2 h-4 w-4 text-blue-500" />
+            ) : (
+              <Briefcase className="mr-2 h-4 w-4" />
+            )}
             <span className="flex-1 truncate text-left">
               {selectedTeam?.name || "Select team"}
-              {selectedTeam?.role === 'admin' && (
-                <span className="ml-2 text-xs text-blue-500 dark:text-blue-400">
-                  (Admin)
-                </span>
-              )}
             </span>
-            <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+            {!singleTeam && <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[200px] p-0">
@@ -184,7 +190,11 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
                     onSelect={() => handleSelectTeam(team)}
                     className="text-sm"
                   >
-                    <Building className="mr-2 h-4 w-4" />
+                    {team.role === 'admin' ? (
+                      <ShieldCheck className="mr-2 h-4 w-4 text-blue-500" />
+                    ) : (
+                      <Briefcase className="mr-2 h-4 w-4" />
+                    )}
                     <span className="flex flex-1 items-center justify-between">
                       <span>{team.name}</span>
                       {team.role === 'admin' && (
@@ -208,17 +218,19 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
             <CommandSeparator />
             <CommandList>
               <CommandGroup>
-                <DialogTrigger asChild>
-                  <CommandItem
-                    onSelect={() => {
-                      setOpen(false);
-                      setShowNewTeamDialog(true);
-                    }}
-                  >
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Create Team
-                  </CommandItem>
-                </DialogTrigger>
+                {hasAdminRole && (
+                  <DialogTrigger asChild>
+                    <CommandItem
+                      onSelect={() => {
+                        setOpen(false);
+                        setShowNewTeamDialog(true);
+                      }}
+                    >
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Create Team
+                    </CommandItem>
+                  </DialogTrigger>
+                )}
               </CommandGroup>
             </CommandList>
           </Command>

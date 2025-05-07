@@ -1,15 +1,15 @@
-import { 
-  users, 
-  teams, 
-  userTeams, 
-  type User, 
-  type InsertUser, 
+import {
+  users,
+  teams,
+  userTeams,
+  type User,
+  type InsertUser,
   type UpdateUser,
   type Team,
   type InsertTeam,
   type UserTeam,
   type InsertUserTeam,
-  type TeamWithRole
+  type TeamWithRole,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
@@ -18,12 +18,16 @@ import jwt from "jsonwebtoken";
 
 // Create a JWT_SECRET if not already set
 if (!process.env.JWT_SECRET) {
-  console.warn("JWT_SECRET not set. Using a default secret for development. DO NOT USE THIS IN PRODUCTION!");
+  console.warn(
+    "JWT_SECRET not set. Using a default secret for development. DO NOT USE THIS IN PRODUCTION!",
+  );
   process.env.JWT_SECRET = "myzone-ai-dev-secret-2025";
 }
 
 // List of admin emails (environment variable based for security, with defaults)
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'bican.valeriu@myzone.ai,admin@myzone.ai,admin@example.com').split(',');
+const ADMIN_EMAILS = (
+  process.env.ADMIN_EMAILS || "bican.valeriu@myzone.ai,mike@myzone.ai"
+).split(",");
 
 export interface IStorage {
   // User operations
@@ -31,15 +35,18 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, userData: UpdateUser): Promise<User | undefined>;
-  validatePassword(plainPassword: string, hashedPassword: string): Promise<boolean>;
+  validatePassword(
+    plainPassword: string,
+    hashedPassword: string,
+  ): Promise<boolean>;
   hashPassword(password: string): Promise<string>;
-  
+
   // Team operations
   createTeam(teamData: InsertTeam): Promise<Team>;
   getTeam(id: number): Promise<Team | undefined>;
   getTeamsByUserId(userId: number): Promise<TeamWithRole[]>;
   addUserToTeam(userTeamData: InsertUserTeam): Promise<UserTeam>;
-  
+
   // Authentication operations
   generateToken(user: User): string;
   verifyToken(token: string): { userId: number } | null;
@@ -50,23 +57,26 @@ export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
     try {
       // Select only the fields we know exist to prevent errors
-      const [user] = await db.select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        password: users.password,
-        company: users.company,
-        employeeCount: users.employeeCount,
-        industry: users.industry,
-        createdAt: users.createdAt,
-        updatedAt: users.updatedAt
-      }).from(users).where(eq(users.id, id));
-      
+      const [user] = await db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          password: users.password,
+          company: users.company,
+          employeeCount: users.employeeCount,
+          industry: users.industry,
+          createdAt: users.createdAt,
+          updatedAt: users.updatedAt,
+        })
+        .from(users)
+        .where(eq(users.id, id));
+
       if (user) {
         // Add the role based on admin email check
         return {
           ...user,
-          role: this.isAdmin(user.email) ? 'admin' : 'client'
+          role: this.isAdmin(user.email) ? "admin" : "client",
         };
       }
       return undefined;
@@ -79,23 +89,26 @@ export class DatabaseStorage implements IStorage {
   async getUserByEmail(email: string): Promise<User | undefined> {
     try {
       // Select only the fields we know exist to prevent errors
-      const [user] = await db.select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        password: users.password,
-        company: users.company,
-        employeeCount: users.employeeCount,
-        industry: users.industry,
-        createdAt: users.createdAt,
-        updatedAt: users.updatedAt
-      }).from(users).where(eq(users.email, email));
-      
+      const [user] = await db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          password: users.password,
+          company: users.company,
+          employeeCount: users.employeeCount,
+          industry: users.industry,
+          createdAt: users.createdAt,
+          updatedAt: users.updatedAt,
+        })
+        .from(users)
+        .where(eq(users.email, email));
+
       if (user) {
         // Add the role based on admin email check
         return {
           ...user,
-          role: this.isAdmin(user.email) ? 'admin' : 'client'
+          role: this.isAdmin(user.email) ? "admin" : "client",
         };
       }
       return undefined;
@@ -109,10 +122,10 @@ export class DatabaseStorage implements IStorage {
     try {
       // Hash the password before storing
       const hashedPassword = await this.hashPassword(insertUser.password);
-      
+
       // Check if user should have admin role based on email
       const role = this.isAdmin(insertUser.email) ? "admin" : "client";
-      
+
       // Prepare values object without role first (in case it doesn't exist yet)
       const values = {
         name: insertUser.name,
@@ -121,9 +134,9 @@ export class DatabaseStorage implements IStorage {
         company: insertUser.company || null,
         employeeCount: insertUser.employeeCount || null,
         industry: insertUser.industry || null,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
-      
+
       // Try to insert with role field
       try {
         // First attempt with role
@@ -131,21 +144,18 @@ export class DatabaseStorage implements IStorage {
           .insert(users)
           .values({
             ...values,
-            role: role
+            role: role,
           })
           .returning();
         return user;
       } catch (e) {
         // If that fails (likely role column doesn't exist yet), try without
-        const [user] = await db
-          .insert(users)
-          .values(values)
-          .returning();
-          
+        const [user] = await db.insert(users).values(values).returning();
+
         // Add role to the returned user object
         return {
           ...user,
-          role
+          role,
         };
       }
     } catch (error) {
@@ -154,37 +164,43 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async updateUser(id: number, userData: UpdateUser): Promise<User | undefined> {
+  async updateUser(
+    id: number,
+    userData: UpdateUser,
+  ): Promise<User | undefined> {
     // First get the current user to ensure we have all data
     const currentUser = await this.getUser(id);
     if (!currentUser) {
       return undefined;
     }
-    
+
     // Hash the password if provided
     let updatedUserData = { ...userData };
-    
+
     if (userData.password) {
       updatedUserData.password = await this.hashPassword(userData.password);
     }
-    
+
     // Make sure we're maintaining all fields by merging with current data
     // We'll spread these in the order: current data, new data, updated timestamp
     // to ensure new data takes precedence
     const [updatedUser] = await db
       .update(users)
       .set({
-        ...currentUser,   // Start with all existing fields
+        ...currentUser, // Start with all existing fields
         ...updatedUserData, // Override with new data
-        updatedAt: new Date() // Always update timestamp
+        updatedAt: new Date(), // Always update timestamp
       })
       .where(eq(users.id, id))
       .returning();
-      
+
     return updatedUser;
   }
 
-  async validatePassword(plainPassword: string, hashedPassword: string): Promise<boolean> {
+  async validatePassword(
+    plainPassword: string,
+    hashedPassword: string,
+  ): Promise<boolean> {
     return bcrypt.compare(plainPassword, hashedPassword);
   }
 
@@ -199,10 +215,10 @@ export class DatabaseStorage implements IStorage {
       .insert(teams)
       .values({
         name: teamData.name,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .returning();
-    
+
     return team;
   }
 
@@ -224,7 +240,7 @@ export class DatabaseStorage implements IStorage {
       .from(userTeams)
       .innerJoin(teams, eq(userTeams.teamId, teams.id))
       .where(eq(userTeams.userId, userId));
-    
+
     return teamWithRoles;
   }
 
@@ -235,28 +251,31 @@ export class DatabaseStorage implements IStorage {
         userId: userTeamData.userId,
         teamId: userTeamData.teamId,
         role: userTeamData.role || "client",
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .returning();
-    
+
     return userTeam;
   }
 
   // Authentication operations
   generateToken(user: User): string {
     return jwt.sign(
-      { 
+      {
         userId: user.id,
-        role: user.role || "client" // Include role in token
+        role: user.role || "client", // Include role in token
       },
       process.env.JWT_SECRET!,
-      { expiresIn: '7d' }
+      { expiresIn: "7d" },
     );
   }
 
   verifyToken(token: string): { userId: number } | null {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number, role?: string };
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+        userId: number;
+        role?: string;
+      };
       return { userId: decoded.userId };
     } catch (error) {
       return null;
@@ -291,19 +310,17 @@ export class MemStorage implements IStorage {
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.email === email,
-    );
+    return Array.from(this.users.values()).find((user) => user.email === email);
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentId++;
     const hashedPassword = await this.hashPassword(insertUser.password);
     const role = this.isAdmin(insertUser.email) ? "admin" : "client";
-    
-    const user: User = { 
+
+    const user: User = {
       id,
-      name: insertUser.name, 
+      name: insertUser.name,
       email: insertUser.email,
       password: hashedPassword,
       company: insertUser.company || null,
@@ -311,34 +328,40 @@ export class MemStorage implements IStorage {
       industry: insertUser.industry || null,
       role: role,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
     this.users.set(id, user);
     return user;
   }
 
-  async updateUser(id: number, userData: UpdateUser): Promise<User | undefined> {
+  async updateUser(
+    id: number,
+    userData: UpdateUser,
+  ): Promise<User | undefined> {
     const existingUser = this.users.get(id);
     if (!existingUser) return undefined;
 
     // Hash password if provided
     let updatedUserData = { ...userData };
-    
+
     if (userData.password) {
       updatedUserData.password = await this.hashPassword(userData.password);
     }
 
     // Ensure we keep all fields with the same priority as DatabaseStorage
-    const updatedUser = { 
-      ...existingUser,     // Keep all existing fields
-      ...updatedUserData,  // Override with new data
-      updatedAt: new Date() 
+    const updatedUser = {
+      ...existingUser, // Keep all existing fields
+      ...updatedUserData, // Override with new data
+      updatedAt: new Date(),
     };
     this.users.set(id, updatedUser);
     return updatedUser;
   }
 
-  async validatePassword(plainPassword: string, hashedPassword: string): Promise<boolean> {
+  async validatePassword(
+    plainPassword: string,
+    hashedPassword: string,
+  ): Promise<boolean> {
     return bcrypt.compare(plainPassword, hashedPassword);
   }
 
@@ -354,7 +377,7 @@ export class MemStorage implements IStorage {
       id,
       name: teamData.name,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
     this.teams.set(id, team);
     return team;
@@ -366,19 +389,21 @@ export class MemStorage implements IStorage {
 
   async getTeamsByUserId(userId: number): Promise<TeamWithRole[]> {
     const userTeamEntries = Array.from(this.userTeams.values()).filter(
-      (userTeam) => userTeam.userId === userId
+      (userTeam) => userTeam.userId === userId,
     );
-    
-    const teamsWithRoles: TeamWithRole[] = userTeamEntries.map(userTeam => {
-      const team = this.teams.get(userTeam.teamId);
-      if (!team) return null;
-      
-      return {
-        ...team,
-        role: userTeam.role
-      };
-    }).filter(Boolean) as TeamWithRole[];
-    
+
+    const teamsWithRoles: TeamWithRole[] = userTeamEntries
+      .map((userTeam) => {
+        const team = this.teams.get(userTeam.teamId);
+        if (!team) return null;
+
+        return {
+          ...team,
+          role: userTeam.role,
+        };
+      })
+      .filter(Boolean) as TeamWithRole[];
+
     return teamsWithRoles;
   }
 
@@ -390,7 +415,7 @@ export class MemStorage implements IStorage {
       teamId: userTeamData.teamId,
       role: userTeamData.role || "client",
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
     this.userTeams.set(id, userTeam);
     return userTeam;
@@ -398,18 +423,21 @@ export class MemStorage implements IStorage {
 
   generateToken(user: User): string {
     return jwt.sign(
-      { 
+      {
         userId: user.id,
-        role: user.role || "client"
+        role: user.role || "client",
       },
       process.env.JWT_SECRET!,
-      { expiresIn: '7d' }
+      { expiresIn: "7d" },
     );
   }
 
   verifyToken(token: string): { userId: number } | null {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number, role?: string };
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+        userId: number;
+        role?: string;
+      };
       return { userId: decoded.userId };
     } catch (error) {
       return null;
