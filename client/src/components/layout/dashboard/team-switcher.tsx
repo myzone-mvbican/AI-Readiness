@@ -193,7 +193,7 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
             {selectedTeam?.role === "admin" ? (
               <ShieldCheck className="mr-2 h-4 w-4 text-blue-500" />
             ) : (
-              <Briefcase className="mr-2 h-4 w-4" />
+              <Building className="mr-2 h-4 w-4" />
             )}
             <span className="flex-1 truncate text-left">
               {selectedTeam?.name || "Select team"}
@@ -218,7 +218,7 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
                     {team.role === "admin" ? (
                       <ShieldCheck className="mr-2 h-4 w-4 text-blue-500" />
                     ) : (
-                      <Briefcase className="mr-2 h-4 w-4" />
+                      <Building className="mr-2 h-4 w-4" />
                     )}
                     <span className="flex flex-1 items-center justify-between">
                       <span>{team.name}</span>
