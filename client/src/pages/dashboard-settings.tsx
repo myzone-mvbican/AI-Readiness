@@ -27,7 +27,6 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [updateSuccess, setUpdateSuccess] = useState(false);
   const [initialFormData, setInitialFormData] = useState<SettingsFormValues | null>(null);
   
   const {
@@ -85,8 +84,7 @@ export default function SettingsPage() {
     
     try {
       setIsSubmitting(true);
-      setUpdateSuccess(false);
-
+      
       // Prepare update data - only include fields that have changed
       const updateData: Record<string, any> = {};
 
@@ -107,8 +105,6 @@ export default function SettingsPage() {
       const result = await response.json();
 
       if (response.ok) {
-        setUpdateSuccess(true);
-        
         // Update the user data in the auth context
         queryClient.invalidateQueries({ queryKey: ["/api/user"] });
         
@@ -128,7 +124,9 @@ export default function SettingsPage() {
         });
         
         toast({
-          title: "Profile updated",
+          variant: "default",
+          className: "bg-green-50 border-green-200 text-green-800",
+          title: "Success",
           description: "Your profile has been updated successfully",
           duration: 3000,
         });
@@ -158,16 +156,6 @@ export default function SettingsPage() {
   return (
     <DashboardLayout>
       <h1 className="text-2xl font-bold mb-6">Account Settings</h1>
-
-      {updateSuccess && (
-        <Alert className="mb-6 bg-green-50 border-green-200">
-          <AlertCircle className="h-4 w-4 text-green-500" />
-          <AlertTitle>Success</AlertTitle>
-          <AlertDescription>
-            Your profile has been updated successfully.
-          </AlertDescription>
-        </Alert>
-      )}
 
       <form onSubmit={handleSubmit(onSubmit)}>
         {/* Two-column settings layout */}
