@@ -161,7 +161,14 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
             className={cn("w-full justify-between", className)}
           >
             <Building className="mr-2 h-4 w-4" />
-            {selectedTeam?.name || "Select team"}
+            <span className="flex-1 truncate text-left">
+              {selectedTeam?.name || "Select team"}
+              {selectedTeam?.role === 'admin' && (
+                <span className="ml-2 text-xs text-blue-500 dark:text-blue-400">
+                  (Admin)
+                </span>
+              )}
+            </span>
             <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
@@ -178,10 +185,17 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
                     className="text-sm"
                   >
                     <Building className="mr-2 h-4 w-4" />
-                    {team.name}
+                    <span className="flex flex-1 items-center justify-between">
+                      <span>{team.name}</span>
+                      {team.role === 'admin' && (
+                        <span className="ml-2 rounded-sm bg-blue-100 px-1.5 py-0.5 text-xs text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                          Admin
+                        </span>
+                      )}
+                    </span>
                     <Check
                       className={cn(
-                        "ml-auto h-4 w-4",
+                        "ml-2 h-4 w-4",
                         selectedTeam?.id === team.id
                           ? "opacity-100"
                           : "opacity-0"

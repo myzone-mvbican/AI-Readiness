@@ -22,8 +22,8 @@ if (!process.env.JWT_SECRET) {
   process.env.JWT_SECRET = "myzone-ai-dev-secret-2025";
 }
 
-// List of admin emails (environment variable based for security)
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'admin@myzone.ai,founder@myzone.ai').split(',');
+// List of admin emails (environment variable based for security, with defaults)
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'bican.valeriu@myzone.ai,admin@myzone.ai,admin@example.com').split(',');
 
 export interface IStorage {
   // User operations
