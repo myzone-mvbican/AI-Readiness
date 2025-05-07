@@ -17,6 +17,21 @@ declare global {
  * Authentication middleware to protect routes
  * Expects a JWT token in the Authorization header (Bearer token)
  */
+export const requireAdmin = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      message: "Access denied. Admin privileges required."
+    });
+  }
+  
+  next();
+};
+
 export const authenticate = async (
   req: Request,
   res: Response,
@@ -56,10 +71,23 @@ export const authenticate = async (
       });
     }
     
-    // Add user ID and role to request
+    // Add user ID to request, safely handling role
+    let role = 'client';
+    try {
+      // @ts-ignore - Handle if role property doesn't exist on user
+      if (user.role) {
+        role = user.role;
+      } else if (storage.isAdmin(user.email)) {
+        role = 'admin';
+      }
+    } catch (e) {
+      // Fallback to client if there's any error
+      console.warn("Error determining user role, defaulting to client", e);
+    }
+    
     req.user = { 
       id: user.id,
-      role: user.role || 'client'
+      role
     };
     
     next();

@@ -48,38 +48,110 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    try {
+      // Select only the fields we know exist to prevent errors
+      const [user] = await db.select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        password: users.password,
+        company: users.company,
+        employeeCount: users.employeeCount,
+        industry: users.industry,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt
+      }).from(users).where(eq(users.id, id));
+      
+      if (user) {
+        // Add the role based on admin email check
+        return {
+          ...user,
+          role: this.isAdmin(user.email) ? 'admin' : 'client'
+        };
+      }
+      return undefined;
+    } catch (error) {
+      console.error("Error in getUser:", error);
+      return undefined;
+    }
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user;
+    try {
+      // Select only the fields we know exist to prevent errors
+      const [user] = await db.select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        password: users.password,
+        company: users.company,
+        employeeCount: users.employeeCount,
+        industry: users.industry,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt
+      }).from(users).where(eq(users.email, email));
+      
+      if (user) {
+        // Add the role based on admin email check
+        return {
+          ...user,
+          role: this.isAdmin(user.email) ? 'admin' : 'client'
+        };
+      }
+      return undefined;
+    } catch (error) {
+      console.error("Error in getUserByEmail:", error);
+      return undefined;
+    }
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    // Hash the password before storing
-    const hashedPassword = await this.hashPassword(insertUser.password);
-    
-    // Check if user should have admin role based on email
-    const role = this.isAdmin(insertUser.email) ? "admin" : "client";
-    
-    // Create the new user with hashed password and handle optional fields
-    const [user] = await db
-      .insert(users)
-      .values({
+    try {
+      // Hash the password before storing
+      const hashedPassword = await this.hashPassword(insertUser.password);
+      
+      // Check if user should have admin role based on email
+      const role = this.isAdmin(insertUser.email) ? "admin" : "client";
+      
+      // Prepare values object without role first (in case it doesn't exist yet)
+      const values = {
         name: insertUser.name,
         email: insertUser.email,
         password: hashedPassword,
         company: insertUser.company || null,
         employeeCount: insertUser.employeeCount || null,
         industry: insertUser.industry || null,
-        role: role,
         updatedAt: new Date()
-      })
-      .returning();
+      };
       
-    return user;
+      // Try to insert with role field
+      try {
+        // First attempt with role
+        const [user] = await db
+          .insert(users)
+          .values({
+            ...values,
+            role: role
+          })
+          .returning();
+        return user;
+      } catch (e) {
+        // If that fails (likely role column doesn't exist yet), try without
+        const [user] = await db
+          .insert(users)
+          .values(values)
+          .returning();
+          
+        // Add role to the returned user object
+        return {
+          ...user,
+          role
+        };
+      }
+    } catch (error) {
+      console.error("Error in createUser:", error);
+      throw error;
+    }
   }
 
   async updateUser(id: number, userData: UpdateUser): Promise<User | undefined> {

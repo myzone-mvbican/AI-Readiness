@@ -7,13 +7,15 @@ import {
   ClipboardCheck,
   BarChart3,
   PlusCircle,
+  ScrollText,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { NavMain } from "./nav-menu";
 import { NavUser } from "./nav-user";
+import { TeamSwitcher } from "./team-switcher";
 import { Link, useLocation } from "wouter";
-import logoPath from "@/assets/logo-myzone-ai-black.svg";
+import { useAuth } from "@/hooks/use-auth";
 
 import {
   Sidebar,
@@ -30,30 +32,10 @@ import {
 import profileImage from "@/assets/mvbican.jpg";
 
 // This is sample data.
-const data = {
-  user: {
-    name: "mvbican",
-    email: "bican.valeriu@myzone.ai",
-    avatar: profileImage,
-  },
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: Home,
-      isActive: true,
-    },
-    {
-      title: "Assessments",
-      url: "/dashboard/assessments",
-      icon: ClipboardCheck,
-    },
-    {
-      title: "Reports",
-      url: "/dashboard/reports",
-      icon: BarChart3,
-    },
-  ],
+const defaultUser = {
+  name: "mvbican",
+  email: "bican.valeriu@myzone.ai",
+  avatar: profileImage,
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
