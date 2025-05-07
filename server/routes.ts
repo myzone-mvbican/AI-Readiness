@@ -1,16 +1,21 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, updateUserSchema } from "@shared/schema";
+import { insertUserSchema, updateUserSchema, loginSchema } from "@shared/schema";
+import { authenticate } from "./middleware/auth";
+import cors from "cors";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Enable CORS
+  app.use(cors());
+
   // API routes - path prefixed with /api
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", message: "Server is healthy" });
   });
 
-  // User registration endpoint
-  app.post("/api/register", async (req, res) => {
+  // User signup endpoint
+  app.post("/api/signup", async (req, res) => {
     try {
       // Validate the input
       const result = insertUserSchema.safeParse(req.body);
@@ -34,12 +39,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create the new user
       const user = await storage.createUser(req.body);
       
+      // Generate JWT token
+      const token = storage.generateToken(user);
+      
       // Remove password from response
       const { password, ...userWithoutPassword } = user;
       
       return res.status(201).json({ 
         success: true, 
         message: "User registered successfully",
+        token,
         user: userWithoutPassword
       });
     } catch (error) {
@@ -54,25 +63,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User login endpoint
   app.post("/api/login", async (req, res) => {
     try {
-      const { email, password } = req.body;
-      
-      if (!email || !password) {
+      // Validate input
+      const result = loginSchema.safeParse(req.body);
+      if (!result.success) {
         return res.status(400).json({ 
           success: false, 
-          message: "Email and password are required" 
+          message: "Invalid login data", 
+          errors: result.error.format() 
         });
       }
+      
+      const { email, password } = req.body;
       
       // Find user by email
       const user = await storage.getUserByEmail(email);
       
-      // Check if user exists and password matches
-      if (!user || user.password !== password) {
+      // Check if user exists
+      if (!user) {
         return res.status(401).json({ 
           success: false, 
           message: "Invalid email or password" 
         });
       }
+      
+      // Validate password
+      const isPasswordValid = await storage.validatePassword(password, user.password);
+      
+      if (!isPasswordValid) {
+        return res.status(401).json({ 
+          success: false, 
+          message: "Invalid email or password" 
+        });
+      }
+      
+      // Generate JWT token
+      const token = storage.generateToken(user);
       
       // Remove password from response
       const { password: _, ...userWithoutPassword } = user;
@@ -80,6 +105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(200).json({ 
         success: true, 
         message: "Login successful", 
+        token,
         user: userWithoutPassword 
       });
     } catch (error) {
@@ -91,69 +117,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Update user profile endpoint
-  app.put("/api/users/:id", async (req, res) => {
+  // Get current user profile endpoint (protected route)
+  app.get("/api/user", authenticate, async (req, res) => {
     try {
-      const userId = parseInt(req.params.id);
+      // User ID comes from the authenticated user
+      const userId = req.user!.id;
       
-      if (isNaN(userId)) {
-        return res.status(400).json({ 
-          success: false, 
-          message: "Invalid user ID" 
-        });
-      }
-      
-      // Validate update data
-      const result = updateUserSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({ 
-          success: false, 
-          message: "Invalid update data", 
-          errors: result.error.format() 
-        });
-      }
-      
-      // Check if user exists
-      const existingUser = await storage.getUser(userId);
-      if (!existingUser) {
-        return res.status(404).json({ 
-          success: false, 
-          message: "User not found" 
-        });
-      }
-      
-      // Update user
-      const updatedUser = await storage.updateUser(userId, req.body);
-      
-      // Remove password from response
-      const { password, ...userWithoutPassword } = updatedUser!;
-      
-      return res.status(200).json({ 
-        success: true, 
-        message: "User profile updated successfully", 
-        user: userWithoutPassword 
-      });
-    } catch (error) {
-      console.error("Update error:", error);
-      return res.status(500).json({ 
-        success: false, 
-        message: "Update failed due to an unexpected error" 
-      });
-    }
-  });
-  
-  // Get current user profile endpoint
-  app.get("/api/users/:id", async (req, res) => {
-    try {
-      const userId = parseInt(req.params.id);
-      
-      if (isNaN(userId)) {
-        return res.status(400).json({ 
-          success: false, 
-          message: "Invalid user ID" 
-        });
-      }
-      
+      // Get user from database
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -179,6 +149,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Update user profile endpoint (protected route)
+  app.put("/api/user", authenticate, async (req, res) => {
+    try {
+      // User ID comes from the authenticated user
+      const userId = req.user!.id;
+      
+      // Validate update data
+      const result = updateUserSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid update data", 
+          errors: result.error.format() 
+        });
+      }
+      
+      // Check if user exists
+      const existingUser = await storage.getUser(userId);
+      if (!existingUser) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "User not found" 
+        });
+      }
+      
+      // If updating password, ensure old password is correct
+      if (req.body.password && req.body.currentPassword) {
+        const isPasswordValid = await storage.validatePassword(
+          req.body.currentPassword, 
+          existingUser.password
+        );
+        
+        if (!isPasswordValid) {
+          return res.status(401).json({
+            success: false,
+            message: "Current password is incorrect"
+          });
+        }
+      }
+      
+      // Prepare update data (remove currentPassword if present)
+      const { currentPassword, ...updateData } = req.body;
+      
+      // Update user
+      const updatedUser = await storage.updateUser(userId, updateData);
+      
+      // Remove password from response
+      const { password, ...userWithoutPassword } = updatedUser!;
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: "User profile updated successfully", 
+        user: userWithoutPassword 
+      });
+    } catch (error) {
+      console.error("Update error:", error);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Update failed due to an unexpected error" 
+      });
+    }
+  });
+    
   const httpServer = createServer(app);
 
   return httpServer;
