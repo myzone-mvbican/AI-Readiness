@@ -54,6 +54,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUser(id: number, userData: UpdateUser): Promise<User | undefined> {
+    // First get the current user to ensure we have all data
+    const currentUser = await this.getUser(id);
+    if (!currentUser) {
+      return undefined;
+    }
+    
     // Hash the password if provided
     let updatedUserData = { ...userData };
     
@@ -61,12 +67,15 @@ export class DatabaseStorage implements IStorage {
       updatedUserData.password = await this.hashPassword(userData.password);
     }
     
-    // Update with the current timestamp
+    // Make sure we're maintaining all fields by merging with current data
+    // We'll spread these in the order: current data, new data, updated timestamp
+    // to ensure new data takes precedence
     const [updatedUser] = await db
       .update(users)
       .set({
-        ...updatedUserData,
-        updatedAt: new Date()
+        ...currentUser,   // Start with all existing fields
+        ...updatedUserData, // Override with new data
+        updatedAt: new Date() // Always update timestamp
       })
       .where(eq(users.id, id))
       .returning();
@@ -144,13 +153,16 @@ export class MemStorage implements IStorage {
     if (!existingUser) return undefined;
 
     // Hash password if provided
+    let updatedUserData = { ...userData };
+    
     if (userData.password) {
-      userData.password = await this.hashPassword(userData.password);
+      updatedUserData.password = await this.hashPassword(userData.password);
     }
 
+    // Ensure we keep all fields with the same priority as DatabaseStorage
     const updatedUser = { 
-      ...existingUser, 
-      ...userData, 
+      ...existingUser,     // Keep all existing fields
+      ...updatedUserData,  // Override with new data
       updatedAt: new Date() 
     };
     this.users.set(id, updatedUser);

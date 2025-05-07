@@ -105,23 +105,27 @@ export default function SettingsPage() {
       const result = await response.json();
 
       if (response.ok) {
-        // Update the user data in the auth context
-        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        // Update with the latest user data returned from the server
+        const updatedUser = result.user;
         
-        // Update initial form data to reflect the new state
-        setInitialFormData({
-          ...initialFormData as SettingsFormValues,
-          ...updateData,
+        // Update the user data in the auth context
+        queryClient.setQueryData(["/api/user"], updatedUser);
+        
+        // Create a new form data object from the updated user
+        const updatedFormData = {
+          name: updatedUser.name || "",
+          company: updatedUser.company || "",
+          employeeCount: updatedUser.employeeCount as any || undefined,
+          industry: updatedUser.industry as any || undefined,
           password: "",
           confirmPassword: "",
-        });
+        };
+        
+        // Update initial form data to reflect the new state from the server
+        setInitialFormData(updatedFormData);
         
         // Reset form with updated data but clear password fields
-        reset({
-          ...data,
-          password: "",
-          confirmPassword: "",
-        });
+        reset(updatedFormData);
         
         toast({
           variant: "default",

@@ -195,8 +195,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update user
       const updatedUser = await storage.updateUser(userId, updateData);
       
+      if (!updatedUser) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to update user profile"
+        });
+      }
+      
+      // Force a re-fetch to ensure we have the most current data
+      const refreshedUser = await storage.getUser(userId);
+      
+      if (!refreshedUser) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to retrieve updated user profile"
+        });
+      }
+      
       // Remove password from response
-      const { password, ...userWithoutPassword } = updatedUser!;
+      const { password, ...userWithoutPassword } = refreshedUser;
       
       return res.status(200).json({ 
         success: true, 
