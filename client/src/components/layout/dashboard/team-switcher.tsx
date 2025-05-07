@@ -148,9 +148,10 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
     localStorage.setItem('selectedTeam', JSON.stringify(team));
   };
 
-  // Check if user has admin role in at least one team
-  // This determines if they can create new teams
-  const hasAdminRole = teams?.teams?.some(team => team.role === 'admin') || false;
+  // Enable team creation if:
+  // 1. User has admin role in at least one team OR
+  // 2. User's email is in the ADMIN_EMAILS list (determined by user.role)
+  const hasAdminRole = user?.role === 'admin' || teams?.teams?.some(team => team.role === 'admin') || false;
   
   // Determine if the team switcher should be disabled (single team)
   const singleTeam = availableTeams.length <= 1;
