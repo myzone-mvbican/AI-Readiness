@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,19 +16,24 @@ import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
-import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function AuthPage() {
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
+  const { user, loginMutation, registerMutation } = useAuth();
+  
+  // Redirect if user is already authenticated
+  useEffect(() => {
+    if (user) {
+      setLocation("/dashboard");
+    }
+  }, [user, setLocation]);
 
   // Login form setup
   const {
@@ -63,36 +68,16 @@ export default function AuthPage() {
     try {
       setIsSubmitting(true);
 
-      // Submit login data to the API
-      const response = await apiRequest("POST", "/api/login", data);
-      const result = await response.json();
-
-      if (response.ok) {
-        toast({
-          title: "Login successful!",
-          description: "Welcome back to MyZone AI.",
-          duration: 3000,
-        });
-
-        // Redirect to dashboard
-        setLocation("/dashboard");
-      } else {
-        toast({
-          title: "Login failed",
-          description: result.message || "Invalid email or password.",
-          variant: "destructive",
-          duration: 3000,
-        });
-      }
-    } catch (error) {
-      console.error("Error submitting form:", error);
-
-      toast({
-        title: "Login failed",
-        description: "There was a problem with your login. Please try again.",
-        variant: "destructive",
-        duration: 3000,
+      // Use the loginMutation from our auth hook
+      await loginMutation.mutateAsync({
+        email: data.email,
+        password: data.password,
       });
+      
+      // Redirect happens automatically in useEffect when user is set
+    } catch (error) {
+      console.error("Error submitting login form:", error);
+      // Error handling is done in the mutation
     } finally {
       setIsSubmitting(false);
     }
@@ -102,44 +87,18 @@ export default function AuthPage() {
     try {
       setIsSubmitting(true);
 
-      // Submit data to the API
-      const response = await apiRequest("POST", "/api/register", {
+      // Use the registerMutation from our auth hook
+      await registerMutation.mutateAsync({
         name: data.name,
         email: data.email,
         password: data.password,
+        confirmPassword: data.confirmPassword,
       });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        toast({
-          title: "Registration successful!",
-          description:
-            "Your account has been created. Redirecting to the dashboard.",
-          duration: 3000,
-        });
-
-        // Redirect to the dashboard
-        setLocation("/dashboard");
-      } else {
-        toast({
-          title: "Registration failed",
-          description:
-            result.message || "There was a problem with your registration.",
-          variant: "destructive",
-          duration: 3000,
-        });
-      }
+      
+      // Redirect happens automatically in useEffect when user is set
     } catch (error) {
-      console.error("Error submitting form:", error);
-
-      toast({
-        title: "Registration failed",
-        description:
-          "There was a problem with your registration. Please try again.",
-        variant: "destructive",
-        duration: 3000,
-      });
+      console.error("Error submitting registration form:", error);
+      // Error handling is done in the mutation
     } finally {
       setIsSubmitting(false);
     }

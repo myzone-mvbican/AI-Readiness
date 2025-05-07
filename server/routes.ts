@@ -14,8 +14,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: "ok", message: "Server is healthy" });
   });
 
-  // User signup endpoint
-  app.post("/api/signup", async (req, res) => {
+  // User signup endpoint (with support for both /signup and /register paths)
+  app.post(["/api/signup", "/api/register"], async (req, res) => {
     try {
       // Validate the input
       const result = insertUserSchema.safeParse(req.body);
