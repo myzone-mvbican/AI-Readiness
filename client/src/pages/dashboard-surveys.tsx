@@ -71,7 +71,7 @@ export default function DashboardAssessments() {
   ];
 
   return (
-    <DashboardLayout>
+    <DashboardLayout title="Assessments">
       <div className="flex flex-col gap-6">
         <div className="flex justify-between items-center">
           <div>
