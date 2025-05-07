@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -9,13 +9,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import {
@@ -25,7 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function LoginPage() {
   const { toast } = useToast();
@@ -36,40 +29,45 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors },
-    setValue,
-    reset,
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      name: "",
       email: "",
-      company: "",
-      employeeCount: "",
-      industry: "",
+      password: "",
     },
   });
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setIsSubmitting(true);
-      // Simulate API call with a delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Form submitted:", data);
+      
+      // Submit login data to the API
+      const response = await apiRequest("POST", "/api/login", data);
+      const result = await response.json();
+      
+      if (response.ok) {
+        toast({
+          title: "Login successful!",
+          description: "Welcome back to MyZone AI.",
+          duration: 3000,
+        });
 
-      // Redirect to dashboard
-      setLocation("/dashboard");
-
-      toast({
-        title: "Login successful!",
-        description: "Welcome to MyZone AI.",
-        duration: 3000,
-      });
+        // Redirect to dashboard
+        setLocation("/dashboard");
+      } else {
+        toast({
+          title: "Login failed",
+          description: result.message || "Invalid email or password.",
+          variant: "destructive",
+          duration: 3000,
+        });
+      }
     } catch (error) {
       console.error("Error submitting form:", error);
 
       toast({
         title: "Login failed",
-        description: "There was a problem with your login.",
+        description: "There was a problem with your login. Please try again.",
         variant: "destructive",
         duration: 3000,
       });
@@ -115,7 +113,7 @@ export default function LoginPage() {
     <div className="max-w-md mx-auto px-4 py-12">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900">
-          Welcome to MyZone AI
+          Welcome Back
         </h1>
         <p className="mt-3 text-lg text-gray-600">
           Sign in to access your AI Readiness Assessment
@@ -123,7 +121,14 @@ export default function LoginPage() {
       </div>
 
       <Card className="shadow-md">
-        <CardContent className="pt-6">
+        <CardHeader>
+          <CardTitle className="text-xl">Login</CardTitle>
+          <CardDescription>
+            Enter your credentials to access your account
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent>
           <div className="flex flex-col items-center gap-6">
             {/* Google Sign-In Option */}
             <div className="w-full">
@@ -171,34 +176,9 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Custom Login Form */}
+            {/* Email Login Form */}
             <div className="w-full">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                Login with Email
-              </h3>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                {/* Name field */}
-                <div className="space-y-1">
-                  <Label
-                    htmlFor="name"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Full Name
-                  </Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="John Doe"
-                    {...register("name")}
-                    className={errors.name ? "border-red-500" : ""}
-                  />
-                  {errors.name && (
-                    <p className="text-sm text-red-500">
-                      {errors.name.message}
-                    </p>
-                  )}
-                </div>
-
                 {/* Email field */}
                 <div className="space-y-1">
                   <Label
@@ -221,115 +201,24 @@ export default function LoginPage() {
                   )}
                 </div>
 
-                {/* Company field */}
+                {/* Password field */}
                 <div className="space-y-1">
                   <Label
-                    htmlFor="company"
+                    htmlFor="password"
                     className="text-sm font-medium text-gray-700"
                   >
-                    Company
+                    Password
                   </Label>
                   <Input
-                    id="company"
-                    type="text"
-                    placeholder="MyZone AI"
-                    {...register("company")}
-                    className={errors.company ? "border-red-500" : ""}
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    {...register("password")}
+                    className={errors.password ? "border-red-500" : ""}
                   />
-                  {errors.company && (
+                  {errors.password && (
                     <p className="text-sm text-red-500">
-                      {errors.company.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Employee Count field */}
-                <div className="space-y-1">
-                  <Label
-                    htmlFor="employeeCount"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Number of Employees
-                  </Label>
-                  <Select
-                    onValueChange={(value) => setValue("employeeCount", value)}
-                    defaultValue=""
-                  >
-                    <SelectTrigger
-                      id="employeeCount"
-                      className={errors.employeeCount ? "border-red-500" : ""}
-                    >
-                      <SelectValue placeholder="Select company size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1-9">1-9</SelectItem>
-                      <SelectItem value="10-49">10-49</SelectItem>
-                      <SelectItem value="50-149">50-149</SelectItem>
-                      <SelectItem value="150-499">150-499</SelectItem>
-                      <SelectItem value="500-999">500-999</SelectItem>
-                      <SelectItem value="1000+">1000+</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.employeeCount && (
-                    <p className="text-sm text-red-500">
-                      {errors.employeeCount.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Industry field */}
-                <div className="space-y-1">
-                  <Label
-                    htmlFor="industry"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Industry
-                  </Label>
-                  <Select
-                    onValueChange={(value) => setValue("industry", value)}
-                    defaultValue=""
-                  >
-                    <SelectTrigger
-                      id="industry"
-                      className={errors.industry ? "border-red-500" : ""}
-                    >
-                      <SelectValue placeholder="Select your industry" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="technology">
-                        Technology / Software
-                      </SelectItem>
-                      <SelectItem value="healthcare">Healthcare</SelectItem>
-                      <SelectItem value="finance">
-                        Finance / Insurance
-                      </SelectItem>
-                      <SelectItem value="retail">
-                        Retail / E-commerce
-                      </SelectItem>
-                      <SelectItem value="manufacturing">
-                        Manufacturing / Industrial
-                      </SelectItem>
-                      <SelectItem value="education">
-                        Education / Training
-                      </SelectItem>
-                      <SelectItem value="professional">
-                        Professional Services
-                      </SelectItem>
-                      <SelectItem value="construction">
-                        Construction / Real Estate
-                      </SelectItem>
-                      <SelectItem value="hospitality">
-                        Hospitality / Food & Beverage
-                      </SelectItem>
-                      <SelectItem value="transportation">
-                        Transportation / Logistics
-                      </SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.industry && (
-                    <p className="text-sm text-red-500">
-                      {errors.industry.message}
+                      {errors.password.message}
                     </p>
                   )}
                 </div>
@@ -340,8 +229,15 @@ export default function LoginPage() {
                   disabled={isSubmitting}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors"
                 >
-                  {isSubmitting ? "Signing up..." : "Sign up"}
+                  {isSubmitting ? "Signing in..." : "Sign in"}
                 </Button>
+                
+                <div className="text-center text-sm text-gray-600 mt-4">
+                  Don't have an account?{" "}
+                  <Link href="/signup" className="text-blue-600 hover:underline">
+                    Sign up
+                  </Link>
+                </div>
               </form>
             </div>
           </div>

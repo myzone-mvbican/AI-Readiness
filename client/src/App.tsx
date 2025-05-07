@@ -7,10 +7,12 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import LoginPage from "@/pages/login";
+import SignupPage from "@/pages/signup";
 import SurveyPage from "@/pages/survey";
 import SurveyNew from "@/pages/dashboard-survey-new";
 import SurveysList from "@/pages/dashboard-surveys";
 import DashboardHome from "@/pages/dashboard-home";
+import SettingsPage from "@/pages/dashboard-settings";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 
@@ -25,6 +27,7 @@ function Router() {
         <Route path="/dashboard" component={DashboardHome} />
         <Route path="/dashboard/assessments/new" component={SurveyNew} />
         <Route path="/dashboard/assessments" component={SurveysList} />
+        <Route path="/dashboard/settings" component={SettingsPage} />
         <Route path="/dashboard/:rest*" component={DashboardHome} />
         <Route component={NotFound} />
       </Switch>
@@ -39,6 +42,7 @@ function Router() {
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/login" component={LoginPage} />
+          <Route path="/signup" component={SignupPage} />
           <Route path="/about" component={SurveyPage} />
           <Route component={NotFound} />
         </Switch>
