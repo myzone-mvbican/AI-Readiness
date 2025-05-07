@@ -62,9 +62,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // If Client team doesn't exist, create it
           if (!clientTeam) {
             clientTeam = await storage.createTeam({
-              name: "Client",
-              createdAt: new Date(),
-              updatedAt: new Date()
+              name: "Client"
             });
             console.log("Created default Client team");
           }
@@ -73,9 +71,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.addUserToTeam({
             userId: user.id,
             teamId: clientTeam.id,
-            role: "client",
-            createdAt: new Date(),
-            updatedAt: new Date()
+            role: "client"
           });
           
           console.log(`Auto-assigned user ${user.email} to Client team`);

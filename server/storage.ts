@@ -392,6 +392,10 @@ export class MemStorage implements IStorage {
   async getTeam(id: number): Promise<Team | undefined> {
     return this.teams.get(id);
   }
+  
+  async getTeamByName(name: string): Promise<Team | undefined> {
+    return Array.from(this.teams.values()).find(team => team.name === name);
+  }
 
   async getTeamsByUserId(userId: number): Promise<TeamWithRole[]> {
     const userTeamEntries = Array.from(this.userTeams.values()).filter(
