@@ -53,6 +53,11 @@ const data = {
       url: "/dashboard/reports",
       icon: BarChart3,
     },
+    {
+      title: "Settings",
+      url: "/dashboard/settings",
+      icon: Settings2,
+    },
   ],
 };
 
