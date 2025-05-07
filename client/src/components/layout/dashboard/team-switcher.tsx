@@ -70,6 +70,13 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
     enabled: !!user, // Only fetch if user is logged in
   });
   
+  // For admin users, get all teams in the system
+  const isAdmin = user?.role === 'admin';
+  const { data: adminTeams, isLoading: isLoadingAdminTeams } = useQuery<{ success: boolean, teams: TeamWithRole[] }>({
+    queryKey: ['/api/admin/teams'],
+    enabled: !!user && isAdmin, // Only fetch if user is admin
+  });
+  
   // Set initial selected team when teams load
   React.useEffect(() => {
     if (teams?.teams?.length && !selectedTeam) {
@@ -129,8 +136,11 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
     }
   };
   
-  // Use actual teams if available, otherwise fallback to mock data for development
-  const availableTeams = teams?.teams?.length ? teams.teams : defaultTeams;
+  // If user is admin and admin teams are available, show all teams, otherwise show only user's teams
+  // If no teams are available from API, fall back to mock data for development
+  const availableTeams = isAdmin && adminTeams?.teams?.length 
+    ? adminTeams.teams 
+    : (teams?.teams?.length ? teams.teams : defaultTeams);
   
   const handleSelectTeam = (team: TeamWithRole) => {
     setSelectedTeam(team);
