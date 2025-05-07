@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
-import AuthPage from "@/pages/auth-page";
+import AuthPage from "@/pages/auth";
 import SurveyPage from "@/pages/survey";
 import SurveyNew from "@/pages/dashboard-survey-new";
 import SurveysList from "@/pages/dashboard-surveys";

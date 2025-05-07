@@ -1,6 +1,5 @@
 import { Link } from "wouter";
 import logoPath from "@/assets/logo-myzone-ai-black.svg";
-import { Button } from "@/components/ui/button";
 
 export default function Header() {
   return (
@@ -24,11 +23,6 @@ export default function Header() {
               </span>
             </Link>
           </nav>
-          <Link href="/auth">
-            <Button variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50">
-              Login
-            </Button>
-          </Link>
         </div>
       </div>
     </header>
