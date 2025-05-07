@@ -36,12 +36,16 @@ export class DatabaseStorage implements IStorage {
     // Hash the password before storing
     const hashedPassword = await this.hashPassword(insertUser.password);
     
-    // Create the new user with hashed password
+    // Create the new user with hashed password and handle optional fields
     const [user] = await db
       .insert(users)
       .values({
-        ...insertUser,
+        name: insertUser.name,
+        email: insertUser.email,
         password: hashedPassword,
+        company: insertUser.company || null,
+        employeeCount: insertUser.employeeCount || null,
+        industry: insertUser.industry || null,
         updatedAt: new Date()
       })
       .returning();
@@ -121,9 +125,13 @@ export class MemStorage implements IStorage {
     const id = this.currentId++;
     const hashedPassword = await this.hashPassword(insertUser.password);
     const user: User = { 
-      ...insertUser, 
-      id, 
+      id,
+      name: insertUser.name, 
+      email: insertUser.email,
       password: hashedPassword,
+      company: insertUser.company || null,
+      employeeCount: insertUser.employeeCount || null,
+      industry: insertUser.industry || null,
       createdAt: new Date(),
       updatedAt: new Date()
     };
