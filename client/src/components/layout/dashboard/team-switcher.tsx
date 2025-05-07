@@ -6,7 +6,7 @@ import {
   ChevronsUpDown,
   PlusCircle,
   ShieldCheck,
-  Briefcase,
+  Building,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -243,7 +243,8 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
             <CommandList>
               <CommandSeparator />
               <CommandGroup>
-                {hasAdminRole && (
+                {/* Show Create Team button only if current selected team is an admin team OR user is admin */}
+                {(selectedTeam?.role === "admin" || user?.role === "admin") && (
                   <DialogTrigger asChild>
                     <CommandItem
                       onSelect={() => {
