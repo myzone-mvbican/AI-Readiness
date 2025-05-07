@@ -233,8 +233,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear token
       setToken(null);
 
-      // Clear cached user data
+      // Clear cached user data and selected team
       localStorage.removeItem("userData");
+      localStorage.removeItem("selectedTeam");
 
       // Clear query cache
       queryClient.setQueryData(["/api/user"], null);
