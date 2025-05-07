@@ -40,6 +40,26 @@ const defaultUser = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [location] = useLocation();
+  const { user } = useAuth();
+  
+  // Navigation items
+  const navItems = [
+    {
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: Home,
+    },
+    {
+      title: "Assessments",
+      url: "/dashboard/assessments",
+      icon: ClipboardCheck,
+    },
+    {
+      title: "Reports",
+      url: "/dashboard/reports",
+      icon: BarChart3,
+    },
+  ];
 
   // Check if a route is active
   const isRouteActive = (route: string) => {
@@ -52,15 +72,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return false;
   };
 
+  // User profile data - use authenticated user if available, otherwise default
+  const userData = user ? {
+    name: user.name,
+    email: user.email,
+    avatar: profileImage, // Using default profile image
+  } : defaultUser;
+
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <Link href="/" className="bock m-2">
-          <img src={logoPath} alt="Logo" className="w-[100px] h-auto" />
-        </Link>
+      <SidebarHeader className="p-2">
+        <TeamSwitcher className="w-full" />
       </SidebarHeader>
       <SidebarContent>
-        <SidebarMenu className="p-2 mt-0]">
+        <SidebarMenu className="p-2 mt-0">
           <SidebarMenuItem>
             <SidebarMenuButton
               className="bg-blue-500 text-white hover:bg-blue-600 hover:text-white"
@@ -74,8 +99,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <NavMain items={data.navMain} isRouteActive={isRouteActive} />
+        <NavMain items={navItems} isRouteActive={isRouteActive} />
         <SidebarMenu className="py-2 px-2 mt-auto">
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              className={cn(
+                "bg-muted hover:bg-accent",
+                isRouteActive("/dashboard/settings") && "bg-accent",
+              )}
+              asChild
+            >
+              <Link href="/dashboard/settings">
+                <Settings2 />
+                <span>Settings</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
               className={cn(
@@ -85,15 +124,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
             >
               <Link href="/dashboard/help">
-                <Settings2 />
-                <span>Get Help</span>
+                <ScrollText />
+                <span>Help Center</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={userData} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

@@ -6,10 +6,12 @@ import {
   updateUserSchema, 
   loginSchema,
   insertTeamSchema,
-  userTeamSchema
+  userTeamSchema,
+  teams
 } from "@shared/schema";
-import { authenticate } from "./middleware/auth";
+import { authenticate, requireAdmin } from "./middleware/auth";
 import cors from "cors";
+import { db } from "./db";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Enable CORS
@@ -306,6 +308,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({
         success: false,
         message: "Failed to create team"
+      });
+    }
+  });
+  
+  // Admin-only: Get all teams
+  app.get("/api/admin/teams", authenticate, requireAdmin, async (req, res) => {
+    try {
+      // Get all teams from database
+      const allTeams = await db.select().from(teams);
+      
+      return res.status(200).json({
+        success: true,
+        teams: allTeams
+      });
+    } catch (error) {
+      console.error("Admin get teams error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to retrieve all teams"
       });
     }
   });
