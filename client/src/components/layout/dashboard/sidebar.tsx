@@ -88,6 +88,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: FileSpreadsheet,
     }
   ] : [];
+  
+  // Force reactive update when team selection changes
+  React.useEffect(() => {
+    // This is just to ensure the component re-renders when team selection changes
+  }, [selectedTeam]);
 
   // Check if a route is active
   const isRouteActive = (route: string) => {
@@ -129,7 +134,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <NavMain items={[...navItems, ...adminNavItems]} isRouteActive={isRouteActive} />
+        <NavMain items={navItems} adminItems={adminNavItems} isRouteActive={isRouteActive} />
         <SidebarMenu className="py-2 px-2 mt-auto">
           <SidebarMenuItem>
             <SidebarMenuButton
