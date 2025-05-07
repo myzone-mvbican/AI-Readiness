@@ -35,7 +35,7 @@ export function NavMain({
                 href={item.url}
                 className={cn(
                   "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                  isRouteActive(item.url) && "bg-muted font-semibold",
+                  isRouteActive(item.url) && "bg-accent",
                 )}
               >
                 {item.icon && <item.icon />}

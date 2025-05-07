@@ -42,8 +42,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-            <Separator orientation="vertical" className="ml-auto h-4" />
-            <ThemeToggle />
+            <div className="ml-auto">
+              <ThemeToggle />
+            </div>
           </div>
         </header>
         <main className="flex-1 overflow-auto p-6">{children}</main>

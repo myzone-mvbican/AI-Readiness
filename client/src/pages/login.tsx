@@ -2,21 +2,36 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, type LoginFormValues } from "@/schemas/validation-schemas";
+import {
+  loginSchema,
+  type LoginFormValues,
+} from "@/schemas/validation-schemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
 export default function LoginPage() {
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const {
     register,
     handleSubmit,
@@ -38,12 +53,12 @@ export default function LoginPage() {
     try {
       setIsSubmitting(true);
       // Simulate API call with a delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       console.log("Form submitted:", data);
-      
+
       // Redirect to dashboard
       setLocation("/dashboard");
-      
+
       toast({
         title: "Login successful!",
         description: "Welcome to MyZone AI.",
@@ -51,7 +66,7 @@ export default function LoginPage() {
       });
     } catch (error) {
       console.error("Error submitting form:", error);
-      
+
       toast({
         title: "Login failed",
         description: "There was a problem with your login.",
@@ -62,22 +77,22 @@ export default function LoginPage() {
       setIsSubmitting(false);
     }
   };
-  
+
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
       console.log("Google login success:", credentialResponse);
-      
+
       toast({
         title: "Google login successful!",
         description: "Welcome to MyZone AI.",
         duration: 3000,
       });
-      
+
       // Redirect to dashboard
       setLocation("/dashboard");
     } catch (error) {
       console.error("Error with Google login:", error);
-      
+
       toast({
         title: "Google login failed",
         description: "There was a problem with your Google login.",
@@ -86,7 +101,7 @@ export default function LoginPage() {
       });
     }
   };
-  
+
   const handleGoogleError = () => {
     toast({
       title: "Google login failed",
@@ -99,31 +114,38 @@ export default function LoginPage() {
   return (
     <div className="max-w-md mx-auto px-4 py-12">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Welcome to MyZone AI</h1>
+        <h1 className="text-3xl font-bold text-gray-900">
+          Welcome to MyZone AI
+        </h1>
         <p className="mt-3 text-lg text-gray-600">
           Sign in to access your AI Readiness Assessment
         </p>
       </div>
-      
+
       <Card className="shadow-md">
         <CardContent className="pt-6">
           <div className="flex flex-col items-center gap-6">
             {/* Google Sign-In Option */}
             <div className="w-full">
-              <div className="w-full flex items-center justify-center border border-gray-300 rounded-md py-2 bg-white hover:bg-gray-50 cursor-pointer"
+              <div
+                className="w-full flex items-center justify-center border border-gray-300 rounded-md py-2 bg-white hover:bg-gray-50 cursor-pointer"
                 onClick={() => {
                   // Trigger Google login programmatically
-                  document.querySelector<HTMLDivElement>("[id^='google_btn']")?.click();
+                  document
+                    .querySelector<HTMLDivElement>("[id^='google_btn']")
+                    ?.click();
                 }}
               >
-                <img 
-                  src="https://developers.google.com/identity/images/g-logo.png" 
-                  alt="Google logo" 
+                <img
+                  src="https://developers.google.com/identity/images/g-logo.png"
+                  alt="Google logo"
                   className="w-6 h-6 mr-2"
                 />
-                <span className="text-gray-700 font-medium">Sign in with Google</span>
+                <span className="text-gray-700 font-medium">
+                  Sign in with Google
+                </span>
               </div>
-              
+
               <div className="hidden">
                 <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
                   <GoogleLogin
@@ -138,7 +160,7 @@ export default function LoginPage() {
                 </GoogleOAuthProvider>
               </div>
             </div>
-            
+
             {/* Divider */}
             <div className="relative w-full">
               <div className="absolute inset-0 flex items-center">
@@ -148,14 +170,19 @@ export default function LoginPage() {
                 <span className="px-2 bg-white text-gray-500">or</span>
               </div>
             </div>
-            
+
             {/* Custom Login Form */}
             <div className="w-full">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Login with Email</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Login with Email
+              </h3>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 {/* Name field */}
                 <div className="space-y-1">
-                  <Label htmlFor="name" className="text-sm font-medium text-gray-700">
+                  <Label
+                    htmlFor="name"
+                    className="text-sm font-medium text-gray-700"
+                  >
                     Full Name
                   </Label>
                   <Input
@@ -166,13 +193,18 @@ export default function LoginPage() {
                     className={errors.name ? "border-red-500" : ""}
                   />
                   {errors.name && (
-                    <p className="text-sm text-red-500">{errors.name.message}</p>
+                    <p className="text-sm text-red-500">
+                      {errors.name.message}
+                    </p>
                   )}
                 </div>
 
                 {/* Email field */}
                 <div className="space-y-1">
-                  <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                  <Label
+                    htmlFor="email"
+                    className="text-sm font-medium text-gray-700"
+                  >
                     Email Address
                   </Label>
                   <Input
@@ -183,13 +215,18 @@ export default function LoginPage() {
                     className={errors.email ? "border-red-500" : ""}
                   />
                   {errors.email && (
-                    <p className="text-sm text-red-500">{errors.email.message}</p>
+                    <p className="text-sm text-red-500">
+                      {errors.email.message}
+                    </p>
                   )}
                 </div>
 
                 {/* Company field */}
                 <div className="space-y-1">
-                  <Label htmlFor="company" className="text-sm font-medium text-gray-700">
+                  <Label
+                    htmlFor="company"
+                    className="text-sm font-medium text-gray-700"
+                  >
                     Company
                   </Label>
                   <Input
@@ -200,20 +237,28 @@ export default function LoginPage() {
                     className={errors.company ? "border-red-500" : ""}
                   />
                   {errors.company && (
-                    <p className="text-sm text-red-500">{errors.company.message}</p>
+                    <p className="text-sm text-red-500">
+                      {errors.company.message}
+                    </p>
                   )}
                 </div>
 
                 {/* Employee Count field */}
                 <div className="space-y-1">
-                  <Label htmlFor="employeeCount" className="text-sm font-medium text-gray-700">
+                  <Label
+                    htmlFor="employeeCount"
+                    className="text-sm font-medium text-gray-700"
+                  >
                     Number of Employees
                   </Label>
-                  <Select 
+                  <Select
                     onValueChange={(value) => setValue("employeeCount", value)}
                     defaultValue=""
                   >
-                    <SelectTrigger id="employeeCount" className={errors.employeeCount ? "border-red-500" : ""}>
+                    <SelectTrigger
+                      id="employeeCount"
+                      className={errors.employeeCount ? "border-red-500" : ""}
+                    >
                       <SelectValue placeholder="Select company size" />
                     </SelectTrigger>
                     <SelectContent>
@@ -226,38 +271,66 @@ export default function LoginPage() {
                     </SelectContent>
                   </Select>
                   {errors.employeeCount && (
-                    <p className="text-sm text-red-500">{errors.employeeCount.message}</p>
+                    <p className="text-sm text-red-500">
+                      {errors.employeeCount.message}
+                    </p>
                   )}
                 </div>
 
                 {/* Industry field */}
                 <div className="space-y-1">
-                  <Label htmlFor="industry" className="text-sm font-medium text-gray-700">
+                  <Label
+                    htmlFor="industry"
+                    className="text-sm font-medium text-gray-700"
+                  >
                     Industry
                   </Label>
-                  <Select 
+                  <Select
                     onValueChange={(value) => setValue("industry", value)}
                     defaultValue=""
                   >
-                    <SelectTrigger id="industry" className={errors.industry ? "border-red-500" : ""}>
+                    <SelectTrigger
+                      id="industry"
+                      className={errors.industry ? "border-red-500" : ""}
+                    >
                       <SelectValue placeholder="Select your industry" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="technology">Technology / Software</SelectItem>
+                      <SelectItem value="technology">
+                        Technology / Software
+                      </SelectItem>
                       <SelectItem value="healthcare">Healthcare</SelectItem>
-                      <SelectItem value="finance">Finance / Insurance</SelectItem>
-                      <SelectItem value="retail">Retail / E-commerce</SelectItem>
-                      <SelectItem value="manufacturing">Manufacturing / Industrial</SelectItem>
-                      <SelectItem value="education">Education / Training</SelectItem>
-                      <SelectItem value="professional">Professional Services</SelectItem>
-                      <SelectItem value="construction">Construction / Real Estate</SelectItem>
-                      <SelectItem value="hospitality">Hospitality / Food & Beverage</SelectItem>
-                      <SelectItem value="transportation">Transportation / Logistics</SelectItem>
+                      <SelectItem value="finance">
+                        Finance / Insurance
+                      </SelectItem>
+                      <SelectItem value="retail">
+                        Retail / E-commerce
+                      </SelectItem>
+                      <SelectItem value="manufacturing">
+                        Manufacturing / Industrial
+                      </SelectItem>
+                      <SelectItem value="education">
+                        Education / Training
+                      </SelectItem>
+                      <SelectItem value="professional">
+                        Professional Services
+                      </SelectItem>
+                      <SelectItem value="construction">
+                        Construction / Real Estate
+                      </SelectItem>
+                      <SelectItem value="hospitality">
+                        Hospitality / Food & Beverage
+                      </SelectItem>
+                      <SelectItem value="transportation">
+                        Transportation / Logistics
+                      </SelectItem>
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                   {errors.industry && (
-                    <p className="text-sm text-red-500">{errors.industry.message}</p>
+                    <p className="text-sm text-red-500">
+                      {errors.industry.message}
+                    </p>
                   )}
                 </div>
 
@@ -267,14 +340,14 @@ export default function LoginPage() {
                   disabled={isSubmitting}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors"
                 >
-                  {isSubmitting ? "Logging in..." : "Login"}
+                  {isSubmitting ? "Signing up..." : "Sign up"}
                 </Button>
               </form>
             </div>
           </div>
         </CardContent>
       </Card>
-      
+
       <div className="mt-8 text-center text-sm text-gray-500">
         <p>
           By logging in, you agree to our Terms of Service and Privacy Policy.

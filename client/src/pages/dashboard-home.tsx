@@ -1,3 +1,5 @@
+import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
 import { DashboardLayout } from "@/components/layout/dashboard";
 import {
   Card,
@@ -6,8 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
 import {
   BarChart3,
   ClipboardCheck,
@@ -70,7 +70,7 @@ export default function DashboardHome() {
               <div className="flex flex-col gap-2">
                 <Button variant="outline" className="justify-start">
                   <ClipboardCheck className="mr-2 h-4 w-4" />
-                  <span>View Previous Assessments</span>
+                  <span>View Assessments</span>
                 </Button>
                 <Button variant="outline" className="justify-start">
                   <BarChart3 className="mr-2 h-4 w-4" />
