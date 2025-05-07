@@ -136,11 +136,10 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
     }
   };
   
-  // If user is admin and admin teams are available, show all teams, otherwise show only user's teams
-  // If no teams are available from API, fall back to mock data for development
-  const availableTeams = isAdmin && adminTeams?.teams?.length 
-    ? adminTeams.teams 
-    : (teams?.teams?.length ? teams.teams : defaultTeams);
+  // Only show teams that the user is assigned to, regardless of admin status
+  // This prevents regular users switching to teams they're not part of
+  // Admin users will only see their assigned teams in the switcher (not all teams)
+  const availableTeams = teams?.teams?.length ? teams.teams : defaultTeams;
   
   const handleSelectTeam = (team: TeamWithRole) => {
     setSelectedTeam(team);

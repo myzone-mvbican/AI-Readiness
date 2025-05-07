@@ -27,7 +27,7 @@ if (!process.env.JWT_SECRET) {
 // List of admin emails (environment variable based for security, with defaults)
 const ADMIN_EMAILS = (
   process.env.ADMIN_EMAILS || "bican.valeriu@myzone.ai,mike@myzone.ai"
-).split(",");
+).split(",").map(email => email.trim().toLowerCase());
 
 export interface IStorage {
   // User operations
