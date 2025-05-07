@@ -123,7 +123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // User ID comes from the authenticated user
       const userId = req.user!.id;
       
-      // Get user from database
+      // Get user from database with a fresh query
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -133,8 +133,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Log the user data being sent
+      console.log("Sending user data:", { 
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        company: user.company,
+        employeeCount: user.employeeCount,
+        industry: user.industry
+      });
+      
       // Remove password from response
       const { password, ...userWithoutPassword } = user;
+      
+      // Add cache control headers to prevent browser caching
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
       
       return res.status(200).json({ 
         success: true, 
