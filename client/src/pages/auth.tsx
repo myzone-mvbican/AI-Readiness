@@ -22,12 +22,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { apiRequest } from "@/lib/queryClient";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AuthPage() {
   const { toast } = useToast();
@@ -67,11 +62,11 @@ export default function AuthPage() {
   const onLoginSubmit = async (data: LoginFormValues) => {
     try {
       setIsSubmitting(true);
-      
+
       // Submit login data to the API
       const response = await apiRequest("POST", "/api/login", data);
       const result = await response.json();
-      
+
       if (response.ok) {
         toast({
           title: "Login successful!",
@@ -106,7 +101,7 @@ export default function AuthPage() {
   const onSignupSubmit = async (data: SignupFormValues) => {
     try {
       setIsSubmitting(true);
-      
+
       // Submit data to the API
       const response = await apiRequest("POST", "/api/register", {
         name: data.name,
@@ -115,30 +110,33 @@ export default function AuthPage() {
       });
 
       const result = await response.json();
-      
+
       if (response.ok) {
         toast({
           title: "Registration successful!",
-          description: "Your account has been created. Redirecting to the dashboard.",
+          description:
+            "Your account has been created. Redirecting to the dashboard.",
           duration: 3000,
         });
-        
+
         // Redirect to the dashboard
         setLocation("/dashboard");
       } else {
         toast({
           title: "Registration failed",
-          description: result.message || "There was a problem with your registration.",
+          description:
+            result.message || "There was a problem with your registration.",
           variant: "destructive",
           duration: 3000,
         });
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-      
+
       toast({
         title: "Registration failed",
-        description: "There was a problem with your registration. Please try again.",
+        description:
+          "There was a problem with your registration. Please try again.",
         variant: "destructive",
         duration: 3000,
       });
@@ -181,47 +179,25 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl grid md:grid-cols-2 gap-8 rounded-xl bg-white shadow-xl overflow-hidden">
-        {/* Hero section */}
-        <div className="hidden md:flex flex-col bg-blue-600 p-12 text-white justify-center">
-          <div>
-            <h1 className="text-3xl font-bold mb-4">MyZone AI Readiness</h1>
-            <p className="text-lg mb-6">
-              Assess your organization's AI maturity and get personalized recommendations to accelerate your AI journey.
-            </p>
-            <ul className="space-y-3">
-              <li className="flex items-center">
-                <svg className="h-5 w-5 mr-2 text-blue-200" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span>Detailed AI readiness assessment</span>
-              </li>
-              <li className="flex items-center">
-                <svg className="h-5 w-5 mr-2 text-blue-200" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span>Industry benchmark comparisons</span>
-              </li>
-              <li className="flex items-center">
-                <svg className="h-5 w-5 mr-2 text-blue-200" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span>Personalized improvement roadmap</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-
+    <div className="bg-gray-50 p-4">
+      <div className="container">
         {/* Form section */}
-        <div className="p-8 flex flex-col justify-center">
+        <div className="w-full max-w-[600px] mx-auto p-8 flex flex-col justify-center">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Welcome to MyZone AI</h2>
-            <p className="text-gray-600 mt-2">Your AI Readiness Assessment platform</p>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Welcome to MyZone AI
+            </h2>
+            <p className="text-gray-600 mt-2">
+              Your AI Readiness Assessment platform
+            </p>
           </div>
-          
+
           <Card className="border-0 shadow-none">
-            <Tabs defaultValue="login" className="w-full" onValueChange={setActiveTab}>
+            <Tabs
+              defaultValue="login"
+              className="w-full"
+              onValueChange={setActiveTab}
+            >
               <CardHeader className="pb-2">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="login">Login</TabsTrigger>
@@ -246,7 +222,9 @@ export default function AuthPage() {
                       className="w-6 h-6 mr-2"
                     />
                     <span className="text-gray-700 font-medium">
-                      {activeTab === "login" ? "Sign in with Google" : "Sign up with Google"}
+                      {activeTab === "login"
+                        ? "Sign in with Google"
+                        : "Sign up with Google"}
                     </span>
                   </div>
 
@@ -277,7 +255,10 @@ export default function AuthPage() {
 
                 {/* LOGIN FORM */}
                 <TabsContent value="login" className="mt-0">
-                  <form onSubmit={handleLoginSubmit(onLoginSubmit)} className="space-y-4">
+                  <form
+                    onSubmit={handleLoginSubmit(onLoginSubmit)}
+                    className="space-y-4"
+                  >
                     {/* Email field */}
                     <div className="space-y-1">
                       <Label
@@ -309,7 +290,10 @@ export default function AuthPage() {
                         >
                           Password
                         </Label>
-                        <a href="#" className="text-sm text-blue-600 hover:underline">
+                        <a
+                          href="#"
+                          className="text-sm text-blue-600 hover:underline"
+                        >
                           Forgot password?
                         </a>
                       </div>
@@ -340,7 +324,10 @@ export default function AuthPage() {
 
                 {/* SIGNUP FORM */}
                 <TabsContent value="signup" className="mt-0">
-                  <form onSubmit={handleSignupSubmit(onSignupSubmit)} className="space-y-4">
+                  <form
+                    onSubmit={handleSignupSubmit(onSignupSubmit)}
+                    className="space-y-4"
+                  >
                     {/* Name field */}
                     <div className="space-y-1">
                       <Label
@@ -398,7 +385,9 @@ export default function AuthPage() {
                         type="password"
                         placeholder="••••••••"
                         {...registerSignup("password")}
-                        className={signupErrors.password ? "border-red-500" : ""}
+                        className={
+                          signupErrors.password ? "border-red-500" : ""
+                        }
                       />
                       {signupErrors.password && (
                         <p className="text-sm text-red-500">
@@ -420,7 +409,9 @@ export default function AuthPage() {
                         type="password"
                         placeholder="••••••••"
                         {...registerSignup("confirmPassword")}
-                        className={signupErrors.confirmPassword ? "border-red-500" : ""}
+                        className={
+                          signupErrors.confirmPassword ? "border-red-500" : ""
+                        }
                       />
                       {signupErrors.confirmPassword && (
                         <p className="text-sm text-red-500">
@@ -445,7 +436,8 @@ export default function AuthPage() {
 
           <div className="mt-6 text-center text-sm text-gray-500">
             <p>
-              By continuing, you agree to our Terms of Service and Privacy Policy.
+              By continuing, you agree to our Terms of Service and Privacy
+              Policy.
             </p>
           </div>
         </div>
