@@ -13,6 +13,8 @@ import SurveysList from "@/pages/dashboard-surveys";
 import DashboardHome from "@/pages/dashboard-home";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
+import { AuthProvider } from "@/hooks/use-auth";
+import { ProtectedRoute } from "@/lib/protected-route";
 
 // Make sure the dashboard settings page is properly imported
 import SettingsPage from "./pages/dashboard-settings";
@@ -62,8 +64,10 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <GoogleOAuthProvider clientId="GOOGLE_CLIENT_ID_PLACEHOLDER">
-            <Toaster />
-            <Router />
+            <AuthProvider>
+              <Toaster />
+              <Router />
+            </AuthProvider>
           </GoogleOAuthProvider>
         </TooltipProvider>
       </QueryClientProvider>
