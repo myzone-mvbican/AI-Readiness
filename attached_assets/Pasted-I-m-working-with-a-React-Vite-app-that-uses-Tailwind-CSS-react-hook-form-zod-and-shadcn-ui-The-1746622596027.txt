@@ -1,0 +1,77 @@
+I'm working with a React + Vite app that uses Tailwind CSS, react-hook-form, zod, and shadcn/ui. The app already has a /login route. Please make the following updates only, using the existing stack and form handling setup:
+
+🔐 1. Email-Based User Sign-Up
+Move the current email-based login form from /login to a new route:
+/signup
+
+On this /signup page:
+
+Create a user in the backend/database using the submitted data (use any existing API/client methods already used in the app — no mock APIs).
+
+Required form fields:
+
+Name (text)
+
+Email (email)
+
+Company (text)
+
+Number of employees (select)
+
+Industry (select)
+
+Password (password)
+
+Confirm Password (password confirmation)
+
+Validate with zod:
+
+All fields required
+
+Confirm password must match password
+
+On successful user creation, automatically redirect the user to:
+/dashboard/assessments/new
+
+🔁 2. Existing /login Page
+Retain the /login route and page, but now limit it to only handle user login.
+
+Remove any signup logic from /login.
+
+Keep all current login functionality and social login buttons intact.
+
+⚙️ 3. /dashboard/settings Route
+Create a new route: /dashboard/settings
+
+This page should show a simple form using react-hook-form, zod, and shadcn/ui to allow a logged-in user to update their account details.
+
+Form fields:
+
+Name (editable)
+
+Email (non-editable, disabled input)
+
+Password (password input — optional)
+
+Confirm Password (shown only if password is entered)
+
+Validation:
+
+If password is entered, confirmPassword must match.
+
+If password is left blank, don’t update it.
+
+On submit:
+
+Send data to backend to update user profile (use existing API/client utils).
+
+Show a success message on update using shadcn/ui toast or alert.
+
+🛑 Do Not
+Do not change any existing login, dashboard, or survey logic elsewhere.
+
+Do not introduce third-party form libraries — use the app’s existing react-hook-form, zod, shadcn/ui, and Tailwind stack.
+
+Do not refactor unrelated files or add auth logic where not required.
+
+The end result should cleanly handle sign-up flow, maintain login separation, and provide a working user settings route with form validation and password update logic.

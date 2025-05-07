@@ -13,7 +13,6 @@ import { cn } from "@/lib/utils";
 import { NavMain } from "./nav-menu";
 import { NavUser } from "./nav-user";
 import { Link, useLocation } from "wouter";
-// import { ThemeToggle } from "@/components/theme-toggle";
 import logoPath from "@/assets/logo-myzone-ai-black.svg";
 
 import {
@@ -82,10 +81,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu className="p-2 mt-0]">
           <SidebarMenuItem>
             <SidebarMenuButton
-              className={cn(
-                "bg-blue-500 text-white hover:bg-accent hover:text-white",
-                isRouteActive("/dashboard/assessments/new") && "bg-blue-800",
-              )}
+              className="bg-blue-500 text-white hover:bg-blue-600 hover:text-white"
               tooltip="Create New Assessment"
               asChild
             >
@@ -101,8 +97,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               className={cn(
-                "bg-muted hover:bg-accent hover:text-white",
-                isRouteActive("/dashboard/help") && "bg-blue-800",
+                "bg-muted hover:bg-accent",
+                isRouteActive("/dashboard/help") && "bg-accent",
               )}
               asChild
             >

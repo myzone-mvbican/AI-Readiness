@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { SurveySection, SurveyStepFormValues, SurveySummary } from "@/schemas/survey-schema";
+import {
+  SurveySection,
+  SurveyStepFormValues,
+  SurveySummary,
+} from "@/schemas/survey-schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import SurveyStep from "./survey-step";
 import SurveySummaryComponent from "./survey-summary";
-import SurveyCompletionNew from "./survey-completion-new";
+import SurveyCompletion from "./survey-completion";
 import { loadSurveyData } from "@/lib/survey-data";
 import { useToast } from "@/hooks/use-toast";
 
@@ -45,9 +49,9 @@ export default function SurveyForm({ onComplete }: SurveyFormProps) {
   // Handle when a step is completed
   const handleNextStep = (stepData: SurveyStepFormValues) => {
     // Save the data for this step
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [currentStep]: stepData
+      [currentStep]: stepData,
     }));
 
     // If this was the last step, show the summary
@@ -55,14 +59,14 @@ export default function SurveyForm({ onComplete }: SurveyFormProps) {
       setShowSummary(true);
     } else {
       // Otherwise, go to the next step
-      setCurrentStep(prevStep => prevStep + 1);
+      setCurrentStep((prevStep) => prevStep + 1);
     }
   };
 
   // Handle going back to the previous step
   const handlePrevStep = () => {
     if (currentStep > 0) {
-      setCurrentStep(prevStep => prevStep - 1);
+      setCurrentStep((prevStep) => prevStep - 1);
     }
   };
 
@@ -77,13 +81,14 @@ export default function SurveyForm({ onComplete }: SurveyFormProps) {
     if (onComplete) {
       onComplete(formData);
     }
-    
+
     // Show success toast
     toast({
       title: "Survey Completed",
-      description: "Your AI Readiness Assessment has been submitted successfully!",
+      description:
+        "Your AI Readiness Assessment has been submitted successfully!",
     });
-    
+
     // Show completion screen with results
     setShowSummary(false);
     setShowCompletion(true);
@@ -98,16 +103,16 @@ export default function SurveyForm({ onComplete }: SurveyFormProps) {
     );
   }
 
-  // If on completion screen, render the SurveyCompletionNew component
+  // If on completion screen, render the SurveyCompletion component
   if (showCompletion) {
-    return <SurveyCompletionNew surveyData={formData} sections={sections} />;
+    return <SurveyCompletion surveyData={formData} sections={sections} />;
   }
 
   return (
     <Card className="shadow-md">
       <CardContent className="pt-6">
         {showSummary ? (
-          <SurveySummaryComponent 
+          <SurveySummaryComponent
             sections={sections}
             surveyData={formData}
             onSubmit={handleSubmit}
@@ -118,13 +123,17 @@ export default function SurveyForm({ onComplete }: SurveyFormProps) {
             {/* Progress indicator */}
             <div className="mb-6">
               <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
-                <span>Section {currentStep + 1} of {sections.length}</span>
+                <span>
+                  Section {currentStep + 1} of {sections.length}
+                </span>
                 <span>{sections[currentStep]?.category}</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-in-out" 
-                  style={{ width: `${((currentStep + 1) / sections.length) * 100}%` }}
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-in-out"
+                  style={{
+                    width: `${((currentStep + 1) / sections.length) * 100}%`,
+                  }}
                 ></div>
               </div>
             </div>
