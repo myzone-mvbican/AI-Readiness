@@ -1,6 +1,6 @@
 import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function SurveyPage() {

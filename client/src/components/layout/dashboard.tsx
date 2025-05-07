@@ -24,28 +24,28 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, title }: DashboardLayoutProps) {
   const [location] = useLocation();
-  
+
   // Generate page title based on the current route
   const pageName = useMemo(() => {
     // If a title is explicitly provided, use it
     if (title) return title;
-    
+
     // Otherwise generate from the current route
-    const path = location.split('/').filter(Boolean);
-    const currentRoute = path[path.length - 1] || 'dashboard';
-    
+    const path = location.split("/").filter(Boolean);
+    const currentRoute = path[path.length - 1] || "dashboard";
+
     // Format the route name (convert kebab-case to Title Case)
     return currentRoute
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   }, [location, title]);
 
   return (
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+        <header className="sticky top-0 bg-white dark:bg-gray-900 border-b flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 z-10">
           <div className="flex items-center w-full gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
@@ -67,7 +67,9 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-auto p-6">{children}</main>
+        <main className="bg-white dark:bg-gray-900 flex-1 overflow-auto p-6">
+          {children}
+        </main>
       </SidebarInset>
     </SidebarProvider>
   );
