@@ -26,7 +26,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 
 export function NavUser({
   user,
@@ -38,6 +39,18 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
+  const { logoutMutation } = useAuth();
+  const [_, setLocation] = useLocation();
+  
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+      // Redirect to auth page
+      setLocation("/auth");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
 
   return (
     <SidebarMenu>
@@ -95,7 +108,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
               <LogOut />
               Log out
             </DropdownMenuItem>

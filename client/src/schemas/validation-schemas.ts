@@ -33,6 +33,29 @@ export const settingsSchema = z.object({
     .min(2, { message: "Name must be at least 2 characters" })
     .max(50, { message: "Name cannot exceed 50 characters" }),
   
+  company: z.string().optional().or(z.literal('')),
+  
+  employeeCount: z.enum([
+    "1-9", 
+    "10-49", 
+    "50-249", 
+    "250-999", 
+    "1000+"
+  ]).optional(),
+  
+  industry: z.enum([
+    "technology",
+    "healthcare",
+    "finance",
+    "retail",
+    "manufacturing",
+    "education",
+    "government",
+    "energy",
+    "transportation",
+    "other"
+  ]).optional(),
+  
   password: z.string()
     .min(8, { message: "Password must be at least 8 characters" })
     .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter" })
