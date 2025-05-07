@@ -171,6 +171,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.success && data.token) {
         setToken(data.token);
         queryClient.setQueryData(["/api/user"], data.user);
+        
+        // Invalidate teams query to ensure we get fresh data
+        queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
+        
+        // Clear any previously selected team to force auto-selection
+        localStorage.removeItem("selectedTeam");
+        
         toast({
           title: "Login successful",
           description: "You have been logged in successfully.",
