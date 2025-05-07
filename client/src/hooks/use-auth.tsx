@@ -95,6 +95,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [toast, setLocation]);
 
+  // Get cached user data from localStorage
+  const getCachedUser = (): User | null => {
+    try {
+      const cachedUserData = localStorage.getItem('userData');
+      if (cachedUserData) {
+        return JSON.parse(cachedUserData);
+      }
+    } catch (e) {
+      console.error("Error parsing cached user data:", e);
+    }
+    return null;
+  };
+
+  // Initial cached user data
+  const [cachedUser, setCachedUser] = useState<User | null>(getCachedUser());
+  
   const {
     data: user,
     error,
@@ -111,10 +127,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }) 
       : () => Promise.resolve(null),
     enabled: !!token,
-    staleTime: 1000 * 60 * 1, // Consider data fresh for only 1 minute
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
     refetchOnWindowFocus: true, // Refetch when window regains focus
     refetchOnMount: true, // Always refetch when component using the query mounts
+    initialData: cachedUser, // Use cached data as initial data
   });
+  
+  // Update localStorage when user data changes
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('userData', JSON.stringify(user));
+    }
+  }, [user]);
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
@@ -185,8 +209,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return Promise.resolve();
     },
     onSuccess: () => {
+      // Clear token
       setToken(null);
+      
+      // Clear cached user data
+      localStorage.removeItem('userData');
+      
+      // Clear query cache
       queryClient.setQueryData(["/api/user"], null);
+      
+      // Show success toast
       toast({
         title: "Logged out",
         description: "You have been logged out successfully.",
