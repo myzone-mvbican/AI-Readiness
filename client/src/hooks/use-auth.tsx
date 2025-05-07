@@ -1,4 +1,10 @@
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { useLocation } from "wouter";
 import {
   useQuery,
@@ -6,7 +12,12 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { User } from "@shared/schema";
-import { getQueryFn, apiRequest, queryClient, UNAUTHORIZED_EVENT } from "../lib/queryClient";
+import {
+  getQueryFn,
+  apiRequest,
+  queryClient,
+  UNAUTHORIZED_EVENT,
+} from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 type AuthContextType = {
@@ -49,11 +60,13 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
+  const [token, setToken] = useState<string | null>(() =>
+    localStorage.getItem("token"),
+  );
 
   // Load token from localStorage on initial render
   useEffect(() => {
-    const savedToken = localStorage.getItem('token');
+    const savedToken = localStorage.getItem("token");
     if (savedToken) {
       setToken(savedToken);
     }
@@ -62,45 +75,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Set auth header whenever token changes
   useEffect(() => {
     if (token) {
-      localStorage.setItem('token', token);
+      localStorage.setItem("token", token);
     } else {
-      localStorage.removeItem('token');
+      localStorage.removeItem("token");
     }
   }, [token]);
-  
+
   // Listen for unauthorized events (token expiration)
   useEffect(() => {
     const handleUnauthorized = (event: CustomEvent) => {
       // Clear auth state
       setToken(null);
       queryClient.setQueryData(["/api/user"], null);
-      
+
       // Show toast message
       toast({
         title: "Session expired",
-        description: event.detail?.message || "Your session has expired. Please log in again.",
+        description:
+          event.detail?.message ||
+          "Your session has expired. Please log in again.",
         variant: "destructive",
       });
-      
+
       // Redirect to login page
       setLocation("/auth");
     };
 
     // Add event listener for unauthorized events
-    window.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized as EventListener);
-    
+    window.addEventListener(
+      UNAUTHORIZED_EVENT,
+      handleUnauthorized as EventListener,
+    );
+
     // Cleanup function
     return () => {
-      window.removeEventListener(UNAUTHORIZED_EVENT, handleUnauthorized as EventListener);
+      window.removeEventListener(
+        UNAUTHORIZED_EVENT,
+        handleUnauthorized as EventListener,
+      );
     };
   }, [toast, setLocation]);
 
   // Get cached user data from localStorage
   const getCachedUser = (): User | null => {
     try {
-      const cachedUserData = localStorage.getItem('userData');
+      const cachedUserData = localStorage.getItem("userData");
       if (cachedUserData) {
-        return JSON.parse(cachedUserData);
+        return JSON.parse(cachedUserData)?.user;
       }
     } catch (e) {
       console.error("Error parsing cached user data:", e);
@@ -110,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Initial cached user data
   const [cachedUser, setCachedUser] = useState<User | null>(getCachedUser());
-  
+
   const {
     data: user,
     error,
@@ -118,13 +139,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refetch: refetchUser,
   } = useQuery<User | null, Error>({
     queryKey: ["/api/user"],
-    queryFn: token 
-      ? getQueryFn({ 
-          on401: "returnNull", 
-          headers: { 
-            Authorization: `Bearer ${token}` 
-          } 
-        }) 
+    queryFn: token
+      ? getQueryFn({
+          on401: "returnNull",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
       : () => Promise.resolve(null),
     enabled: !!token,
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
@@ -132,11 +153,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refetchOnMount: true, // Always refetch when component using the query mounts
     initialData: cachedUser, // Use cached data as initial data
   });
-  
+
   // Update localStorage when user data changes
   useEffect(() => {
     if (user) {
-      localStorage.setItem('userData', JSON.stringify(user));
+      localStorage.setItem("userData", JSON.stringify(user));
     }
   }, [user]);
 
@@ -211,13 +232,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       // Clear token
       setToken(null);
-      
+
       // Clear cached user data
-      localStorage.removeItem('userData');
-      
+      localStorage.removeItem("userData");
+
       // Clear query cache
       queryClient.setQueryData(["/api/user"], null);
-      
+
       // Show success toast
       toast({
         title: "Logged out",

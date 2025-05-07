@@ -5,30 +5,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { DashboardLayout } from "@/components/layout/dashboard";
-import { AlertCircle } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
 import {
   settingsSchema,
   type SettingsFormValues,
 } from "@/schemas/validation-schemas";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue 
+  SelectValue,
 } from "@/components/ui/select";
-import { useAuth } from "@/hooks/use-auth";
 
 export default function SettingsPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [initialFormData, setInitialFormData] = useState<SettingsFormValues | null>(null);
-  
+  const [initialFormData, setInitialFormData] =
+    useState<SettingsFormValues | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -55,20 +55,20 @@ export default function SettingsPage() {
       const formData = {
         name: user.name || "",
         company: user.company || "",
-        employeeCount: user.employeeCount as any || undefined,
-        industry: user.industry as any || undefined,
+        employeeCount: (user.employeeCount as any) || undefined,
+        industry: (user.industry as any) || undefined,
         password: "",
         confirmPassword: "",
       };
-      
+
       // Set initial form data for dirty check comparison
       setInitialFormData(formData);
-      
+
       // Reset form with user data
       reset(formData);
     }
   }, [user, reset]);
-  
+
   const password = watch("password");
   const showConfirmPassword = password && password.length > 0;
 
@@ -81,52 +81,51 @@ export default function SettingsPage() {
       });
       return;
     }
-    
+
     try {
       setIsSubmitting(true);
-      
+
       // Prepare update data - only include fields that have changed
       const updateData: Record<string, any> = {};
 
       if (data.name !== initialFormData?.name) updateData.name = data.name;
-      if (data.company !== initialFormData?.company) updateData.company = data.company;
-      if (data.employeeCount !== initialFormData?.employeeCount) updateData.employeeCount = data.employeeCount;
-      if (data.industry !== initialFormData?.industry) updateData.industry = data.industry;
-      
+      if (data.company !== initialFormData?.company)
+        updateData.company = data.company;
+      if (data.employeeCount !== initialFormData?.employeeCount)
+        updateData.employeeCount = data.employeeCount;
+      if (data.industry !== initialFormData?.industry)
+        updateData.industry = data.industry;
+
       // Only include password if it's not empty
       if (data.password) updateData.password = data.password;
 
       // Submit to API
-      const response = await apiRequest(
-        "PUT",
-        `/api/user`,
-        updateData,
-      );
+      const response = await apiRequest("PUT", `/api/user`, updateData);
       const result = await response.json();
 
       if (response.ok) {
         // Update with the latest user data returned from the server
         const updatedUser = result.user;
-        
+
         // Update the user data in the auth context
         queryClient.setQueryData(["/api/user"], updatedUser);
-        
+
         // Create a new form data object from the updated user
         const updatedFormData = {
           name: updatedUser.name || "",
           company: updatedUser.company || "",
-          employeeCount: updatedUser.employeeCount as any || undefined,
-          industry: updatedUser.industry as any || undefined,
+          employeeCount: (updatedUser.employeeCount as any) || undefined,
+          industry: (updatedUser.industry as any) || undefined,
           password: "",
           confirmPassword: "",
         };
-        
+
         // Update initial form data to reflect the new state from the server
         setInitialFormData(updatedFormData);
-        
+
         // Reset form with updated data but clear password fields
         reset(updatedFormData);
-        
+
         toast({
           variant: "default",
           className: "bg-green-50 border-green-200 text-green-800",
@@ -288,7 +287,7 @@ export default function SettingsPage() {
                 <div className="space-y-6">
                   {/* Company field */}
                   <div className="space-y-1">
-                    <Label 
+                    <Label
                       htmlFor="company"
                       className="text-sm font-medium text-gray-700"
                     >
@@ -310,7 +309,7 @@ export default function SettingsPage() {
 
                   {/* Employee Count field */}
                   <div className="space-y-1">
-                    <Label 
+                    <Label
                       htmlFor="employeeCount"
                       className="text-sm font-medium text-gray-700"
                     >
@@ -324,15 +323,28 @@ export default function SettingsPage() {
                           value={field.value}
                           onValueChange={field.onChange}
                         >
-                          <SelectTrigger id="employeeCount" className={errors.employeeCount ? "border-red-500" : ""}>
+                          <SelectTrigger
+                            id="employeeCount"
+                            className={
+                              errors.employeeCount ? "border-red-500" : ""
+                            }
+                          >
                             <SelectValue placeholder="Select employee count" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="1-9">1-9 employees</SelectItem>
-                            <SelectItem value="10-49">10-49 employees</SelectItem>
-                            <SelectItem value="50-249">50-249 employees</SelectItem>
-                            <SelectItem value="250-999">250-999 employees</SelectItem>
-                            <SelectItem value="1000+">1000+ employees</SelectItem>
+                            <SelectItem value="10-49">
+                              10-49 employees
+                            </SelectItem>
+                            <SelectItem value="50-249">
+                              50-249 employees
+                            </SelectItem>
+                            <SelectItem value="250-999">
+                              250-999 employees
+                            </SelectItem>
+                            <SelectItem value="1000+">
+                              1000+ employees
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       )}
@@ -346,7 +358,7 @@ export default function SettingsPage() {
 
                   {/* Industry field */}
                   <div className="space-y-1">
-                    <Label 
+                    <Label
                       htmlFor="industry"
                       className="text-sm font-medium text-gray-700"
                     >
@@ -360,19 +372,38 @@ export default function SettingsPage() {
                           value={field.value}
                           onValueChange={field.onChange}
                         >
-                          <SelectTrigger id="industry" className={errors.industry ? "border-red-500" : ""}>
+                          <SelectTrigger
+                            id="industry"
+                            className={errors.industry ? "border-red-500" : ""}
+                          >
                             <SelectValue placeholder="Select industry" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="technology">Technology / Software</SelectItem>
-                            <SelectItem value="healthcare">Healthcare</SelectItem>
-                            <SelectItem value="finance">Finance / Insurance</SelectItem>
-                            <SelectItem value="retail">Retail / E-commerce</SelectItem>
-                            <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                            <SelectItem value="technology">
+                              Technology / Software
+                            </SelectItem>
+                            <SelectItem value="healthcare">
+                              Healthcare
+                            </SelectItem>
+                            <SelectItem value="finance">
+                              Finance / Insurance
+                            </SelectItem>
+                            <SelectItem value="retail">
+                              Retail / E-commerce
+                            </SelectItem>
+                            <SelectItem value="manufacturing">
+                              Manufacturing
+                            </SelectItem>
                             <SelectItem value="education">Education</SelectItem>
-                            <SelectItem value="government">Government</SelectItem>
-                            <SelectItem value="energy">Energy / Utilities</SelectItem>
-                            <SelectItem value="transportation">Transportation / Logistics</SelectItem>
+                            <SelectItem value="government">
+                              Government
+                            </SelectItem>
+                            <SelectItem value="energy">
+                              Energy / Utilities
+                            </SelectItem>
+                            <SelectItem value="transportation">
+                              Transportation / Logistics
+                            </SelectItem>
                             <SelectItem value="other">Other</SelectItem>
                           </SelectContent>
                         </Select>

@@ -1,13 +1,14 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
 
 // Global event for handling unauthorized access
 export const UNAUTHORIZED_EVENT = "auth:unauthorized";
 
 // Dispatches an event when an unauthorized response is received
-function handleUnauthorized(message = "Your session has expired. Please log in again.") {
-  const event = new CustomEvent(UNAUTHORIZED_EVENT, { 
-    detail: { message }
+function handleUnauthorized(
+  message = "Your session has expired. Please log in again.",
+) {
+  const event = new CustomEvent(UNAUTHORIZED_EVENT, {
+    detail: { message },
   });
   window.dispatchEvent(event);
 }
@@ -20,7 +21,7 @@ async function throwIfResNotOk(res: Response) {
       handleUnauthorized();
       throw new Error(`Unauthorized: ${text || res.statusText}`);
     }
-    
+
     const text = (await res.text()) || res.statusText;
     throw new Error(`${res.status}: ${text}`);
   }
@@ -32,15 +33,15 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<Response> {
   // Get token from localStorage for each request
-  const token = localStorage.getItem('token');
-  
+  const token = localStorage.getItem("token");
+
   // Set up headers with Authorization if token exists
   const headers: Record<string, string> = {};
-  
+
   if (data) {
     headers["Content-Type"] = "application/json";
   }
-  
+
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
@@ -64,16 +65,16 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior, headers = {} }) =>
   async ({ queryKey }) => {
     // Get token from localStorage for each request
-    const token = localStorage.getItem('token');
-    
+    const token = localStorage.getItem("token");
+
     // Merge with any existing headers
     const requestHeaders = { ...headers };
-    
+
     // Add Authorization header if token exists
     if (token) {
       requestHeaders["Authorization"] = `Bearer ${token}`;
     }
-    
+
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
       headers: requestHeaders,
@@ -83,7 +84,7 @@ export const getQueryFn: <T>(options: {
       if (unauthorizedBehavior === "returnNull") {
         return null;
       }
-      
+
       // Handle unauthorized globally
       handleUnauthorized();
     }

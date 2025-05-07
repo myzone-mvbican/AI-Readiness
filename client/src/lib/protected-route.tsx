@@ -1,6 +1,6 @@
-import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
-import { Redirect, Route, RouteComponentProps } from "wouter";
+import { Redirect, Route } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 
 type ProtectedRouteProps = {
   path: string;
@@ -34,9 +34,5 @@ export function ProtectedRoute({
   }
 
   // If authenticated, render the protected component
-  return (
-    <Route path={path}>
-      {(params) => <Component {...params} />}
-    </Route>
-  );
+  return <Route path={path}>{(params) => <Component {...params} />}</Route>;
 }
