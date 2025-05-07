@@ -44,13 +44,17 @@ const defaultUser = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [location] = useLocation();
   const { user } = useAuth();
-  
+
   // Get the currently selected team from localStorage
-  const [selectedTeam, setSelectedTeam] = React.useState<{ id: number, name: string, role: string } | null>(null);
-  
+  const [selectedTeam, setSelectedTeam] = React.useState<{
+    id: number;
+    name: string;
+    role: string;
+  } | null>(null);
+
   // Load selected team from local storage on mount
   React.useEffect(() => {
-    const savedTeam = localStorage.getItem('selectedTeam');
+    const savedTeam = localStorage.getItem("selectedTeam");
     if (savedTeam) {
       try {
         setSelectedTeam(JSON.parse(savedTeam));
@@ -59,9 +63,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       }
     }
   }, []);
-  
+
   // Check if current team is an admin team
-  const isTeamAdmin = selectedTeam?.role === 'admin';
+  const isTeamAdmin = selectedTeam?.role === "admin";
 
   // Navigation items
   const navItems = [
@@ -81,31 +85,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: BarChart3,
     },
   ];
-  
+
   // Admin-only menu items that are only shown when the current team has admin role
-  const adminNavItems = isTeamAdmin ? [
-    {
-      title: "Manage Surveys",
-      url: "/dashboard/admin/surveys",
-      icon: FileSpreadsheet,
-    },
-    {
-      title: "User Management",
-      url: "/dashboard/admin/users",
-      icon: Users,
-    },
-    {
-      title: "System Settings",
-      url: "/dashboard/admin/settings",
-      icon: Shield,
-    }
-  ] : [];
-  
+  const adminNavItems = isTeamAdmin
+    ? [
+        {
+          title: "Surveys",
+          url: "/dashboard/surveys",
+          icon: FileSpreadsheet,
+        },
+        {
+          title: "Users",
+          url: "/dashboard/users",
+          icon: Users,
+        },
+      ]
+    : [];
+
   // Monitor changes to selected team from localStorage
   React.useEffect(() => {
     // Listen for storage events to detect team changes in other tabs/windows
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'selectedTeam') {
+      if (event.key === "selectedTeam") {
         try {
           const newTeam = event.newValue ? JSON.parse(event.newValue) : null;
           setSelectedTeam(newTeam);
@@ -116,11 +117,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     };
 
     // Add storage event listener
-    window.addEventListener('storage', handleStorageChange);
-    
+    window.addEventListener("storage", handleStorageChange);
+
     // Check for team changes periodically (300ms interval)
     const checkTeamInterval = setInterval(() => {
-      const savedTeam = localStorage.getItem('selectedTeam');
+      const savedTeam = localStorage.getItem("selectedTeam");
       if (savedTeam) {
         try {
           const parsedTeam = JSON.parse(savedTeam);
@@ -136,10 +137,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         setSelectedTeam(null);
       }
     }, 300);
-    
+
     // Clean up
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener("storage", handleStorageChange);
       clearInterval(checkTeamInterval);
     };
   }, [selectedTeam]);
@@ -184,7 +185,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <NavMain items={navItems} adminItems={adminNavItems} isRouteActive={isRouteActive} />
+        <NavMain
+          items={navItems}
+          adminItems={adminNavItems}
+          isRouteActive={isRouteActive}
+        />
         <SidebarMenu className="py-2 px-2 mt-auto">
           <SidebarMenuItem>
             <SidebarMenuButton

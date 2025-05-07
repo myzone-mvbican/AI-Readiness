@@ -44,16 +44,9 @@ import { TeamWithRole } from "@shared/schema";
 // Mock teams for initial development, will be replaced with real data
 const defaultTeams: TeamWithRole[] = [
   {
-    id: 1,
-    name: "Client",
-    role: "client",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 2,
-    name: "Admin",
-    role: "admin",
+    id: 99999,
+    name: "Loading",
+    role: "none",
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -92,26 +85,39 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
     enabled: !!user && isAdmin, // Only fetch if user is admin
   });
 
-  // Set initial selected team when teams load
+  // Enhanced team selection logic:
+  // 1. Load from localStorage on mount
+  // 2. When teams are fetched, check if selected team is valid
+  // 3. If no valid team is selected, select the first available team
   React.useEffect(() => {
-    if (teams?.teams?.length && !selectedTeam) {
-      setSelectedTeam(teams.teams[0]);
-      // Store in local storage
-      localStorage.setItem("selectedTeam", JSON.stringify(teams.teams[0]));
-    }
-  }, [teams, selectedTeam]);
-
-  // Load selected team from local storage on mount
-  React.useEffect(() => {
+    // First attempt to load from localStorage
     const savedTeam = localStorage.getItem("selectedTeam");
+    let parsedSavedTeam = null;
+    
     if (savedTeam) {
       try {
-        setSelectedTeam(JSON.parse(savedTeam));
+        parsedSavedTeam = JSON.parse(savedTeam);
+        setSelectedTeam(parsedSavedTeam);
       } catch (e) {
         console.error("Error parsing saved team:", e);
+        localStorage.removeItem("selectedTeam"); // Clear invalid data
       }
     }
-  }, []);
+    
+    // When teams are loaded, verify the selected team is valid
+    if (teams?.teams?.length) {
+      // Check if the saved team actually exists in the user's assigned teams
+      const savedTeamExists = parsedSavedTeam && 
+        teams.teams.some(team => team.id === parsedSavedTeam.id);
+      
+      // If no valid team is selected, select the first available team
+      if (!savedTeamExists) {
+        setSelectedTeam(teams.teams[0]);
+        localStorage.setItem("selectedTeam", JSON.stringify(teams.teams[0]));
+        console.log("Auto-selecting team:", teams.teams[0].name);
+      }
+    }
+  }, [teams]);
 
   const createTeam = async () => {
     if (!newTeamName.trim()) {
@@ -203,7 +209,7 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[200px] p-0">
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
           <Command>
             <CommandList>
               <CommandInput placeholder="Search team..." />
@@ -240,11 +246,11 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
                 ))}
               </CommandGroup>
             </CommandList>
-            <CommandList>
-              <CommandSeparator />
-              <CommandGroup>
-                {/* Show Create Team button only if current selected team is an admin team OR user is admin */}
-                {(selectedTeam?.role === "admin" || user?.role === "admin") && (
+            {/* Show Create Team button only if current selected team is an admin team OR user is admin */}
+            {(selectedTeam?.role === "admin" || user?.role === "admin") && (
+              <CommandList>
+                <CommandSeparator />
+                <CommandGroup>
                   <DialogTrigger asChild>
                     <CommandItem
                       onSelect={() => {
@@ -256,9 +262,9 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
                       Create Team
                     </CommandItem>
                   </DialogTrigger>
-                )}
-              </CommandGroup>
-            </CommandList>
+                </CommandGroup>
+              </CommandList>
+            )}
           </Command>
         </PopoverContent>
       </Popover>

@@ -121,7 +121,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const cachedUserData = localStorage.getItem("userData");
       if (cachedUserData) {
-        return JSON.parse(cachedUserData)?.user;
+        const cachedData = JSON.parse(cachedUserData);
+        return cachedData?.user || cachedData;
       }
     } catch (e) {
       console.error("Error parsing cached user data:", e);
