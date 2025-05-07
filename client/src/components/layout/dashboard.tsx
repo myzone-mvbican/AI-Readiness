@@ -1,7 +1,7 @@
 import { AppSidebar } from "./dashboard/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Separator } from "@/components/ui/separator";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -15,12 +15,32 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { useMemo } from "react";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
+  title?: string;
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
+export function DashboardLayout({ children, title }: DashboardLayoutProps) {
+  const [location] = useLocation();
+  
+  // Generate page title based on the current route
+  const pageName = useMemo(() => {
+    // If a title is explicitly provided, use it
+    if (title) return title;
+    
+    // Otherwise generate from the current route
+    const path = location.split('/').filter(Boolean);
+    const currentRoute = path[path.length - 1] || 'dashboard';
+    
+    // Format the route name (convert kebab-case to Title Case)
+    return currentRoute
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }, [location, title]);
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -38,7 +58,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Route Name</BreadcrumbPage>
+                  <BreadcrumbPage>{pageName}</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
