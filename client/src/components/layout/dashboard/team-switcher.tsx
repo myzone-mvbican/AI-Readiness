@@ -90,19 +90,26 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
   // 2. When teams are fetched, check if selected team is valid
   // 3. If no valid team is selected, select the first available team
   React.useEffect(() => {
-    // First attempt to load from localStorage
-    const savedTeam = localStorage.getItem("selectedTeam");
-    let parsedSavedTeam = null;
-    
-    if (savedTeam) {
-      try {
-        parsedSavedTeam = JSON.parse(savedTeam);
-        setSelectedTeam(parsedSavedTeam);
-      } catch (e) {
-        console.error("Error parsing saved team:", e);
-        localStorage.removeItem("selectedTeam"); // Clear invalid data
+    // Load team from localStorage on component mount
+    const loadSavedTeam = () => {
+      const savedTeam = localStorage.getItem("selectedTeam");
+      let parsedSavedTeam = null;
+      
+      if (savedTeam) {
+        try {
+          parsedSavedTeam = JSON.parse(savedTeam);
+          setSelectedTeam(parsedSavedTeam);
+          return parsedSavedTeam;
+        } catch (e) {
+          console.error("Error parsing saved team:", e);
+          localStorage.removeItem("selectedTeam"); // Clear invalid data
+        }
       }
-    }
+      return null;
+    };
+    
+    // Initially try to load team
+    const parsedSavedTeam = loadSavedTeam();
     
     // When teams are loaded, verify the selected team is valid
     if (teams?.teams?.length) {
@@ -117,6 +124,33 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
         console.log("Auto-selecting team:", teams.teams[0].name);
       }
     }
+    
+    // Listen for storage events from other tabs
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === "selectedTeam" && event.newValue !== null) {
+        try {
+          const newTeam = JSON.parse(event.newValue);
+          setSelectedTeam(newTeam);
+        } catch (e) {
+          console.error("Error parsing team from storage event:", e);
+        }
+      } else if (event.key === "selectedTeam" && event.newValue === null) {
+        // If team was removed, try to select first available team
+        if (teams?.teams?.length) {
+          setSelectedTeam(teams.teams[0]);
+        } else {
+          setSelectedTeam(null);
+        }
+      }
+    };
+    
+    // Add storage event listener
+    window.addEventListener("storage", handleStorageChange);
+    
+    // Clean up event listener on unmount
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, [teams]);
 
   const createTeam = async () => {
