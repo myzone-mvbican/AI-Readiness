@@ -48,11 +48,17 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, Search, MoreHorizontal, PlusCircle, X } from "lucide-react";
+import { Loader2, Search, MoreHorizontal, PlusCircle, X, ArrowUpDown } from "lucide-react";
 
 // Import DataTable components
 import {
@@ -313,12 +319,34 @@ export default function UsersPage() {
   const columns: ColumnDef<User>[] = [
     {
       accessorKey: "name",
-      header: "Name",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="-ml-4"
+          >
+            Name
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
       cell: ({ row }) => <div>{row.getValue("name")}</div>,
     },
     {
       accessorKey: "role",
-      header: "Type",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="-ml-4"
+          >
+            Type
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
       cell: ({ row }) => {
         const role = row.getValue("role") as string;
         return (
@@ -330,11 +358,23 @@ export default function UsersPage() {
     },
     {
       accessorKey: "createdAt",
-      header: "Created",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="-ml-4"
+          >
+            Created
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
       cell: ({ row }) => {
         const date = new Date(row.getValue("createdAt"));
         return <div>{formatDistanceToNow(date, { addSuffix: true })}</div>;
       },
+      sortingFn: "datetime",
     },
     {
       id: "teams",
@@ -351,19 +391,81 @@ export default function UsersPage() {
               </Badge>
             ))}
             {!isCurrentUser && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setTeamManagementUser(user);
-                  setIsTeamPopoverOpen(true);
-                }}
-              >
-                <PlusCircle className="h-3 w-3" />
-                <span className="sr-only">Manage teams</span>
-              </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTeamManagementUser(user);
+                    }}
+                  >
+                    <PlusCircle className="h-3 w-3" />
+                    <span className="sr-only">Manage teams</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0" align="end">
+                  <div className="p-4 border-b">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium">Manage Teams</h4>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setTeamManagementUser(null)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="mt-2">
+                      <Input
+                        placeholder="Search teams..."
+                        value={teamSearchValue}
+                        onChange={(e) => setTeamSearchValue(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="max-h-[250px] overflow-y-auto">
+                    {isLoadingTeams ? (
+                      <div className="flex items-center justify-center p-4">
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      </div>
+                    ) : (
+                      filteredTeams.map((team) => {
+                        const isAssigned = user.teams.some(
+                          (t) => t.id === team.id
+                        );
+                        return (
+                          <div
+                            key={team.id}
+                            className="flex items-center justify-between px-4 py-2 hover:bg-muted"
+                          >
+                            <span className="text-sm">{team.name}</span>
+                            <Checkbox
+                              checked={isAssigned}
+                              onCheckedChange={() => 
+                                handleToggleTeam(
+                                  user.id,
+                                  team.id,
+                                  user.teams
+                                )
+                              }
+                            />
+                          </div>
+                        );
+                      })
+                    )}
+                    
+                    {!isLoadingTeams && filteredTeams.length === 0 && (
+                      <div className="text-center p-4 text-sm text-muted-foreground">
+                        No teams found.
+                      </div>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
             )}
           </div>
         );
@@ -535,7 +637,7 @@ export default function UsersPage() {
 
       {/* Edit User Dialog */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[650px]">
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>
@@ -545,145 +647,156 @@ export default function UsersPage() {
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input {...field} disabled />
-                    </FormControl>
-                    <FormDescription>
-                      Email cannot be changed.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="company"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Company</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || ""} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="employeeCount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Employee Count</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value || ""}
-                      >
+              <Tabs defaultValue="profile" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="profile">Profile Information</TabsTrigger>
+                  <TabsTrigger value="company">Company Information</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="profile" className="p-4 pt-6 space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select size" />
-                          </SelectTrigger>
+                          <Input {...field} />
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="1-9">1-9</SelectItem>
-                          <SelectItem value="10-49">10-49</SelectItem>
-                          <SelectItem value="50-99">50-99</SelectItem>
-                          <SelectItem value="100-499">100-499</SelectItem>
-                          <SelectItem value="500-999">500-999</SelectItem>
-                          <SelectItem value="1000+">1000+</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="industry"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Industry</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value || ""}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select industry" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="technology">Technology</SelectItem>
-                        <SelectItem value="finance">Finance</SelectItem>
-                        <SelectItem value="healthcare">Healthcare</SelectItem>
-                        <SelectItem value="education">Education</SelectItem>
-                        <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                        <SelectItem value="retail">Retail</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input {...field} disabled />
+                        </FormControl>
+                        <FormDescription>
+                          Email cannot be changed.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <div className="space-y-4">
-                <div className="text-sm font-medium">Change Password (Optional)</div>
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>New Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Leave blank to keep current password.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <div className="space-y-4">
+                    <div className="text-sm font-medium">Change Password (Optional)</div>
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>New Password</FormLabel>
+                          <FormControl>
+                            <Input type="password" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormDescription>
+                            Leave blank to keep current password.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                <FormField
-                  control={form.control}
-                  name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirm Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                    {form.watch("password") && (
+                      <FormField
+                        control={form.control}
+                        name="confirmPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Confirm Password</FormLabel>
+                            <FormControl>
+                              <Input type="password" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="company" className="p-4 pt-6 space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="company"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Company</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="employeeCount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Employee Count</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value || ""}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select size" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="1-9">1-9</SelectItem>
+                            <SelectItem value="10-49">10-49</SelectItem>
+                            <SelectItem value="50-99">50-99</SelectItem>
+                            <SelectItem value="100-499">100-499</SelectItem>
+                            <SelectItem value="500-999">500-999</SelectItem>
+                            <SelectItem value="1000+">1000+</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="industry"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Industry</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value || ""}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select industry" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="technology">Technology</SelectItem>
+                            <SelectItem value="finance">Finance</SelectItem>
+                            <SelectItem value="healthcare">Healthcare</SelectItem>
+                            <SelectItem value="education">Education</SelectItem>
+                            <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                            <SelectItem value="retail">Retail</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </TabsContent>
+              </Tabs>
 
               <DialogFooter>
                 <Button
