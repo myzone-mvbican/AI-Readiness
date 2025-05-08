@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, PlusCircle, X } from "lucide-react";
+import { Loader2, PlusCircle } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,7 @@ export function TeamManagement({ user, currentUserId, isAdmin }: TeamManagementP
   const queryClient = useQueryClient();
   const [teamSearchValue, setTeamSearchValue] = useState("");
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const popoverContentRef = useRef<HTMLDivElement>(null);
 
   // Fetch all teams for team management
   const { data: teamsData, isLoading: isLoadingTeams } = useQuery<TeamsResponse>({
@@ -66,6 +67,16 @@ export function TeamManagement({ user, currentUserId, isAdmin }: TeamManagementP
     updateUserTeamsMutation.mutate({ userId, teamIds: newTeamIds });
   };
 
+  // Handle removing a team by clicking on the badge
+  const handleRemoveTeam = (e: React.MouseEvent, teamId: number) => {
+    e.stopPropagation();
+    if (isCurrentUser) return;
+    
+    const currentTeamIds = user.teams.map(team => team.id);
+    const newTeamIds = currentTeamIds.filter(id => id !== teamId);
+    updateUserTeamsMutation.mutate({ userId: user.id, teamIds: newTeamIds });
+  };
+
   // Get properly typed teams array
   const teams = teamsData?.teams || [];
   
@@ -77,29 +88,99 @@ export function TeamManagement({ user, currentUserId, isAdmin }: TeamManagementP
   // Check if this is the current user
   const isCurrentUser = currentUserId === user.id;
 
+  // Handle input change without closing popover
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    setTeamSearchValue(e.target.value);
+  };
+
+  // Handle checkbox change without closing popover
+  const handleCheckboxChange = (userId: number, teamId: number, currentTeams: Team[]) => {
+    handleToggleTeam(userId, teamId, currentTeams);
+  };
+
   // If no teams assigned, show "No teams" text
   if (user.teams.length === 0) {
     return (
-      <div className="flex flex-wrap gap-1 items-center w-full cursor-pointer" onClick={() => !isCurrentUser && setIsPopoverOpen(true)}>
+      <div 
+        className="flex flex-wrap gap-1 items-center w-full h-full cursor-pointer" 
+        onClick={(e) => {
+          if (!isCurrentUser) {
+            e.preventDefault();
+            setIsPopoverOpen(true);
+          }
+        }}
+      >
         <span className="text-sm text-muted-foreground">No teams</span>
         {!isCurrentUser && (
-          <TeamPopover 
-            isOpen={isPopoverOpen}
-            setIsOpen={setIsPopoverOpen}
-            teamSearchValue={teamSearchValue}
-            setTeamSearchValue={setTeamSearchValue}
-            isLoadingTeams={isLoadingTeams}
-            filteredTeams={filteredTeams}
-            user={user}
-            handleToggleTeam={handleToggleTeam}
-          />
+          <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+            <PopoverTrigger className="sr-only">
+              <span>Manage Teams</span>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-0" align="end" ref={popoverContentRef}>
+              <div className="p-4 border-b">
+                <div className="flex items-center">
+                  <h4 className="text-sm font-medium">Manage Teams</h4>
+                </div>
+                <div className="mt-2">
+                  <Input
+                    placeholder="Search teams..."
+                    value={teamSearchValue}
+                    onChange={handleInputChange}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+              </div>
+              
+              <div className="max-h-[250px] overflow-y-auto">
+                {isLoadingTeams ? (
+                  <div className="flex items-center justify-center p-4">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  filteredTeams.map((team) => {
+                    const isAssigned = user.teams.some(
+                      (t) => t.id === team.id
+                    );
+                    return (
+                      <div
+                        key={team.id}
+                        className="flex items-center justify-between px-4 py-2 hover:bg-muted"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <span className="text-sm">{team.name}</span>
+                        <Checkbox
+                          checked={isAssigned}
+                          onCheckedChange={() => handleCheckboxChange(user.id, team.id, user.teams)}
+                        />
+                      </div>
+                    );
+                  })
+                )}
+                
+                {!isLoadingTeams && filteredTeams.length === 0 && (
+                  <div className="text-center p-4 text-sm text-muted-foreground">
+                    No teams found.
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
         )}
       </div>
     );
   }
 
   return (
-    <div className="flex flex-wrap gap-1 items-center w-full cursor-pointer" onClick={() => !isCurrentUser && setIsPopoverOpen(true)}>
+    <div 
+      className="flex flex-wrap gap-1 items-center w-full h-full cursor-pointer" 
+      onClick={(e) => {
+        if (!isCurrentUser) {
+          e.preventDefault();
+          setIsPopoverOpen(true);
+        }
+      }}
+    >
       {user.teams.map(team => (
         <TooltipProvider key={team.id}>
           <Tooltip>
@@ -107,12 +188,7 @@ export function TeamManagement({ user, currentUserId, isAdmin }: TeamManagementP
               <Badge 
                 variant="outline" 
                 className="text-xs"
-                onClick={(e) => {
-                  if (!isCurrentUser) {
-                    e.stopPropagation();
-                    handleToggleTeam(user.id, team.id, user.teams);
-                  }
-                }}
+                onClick={(e) => handleRemoveTeam(e, team.id)}
               >
                 {team.name}
               </Badge>
@@ -125,106 +201,60 @@ export function TeamManagement({ user, currentUserId, isAdmin }: TeamManagementP
       ))}
       
       {!isCurrentUser && (
-        <TeamPopover 
-          isOpen={isPopoverOpen}
-          setIsOpen={setIsPopoverOpen}
-          teamSearchValue={teamSearchValue}
-          setTeamSearchValue={setTeamSearchValue}
-          isLoadingTeams={isLoadingTeams}
-          filteredTeams={filteredTeams}
-          user={user}
-          handleToggleTeam={handleToggleTeam}
-        />
+        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+          <PopoverTrigger className="sr-only">
+            <span>Manage Teams</span>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-0" align="end" ref={popoverContentRef}>
+            <div className="p-4 border-b">
+              <div className="flex items-center">
+                <h4 className="text-sm font-medium">Manage Teams</h4>
+              </div>
+              <div className="mt-2">
+                <Input
+                  placeholder="Search teams..."
+                  value={teamSearchValue}
+                  onChange={handleInputChange}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            </div>
+            
+            <div className="max-h-[250px] overflow-y-auto">
+              {isLoadingTeams ? (
+                <div className="flex items-center justify-center p-4">
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                </div>
+              ) : (
+                filteredTeams.map((team) => {
+                  const isAssigned = user.teams.some(
+                    (t) => t.id === team.id
+                  );
+                  return (
+                    <div
+                      key={team.id}
+                      className="flex items-center justify-between px-4 py-2 hover:bg-muted"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <span className="text-sm">{team.name}</span>
+                      <Checkbox
+                        checked={isAssigned}
+                        onCheckedChange={() => handleCheckboxChange(user.id, team.id, user.teams)}
+                      />
+                    </div>
+                  );
+                })
+              )}
+              
+              {!isLoadingTeams && filteredTeams.length === 0 && (
+                <div className="text-center p-4 text-sm text-muted-foreground">
+                  No teams found.
+                </div>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
       )}
     </div>
-  );
-}
-
-interface TeamPopoverProps {
-  isOpen: boolean;
-  setIsOpen: (open: boolean) => void;
-  teamSearchValue: string;
-  setTeamSearchValue: (value: string) => void;
-  isLoadingTeams: boolean;
-  filteredTeams: Team[];
-  user: User;
-  handleToggleTeam: (userId: number, teamId: number, currentTeams: Team[]) => void;
-}
-
-function TeamPopover({
-  isOpen,
-  setIsOpen,
-  teamSearchValue,
-  setTeamSearchValue,
-  isLoadingTeams,
-  filteredTeams,
-  user,
-  handleToggleTeam
-}: TeamPopoverProps) {
-  return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
-        <PlusCircle className="h-3 w-3 ml-1 cursor-pointer" onClick={(e) => {
-          e.stopPropagation();
-          setIsOpen(true);
-        }} />
-      </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <div className="p-4 border-b">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-medium">Manage Teams</h4>
-          </div>
-          <div className="mt-2">
-            <Input
-              placeholder="Search teams..."
-              value={teamSearchValue}
-              onChange={(e) => {
-                e.stopPropagation();
-                setTeamSearchValue(e.target.value);
-              }}
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
-        </div>
-        
-        <div className="max-h-[250px] overflow-y-auto">
-          {isLoadingTeams ? (
-            <div className="flex items-center justify-center p-4">
-              <Loader2 className="h-4 w-4 animate-spin text-primary" />
-            </div>
-          ) : (
-            filteredTeams.map((team) => {
-              const isAssigned = user.teams.some(
-                (t) => t.id === team.id
-              );
-              return (
-                <div
-                  key={team.id}
-                  className="flex items-center justify-between px-4 py-2 hover:bg-muted"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                >
-                  <span className="text-sm">{team.name}</span>
-                  <Checkbox
-                    checked={isAssigned}
-                    onCheckedChange={(checked) => {
-                      handleToggleTeam(user.id, team.id, user.teams);
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </div>
-              );
-            })
-          )}
-          
-          {!isLoadingTeams && filteredTeams.length === 0 && (
-            <div className="text-center p-4 text-sm text-muted-foreground">
-              No teams found.
-            </div>
-          )}
-        </div>
-      </PopoverContent>
-    </Popover>
   );
 }
