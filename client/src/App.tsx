@@ -12,6 +12,7 @@ import SurveyNew from "@/pages/dashboard-survey-new";
 import DashboardHome from "@/pages/dashboard-home";
 import SurveysPage from "@/pages/dashboard-surveys";
 import AdminSurveysPage from "@/pages/dashboard-admin-surveys";
+import UsersPage from "@/pages/dashboard-users";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -36,6 +37,7 @@ function Router() {
         <ProtectedRoute path="/dashboard/assessments" component={SurveysPage} />
         <ProtectedRoute path="/dashboard/settings" component={SettingsPage} />
         <AdminProtectedRoute path="/dashboard/surveys" component={AdminSurveysPage} />
+        <AdminProtectedRoute path="/dashboard/users" component={UsersPage} />
         <ProtectedRoute path="/dashboard/:rest*" component={DashboardHome} />
         <Route component={NotFound} />
       </Switch>
