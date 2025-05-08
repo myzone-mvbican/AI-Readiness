@@ -26,6 +26,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  PopoverClose,
 } from "@/components/ui/popover";
 import {
   Form,
@@ -154,9 +155,7 @@ export default function UsersPage() {
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
-  // State for team assignment
-  const [teamManagementUser, setTeamManagementUser] = useState<User | null>(null);
-  const [isTeamPopoverOpen, setIsTeamPopoverOpen] = useState(false);
+  // State for team search
   const [teamSearchValue, setTeamSearchValue] = useState("");
 
   // Fetch users
@@ -311,7 +310,7 @@ export default function UsersPage() {
   };
 
   // Filtered teams based on search
-  const filteredTeams = teamsData?.teams?.filter(team => 
+  const filteredTeams = teamsData?.teams?.filter((team: any) => 
     team.name.toLowerCase().includes(teamSearchValue.toLowerCase())
   ) || [];
 
@@ -399,7 +398,6 @@ export default function UsersPage() {
                     className="h-5 w-5"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setTeamManagementUser(user);
                     }}
                   >
                     <PlusCircle className="h-3 w-3" />
@@ -413,7 +411,10 @@ export default function UsersPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setTeamManagementUser(null)}
+                        onClick={() => {
+                          // This manually closes the popover
+                          document.body.click();
+                        }}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -433,7 +434,7 @@ export default function UsersPage() {
                         <Loader2 className="h-4 w-4 animate-spin text-primary" />
                       </div>
                     ) : (
-                      filteredTeams.map((team) => {
+                      filteredTeams.map((team: any) => {
                         const isAssigned = user.teams.some(
                           (t) => t.id === team.id
                         );
@@ -522,7 +523,7 @@ export default function UsersPage() {
 
   // Set up table
   const table = useReactTable({
-    data: usersData?.users || [],
+    data: (usersData?.users as User[]) || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -845,73 +846,7 @@ export default function UsersPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Team Management Popover */}
-      {teamManagementUser && (
-        <Popover open={isTeamPopoverOpen} onOpenChange={setIsTeamPopoverOpen}>
-          <PopoverTrigger asChild>
-            <span style={{ display: "none" }}></span> {/* Hidden trigger */}
-          </PopoverTrigger>
-          <PopoverContent className="w-80 p-0" align="end">
-            <div className="p-4 border-b">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium">Manage Teams</h4>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsTeamPopoverOpen(false)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="mt-2">
-                <Input
-                  placeholder="Search teams..."
-                  value={teamSearchValue}
-                  onChange={(e) => setTeamSearchValue(e.target.value)}
-                />
-              </div>
-            </div>
-            
-            <div className="max-h-[250px] overflow-y-auto">
-              {isLoadingTeams ? (
-                <div className="flex items-center justify-center p-4">
-                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                </div>
-              ) : (
-                filteredTeams.map((team) => {
-                  const isAssigned = teamManagementUser.teams.some(
-                    (t) => t.id === team.id
-                  );
-                  return (
-                    <div
-                      key={team.id}
-                      className="flex items-center justify-between px-4 py-2 hover:bg-muted"
-                    >
-                      <span className="text-sm">{team.name}</span>
-                      <Checkbox
-                        checked={isAssigned}
-                        onCheckedChange={() => 
-                          handleToggleTeam(
-                            teamManagementUser.id,
-                            team.id,
-                            teamManagementUser.teams
-                          )
-                        }
-                      />
-                    </div>
-                  );
-                })
-              )}
-              
-              {!isLoadingTeams && filteredTeams.length === 0 && (
-                <div className="text-center p-4 text-sm text-muted-foreground">
-                  No teams found.
-                </div>
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
-      )}
+      {/* We no longer need the separate Team Management Popover as it's now handled inline */}
     </DashboardLayout>
   );
 }
