@@ -26,7 +26,6 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-  PopoverClose,
 } from "@/components/ui/popover";
 import {
   Form,
@@ -158,14 +157,25 @@ export default function UsersPage() {
   // State for team search
   const [teamSearchValue, setTeamSearchValue] = useState("");
 
+  // Define API response types
+  type UsersResponse = {
+    success: boolean;
+    users: User[];
+  };
+
+  type TeamsResponse = {
+    success: boolean;
+    teams: Team[];
+  };
+
   // Fetch users
-  const { data: usersData, isLoading: isLoadingUsers } = useQuery({
+  const { data: usersData, isLoading: isLoadingUsers } = useQuery<UsersResponse>({
     queryKey: ["/api/users"],
     retry: false,
   });
 
   // Fetch all teams for team management
-  const { data: teamsData, isLoading: isLoadingTeams } = useQuery({
+  const { data: teamsData, isLoading: isLoadingTeams } = useQuery<TeamsResponse>({
     queryKey: ["/api/admin/teams"],
     enabled: !!currentUser?.role === true && currentUser?.role === "admin",
   });
@@ -309,10 +319,13 @@ export default function UsersPage() {
     updateUserTeamsMutation.mutate({ userId, teamIds: newTeamIds });
   };
 
+  // Get properly typed teams array
+  const teams = teamsData?.teams || [];
+  
   // Filtered teams based on search
-  const filteredTeams = teamsData?.teams?.filter((team: any) => 
+  const filteredTeams = teams.filter((team) => 
     team.name.toLowerCase().includes(teamSearchValue.toLowerCase())
-  ) || [];
+  );
 
   // Table columns definition
   const columns: ColumnDef<User>[] = [
@@ -521,9 +534,12 @@ export default function UsersPage() {
     },
   ];
 
+  // Get properly typed users array
+  const users = usersData?.users || [];
+  
   // Set up table
   const table = useReactTable({
-    data: (usersData?.users as User[]) || [],
+    data: users,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
