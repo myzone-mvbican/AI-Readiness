@@ -1,0 +1,91 @@
+I’m building a user management interface at /dashboard/users using React, Tailwind CSS, shadcn/ui, and existing team-role infrastructure. Please build the following using shadcn/ui’s DataTable and Dialog components only — do not introduce unrelated layout or framework changes.
+
+🧾 1. User Listing Table
+Use shadcn/ui’s DataTable with:
+
+Pagination
+
+Global search
+
+Optional filter by type (admin, client)
+
+Table Columns:
+Name: plain text
+
+Type: Badge ("Admin", "Client")
+
+Created At: formatted date
+
+Teams: interactive tag list (see below)
+
+Actions: 3-dot menu with:
+
+Edit → opens modal (see section 2)
+
+Delete → confirmation modal (see section 3)
+
+🧍 2. Edit User Modal (shadcn/ui Dialog)
+Clicking Edit opens a Dialog modal.
+
+Modal contains a form identical to /dashboard/settings:
+
+Name, Company, Industry, Employee Count
+
+Email (read-only)
+
+Password + Confirm (optional, validate match)
+
+Submit sends a PUT /api/users/:id request.
+
+On success, show toast and update table row.
+
+❌ 3. Delete User Flow
+Clicking Delete opens confirmation dialog (AlertDialog).
+
+Message:
+"Are you sure you want to delete this user? This action cannot be undone."
+
+On confirm, send DELETE /api/users/:id
+
+On success: show toast and remove row from table.
+
+🧠 4. Interactive Team Column Editor
+When clicking the Teams cell of a user:
+
+Open a popover panel/dropdown just under the cell.
+
+Contents:
+
+Search field at top (Input with debounce)
+
+List of all teams, each with:
+
+Team name
+
+Checkbox for selected/unselected
+
+Already-selected teams show in column as Badge components.
+
+Clicking a team toggles assignment via PATCH /api/users/:id/teams.
+
+Close panel on click-outside or Esc.
+
+✅ Backend Requirements:
+GET /api/users — returns full user list with metadata and team list
+
+PUT /api/users/:id — updates user profile info
+
+DELETE /api/users/:id — deletes a user
+
+GET /api/teams — returns all available teams
+
+PATCH /api/users/:id/teams — updates user’s team assignments
+
+⚠️ Do Not:
+Do not allow modifying the logged-in admin’s own account here.
+
+Do not show password field unless editing.
+
+Do not expose team-switching functionality outside this view.
+
+The final result should look and behave like the shadcn "Tasks" table example with rich interactivity for team management, seamless editing, and strict role-based access control.

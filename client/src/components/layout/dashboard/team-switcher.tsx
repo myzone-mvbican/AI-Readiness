@@ -11,19 +11,19 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from "@/components/ui/command";
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
 import {
   Dialog,
@@ -32,7 +32,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,9 +43,9 @@ import { TeamWithRole } from "@shared/schema";
 // Mock teams for initial development, will be replaced with real data
 const defaultTeams: TeamWithRole[] = [
   {
-    id: 99999,
-    name: "Loading",
-    role: "none",
+    id: 2,
+    name: "Client",
+    role: "client",
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -54,8 +53,7 @@ const defaultTeams: TeamWithRole[] = [
 
 type TeamSwitcherProps = React.HTMLAttributes<HTMLDivElement>;
 
-export function TeamSwitcher({ className }: TeamSwitcherProps) {
-  const [open, setOpen] = React.useState(false);
+export function TeamSwitcher({}: TeamSwitcherProps) {
   const [showNewTeamDialog, setShowNewTeamDialog] = React.useState(false);
   const [newTeamName, setNewTeamName] = React.useState("");
   const { toast } = useToast();
@@ -75,16 +73,6 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
     enabled: !!user, // Only fetch if user is logged in
   });
 
-  // For admin users, get all teams in the system
-  const isAdmin = user?.role === "admin";
-  const { data: adminTeams, isLoading: isLoadingAdminTeams } = useQuery<{
-    success: boolean;
-    teams: TeamWithRole[];
-  }>({
-    queryKey: ["/api/admin/teams"],
-    enabled: !!user && isAdmin, // Only fetch if user is admin
-  });
-
   // Enhanced team selection logic:
   // 1. Load from localStorage on mount
   // 2. When teams are fetched, check if selected team is valid
@@ -94,7 +82,7 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
     const loadSavedTeam = () => {
       const savedTeam = localStorage.getItem("selectedTeam");
       let parsedSavedTeam = null;
-      
+
       if (savedTeam) {
         try {
           parsedSavedTeam = JSON.parse(savedTeam);
@@ -107,16 +95,17 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
       }
       return null;
     };
-    
+
     // Initially try to load team
     const parsedSavedTeam = loadSavedTeam();
-    
+
     // When teams are loaded, verify the selected team is valid
     if (teams?.teams?.length) {
       // Check if the saved team actually exists in the user's assigned teams
-      const savedTeamExists = parsedSavedTeam && 
-        teams.teams.some(team => team.id === parsedSavedTeam.id);
-      
+      const savedTeamExists =
+        parsedSavedTeam &&
+        teams.teams.some((team) => team.id === parsedSavedTeam.id);
+
       // If no valid team is selected, select the first available team
       if (!savedTeamExists) {
         setSelectedTeam(teams.teams[0]);
@@ -124,7 +113,7 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
         console.log("Auto-selecting team:", teams.teams[0].name);
       }
     }
-    
+
     // Listen for storage events from other tabs
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === "selectedTeam" && event.newValue !== null) {
@@ -143,10 +132,10 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
         }
       }
     };
-    
+
     // Add storage event listener
     window.addEventListener("storage", handleStorageChange);
-    
+
     // Clean up event listener on unmount
     return () => {
       window.removeEventListener("storage", handleStorageChange);
@@ -200,7 +189,6 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
 
   const handleSelectTeam = (team: TeamWithRole) => {
     setSelectedTeam(team);
-    setOpen(false);
     // Store selected team in localStorage
     localStorage.setItem("selectedTeam", JSON.stringify(team));
   };
@@ -213,123 +201,121 @@ export function TeamSwitcher({ className }: TeamSwitcherProps) {
     teams?.teams?.some((team) => team.role === "admin") ||
     false;
 
-  // Determine if the team switcher should be disabled (single team)
-  const singleTeam = availableTeams.length <= 1;
+  const { isMobile } = useSidebar();
 
   return (
     <Dialog open={showNewTeamDialog} onOpenChange={setShowNewTeamDialog}>
-      <Popover
-        open={singleTeam ? false : open}
-        onOpenChange={!singleTeam ? setOpen : undefined}
-      >
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            aria-label="Select a team"
-            className={cn("w-full justify-between", className)}
-          >
-            {selectedTeam?.role === "admin" ? (
-              <ShieldCheck className="mr-2 h-4 w-4 text-blue-500" />
-            ) : (
-              <Building className="mr-2 h-4 w-4" />
-            )}
-            <span className="flex-1 truncate text-left">
-              {selectedTeam?.name || "Select team"}
-            </span>
-            {!singleTeam && (
-              <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
-            )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-          <Command>
-            <CommandList>
-              <CommandInput placeholder="Search team..." />
-              <CommandEmpty>No team found.</CommandEmpty>
-              <CommandGroup heading="Teams">
-                {availableTeams.map((team) => (
-                  <CommandItem
-                    key={team.id}
-                    onSelect={() => handleSelectTeam(team)}
-                    className="text-sm"
-                  >
-                    {team.role === "admin" ? (
-                      <ShieldCheck className="mr-2 h-4 w-4 text-blue-500" />
-                    ) : (
-                      <Building className="mr-2 h-4 w-4" />
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <SidebarMenuButton
+                size="lg"
+                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              >
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                  L
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">
+                    {selectedTeam?.name}
+                  </span>
+                  <span className="truncate text-xs">{selectedTeam?.role}</span>
+                </div>
+                <ChevronsUpDown className="ml-auto" />
+              </SidebarMenuButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+              align="start"
+              side={isMobile ? "bottom" : "right"}
+              sideOffset={4}
+            >
+              <DropdownMenuLabel className="text-xs text-muted-foreground">
+                Teams
+              </DropdownMenuLabel>
+              {availableTeams.map((team) => (
+                <DropdownMenuItem
+                  key={team.id}
+                  onSelect={() => handleSelectTeam(team)}
+                  className="text-sm"
+                >
+                  {team.role === "admin" ? (
+                    <ShieldCheck className="mr-2 h-4 w-4 text-blue-500" />
+                  ) : (
+                    <Building className="mr-2 h-4 w-4" />
+                  )}
+                  <span className="flex flex-1 items-center justify-between">
+                    <span>{team.name}</span>
+                    {team.role === "admin" && (
+                      <span className="ml-2 rounded-sm bg-blue-100 px-1.5 py-0.5 text-xs text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                        Admin
+                      </span>
                     )}
-                    <span className="flex flex-1 items-center justify-between">
-                      <span>{team.name}</span>
-                      {team.role === "admin" && (
-                        <span className="ml-2 rounded-sm bg-blue-100 px-1.5 py-0.5 text-xs text-blue-600 dark:bg-blue-900 dark:text-blue-300">
-                          Admin
-                        </span>
-                      )}
-                    </span>
-                    <Check
-                      className={cn(
-                        "ml-2 h-4 w-4",
-                        selectedTeam?.id === team.id
-                          ? "opacity-100"
-                          : "opacity-0",
-                      )}
-                    />
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-            {/* Show Create Team button only if current selected team is an admin team OR user is admin */}
-            {(selectedTeam?.role === "admin" || user?.role === "admin") && (
-              <CommandList>
-                <CommandSeparator />
-                <CommandGroup>
-                  <DialogTrigger asChild>
-                    <CommandItem
-                      onSelect={() => {
-                        setOpen(false);
-                        setShowNewTeamDialog(true);
-                      }}
-                    >
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Create Team
-                    </CommandItem>
-                  </DialogTrigger>
-                </CommandGroup>
-              </CommandList>
-            )}
-          </Command>
-        </PopoverContent>
-      </Popover>
-
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create team</DialogTitle>
-          <DialogDescription>
-            Add a new team to manage projects and members.
-          </DialogDescription>
-        </DialogHeader>
-        <div>
-          <div className="space-y-4 py-2 pb-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Team name</Label>
-              <Input
-                id="name"
-                placeholder="Acme Inc."
-                value={newTeamName}
-                onChange={(e) => setNewTeamName(e.target.value)}
-              />
+                  </span>
+                  <Check
+                    className={cn(
+                      "ml-2 h-4 w-4",
+                      selectedTeam?.id === team.id
+                        ? "opacity-100"
+                        : "opacity-0",
+                    )}
+                  />
+                </DropdownMenuItem>
+              ))}
+              {/* Show Create Team button only if current selected team is an admin team OR user is admin */}
+              {hasAdminRole && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="gap-2 p-2"
+                    onSelect={() => {
+                      setShowNewTeamDialog(true);
+                    }}
+                  >
+                    <div className="flex size-6 items-center justify-center rounded-md border bg-background">
+                      <PlusCircle className="size-4" />
+                    </div>
+                    <div className="font-medium text-muted-foreground">
+                      Add team
+                    </div>
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarMenuItem>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create team</DialogTitle>
+            <DialogDescription>
+              Add a new team to manage projects and members.
+            </DialogDescription>
+          </DialogHeader>
+          <div>
+            <div className="space-y-4 py-2 pb-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Team name</Label>
+                <Input
+                  id="name"
+                  placeholder="Myzone Ltd."
+                  value={newTeamName}
+                  onChange={(e) => setNewTeamName(e.target.value)}
+                />
+              </div>
             </div>
           </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setShowNewTeamDialog(false)}>
-            Cancel
-          </Button>
-          <Button onClick={createTeam}>Create</Button>
-        </DialogFooter>
-      </DialogContent>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowNewTeamDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={createTeam}>Create</Button>
+          </DialogFooter>
+        </DialogContent>
+      </SidebarMenu>
     </Dialog>
   );
 }

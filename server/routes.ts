@@ -7,11 +7,14 @@ import {
   loginSchema,
   insertTeamSchema,
   userTeamSchema,
-  teams
+  teams,
+  users,
+  userTeams
 } from "@shared/schema";
 import { authenticate, requireAdmin } from "./middleware/auth";
 import cors from "cors";
 import { db } from "./db";
+import { eq, and, inArray } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Enable CORS
@@ -361,6 +364,186 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({
         success: false,
         message: "Failed to retrieve all teams"
+      });
+    }
+  });
+  
+  // Admin-only: Get all users
+  app.get("/api/users", authenticate, requireAdmin, async (req, res) => {
+    try {
+      // Import necessary modules
+      const { users } = await import("@shared/schema");
+      
+      // Get basic user information excluding passwords
+      const allUsers = await db.select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        company: users.company,
+        employeeCount: users.employeeCount,
+        industry: users.industry,
+        role: users.role,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+      }).from(users);
+      
+      // For each user, get their teams
+      const usersWithTeams = await Promise.all(
+        allUsers.map(async (user) => {
+          const teams = await storage.getTeamsByUserId(user.id);
+          return {
+            ...user,
+            teams: teams
+          };
+        })
+      );
+      
+      return res.status(200).json({
+        success: true,
+        users: usersWithTeams
+      });
+    } catch (error) {
+      console.error("Get all users error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to retrieve user list"
+      });
+    }
+  });
+  
+  // Admin-only: Update a user
+  app.put("/api/users/:id", authenticate, requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const loggedInUserId = req.user!.id;
+      
+      // Prevent admins from modifying their own accounts through this endpoint
+      if (userId === loggedInUserId) {
+        return res.status(403).json({
+          success: false,
+          message: "You cannot modify your own account through this endpoint. Please use /api/user instead."
+        });
+      }
+      
+      // Validate data
+      const result = updateUserSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid update data",
+          errors: result.error.format()
+        });
+      }
+      
+      // If updating password, hash it first
+      let updateData = { ...req.body };
+      if (updateData.password) {
+        updateData.password = await storage.hashPassword(updateData.password);
+      }
+      
+      // Update user
+      const updatedUser = await storage.updateUser(userId, updateData);
+      
+      if (!updatedUser) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found"
+        });
+      }
+      
+      // Return updated user without password
+      const { password, ...userWithoutPassword } = updatedUser;
+      
+      return res.status(200).json({
+        success: true,
+        message: "User updated successfully",
+        user: userWithoutPassword
+      });
+    } catch (error) {
+      console.error("Update user error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to update user"
+      });
+    }
+  });
+  
+  // Admin-only: Delete a user
+  app.delete("/api/users/:id", authenticate, requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const loggedInUserId = req.user!.id;
+      
+      // Prevent admins from deleting their own accounts
+      if (userId === loggedInUserId) {
+        return res.status(403).json({
+          success: false,
+          message: "You cannot delete your own account"
+        });
+      }
+      
+      // Delete user
+      const success = await storage.deleteUser(userId);
+      
+      if (!success) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found or could not be deleted"
+        });
+      }
+      
+      return res.status(200).json({
+        success: true,
+        message: "User deleted successfully"
+      });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to delete user"
+      });
+    }
+  });
+  
+  // Admin-only: Update a user's team assignments
+  app.patch("/api/users/:id/teams", authenticate, requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const loggedInUserId = req.user!.id;
+      
+      // Prevent admins from modifying their own team assignments through this endpoint
+      if (userId === loggedInUserId) {
+        return res.status(403).json({
+          success: false,
+          message: "You cannot modify your own team assignments through this endpoint"
+        });
+      }
+      
+      const { teamIds } = req.body;
+      
+      if (!Array.isArray(teamIds)) {
+        return res.status(400).json({
+          success: false,
+          message: "teamIds must be an array of team IDs"
+        });
+      }
+      
+      // Update user team assignments
+      await storage.updateUserTeams(userId, teamIds);
+      
+      // Get updated teams for this user
+      const updatedTeams = await storage.getTeamsByUserId(userId);
+      
+      return res.status(200).json({
+        success: true,
+        message: "User team assignments updated successfully",
+        teams: updatedTeams
+      });
+    } catch (error) {
+      console.error("Update user teams error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to update user team assignments"
       });
     }
   });

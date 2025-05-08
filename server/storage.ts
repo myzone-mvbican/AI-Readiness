@@ -35,6 +35,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, userData: UpdateUser): Promise<User | undefined>;
+  deleteUser(id: number): Promise<boolean>;
   validatePassword(
     plainPassword: string,
     hashedPassword: string,
@@ -47,6 +48,7 @@ export interface IStorage {
   getTeamByName(name: string): Promise<Team | undefined>;
   getTeamsByUserId(userId: number): Promise<TeamWithRole[]>;
   addUserToTeam(userTeamData: InsertUserTeam): Promise<UserTeam>;
+  updateUserTeams(userId: number, teamIds: number[]): Promise<void>;
 
   // Authentication operations
   generateToken(user: User): string;
@@ -263,6 +265,63 @@ export class DatabaseStorage implements IStorage {
 
     return userTeam;
   }
+  
+  // Delete a user by ID
+  async deleteUser(id: number): Promise<boolean> {
+    try {
+      // First, remove user from all teams
+      await db.delete(userTeams).where(eq(userTeams.userId, id));
+      
+      // Then delete the user
+      const result = await db.delete(users).where(eq(users.id, id)).returning();
+      
+      return result.length > 0;
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      return false;
+    }
+  }
+  
+  // Update a user's team assignments
+  async updateUserTeams(userId: number, teamIds: number[]): Promise<void> {
+    try {
+      // First, get current teams for this user
+      const currentTeams = await this.getTeamsByUserId(userId);
+      const currentTeamIds = currentTeams.map(team => team.id);
+      
+      // Transaction to ensure all operations complete or none do
+      await db.transaction(async (tx) => {
+        // Remove user from teams that are no longer assigned
+        const teamsToRemove = currentTeamIds.filter(id => !teamIds.includes(id));
+        if (teamsToRemove.length > 0) {
+          await tx.delete(userTeams)
+            .where(
+              and(
+                eq(userTeams.userId, userId),
+                inArray(userTeams.teamId, teamsToRemove)
+              )
+            );
+        }
+        
+        // Add user to new teams
+        const teamsToAdd = teamIds.filter(id => !currentTeamIds.includes(id));
+        for (const teamId of teamsToAdd) {
+          await tx.insert(userTeams)
+            .values({
+              userId,
+              teamId,
+              role: "client", // Default role for new team assignments
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .onConflictDoNothing(); // In case the user is already in this team
+        }
+      });
+    } catch (error) {
+      console.error("Error updating user teams:", error);
+      throw error;
+    }
+  }
 
   // Authentication operations
   generateToken(user: User): string {
@@ -429,6 +488,50 @@ export class MemStorage implements IStorage {
     };
     this.userTeams.set(id, userTeam);
     return userTeam;
+  }
+  
+  async deleteUser(id: number): Promise<boolean> {
+    if (!this.users.has(id)) return false;
+    
+    // First remove user from all teams
+    const userTeamIds = Array.from(this.userTeams.entries())
+      .filter(([_, userTeam]) => userTeam.userId === id)
+      .map(([id, _]) => id);
+      
+    userTeamIds.forEach(id => this.userTeams.delete(id));
+    
+    // Then delete the user
+    return this.users.delete(id);
+  }
+  
+  async updateUserTeams(userId: number, teamIds: number[]): Promise<void> {
+    // Get current teams for this user
+    const currentTeams = await this.getTeamsByUserId(userId);
+    const currentTeamIds = currentTeams.map(team => team.id);
+    
+    // Remove user from teams that are no longer assigned
+    const teamsToRemove = currentTeamIds.filter(id => !teamIds.includes(id));
+    
+    if (teamsToRemove.length > 0) {
+      const userTeamIdsToRemove = Array.from(this.userTeams.entries())
+        .filter(([_, userTeam]) => 
+          userTeam.userId === userId && teamsToRemove.includes(userTeam.teamId)
+        )
+        .map(([id, _]) => id);
+        
+      userTeamIdsToRemove.forEach(id => this.userTeams.delete(id));
+    }
+    
+    // Add user to new teams
+    const teamsToAdd = teamIds.filter(id => !currentTeamIds.includes(id));
+    
+    for (const teamId of teamsToAdd) {
+      await this.addUserToTeam({
+        userId,
+        teamId,
+        role: "client" // Default role for new team assignments
+      });
+    }
   }
 
   generateToken(user: User): string {
