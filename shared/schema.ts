@@ -18,6 +18,7 @@ export const users = pgTable("users", {
   industry: text("industry"),
   password: text("password").notNull(),
   role: text("role").default("client"),
+  googleId: text("google_id").unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -38,6 +39,17 @@ export const insertUserSchema = createInsertSchema(users).pick({
   company: true,
   employeeCount: true,
   industry: true,
+  googleId: true,
+});
+
+// Schema for Google OAuth login/signup
+export const googleAuthSchema = z.object({
+  credential: z.string(),
+});
+
+// Schema for Google account connect/disconnect
+export const googleConnectSchema = z.object({
+  credential: z.string(),
 });
 
 export const loginSchema = z.object({
@@ -51,6 +63,7 @@ export const updateUserSchema = createInsertSchema(users).pick({
   employeeCount: true,
   industry: true,
   password: true,
+  googleId: true,
 }).partial();
 
 // Team schemas
@@ -75,6 +88,26 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type UpdateUser = z.infer<typeof updateUserSchema>;
 export type User = typeof users.$inferSelect;
+export type GoogleAuthInput = z.infer<typeof googleAuthSchema>;
+export type GoogleConnectInput = z.infer<typeof googleConnectSchema>;
 
 // Combined types for frontend use
 export type TeamWithRole = Team & { role: string };
+
+// Google OAuth decoded payload
+export interface GoogleUserPayload {
+  iss: string;
+  nbf: number;
+  aud: string;
+  sub: string;
+  email: string;
+  email_verified: boolean;
+  azp: string;
+  name: string;
+  picture: string;
+  given_name: string;
+  family_name: string;
+  iat: number;
+  exp: number;
+  jti: string;
+}

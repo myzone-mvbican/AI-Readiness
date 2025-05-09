@@ -7,20 +7,20 @@ import { Switch } from "@/components/ui/switch";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
-  
+
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
   };
 
   return (
     <div className="flex items-center space-x-2">
-      <Sun className="h-[1.2rem] w-[1.2rem] text-muted-foreground" />
-      <Switch 
+      <Sun className="h-[1rem] w-[1rem] text-muted-foreground" />
+      <Switch
         checked={theme === "dark"}
         onCheckedChange={toggleTheme}
         aria-label="Toggle dark mode"
       />
-      <Moon className="h-[1.2rem] w-[1.2rem] text-muted-foreground" />
+      <Moon className="h-[1rem] w-[1rem] text-muted-foreground" />
     </div>
   );
 }

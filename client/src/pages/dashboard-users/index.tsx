@@ -4,7 +4,13 @@ import { Search, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { DashboardLayout } from "@/components/layout/dashboard";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -33,26 +39,27 @@ import { UserDeleteDialog } from "./user-delete-dialog";
 export default function UsersPage() {
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
-  
+
   // State for sorting and filtering
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [globalFilter, setGlobalFilter] = useState("");
-  
+
   // State for editing users
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  
+
   // State for deleting users
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Fetch users
-  const { data: usersData, isLoading: isLoadingUsers } = useQuery<UsersResponse>({
-    queryKey: ["/api/users"],
-    retry: false,
-  });
+  const { data: usersData, isLoading: isLoadingUsers } =
+    useQuery<UsersResponse>({
+      queryKey: ["/api/users"],
+      retry: false,
+    });
 
   // Handler functions
   const handleEditUser = (user: User) => {
@@ -75,7 +82,7 @@ export default function UsersPage() {
 
   // Get properly typed users array
   const users = usersData?.users || [];
-  
+
   // Set up table
   const table = useReactTable({
     data: users,
@@ -108,7 +115,7 @@ export default function UsersPage() {
   }
 
   return (
-    <DashboardLayout title="Users">
+    <DashboardLayout title="Manage Users">
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="relative w-64">
@@ -122,8 +129,8 @@ export default function UsersPage() {
           </div>
         </div>
 
-        <div className="rounded-md border">
-          <Table>
+        <div className="relative rounded-md border overflow-auto">
+          <Table className="w-full whitespace-nowrap">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
@@ -133,7 +140,7 @@ export default function UsersPage() {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   ))}
@@ -148,10 +155,10 @@ export default function UsersPage() {
                     data-state={row.getIsSelected() && "selected"}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
+                      <TableCell key={cell.id} className="p-0 px-4">
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}
@@ -170,7 +177,7 @@ export default function UsersPage() {
             </TableBody>
           </Table>
         </div>
-
+        {/* Pagination */}
         <div className="flex items-center justify-end space-x-2 py-4">
           <Button
             variant="outline"
@@ -200,15 +207,15 @@ export default function UsersPage() {
               Update user information. Click save when you're done.
             </DialogDescription>
           </DialogHeader>
-          <UserEditForm 
-            editingUser={editingUser} 
-            onClose={() => setIsEditModalOpen(false)} 
+          <UserEditForm
+            editingUser={editingUser}
+            onClose={() => setIsEditModalOpen(false)}
           />
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <UserDeleteDialog 
+      <UserDeleteDialog
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         deletingUser={deletingUser}

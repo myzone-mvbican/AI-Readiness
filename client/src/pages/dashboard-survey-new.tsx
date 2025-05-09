@@ -23,10 +23,12 @@ export default function Dashboard() {
   };
 
   return (
-    <DashboardLayout>
+    <DashboardLayout title="New Assessment">
       <div className="flex flex-col">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">New Assessment</h1>
+          <h1 className="text-3xl font-bold tracking-tight dark:text-white">
+            New Assessment
+          </h1>
           <p className="text-muted-foreground mt-2 mb-6">
             Complete this assessment to evaluate your organization's AI
             readiness

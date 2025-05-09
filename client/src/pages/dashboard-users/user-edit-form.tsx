@@ -23,12 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, UserFormValues, userFormSchema } from "./types";
 
 interface UserEditFormProps {
@@ -51,23 +46,27 @@ export function UserEditForm({ editingUser, onClose }: UserEditFormProps) {
       industry: editingUser?.industry || "",
       password: "",
       confirmPassword: "",
-    }
+    },
   });
 
   // Update user mutation
   const updateUserMutation = useMutation({
     mutationFn: async (data: UserFormValues) => {
       if (!editingUser) return null;
-      
+
       // Remove confirmPassword before sending to API
       const { confirmPassword, ...updateData } = data;
-      
+
       // Remove password if it's empty
       if (!updateData.password) {
         delete updateData.password;
       }
-      
-      const res = await apiRequest("PUT", `/api/users/${editingUser.id}`, updateData);
+
+      const res = await apiRequest(
+        "PUT",
+        `/api/users/${editingUser.id}`,
+        updateData,
+      );
       return res.json();
     },
     onSuccess: () => {
@@ -100,8 +99,8 @@ export function UserEditForm({ editingUser, onClose }: UserEditFormProps) {
             <TabsTrigger value="profile">Profile Information</TabsTrigger>
             <TabsTrigger value="company">Company Information</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="profile" className="p-4 pt-6 space-y-6">
+
+          <TabsContent value="profile" className="space-y-6">
             <FormField
               control={form.control}
               name="name"
@@ -125,16 +124,16 @@ export function UserEditForm({ editingUser, onClose }: UserEditFormProps) {
                   <FormControl>
                     <Input {...field} disabled />
                   </FormControl>
-                  <FormDescription>
-                    Email cannot be changed.
-                  </FormDescription>
+                  <FormDescription>Email cannot be changed.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
             <div className="space-y-4">
-              <div className="text-sm font-medium">Change Password (Optional)</div>
+              <div className="text-sm font-medium">
+                Change Password (Optional)
+              </div>
               <FormField
                 control={form.control}
                 name="password"
@@ -142,7 +141,11 @@ export function UserEditForm({ editingUser, onClose }: UserEditFormProps) {
                   <FormItem>
                     <FormLabel>New Password</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} value={field.value || ""} />
+                      <Input
+                        type="password"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormDescription>
                       Leave blank to keep current password.
@@ -160,7 +163,11 @@ export function UserEditForm({ editingUser, onClose }: UserEditFormProps) {
                     <FormItem>
                       <FormLabel>Confirm Password</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} value={field.value || ""} />
+                        <Input
+                          type="password"
+                          {...field}
+                          value={field.value || ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -169,8 +176,8 @@ export function UserEditForm({ editingUser, onClose }: UserEditFormProps) {
               )}
             </div>
           </TabsContent>
-          
-          <TabsContent value="company" className="p-4 pt-6 space-y-6">
+
+          <TabsContent value="company" className="space-y-6">
             <FormField
               control={form.control}
               name="company"
@@ -234,7 +241,9 @@ export function UserEditForm({ editingUser, onClose }: UserEditFormProps) {
                       <SelectItem value="finance">Finance</SelectItem>
                       <SelectItem value="healthcare">Healthcare</SelectItem>
                       <SelectItem value="education">Education</SelectItem>
-                      <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                      <SelectItem value="manufacturing">
+                        Manufacturing
+                      </SelectItem>
                       <SelectItem value="retail">Retail</SelectItem>
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
@@ -247,17 +256,10 @@ export function UserEditForm({ editingUser, onClose }: UserEditFormProps) {
         </Tabs>
 
         <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-          >
+          <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button
-            type="submit"
-            disabled={updateUserMutation.isPending}
-          >
+          <Button type="submit" disabled={updateUserMutation.isPending}>
             {updateUserMutation.isPending && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             )}

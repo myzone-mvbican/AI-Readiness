@@ -2,25 +2,20 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/hooks/use-auth";
 import {
   loginSchema,
   signupSchema,
   type LoginFormValues,
   type SignupFormValues,
 } from "@/schemas/validation-schemas";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/hooks/use-auth";
-import { apiRequest } from "@/lib/queryClient";
 
 export default function AuthPage() {
   const { toast } = useToast();
@@ -28,7 +23,7 @@ export default function AuthPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
   const { user, loginMutation, registerMutation } = useAuth();
-  
+
   // Redirect if user is already authenticated
   useEffect(() => {
     if (user) {
@@ -74,7 +69,7 @@ export default function AuthPage() {
         email: data.email,
         password: data.password,
       });
-      
+
       // Redirect happens automatically in useEffect when user is set
     } catch (error) {
       console.error("Error submitting login form:", error);
@@ -95,7 +90,7 @@ export default function AuthPage() {
         password: data.password,
         confirmPassword: data.confirmPassword,
       });
-      
+
       // Redirect happens automatically in useEffect when user is set
     } catch (error) {
       console.error("Error submitting registration form:", error);
@@ -139,267 +134,264 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="bg-gray-50 p-4">
-      <div className="container">
-        {/* Form section */}
-        <div className="w-full max-w-[600px] mx-auto p-8 flex flex-col justify-center">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Welcome to MyZone AI
-            </h2>
-            <p className="text-gray-600 mt-2">
-              Your AI Readiness Assessment platform
-            </p>
-          </div>
+    <div className="container">
+      {/* Form section */}
+      <div className="w-full max-w-[600px] mx-auto p-8 flex flex-col justify-center">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Welcome to MyZone AI
+          </h2>
+          <p className="text-gray-600 mt-2">
+            Your AI Readiness Assessment platform
+          </p>
+        </div>
 
-          <Card className="border-0 shadow-none">
-            <Tabs
-              defaultValue="login"
-              className="w-full"
-              onValueChange={setActiveTab}
-            >
-              <CardHeader className="pb-2">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="login">Login</TabsTrigger>
-                  <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                </TabsList>
-              </CardHeader>
-              <CardContent className="pt-6">
-                {/* Google Sign-In Option */}
-                <div className="w-full mb-6">
-                  <div
-                    className="w-full flex items-center justify-center border border-gray-300 rounded-md py-2 bg-white hover:bg-gray-50 cursor-pointer"
-                    onClick={() => {
-                      // Trigger Google login programmatically
-                      document
-                        .querySelector<HTMLDivElement>("[id^='google_btn']")
-                        ?.click();
-                    }}
-                  >
-                    <img
-                      src="https://developers.google.com/identity/images/g-logo.png"
-                      alt="Google logo"
-                      className="w-6 h-6 mr-2"
+        <Card className="border-0 shadow-none">
+          <Tabs
+            defaultValue="login"
+            className="w-full"
+            onValueChange={setActiveTab}
+          >
+            <CardHeader className="pb-2">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="login">Login</TabsTrigger>
+                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              </TabsList>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {/* Google Sign-In Option */}
+              <div className="w-full mb-6">
+                <div
+                  className="w-full flex items-center justify-center border border-gray-300 rounded-md py-2 bg-white hover:bg-gray-50 cursor-pointer"
+                  onClick={() => {
+                    // Trigger Google login programmatically
+                    document
+                      .querySelector<HTMLDivElement>("[id^='google_btn']")
+                      ?.click();
+                  }}
+                >
+                  <img
+                    src="https://developers.google.com/identity/images/g-logo.png"
+                    alt="Google logo"
+                    className="w-6 h-6 mr-2"
+                  />
+                  <span className="text-gray-700 font-medium">
+                    {activeTab === "login"
+                      ? "Sign in with Google"
+                      : "Sign up with Google"}
+                  </span>
+                </div>
+
+                <div className="hidden">
+                  <GoogleOAuthProvider clientId="894401584949-ieet20ddcm1bstdfv5lumiktnigg7agu.apps.googleusercontent.com">
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={handleGoogleError}
+                      useOneTap
+                      theme="outline"
+                      size="large"
+                      text="signin_with"
+                      shape="rectangular"
                     />
-                    <span className="text-gray-700 font-medium">
-                      {activeTab === "login"
-                        ? "Sign in with Google"
-                        : "Sign up with Google"}
-                    </span>
-                  </div>
-
-                  <div className="hidden">
-                    <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
-                      <GoogleLogin
-                        onSuccess={handleGoogleSuccess}
-                        onError={handleGoogleError}
-                        useOneTap
-                        theme="outline"
-                        size="large"
-                        text="signin_with"
-                        shape="rectangular"
-                      />
-                    </GoogleOAuthProvider>
-                  </div>
+                  </GoogleOAuthProvider>
                 </div>
+              </div>
 
-                {/* Divider */}
-                <div className="relative w-full mb-6">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-300"></div>
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white text-gray-500">or</span>
-                  </div>
+              {/* Divider */}
+              <div className="relative w-full mb-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300 dark:border-gray-900"></div>
                 </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="w-7 h-7 grid place-items-center bg-white dark:bg-gray-900 rounded-full text-gray-500 leading-none">
+                    or
+                  </span>
+                </div>
+              </div>
 
-                {/* LOGIN FORM */}
-                <TabsContent value="login" className="mt-0">
-                  <form
-                    onSubmit={handleLoginSubmit(onLoginSubmit)}
-                    className="space-y-4"
-                  >
-                    {/* Email field */}
-                    <div className="space-y-1">
-                      <Label
-                        htmlFor="login-email"
-                        className="text-sm font-medium text-gray-700"
-                      >
-                        Email
-                      </Label>
-                      <Input
-                        id="login-email"
-                        type="email"
-                        placeholder="you@example.com"
-                        {...registerLogin("email")}
-                        className={loginErrors.email ? "border-red-500" : ""}
-                      />
-                      {loginErrors.email && (
-                        <p className="text-sm text-red-500">
-                          {loginErrors.email.message}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Password field */}
-                    <div className="space-y-1">
-                      <div className="flex justify-between">
-                        <Label
-                          htmlFor="login-password"
-                          className="text-sm font-medium text-gray-700"
-                        >
-                          Password
-                        </Label>
-                        <a
-                          href="#"
-                          className="text-sm text-blue-600 hover:underline"
-                        >
-                          Forgot password?
-                        </a>
-                      </div>
-                      <Input
-                        id="login-password"
-                        type="password"
-                        placeholder="••••••••"
-                        {...registerLogin("password")}
-                        className={loginErrors.password ? "border-red-500" : ""}
-                      />
-                      {loginErrors.password && (
-                        <p className="text-sm text-red-500">
-                          {loginErrors.password.message}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Submit button */}
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors"
+              {/* LOGIN FORM */}
+              <TabsContent value="login" className="mt-0">
+                <form
+                  onSubmit={handleLoginSubmit(onLoginSubmit)}
+                  className="space-y-4"
+                >
+                  {/* Email field */}
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="login-email"
+                      className="text-sm font-medium text-gray-700"
                     >
-                      {isSubmitting ? "Signing in..." : "Sign in"}
-                    </Button>
-                  </form>
-                </TabsContent>
+                      Email
+                    </Label>
+                    <Input
+                      id="login-email"
+                      type="email"
+                      placeholder="you@example.com"
+                      {...registerLogin("email")}
+                      className={loginErrors.email ? "border-red-500" : ""}
+                    />
+                    {loginErrors.email && (
+                      <p className="text-sm text-red-500">
+                        {loginErrors.email.message}
+                      </p>
+                    )}
+                  </div>
 
-                {/* SIGNUP FORM */}
-                <TabsContent value="signup" className="mt-0">
-                  <form
-                    onSubmit={handleSignupSubmit(onSignupSubmit)}
-                    className="space-y-4"
-                  >
-                    {/* Name field */}
-                    <div className="space-y-1">
+                  {/* Password field */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between">
                       <Label
-                        htmlFor="signup-name"
-                        className="text-sm font-medium text-gray-700"
-                      >
-                        Full Name
-                      </Label>
-                      <Input
-                        id="signup-name"
-                        type="text"
-                        placeholder="John Doe"
-                        {...registerSignup("name")}
-                        className={signupErrors.name ? "border-red-500" : ""}
-                      />
-                      {signupErrors.name && (
-                        <p className="text-sm text-red-500">
-                          {signupErrors.name.message}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Email field */}
-                    <div className="space-y-1">
-                      <Label
-                        htmlFor="signup-email"
-                        className="text-sm font-medium text-gray-700"
-                      >
-                        Email
-                      </Label>
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        placeholder="you@example.com"
-                        {...registerSignup("email")}
-                        className={signupErrors.email ? "border-red-500" : ""}
-                      />
-                      {signupErrors.email && (
-                        <p className="text-sm text-red-500">
-                          {signupErrors.email.message}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Password field */}
-                    <div className="space-y-1">
-                      <Label
-                        htmlFor="signup-password"
+                        htmlFor="login-password"
                         className="text-sm font-medium text-gray-700"
                       >
                         Password
                       </Label>
-                      <Input
-                        id="signup-password"
-                        type="password"
-                        placeholder="••••••••"
-                        {...registerSignup("password")}
-                        className={
-                          signupErrors.password ? "border-red-500" : ""
-                        }
-                      />
-                      {signupErrors.password && (
-                        <p className="text-sm text-red-500">
-                          {signupErrors.password.message}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Confirm Password field */}
-                    <div className="space-y-1">
-                      <Label
-                        htmlFor="signup-confirmPassword"
-                        className="text-sm font-medium text-gray-700"
+                      <a
+                        href="#"
+                        className="text-sm text-blue-600 hover:underline"
                       >
-                        Confirm Password
-                      </Label>
-                      <Input
-                        id="signup-confirmPassword"
-                        type="password"
-                        placeholder="••••••••"
-                        {...registerSignup("confirmPassword")}
-                        className={
-                          signupErrors.confirmPassword ? "border-red-500" : ""
-                        }
-                      />
-                      {signupErrors.confirmPassword && (
-                        <p className="text-sm text-red-500">
-                          {signupErrors.confirmPassword.message}
-                        </p>
-                      )}
+                        Forgot password?
+                      </a>
                     </div>
+                    <Input
+                      id="login-password"
+                      type="password"
+                      placeholder="••••••••"
+                      {...registerLogin("password")}
+                      className={loginErrors.password ? "border-red-500" : ""}
+                    />
+                    {loginErrors.password && (
+                      <p className="text-sm text-red-500">
+                        {loginErrors.password.message}
+                      </p>
+                    )}
+                  </div>
 
-                    {/* Submit button */}
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors"
+                  {/* Submit button */}
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors"
+                  >
+                    {isSubmitting ? "Signing in..." : "Sign in"}
+                  </Button>
+                </form>
+              </TabsContent>
+
+              {/* SIGNUP FORM */}
+              <TabsContent value="signup" className="mt-0">
+                <form
+                  onSubmit={handleSignupSubmit(onSignupSubmit)}
+                  className="space-y-4"
+                >
+                  {/* Name field */}
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="signup-name"
+                      className="text-sm font-medium text-gray-700"
                     >
-                      {isSubmitting ? "Creating account..." : "Create account"}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </CardContent>
-            </Tabs>
-          </Card>
+                      Full Name
+                    </Label>
+                    <Input
+                      id="signup-name"
+                      type="text"
+                      placeholder="John Doe"
+                      {...registerSignup("name")}
+                      className={signupErrors.name ? "border-red-500" : ""}
+                    />
+                    {signupErrors.name && (
+                      <p className="text-sm text-red-500">
+                        {signupErrors.name.message}
+                      </p>
+                    )}
+                  </div>
 
-          <div className="mt-6 text-center text-sm text-gray-500">
-            <p>
-              By continuing, you agree to our Terms of Service and Privacy
-              Policy.
-            </p>
-          </div>
+                  {/* Email field */}
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="signup-email"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Email
+                    </Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="you@example.com"
+                      {...registerSignup("email")}
+                      className={signupErrors.email ? "border-red-500" : ""}
+                    />
+                    {signupErrors.email && (
+                      <p className="text-sm text-red-500">
+                        {signupErrors.email.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Password field */}
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="signup-password"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Password
+                    </Label>
+                    <Input
+                      id="signup-password"
+                      type="password"
+                      placeholder="••••••••"
+                      {...registerSignup("password")}
+                      className={signupErrors.password ? "border-red-500" : ""}
+                    />
+                    {signupErrors.password && (
+                      <p className="text-sm text-red-500">
+                        {signupErrors.password.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Confirm Password field */}
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="signup-confirmPassword"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Confirm Password
+                    </Label>
+                    <Input
+                      id="signup-confirmPassword"
+                      type="password"
+                      placeholder="••••••••"
+                      {...registerSignup("confirmPassword")}
+                      className={
+                        signupErrors.confirmPassword ? "border-red-500" : ""
+                      }
+                    />
+                    {signupErrors.confirmPassword && (
+                      <p className="text-sm text-red-500">
+                        {signupErrors.confirmPassword.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Submit button */}
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors"
+                  >
+                    {isSubmitting ? "Creating account..." : "Create account"}
+                  </Button>
+                </form>
+              </TabsContent>
+            </CardContent>
+          </Tabs>
+        </Card>
+
+        <div className="mt-6 text-center text-sm text-gray-500">
+          <p>
+            By continuing, you agree to our Terms of Service and Privacy Policy.
+          </p>
         </div>
       </div>
     </div>

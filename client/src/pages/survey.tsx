@@ -7,7 +7,7 @@ export default function SurveyPage() {
   return (
     <div className="container py-12">
       <div className="text-center mb-10">
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
           AI Readiness Assessment
         </h1>
         <p className="mt-3 text-lg text-gray-600">
@@ -29,11 +29,11 @@ export default function SurveyPage() {
               aspects of AI readiness. Each section will evaluate a specific
               dimension of your organization's capabilities.
             </p>
-            <div className="bg-blue-50 p-4 rounded-md mb-5">
-              <h3 className="font-medium text-blue-800 mb-2">
+            <div className="bg-blue-50 dark:bg-gray-800 p-4 rounded-md mb-5">
+              <h3 className="font-medium text-blue-800 dark:text-gray-500 mb-2">
                 How to complete this assessment:
               </h3>
-              <ul className="list-disc ml-5 text-blue-700 space-y-1">
+              <ul className="list-disc ml-5 text-blue-700 dark:text-gray-500 space-y-1">
                 <li>
                   Answer all questions honestly for the most accurate results
                 </li>
