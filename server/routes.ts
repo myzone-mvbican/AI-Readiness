@@ -295,7 +295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Generate JWT token and handle potential undefined user
+      // Generate JWT token
       if (!user) {
         return res.status(500).json({
           success: false,
@@ -305,7 +305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const token = storage.generateToken(user);
       
-      // Remove password from response
+      // Remove password from response (TypeScript now knows user is defined)
       const { password, ...userWithoutPassword } = user;
       
       return res.status(200).json({
