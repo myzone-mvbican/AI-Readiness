@@ -295,7 +295,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Generate JWT token
+      // Generate JWT token and handle potential undefined user
+      if (!user) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to authenticate with Google",
+        });
+      }
+      
       const token = storage.generateToken(user);
       
       // Remove password from response

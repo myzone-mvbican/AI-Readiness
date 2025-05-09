@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
+import { GoogleLogin } from "@react-oauth/google";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
@@ -22,7 +22,7 @@ export default function AuthPage() {
   const [_, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
-  const { user, loginMutation, registerMutation } = useAuth();
+  const { user, loginMutation, registerMutation, googleLoginMutation } = useAuth();
 
   // Redirect if user is already authenticated
   useEffect(() => {
@@ -102,25 +102,26 @@ export default function AuthPage() {
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
-      console.log("Google login success:", credentialResponse);
-
-      toast({
-        title: "Google login successful!",
-        description: "Welcome to MyZone AI.",
-        duration: 3000,
+      setIsSubmitting(true);
+      
+      // Use the googleLoginMutation from our auth hook
+      await googleLoginMutation.mutateAsync({
+        credential: credentialResponse.credential,
       });
-
-      // Redirect to dashboard
-      setLocation("/dashboard");
+      
+      // Redirect happens automatically in useEffect when user is set
     } catch (error) {
       console.error("Error with Google login:", error);
-
+      
+      // Error handling is done in the mutation, but we can add an additional message
       toast({
         title: "Google login failed",
         description: "There was a problem with your Google login.",
         variant: "destructive",
         duration: 3000,
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -183,17 +184,15 @@ export default function AuthPage() {
                 </div>
 
                 <div className="hidden">
-                  <GoogleOAuthProvider clientId="894401584949-ieet20ddcm1bstdfv5lumiktnigg7agu.apps.googleusercontent.com">
-                    <GoogleLogin
-                      onSuccess={handleGoogleSuccess}
-                      onError={handleGoogleError}
-                      useOneTap
-                      theme="outline"
-                      size="large"
-                      text="signin_with"
-                      shape="rectangular"
-                    />
-                  </GoogleOAuthProvider>
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    useOneTap
+                    theme="outline"
+                    size="large"
+                    text="signin_with"
+                    shape="rectangular"
+                  />
                 </div>
               </div>
 
