@@ -27,6 +27,9 @@ type AuthContextType = {
   loginMutation: UseMutationResult<LoginResponse, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<RegisterResponse, Error, RegisterData>;
+  googleLoginMutation: UseMutationResult<LoginResponse, Error, GoogleLoginData>;
+  googleConnectMutation: UseMutationResult<LoginResponse, Error, GoogleLoginData>;
+  googleDisconnectMutation: UseMutationResult<LoginResponse, Error, void>;
 };
 
 type LoginData = {
@@ -53,6 +56,10 @@ type RegisterResponse = {
   token: string;
   user: User;
   message: string;
+};
+
+type GoogleLoginData = {
+  credential: string;
 };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -277,6 +284,116 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // Google authentication mutations
+  const googleLoginMutation = useMutation({
+    mutationFn: async (data: GoogleLoginData) => {
+      const res = await apiRequest("POST", "/api/auth/google/login", data);
+      return await res.json();
+    },
+    onSuccess: (data: LoginResponse) => {
+      if (data.success && data.token) {
+        setToken(data.token);
+        queryClient.setQueryData(["/api/user"], data.user);
+        
+        // Invalidate teams query to ensure we get fresh data
+        queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
+        
+        // Clear any previously selected team to force auto-selection
+        localStorage.removeItem("selectedTeam");
+        
+        toast({
+          title: "Google login successful",
+          description: "You have been logged in successfully with Google.",
+        });
+      } else {
+        toast({
+          title: "Google login failed",
+          description: data.message || "An error occurred during Google login.",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Google login failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Connect Google account to existing user
+  const googleConnectMutation = useMutation({
+    mutationFn: async (data: GoogleLoginData) => {
+      const res = await apiRequest("POST", "/api/auth/google/connect", data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return await res.json();
+    },
+    onSuccess: (data: LoginResponse) => {
+      if (data.success) {
+        // Update user data in cache
+        queryClient.setQueryData(["/api/user"], data.user);
+        
+        toast({
+          title: "Google account connected",
+          description: "Your Google account has been connected successfully.",
+        });
+      } else {
+        toast({
+          title: "Google connect failed",
+          description: data.message || "Failed to connect Google account.",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Google connect failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Disconnect Google account from existing user
+  const googleDisconnectMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("DELETE", "/api/auth/google/disconnect", null, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return await res.json();
+    },
+    onSuccess: (data: LoginResponse) => {
+      if (data.success) {
+        // Update user data in cache
+        queryClient.setQueryData(["/api/user"], data.user);
+        
+        toast({
+          title: "Google account disconnected",
+          description: "Your Google account has been disconnected successfully.",
+        });
+      } else {
+        toast({
+          title: "Google disconnect failed",
+          description: data.message || "Failed to disconnect Google account.",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Google disconnect failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return (
     <AuthContext.Provider
       value={{
@@ -286,6 +403,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginMutation,
         logoutMutation,
         registerMutation,
+        googleLoginMutation,
+        googleConnectMutation,
+        googleDisconnectMutation,
       }}
     >
       {children}
