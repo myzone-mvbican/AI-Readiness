@@ -1,25 +1,13 @@
 "use client";
 
 import * as React from "react";
-import {
-  Home,
-  Settings2,
-  ClipboardCheck,
-  BarChart3,
-  PlusCircle,
-  ScrollText,
-  FileSpreadsheet,
-  Users,
-  Shield,
-} from "lucide-react";
-
 import { cn } from "@/lib/utils";
 import { NavMain } from "./nav-menu";
 import { NavUser } from "./nav-user";
 import { TeamSwitcher } from "./team-switcher";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-
+import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
   SidebarMenu,
@@ -28,9 +16,16 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarRail,
-  // useSidebar,
 } from "@/components/ui/sidebar";
+import {
+  Home,
+  ClipboardCheck,
+  BarChart3,
+  PlusCircle,
+  ScrollText,
+  FileSpreadsheet,
+  Users,
+} from "lucide-react";
 
 import profileImage from "@/assets/mvbican.jpg";
 
@@ -199,9 +194,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               )}
               asChild
             >
-              <Link href="/dashboard/help">
+              <Link href="/dashboard/help" aria-disabled="true">
                 <ScrollText />
                 <span>Help Center</span>
+                <Badge variant="outline" className="ml-auto">
+                  Soon
+                </Badge>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -210,7 +208,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter>
         <NavUser user={userData} />
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
   );
 }

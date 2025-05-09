@@ -31,14 +31,16 @@ export function getColumns({
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="-ml-4"
+            className="-ml-2"
           >
             Name
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
-        )
+        );
       },
-      cell: ({ row }) => <div>{row.getValue("name")}</div>,
+      cell: ({ row }) => (
+        <div className="p-2 dark:text-white">{row.getValue("name")}</div>
+      ),
     },
     {
       accessorKey: "role",
@@ -52,7 +54,7 @@ export function getColumns({
             Type
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
-        )
+        );
       },
       cell: ({ row }) => {
         const role = row.getValue("role") as string;
@@ -75,11 +77,15 @@ export function getColumns({
             Created
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
-        )
+        );
       },
       cell: ({ row }) => {
         const date = new Date(row.getValue("createdAt"));
-        return <div>{formatDistanceToNow(date, { addSuffix: true })}</div>;
+        return (
+          <div className="dark:text-white">
+            {formatDistanceToNow(date, { addSuffix: true })}
+          </div>
+        );
       },
       sortingFn: "datetime",
     },
@@ -89,41 +95,36 @@ export function getColumns({
       cell: ({ row }) => {
         const user = row.original;
         return (
-          <TeamManagement 
-            user={user} 
-            currentUserId={currentUserId} 
-            isAdmin={isAdmin} 
+          <TeamManagement
+            user={user}
+            currentUserId={currentUserId}
+            isAdmin={isAdmin}
           />
         );
       },
     },
     {
       id: "actions",
+      header: "Actions",
       cell: ({ row }) => {
         const user = row.original;
         // Don't allow editing the current user through this interface
         const isCurrentUser = currentUserId === user.id;
-        
+
         if (isCurrentUser) {
-          return (
-            <div className="text-xs text-muted-foreground">
-              Use Settings to edit your account
-            </div>
-          );
+          return null;
         }
-        
+
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreHorizontal className="h-4 w-4 dark:text-white" />
                 <span className="sr-only">Open menu</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => onEditUser(user)}
-              >
+              <DropdownMenuItem onClick={() => onEditUser(user)}>
                 Edit
               </DropdownMenuItem>
               <DropdownMenuItem

@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DashboardLayout } from "@/components/layout/dashboard";
 import {
@@ -20,7 +21,7 @@ export default function DashboardHome() {
     <DashboardLayout title="Welcome">
       <div className="flex flex-col gap-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight dark:text-white">
             Welcome back to your AI Readiness Dashboard!
           </h1>
           <p className="text-muted-foreground mt-2">
@@ -49,7 +50,7 @@ export default function DashboardHome() {
                   Complete the Q2 2025 assessment to measure your organization's
                   AI readiness
                 </p>
-                <Link href="/dashboard/assessments/new">
+                <Link href="/dashboard/assessments/new" asChild>
                   <Button className="w-full">Create New Assessment</Button>
                 </Link>
               </div>
@@ -68,17 +69,21 @@ export default function DashboardHome() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-2">
-                <Button variant="outline" className="justify-start">
-                  <ClipboardCheck className="mr-2 h-4 w-4" />
-                  <span>View Assessments</span>
-                </Button>
-                <Button variant="outline" className="justify-start">
+                <Link href="/dashboard/assessments/new" asChild>
+                  <Button variant="outline" className="justify-start">
+                    <ClipboardCheck className="mr-2 h-4 w-4" />
+                    <span>View Assessments</span>
+                  </Button>
+                </Link>
+                <Button variant="outline" className="justify-start" disabled>
                   <BarChart3 className="mr-2 h-4 w-4" />
                   <span>Generate Report</span>
+                  <Badge className="ms-auto">Soon</Badge>
                 </Button>
-                <Button variant="outline" className="justify-start">
+                <Button variant="outline" className="justify-bet" disabled>
                   <TrendingUp className="mr-2 h-4 w-4" />
                   <span>Compare with Industry</span>
+                  <Badge className="ms-auto">Soon</Badge>
                 </Button>
               </div>
             </CardContent>

@@ -10,11 +10,13 @@ import {
   type UserTeam,
   type InsertUserTeam,
   type TeamWithRole,
+  type GoogleUserPayload,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, isNull } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import fetch from "node-fetch";
 
 // Create a JWT_SECRET if not already set
 if (!process.env.JWT_SECRET) {
@@ -33,6 +35,7 @@ export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByGoogleId(googleId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, userData: UpdateUser): Promise<User | undefined>;
   deleteUser(id: number): Promise<boolean>;
@@ -53,6 +56,9 @@ export interface IStorage {
   // Authentication operations
   generateToken(user: User): string;
   verifyToken(token: string): { userId: number } | null;
+  verifyGoogleToken(token: string): Promise<GoogleUserPayload | null>;
+  connectGoogleAccount(userId: number, googleId: string): Promise<User | undefined>;
+  disconnectGoogleAccount(userId: number): Promise<User | undefined>;
   isAdmin(email: string): boolean;
 }
 

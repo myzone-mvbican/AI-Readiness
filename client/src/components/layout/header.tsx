@@ -3,7 +3,7 @@ import logoPath from "@/assets/logo-myzone-ai-black.svg";
 
 export default function Header() {
   return (
-    <header className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 border-b border-gray-100">
+    <header className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800">
       <div className="container flex items-center justify-between py-4">
         <Link href="/">
           <div className="flex items-center cursor-pointer">

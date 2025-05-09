@@ -33,10 +33,16 @@ function Router() {
     return (
       <Switch>
         <ProtectedRoute path="/dashboard" component={DashboardHome} />
-        <ProtectedRoute path="/dashboard/assessments/new" component={SurveyNew} />
+        <ProtectedRoute
+          path="/dashboard/assessments/new"
+          component={SurveyNew}
+        />
         <ProtectedRoute path="/dashboard/assessments" component={SurveysPage} />
         <ProtectedRoute path="/dashboard/settings" component={SettingsPage} />
-        <AdminProtectedRoute path="/dashboard/surveys" component={AdminSurveysPage} />
+        <AdminProtectedRoute
+          path="/dashboard/surveys"
+          component={AdminSurveysPage}
+        />
         <AdminProtectedRoute path="/dashboard/users" component={UsersPage} />
         <ProtectedRoute path="/dashboard/:rest*" component={DashboardHome} />
         <Route component={NotFound} />
@@ -48,7 +54,7 @@ function Router() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-grow w-full mx-auto">
+      <main className="bg-white dark:bg-gray-900 flex-grow w-full mx-auto">
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/auth" component={AuthPage} />
@@ -70,7 +76,7 @@ function App() {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <GoogleOAuthProvider clientId="GOOGLE_CLIENT_ID_PLACEHOLDER">
+          <GoogleOAuthProvider clientId="894401584949-ieet20ddcm1bstdfv5lumiktnigg7agu.apps.googleusercontent.com">
             <AuthProvider>
               <Toaster />
               <Router />

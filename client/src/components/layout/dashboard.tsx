@@ -1,6 +1,7 @@
 import { AppSidebar } from "./dashboard/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Separator } from "@/components/ui/separator";
+import { useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import {
   Breadcrumb,
@@ -15,7 +16,6 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { useMemo } from "react";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -41,12 +41,17 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
       .join(" ");
   }, [location, title]);
 
+  const cookies = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("sidebar_state="));
+  const storedState = cookies ? cookies.split("=")[1] : "true";
+
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={storedState === "true"}>
       <AppSidebar />
       <SidebarInset>
         <header className="sticky top-0 bg-white dark:bg-gray-900 border-b flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 z-10">
-          <div className="flex items-center w-full gap-2 px-4">
+          <div className="flex items-center w-full gap-2 px-5">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>
