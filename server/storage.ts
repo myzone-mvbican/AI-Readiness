@@ -75,6 +75,7 @@ export class DatabaseStorage implements IStorage {
           company: users.company,
           employeeCount: users.employeeCount,
           industry: users.industry,
+          googleId: users.googleId,
           createdAt: users.createdAt,
           updatedAt: users.updatedAt,
         })
@@ -107,6 +108,7 @@ export class DatabaseStorage implements IStorage {
           company: users.company,
           employeeCount: users.employeeCount,
           industry: users.industry,
+          googleId: users.googleId,
           createdAt: users.createdAt,
           updatedAt: users.updatedAt,
         })
@@ -123,6 +125,39 @@ export class DatabaseStorage implements IStorage {
       return undefined;
     } catch (error) {
       console.error("Error in getUserByEmail:", error);
+      return undefined;
+    }
+  }
+  
+  async getUserByGoogleId(googleId: string): Promise<User | undefined> {
+    try {
+      // Select only the fields we know exist to prevent errors
+      const [user] = await db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          password: users.password,
+          company: users.company,
+          employeeCount: users.employeeCount,
+          industry: users.industry,
+          googleId: users.googleId,
+          createdAt: users.createdAt,
+          updatedAt: users.updatedAt,
+        })
+        .from(users)
+        .where(eq(users.googleId, googleId));
+
+      if (user) {
+        // Add the role based on admin email check
+        return {
+          ...user,
+          role: this.isAdmin(user.email) ? "admin" : "client",
+        };
+      }
+      return undefined;
+    } catch (error) {
+      console.error("Error in getUserByGoogleId:", error);
       return undefined;
     }
   }
@@ -143,6 +178,7 @@ export class DatabaseStorage implements IStorage {
         company: insertUser.company || null,
         employeeCount: insertUser.employeeCount || null,
         industry: insertUser.industry || null,
+        googleId: insertUser.googleId || null,
         updatedAt: new Date(),
       };
 
@@ -356,6 +392,63 @@ export class DatabaseStorage implements IStorage {
   isAdmin(email: string): boolean {
     return ADMIN_EMAILS.includes(email.toLowerCase());
   }
+  
+  async verifyGoogleToken(token: string): Promise<GoogleUserPayload | null> {
+    try {
+      // Verify the token with Google
+      const response = await fetch(
+        `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`
+      );
+      
+      if (!response.ok) {
+        console.error('Failed to verify Google token:', await response.text());
+        return null;
+      }
+      
+      const payload = await response.json() as GoogleUserPayload;
+      return payload;
+    } catch (error) {
+      console.error('Error verifying Google token:', error);
+      return null;
+    }
+  }
+  
+  async connectGoogleAccount(userId: number, googleId: string): Promise<User | undefined> {
+    try {
+      // Check if this Google ID is already connected to another account
+      const existingUser = await this.getUserByGoogleId(googleId);
+      if (existingUser && existingUser.id !== userId) {
+        throw new Error('This Google account is already connected to another user');
+      }
+      
+      // Update the user's Google ID
+      return this.updateUser(userId, { googleId });
+    } catch (error) {
+      console.error('Error connecting Google account:', error);
+      throw error;
+    }
+  }
+  
+  async disconnectGoogleAccount(userId: number): Promise<User | undefined> {
+    try {
+      // First get the current user
+      const user = await this.getUser(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+      
+      // Ensure the user has a password before disconnecting Google
+      if (!user.password) {
+        throw new Error('Cannot disconnect Google account without a password set');
+      }
+      
+      // Update the user to remove Google ID
+      return this.updateUser(userId, { googleId: null });
+    } catch (error) {
+      console.error('Error disconnecting Google account:', error);
+      throw error;
+    }
+  }
 }
 
 // For backward compatibility with existing code
@@ -397,6 +490,7 @@ export class MemStorage implements IStorage {
       company: insertUser.company || null,
       employeeCount: insertUser.employeeCount || null,
       industry: insertUser.industry || null,
+      googleId: insertUser.googleId || null,
       role: role,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -565,6 +659,67 @@ export class MemStorage implements IStorage {
 
   isAdmin(email: string): boolean {
     return ADMIN_EMAILS.includes(email.toLowerCase());
+  }
+  
+  async getUserByGoogleId(googleId: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find((user) => user.googleId === googleId);
+  }
+  
+  async verifyGoogleToken(token: string): Promise<GoogleUserPayload | null> {
+    try {
+      // Verify the token with Google
+      const response = await fetch(
+        `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`
+      );
+      
+      if (!response.ok) {
+        console.error('Failed to verify Google token:', await response.text());
+        return null;
+      }
+      
+      const payload = await response.json() as GoogleUserPayload;
+      return payload;
+    } catch (error) {
+      console.error('Error verifying Google token:', error);
+      return null;
+    }
+  }
+  
+  async connectGoogleAccount(userId: number, googleId: string): Promise<User | undefined> {
+    try {
+      // Check if this Google ID is already connected to another account
+      const existingUser = await this.getUserByGoogleId(googleId);
+      if (existingUser && existingUser.id !== userId) {
+        throw new Error('This Google account is already connected to another user');
+      }
+      
+      // Update the user's Google ID
+      return this.updateUser(userId, { googleId });
+    } catch (error) {
+      console.error('Error connecting Google account:', error);
+      throw error;
+    }
+  }
+  
+  async disconnectGoogleAccount(userId: number): Promise<User | undefined> {
+    try {
+      // First get the current user
+      const user = await this.getUser(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+      
+      // Ensure the user has a password before disconnecting Google
+      if (!user.password) {
+        throw new Error('Cannot disconnect Google account without a password set');
+      }
+      
+      // Update the user to remove Google ID
+      return this.updateUser(userId, { googleId: null });
+    } catch (error) {
+      console.error('Error disconnecting Google account:', error);
+      throw error;
+    }
   }
 }
 

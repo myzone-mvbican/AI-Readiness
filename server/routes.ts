@@ -7,9 +7,12 @@ import {
   loginSchema,
   insertTeamSchema,
   userTeamSchema,
+  googleAuthSchema,
+  googleConnectSchema,
   teams,
   users,
-  userTeams
+  userTeams,
+  type GoogleUserPayload
 } from "@shared/schema";
 import { authenticate, requireAdmin } from "./middleware/auth";
 import cors from "cors";
@@ -209,6 +212,220 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Google OAuth login/signup endpoint
+  app.post("/api/auth/google/login", async (req, res) => {
+    try {
+      // Validate the input
+      const result = googleAuthSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Google authentication data",
+          errors: result.error.format()
+        });
+      }
+
+      const { credential } = req.body;
+
+      // Verify the Google token
+      const googleUserData = await storage.verifyGoogleToken(credential);
+      if (!googleUserData) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid Google token"
+        });
+      }
+
+      // Check if a user with this Google ID already exists
+      let user = await storage.getUserByGoogleId(googleUserData.sub);
+      
+      if (!user) {
+        // Check if user exists with this email
+        user = await storage.getUserByEmail(googleUserData.email);
+        
+        if (!user) {
+          // Create a new user with data from Google
+          const randomPassword = Array(16)
+            .fill("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*")
+            .map(chars => chars[Math.floor(Math.random() * chars.length)])
+            .join('');
+          
+          user = await storage.createUser({
+            name: googleUserData.name,
+            email: googleUserData.email,
+            password: randomPassword, // Random password as it won't be used
+            googleId: googleUserData.sub
+          });
+          
+          // Auto-assign user to the "Client" team
+          try {
+            // Check if user's email is part of the myzone.ai domain (admin users)
+            const isMyZoneEmail = user.email.endsWith('@myzone.ai');
+            
+            // Only assign to Client team if not a myzone email (admins)
+            if (!isMyZoneEmail) {
+              // Look for the Client team
+              let clientTeam = await storage.getTeamByName("Client");
+              
+              // If Client team doesn't exist, create it
+              if (!clientTeam) {
+                clientTeam = await storage.createTeam({
+                  name: "Client"
+                });
+                console.log("Created default Client team");
+              }
+              
+              // Add user to the Client team
+              await storage.addUserToTeam({
+                userId: user.id,
+                teamId: clientTeam.id,
+                role: "client"
+              });
+              
+              console.log(`Auto-assigned Google user ${user.email} to Client team`);
+            }
+          } catch (teamError) {
+            console.error("Error assigning Google user to team:", teamError);
+            // Continue with user creation even if team assignment fails
+          }
+        } else {
+          // User exists with this email but not connected to Google yet
+          // Connect the Google ID to this user
+          user = await storage.updateUser(user.id, { googleId: googleUserData.sub });
+        }
+      }
+
+      // Generate JWT token
+      const token = storage.generateToken(user);
+      
+      // Remove password from response
+      const { password, ...userWithoutPassword } = user;
+      
+      return res.status(200).json({
+        success: true,
+        message: "Google authentication successful",
+        token,
+        user: userWithoutPassword
+      });
+    } catch (error) {
+      console.error("Google authentication error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Google authentication failed due to an unexpected error"
+      });
+    }
+  });
+  
+  // Connect Google account to existing user (protected route)
+  app.post("/api/auth/google/connect", authenticate, async (req, res) => {
+    try {
+      // Validate the input
+      const result = googleConnectSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Google connect data",
+          errors: result.error.format()
+        });
+      }
+      
+      const userId = req.user!.id;
+      const { credential } = req.body;
+      
+      // Verify the Google token
+      const googleUserData = await storage.verifyGoogleToken(credential);
+      if (!googleUserData) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid Google token"
+        });
+      }
+      
+      // Check if another user has already connected this Google account
+      const existingUser = await storage.getUserByGoogleId(googleUserData.sub);
+      if (existingUser && existingUser.id !== userId) {
+        return res.status(409).json({
+          success: false,
+          message: "This Google account is already connected to another user"
+        });
+      }
+      
+      // Connect Google account to current user
+      const updatedUser = await storage.connectGoogleAccount(userId, googleUserData.sub);
+      
+      if (!updatedUser) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to connect Google account"
+        });
+      }
+      
+      // Remove password from response
+      const { password, ...userWithoutPassword } = updatedUser;
+      
+      return res.status(200).json({
+        success: true,
+        message: "Google account connected successfully",
+        user: userWithoutPassword
+      });
+    } catch (error) {
+      console.error("Google connect error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to connect Google account"
+      });
+    }
+  });
+  
+  // Disconnect Google account from existing user (protected route)
+  app.delete("/api/auth/google/disconnect", authenticate, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // Get current user
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found"
+        });
+      }
+      
+      // Check if user has Google account connected
+      if (!user.googleId) {
+        return res.status(400).json({
+          success: false,
+          message: "No Google account is connected to this user"
+        });
+      }
+      
+      // Disconnect Google account
+      const updatedUser = await storage.disconnectGoogleAccount(userId);
+      
+      if (!updatedUser) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to disconnect Google account"
+        });
+      }
+      
+      // Remove password from response
+      const { password, ...userWithoutPassword } = updatedUser;
+      
+      return res.status(200).json({
+        success: true,
+        message: "Google account disconnected successfully",
+        user: userWithoutPassword
+      });
+    } catch (error) {
+      console.error("Google disconnect error:", error);
+      return res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to disconnect Google account"
+      });
+    }
+  });
+
   // Update user profile endpoint (protected route)
   app.put("/api/user", authenticate, async (req, res) => {
     try {
