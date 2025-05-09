@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { DashboardLayout } from "@/components/layout/dashboard";
+import { GoogleLogin } from '@react-oauth/google';
 
 import {
   settingsSchema,
@@ -24,10 +25,42 @@ import {
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { 
+    user, 
+    googleConnectMutation, 
+    googleDisconnectMutation 
+  } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isConnectingGoogle, setIsConnectingGoogle] = useState(false);
+  const [isDisconnectingGoogle, setIsDisconnectingGoogle] = useState(false);
   const [initialFormData, setInitialFormData] =
     useState<SettingsFormValues | null>(null);
+    
+  // Google authentication handlers
+  const handleGoogleSuccess = useCallback((credentialResponse: any) => {
+    setIsConnectingGoogle(true);
+    googleConnectMutation.mutate(
+      { credential: credentialResponse.credential },
+      {
+        onSettled: () => setIsConnectingGoogle(false)
+      }
+    );
+  }, [googleConnectMutation]);
+  
+  const handleGoogleError = useCallback(() => {
+    toast({
+      title: "Google Sign-In Failed",
+      description: "There was a problem connecting your Google account.",
+      variant: "destructive"
+    });
+  }, [toast]);
+  
+  const handleDisconnectGoogle = useCallback(() => {
+    setIsDisconnectingGoogle(true);
+    googleDisconnectMutation.mutate(undefined, {
+      onSettled: () => setIsDisconnectingGoogle(false)
+    });
+  }, [googleDisconnectMutation]);
 
   const {
     register,

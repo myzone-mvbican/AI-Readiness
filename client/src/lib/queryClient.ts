@@ -31,18 +31,20 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
+  options?: { headers?: Record<string, string> },
 ): Promise<Response> {
   // Get token from localStorage for each request
   const token = localStorage.getItem("token");
 
   // Set up headers with Authorization if token exists
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...options?.headers };
 
   if (data) {
     headers["Content-Type"] = "application/json";
   }
 
-  if (token) {
+  // Add Authorization header if not already provided in options
+  if (token && !headers["Authorization"]) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
