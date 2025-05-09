@@ -512,21 +512,23 @@ export default function SettingsPage() {
                           </Button>
                         ) : (
                           <div className="flex justify-center">
-                            <div className={isConnectingGoogle ? "opacity-50 pointer-events-none" : ""}>
-                              <GoogleLogin 
-                                onSuccess={handleGoogleSuccess} 
-                                onError={handleGoogleError}
-                                useOneTap
-                                type="icon"
-                                shape="circle"
-                                theme="outline"
-                                locale="en"
-                              />
+                            <div className="relative">
                               {isConnectingGoogle && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-50 rounded-full">
-                                  <div className="w-4 h-4 border-2 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+                                <div className="absolute inset-0 flex items-center justify-center z-10">
+                                  <div className="w-5 h-5 border-2 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
                                 </div>
                               )}
+                              <div className={isConnectingGoogle ? "opacity-50" : ""}>
+                                <GoogleLogin 
+                                  onSuccess={handleGoogleSuccess} 
+                                  onError={handleGoogleError}
+                                  useOneTap
+                                  type="icon"
+                                  shape="circle"
+                                  theme="outline"
+                                  locale="en"
+                                />
+                              </div>
                             </div>
                           </div>
                         )}
