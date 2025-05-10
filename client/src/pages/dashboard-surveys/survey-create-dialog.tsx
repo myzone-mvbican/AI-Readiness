@@ -368,7 +368,11 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
                                     const newValue = field.value?.includes(team.id)
                                       ? field.value.filter((value: number) => value !== team.id)
                                       : [...(field.value || []), team.id];
-                                    form.setValue("selectedTeams", newValue);
+                                    
+                                    // Use setTimeout to avoid maximum update depth exceeded error
+                                    setTimeout(() => {
+                                      form.setValue("selectedTeams", newValue);
+                                    }, 0);
                                   }}
                                 >
                                   <Check
@@ -397,7 +401,10 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
                                 className="ml-1 h-3 w-3 cursor-pointer"
                                 onClick={() => {
                                   const newValue = field.value.filter((id: number) => id !== teamId);
-                                  form.setValue("selectedTeams", newValue);
+                                  // Use setTimeout to avoid maximum update depth exceeded error
+                                  setTimeout(() => {
+                                    form.setValue("selectedTeams", newValue);
+                                  }, 0);
                                 }}
                               />
                             </Badge>
