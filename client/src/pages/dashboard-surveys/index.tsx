@@ -4,16 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ShieldCheck, Search, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
 import SurveyCreateDialog from "./survey-create-dialog";
 import SurveyTable from "./survey-table";
 
 export default function AdminSurveysPage() {
   const [newSurveyOpen, setNewSurveyOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [teamId, setTeamId] = useState<number | null>(0);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const { toast } = useToast();
 
   // Get surveys
   const { data: surveysData, isLoading } = useQuery({
@@ -69,21 +66,25 @@ export default function AdminSurveysPage() {
           <div className="flex items-center space-x-2">
             <Button
               variant="ghost"
-              className={!statusFilter ? "bg-muted" : ""}
+              className={!statusFilter ? "bg-muted dark:bg-gray-100" : ""}
               onClick={() => setStatusFilter(null)}
             >
               All
             </Button>
             <Button
               variant="ghost"
-              className={statusFilter === "draft" ? "bg-muted" : ""}
+              className={
+                statusFilter === "draft" ? "bg-muted dark:bg-gray-100" : ""
+              }
               onClick={() => setStatusFilter("draft")}
             >
               Draft
             </Button>
             <Button
               variant="ghost"
-              className={statusFilter === "public" ? "bg-muted" : ""}
+              className={
+                statusFilter === "public" ? "bg-muted dark:bg-gray-100" : ""
+              }
               onClick={() => setStatusFilter("public")}
             >
               Public

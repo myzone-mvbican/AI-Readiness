@@ -1,6 +1,3 @@
-import { Link } from "wouter";
-import { ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function SurveyPage() {
@@ -42,15 +39,6 @@ export default function SurveyPage() {
                 <li>Generate a PDF report of your results when finished</li>
               </ul>
             </div>
-            <Link href="/login">
-              <Button
-                size="lg"
-                className="bg-blue-600 hover:bg-blue-700 text-white transition-colors rounded-md shadow-md px-6 py-3 w-full sm:w-auto"
-              >
-                Start Assessment
-                <ChevronRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
           </CardContent>
         </Card>
       </div>
