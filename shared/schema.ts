@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, boolean, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -119,10 +119,28 @@ export const surveys = pgTable("surveys", {
   fileReference: text("file_reference").notNull(),
   questionsCount: integer("questions_count").notNull(),
   authorId: integer("author_id").notNull().references(() => users.id),
-  teamId: integer("team_id").references(() => teams.id),
+  teamId: integer("team_id").references(() => teams.id), // Keep for backward compatibility
   status: text("status").default("draft").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Survey-Teams junction table for many-to-many relationship
+export const surveyTeams = pgTable("survey_teams", {
+  id: serial("id").primaryKey(),
+  surveyId: integer("survey_id").notNull().references(() => surveys.id, { onDelete: 'cascade' }),
+  teamId: integer("team_id").notNull().references(() => teams.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    unq: uniqueIndex('survey_team_unq').on(table.surveyId, table.teamId),
+  };
+});
+
+// Survey-Teams schema
+export const insertSurveyTeamSchema = createInsertSchema(surveyTeams).pick({
+  surveyId: true,
+  teamId: true,
 });
 
 // Survey validation schemas
@@ -164,3 +182,7 @@ export const updateSurveySchema = createInsertSchema(surveys).pick({
 export type Survey = typeof surveys.$inferSelect;
 export type InsertSurvey = z.infer<typeof insertSurveySchema>;
 export type UpdateSurvey = z.infer<typeof updateSurveySchema>;
+
+// Survey-Team types
+export type SurveyTeam = typeof surveyTeams.$inferSelect;
+export type InsertSurveyTeam = z.infer<typeof insertSurveyTeamSchema>;
