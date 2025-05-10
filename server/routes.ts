@@ -1325,8 +1325,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userTeams = await storage.getTeamsByUserId(req.user!.id);
       const teamIds = userTeams.map(team => team.id);
       
-      // Check if user has access to this survey's team
-      if (!teamIds.includes(survey.teamId)) {
+      // Check if survey is global (null teamId) or if user has access to any of the survey's teams
+      const surveyTeamIds = await storage.getSurveyTeams(surveyId);
+      
+      // Allow access if:
+      // 1. Survey is global (teamId is null and no teams assigned)
+      // 2. User is part of any team the survey is assigned to
+      const isGlobalSurvey = survey.teamId === null && surveyTeamIds.length === 0;
+      const hasTeamAccess = surveyTeamIds.some(teamId => teamIds.includes(teamId));
+      
+      if (!isGlobalSurvey && !hasTeamAccess) {
         return res.status(403).json({
           success: false,
           message: "You don't have access to this survey"
