@@ -309,24 +309,19 @@ export default function AdminSurveysPage() {
       return;
     }
 
-    // Get the current team ID or fallback to 0
-    const currentTeamId = teamId || 0;
-    
-    // Make sure we have a valid team ID
-    if (!currentTeamId) {
-      toast({
-        title: "Team selection required",
-        description: "Please select a team for this survey",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Get the current team ID (can be undefined for global surveys)
+    const currentTeamId = teamId || undefined;
     
     const formData = new FormData();
     formData.append('title', surveyTitle);
     formData.append('file', csvFile);
     formData.append('questionsCount', questionsCount.toString());
-    formData.append('teamId', String(currentTeamId));
+    
+    // Only add teamId if it's defined (will be a global survey if undefined)
+    if (currentTeamId) {
+      formData.append('teamId', String(currentTeamId));
+    }
+    
     formData.append('status', 'draft');
 
     createSurveyMutation.mutate(formData);
