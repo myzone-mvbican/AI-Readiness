@@ -152,8 +152,19 @@ export default function SurveyEditDialog({
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate all survey-related queries
       queryClient.invalidateQueries({
         queryKey: ["/api/admin/surveys"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/surveys/0"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/surveys"],
+      });
+      // Also invalidate specific survey detail
+      queryClient.invalidateQueries({
+        queryKey: [`/api/admin/surveys/detail/${survey.id}`],
       });
       onOpenChange(false);
       toast({
