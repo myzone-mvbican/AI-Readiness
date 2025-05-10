@@ -713,19 +713,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Delete user
-      const success = await storage.deleteUser(userId);
-      
-      if (!success) {
-        return res.status(404).json({
-          success: false,
-          message: "User not found or could not be deleted"
+      try {
+        const success = await storage.deleteUser(userId);
+        
+        if (!success) {
+          return res.status(404).json({
+            success: false,
+            message: "User not found or could not be deleted"
+          });
+        }
+        
+        return res.status(200).json({
+          success: true,
+          message: "User deleted successfully"
         });
+      } catch (err) {
+        // Handle specific database errors
+        if (err.code === '23503') { // Foreign key constraint violation
+          return res.status(400).json({
+            success: false,
+            message: "User could not be deleted because they still have associated data. Please contact an administrator."
+          });
+        }
+        throw err; // Re-throw for the outer catch block
       }
-      
-      return res.status(200).json({
-        success: true,
-        message: "User deleted successfully"
-      });
     } catch (error) {
       console.error("Delete user error:", error);
       return res.status(500).json({
