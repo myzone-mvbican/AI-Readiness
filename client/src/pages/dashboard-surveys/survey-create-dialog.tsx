@@ -308,9 +308,13 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
                       value={field.value as string}
                       onValueChange={(value) => {
                         field.onChange(value);
+                        
                         // Reset selected teams when switching to global
+                        // Use setTimeout to avoid maximum update depth exceeded error
                         if (value === "global") {
-                          form.setValue("selectedTeams", []);
+                          setTimeout(() => {
+                            form.setValue("selectedTeams", []);
+                          }, 0);
                         }
                       }}
                     >
