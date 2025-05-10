@@ -16,8 +16,8 @@ import AuthPage from "@/pages/auth";
 import SurveyPage from "@/pages/survey";
 import SurveyNew from "@/pages/dashboard-survey-new";
 import DashboardHome from "@/pages/dashboard-home";
-import SurveysPage from "@/pages/dashboard-surveys";
-import AdminSurveysPage from "@/pages/dashboard-admin-surveys";
+import AssessmentsPage from "@/pages/dashboard-assessments";
+import AdminSurveysPage from "@/pages/dashboard-surveys";
 import UsersPage from "@/pages/dashboard-users";
 import AccountSettingsPage from "./pages/dashboard-settings";
 
@@ -34,7 +34,7 @@ function Router() {
           path="/dashboard/assessments/new"
           component={SurveyNew}
         />
-        <ProtectedRoute path="/dashboard/assessments" component={SurveysPage} />
+        <ProtectedRoute path="/dashboard/assessments" component={AssessmentsPage} />
         <ProtectedRoute
           path="/dashboard/account/settings"
           component={AccountSettingsPage}
