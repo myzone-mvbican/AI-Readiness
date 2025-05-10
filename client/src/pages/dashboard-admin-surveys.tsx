@@ -72,7 +72,7 @@ export default function AdminSurveysPage() {
     ? parseInt(localStorage.getItem("selectedTeam") || "0") 
     : 0;
 
-  // Fetch surveys for the current team
+  // Fetch surveys for the current team and global surveys
   const { 
     data: surveys, 
     isLoading,
@@ -80,14 +80,14 @@ export default function AdminSurveysPage() {
   } = useQuery({ 
     queryKey: ["/api/admin/surveys", teamId], 
     queryFn: async () => {
-      if (!teamId) return { success: false, surveys: [] };
-      const response = await fetch(`/api/admin/surveys/${teamId}`);
+      // Default to team ID 0 if not set, which will fetch global surveys
+      const fetchTeamId = teamId || 0;
+      const response = await fetch(`/api/admin/surveys/${fetchTeamId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch surveys');
       }
       return response.json();
-    },
-    enabled: !!teamId
+    }
   });
 
   // Create a new survey
@@ -573,6 +573,7 @@ export default function AdminSurveysPage() {
                       <TableHead>Questions</TableHead>
                       <TableHead>Last Modified</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Visibility</TableHead>
                       <TableHead>Author</TableHead>
                       <TableHead className="w-[120px]">Actions</TableHead>
                     </TableRow>
@@ -590,6 +591,13 @@ export default function AdminSurveysPage() {
                             variant={survey.status === "live" ? "default" : "secondary"}
                           >
                             {survey.status === "live" ? "Live" : "Draft"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={survey.teamId === null ? "outline" : "secondary"}
+                          >
+                            {survey.teamId === null ? "Global" : "Team-only"}
                           </Badge>
                         </TableCell>
                         <TableCell>
