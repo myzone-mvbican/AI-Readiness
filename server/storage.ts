@@ -484,12 +484,23 @@ export class DatabaseStorage implements IStorage {
 
   async getSurveysWithAuthors(teamId: number): Promise<(Survey & { author: { name: string, email: string } })[]> {
     try {
-      // Get all surveys for the team
-      const teamSurveys = await this.getSurveys(teamId);
+      let allSurveys: Survey[] = [];
+      
+      if (teamId === 0) {
+        // For admins, get ALL surveys regardless of team
+        const results = await db
+          .select()
+          .from(surveys)
+          .orderBy(desc(surveys.updatedAt));
+        allSurveys = results;
+      } else {
+        // Otherwise, just get surveys for this team and global surveys
+        allSurveys = await this.getSurveys(teamId);
+      }
       
       // Map through surveys and add author information
       const surveysWithAuthors = await Promise.all(
-        teamSurveys.map(async (survey) => {
+        allSurveys.map(async (survey) => {
           const author = await this.getUser(survey.authorId);
           return {
             ...survey,
@@ -892,9 +903,19 @@ export class MemStorage implements IStorage {
 
   async getSurveysWithAuthors(teamId: number): Promise<(Survey & { author: { name: string, email: string } })[]> {
     try {
-      const teamSurveys = await this.getSurveys(teamId);
+      let allSurveys: Survey[] = [];
       
-      const surveysWithAuthors = teamSurveys.map(survey => {
+      if (teamId === 0) {
+        // For admins, get ALL surveys regardless of team
+        allSurveys = Array.from(this.surveys.values());
+        // Sort by updated date descending
+        allSurveys.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+      } else {
+        // Otherwise, just get surveys for this team and global surveys
+        allSurveys = await this.getSurveys(teamId);
+      }
+      
+      const surveysWithAuthors = allSurveys.map(survey => {
         const author = this.users.get(survey.authorId);
         return {
           ...survey,
