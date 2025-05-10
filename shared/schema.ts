@@ -119,7 +119,7 @@ export const surveys = pgTable("surveys", {
   fileReference: text("file_reference").notNull(),
   questionsCount: integer("questions_count").notNull(),
   authorId: integer("author_id").notNull().references(() => users.id),
-  teamId: integer("team_id").notNull().references(() => teams.id),
+  teamId: integer("team_id").references(() => teams.id),
   status: text("status").default("draft").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -131,6 +131,9 @@ export const insertSurveySchema = createInsertSchema(surveys).pick({
   fileReference: true,
   questionsCount: true,
   authorId: true,
+  teamId: true,
+  status: true,
+}).partial({
   teamId: true,
   status: true,
 });

@@ -906,7 +906,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { title, teamId, questionsCount, status } = req.body;
       
       // Validate required fields
-      if (!title || !teamId || !questionsCount) {
+      if (!title || !questionsCount) {
         // Delete the uploaded file if validation fails
         if (req.file && req.file.path) {
           fs.unlinkSync(req.file.path);
@@ -914,24 +914,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         return res.status(400).json({ 
           success: false, 
-          message: "Missing required fields. Title, teamId, and questionsCount are required."
+          message: "Missing required fields. Title and questionsCount are required."
         });
       }
       
       // Create survey data
-      const teamIdNum = parseInt(teamId);
       const questionsCountNum = parseInt(questionsCount);
       
-      if (isNaN(teamIdNum)) {
-        // Delete the uploaded file if validation fails
-        if (req.file && req.file.path) {
-          fs.unlinkSync(req.file.path);
+      // Optional teamId (null means global survey)
+      let teamIdNum = null;
+      if (teamId) {
+        teamIdNum = parseInt(teamId);
+        if (isNaN(teamIdNum)) {
+          // Non-empty but invalid teamId
+          // Delete the uploaded file if validation fails
+          if (req.file && req.file.path) {
+            fs.unlinkSync(req.file.path);
+          }
+          
+          return res.status(400).json({ 
+            success: false, 
+            message: "Invalid team ID format. Must be a valid number or empty for global surveys."
+          });
         }
-        
-        return res.status(400).json({ 
-          success: false, 
-          message: "Invalid team ID format. Must be a valid number."
-        });
       }
       
       if (isNaN(questionsCountNum)) {
@@ -948,7 +953,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const surveyData = {
         title,
-        teamId: teamIdNum,
+        teamId: teamIdNum, // Can be null for global surveys
         questionsCount: questionsCountNum,
         status: status || 'draft',
         fileReference: req.file.path,
