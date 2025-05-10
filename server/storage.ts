@@ -66,8 +66,8 @@ export interface IStorage {
   createSurvey(surveyData: InsertSurvey): Promise<Survey>;
   updateSurvey(id: number, surveyData: UpdateSurvey): Promise<Survey | undefined>;
   deleteSurvey(id: number): Promise<boolean>;
-  getSurveyWithAuthor(id: number): Promise<(Survey & { author: { name: string, email: string } }) | undefined>;
-  getSurveysWithAuthors(teamId: number): Promise<(Survey & { author: { name: string, email: string } })[]>;
+  getSurveyWithAuthor(id: number): Promise<(Survey & { author: { name: string, email: string }, teams?: { id: number, name: string }[] }) | undefined>;
+  getSurveysWithAuthors(teamId: number): Promise<(Survey & { author: { name: string, email: string }, teams: { id: number, name: string }[] })[]>;
   
   // Survey-Team operations
   getSurveyTeams(surveyId: number): Promise<number[]>;
@@ -510,7 +510,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getSurveyWithAuthor(id: number): Promise<(Survey & { author: { name: string, email: string } }) | undefined> {
+  async getSurveyWithAuthor(id: number): Promise<(Survey & { author: { name: string, email: string }, teams?: { id: number, name: string }[] }) | undefined> {
     try {
       // First get the survey
       const survey = await this.getSurveyById(id);
@@ -520,13 +520,29 @@ export class DatabaseStorage implements IStorage {
       const author = await this.getUser(survey.authorId);
       if (!author) return undefined;
       
-      // Combine survey with author info
+      // Get teams for this survey
+      const teamIds = await this.getSurveyTeams(survey.id);
+      let teams: { id: number, name: string }[] = [];
+      
+      if (teamIds.length > 0) {
+        // Fetch team details for each teamId
+        const teamPromises = teamIds.map(async (id) => {
+          const team = await this.getTeam(id);
+          return team ? { id: team.id, name: team.name } : null;
+        });
+        
+        // Filter out any null teams (those not found)
+        teams = (await Promise.all(teamPromises)).filter(Boolean) as { id: number, name: string }[];
+      }
+      
+      // Combine survey with author and teams info
       return {
         ...survey,
         author: {
           name: author.name,
           email: author.email
-        }
+        },
+        teams: teams
       };
     } catch (error) {
       console.error(`Error getting survey with author for id ${id}:`, error);
@@ -534,7 +550,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getSurveysWithAuthors(teamId: number): Promise<(Survey & { author: { name: string, email: string } })[]> {
+  async getSurveysWithAuthors(teamId: number): Promise<(Survey & { author: { name: string, email: string }, teams: { id: number, name: string }[] })[]> {
     try {
       let allSurveys: Survey[] = [];
       
