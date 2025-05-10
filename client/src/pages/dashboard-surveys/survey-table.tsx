@@ -11,11 +11,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Pencil, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import SurveyEditDialog from "./survey-edit-dialog";
@@ -57,27 +52,6 @@ export default function SurveyTable({ surveys }: SurveyTableProps) {
   );
   const [editSurveyOpen, setEditSurveyOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
-  // Fetch teams to display team names in visibility column
-  const { data: teamsData } = useQuery({
-    queryKey: ["/api/admin/teams"],
-    retry: false,
-  });
-
-  const teams: Team[] = teamsData?.teams || [];
-
-  // Format the visibility information based on survey teams
-  const formatVisibility = (survey: SurveyWithAuthor): string => {
-    if (!survey.teams || survey.teams.length === 0) {
-      return "Global (Everyone)";
-    }
-
-    if (survey.teams.length === 1) {
-      return survey.teams[0].name;
-    }
-
-    return `${survey.teams.length} teams`;
-  };
 
   // Check if the current user is the author of a survey
   const isAuthor = (survey: SurveyWithAuthor) => {
