@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { SurveyWithAuthor } from "./survey-table";
+import { type Survey } from "@shared/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -110,7 +111,7 @@ export default function SurveyEditDialog({
       title: survey.title,
       visibility: surveyTeamIds.length > 0 ? "teams" : "global",
       selectedTeams: surveyTeamIds,
-      status: survey.status,
+      status: survey.status as "draft" | "public",
     },
   });
 
@@ -121,7 +122,7 @@ export default function SurveyEditDialog({
         title: survey.title,
         visibility: surveyTeamIds.length > 0 ? "teams" : "global",
         selectedTeams: surveyTeamIds,
-        status: survey.status,
+        status: survey.status as "draft" | "public",
       });
       setQuestionsCount(survey.questionsCount);
     }
@@ -300,8 +301,13 @@ export default function SurveyEditDialog({
                   <FormItem>
                     <FormLabel>Visibility</FormLabel>
                     <Select
-                      value={field.value as string}
-                      onValueChange={field.onChange}
+                      value={field.value as "global" | "teams"}
+                      onValueChange={(value: "global" | "teams") => {
+                        // Use setTimeout to avoid maximum update depth exceeded error
+                        setTimeout(() => {
+                          field.onChange(value);
+                        }, 0);
+                      }}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -409,8 +415,13 @@ export default function SurveyEditDialog({
                   <FormItem>
                     <FormLabel>Status</FormLabel>
                     <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
+                      value={field.value as "draft" | "public"}
+                      onValueChange={(value: "draft" | "public") => {
+                        // Use setTimeout to avoid maximum update depth exceeded error
+                        setTimeout(() => {
+                          field.onChange(value);
+                        }, 0);
+                      }}
                     >
                       <FormControl>
                         <SelectTrigger>
