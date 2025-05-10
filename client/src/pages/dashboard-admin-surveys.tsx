@@ -1,10 +1,25 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { FileSpreadsheet, ShieldCheck, Plus, Search, Pencil, Trash2, FileUp, X } from "lucide-react";
+import {
+  FileSpreadsheet,
+  ShieldCheck,
+  Plus,
+  Search,
+  Pencil,
+  Trash2,
+  FileUp,
+  X,
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -44,11 +59,11 @@ import { Loader2 } from "lucide-react";
 import { Survey } from "@shared/schema";
 
 // Type for the survey data with author info
-type SurveyWithAuthor = Survey & { 
-  author: { 
-    name: string; 
+type SurveyWithAuthor = Survey & {
+  author: {
+    name: string;
     email: string;
-  } 
+  };
 };
 
 export default function AdminSurveysPage() {
@@ -60,7 +75,9 @@ export default function AdminSurveysPage() {
   const [newSurveyOpen, setNewSurveyOpen] = useState(false);
   const [editSurveyOpen, setEditSurveyOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [currentSurvey, setCurrentSurvey] = useState<SurveyWithAuthor | null>(null);
+  const [currentSurvey, setCurrentSurvey] = useState<SurveyWithAuthor | null>(
+    null,
+  );
   const [surveyTitle, setSurveyTitle] = useState("");
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [questionsCount, setQuestionsCount] = useState(0);
@@ -68,55 +85,57 @@ export default function AdminSurveysPage() {
   const [isEditing, setIsEditing] = useState(false);
 
   // Get the current selected team ID
-  const teamId = localStorage.getItem("selectedTeam") 
-    ? parseInt(localStorage.getItem("selectedTeam") || "0") 
+  const teamId = localStorage.getItem("selectedTeam")
+    ? parseInt(localStorage.getItem("selectedTeam") || "0")
     : 0;
 
   // Fetch surveys for the current team and global surveys
-  const { 
-    data: surveys, 
+  const {
+    data: surveys,
     isLoading,
-    error 
-  } = useQuery({ 
-    queryKey: ["/api/admin/surveys", teamId], 
+    error,
+  } = useQuery({
+    queryKey: ["/api/admin/surveys", teamId],
     queryFn: async () => {
       // Default to team ID 0 if not set, which will fetch global surveys
       const fetchTeamId = teamId || 0;
       const response = await fetch(`/api/admin/surveys/${fetchTeamId}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch surveys');
+        throw new Error("Failed to fetch surveys");
       }
       return response.json();
-    }
+    },
   });
 
   // Create a new survey
   const createSurveyMutation = useMutation({
     mutationFn: async (formData: FormData) => {
       // Get the authentication token from localStorage
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        throw new Error('Authentication token not found');
+        throw new Error("Authentication token not found");
       }
-      
+
       // We can't use the apiRequest helper directly because it doesn't support FormData
-      const response = await fetch('/api/admin/surveys', {
-        method: 'POST',
+      const response = await fetch("/api/admin/surveys", {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: formData
+        body: formData,
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Failed to create survey');
+        throw new Error(error.message || "Failed to create survey");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/surveys", teamId] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/surveys", teamId],
+      });
       setNewSurveyOpen(false);
       resetForm();
       toast({
@@ -130,38 +149,40 @@ export default function AdminSurveysPage() {
         description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
 
   // Update an existing survey
   const updateSurveyMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      if (!currentSurvey) throw new Error('No survey selected for update');
-      
+      if (!currentSurvey) throw new Error("No survey selected for update");
+
       // Get the authentication token from localStorage
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        throw new Error('Authentication token not found');
+        throw new Error("Authentication token not found");
       }
-      
+
       // We can't use the apiRequest helper directly because it doesn't support FormData
       const response = await fetch(`/api/admin/surveys/${currentSurvey.id}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: formData
+        body: formData,
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Failed to update survey');
+        throw new Error(error.message || "Failed to update survey");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/surveys", teamId] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/surveys", teamId],
+      });
       setEditSurveyOpen(false);
       resetForm();
       toast({
@@ -175,23 +196,28 @@ export default function AdminSurveysPage() {
         description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
 
   // Delete a survey
   const deleteSurveyMutation = useMutation({
     mutationFn: async (surveyId: number) => {
-      const response = await apiRequest('DELETE', `/api/admin/surveys/${surveyId}`);
-      
+      const response = await apiRequest(
+        "DELETE",
+        `/api/admin/surveys/${surveyId}`,
+      );
+
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Failed to delete survey');
+        throw new Error(error.message || "Failed to delete survey");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/surveys", teamId] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/surveys", teamId],
+      });
       setDeleteDialogOpen(false);
       setCurrentSurvey(null);
       toast({
@@ -205,7 +231,7 @@ export default function AdminSurveysPage() {
         description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
 
   // Reset form values
@@ -227,13 +253,13 @@ export default function AdminSurveysPage() {
     }
 
     const file = e.target.files[0];
-    if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+    if (file.type !== "text/csv" && !file.name.endsWith(".csv")) {
       toast({
         title: "Invalid file type",
         description: "Please upload a CSV file",
         variant: "destructive",
       });
-      e.target.value = '';
+      e.target.value = "";
       return;
     }
 
@@ -249,26 +275,26 @@ export default function AdminSurveysPage() {
           // Count rows that have a non-empty Question Summary column
           const validQuestions = results.data.filter((row: any) => {
             // Check if the row has a non-empty Question Summary or similar field
-            return Object.values(row).some(value => 
-              typeof value === 'string' && value.trim().length > 0
+            return Object.values(row).some(
+              (value) => typeof value === "string" && value.trim().length > 0,
             );
           }).length;
-          
+
           setQuestionsCount(validQuestions);
           setIsUploading(false);
         },
         error: (error) => {
-          console.error('Error parsing CSV:', error);
+          console.error("Error parsing CSV:", error);
           toast({
             title: "Error parsing CSV",
             description: "The CSV file could not be parsed correctly",
             variant: "destructive",
           });
           setIsUploading(false);
-        }
+        },
       });
     } catch (error) {
-      console.error('Error reading file:', error);
+      console.error("Error reading file:", error);
       toast({
         title: "Error reading file",
         description: "The file could not be read",
@@ -281,7 +307,7 @@ export default function AdminSurveysPage() {
   // Handle creating a new survey
   const handleCreateSurvey = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!surveyTitle.trim()) {
       toast({
         title: "Missing title",
@@ -290,7 +316,7 @@ export default function AdminSurveysPage() {
       });
       return;
     }
-    
+
     if (!csvFile) {
       toast({
         title: "Missing file",
@@ -299,7 +325,7 @@ export default function AdminSurveysPage() {
       });
       return;
     }
-    
+
     if (questionsCount === 0) {
       toast({
         title: "Invalid CSV",
@@ -311,18 +337,18 @@ export default function AdminSurveysPage() {
 
     // Get the current team ID (can be undefined for global surveys)
     const currentTeamId = teamId || undefined;
-    
+
     const formData = new FormData();
-    formData.append('title', surveyTitle);
-    formData.append('file', csvFile);
-    formData.append('questionsCount', questionsCount.toString());
-    
+    formData.append("title", surveyTitle);
+    formData.append("file", csvFile);
+    formData.append("questionsCount", questionsCount.toString());
+
     // Only add teamId if it's defined (will be a global survey if undefined)
     if (currentTeamId) {
-      formData.append('teamId', String(currentTeamId));
+      formData.append("teamId", String(currentTeamId));
     }
-    
-    formData.append('status', 'draft');
+
+    formData.append("status", "draft");
 
     createSurveyMutation.mutate(formData);
   };
@@ -330,7 +356,7 @@ export default function AdminSurveysPage() {
   // Handle updating an existing survey
   const handleUpdateSurvey = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!surveyTitle.trim()) {
       toast({
         title: "Missing title",
@@ -339,7 +365,7 @@ export default function AdminSurveysPage() {
       });
       return;
     }
-    
+
     if (!currentSurvey) {
       toast({
         title: "Error",
@@ -350,12 +376,12 @@ export default function AdminSurveysPage() {
     }
 
     const formData = new FormData();
-    formData.append('title', surveyTitle);
-    
+    formData.append("title", surveyTitle);
+
     // If a new file was uploaded, include it
     if (csvFile) {
-      formData.append('file', csvFile);
-      formData.append('questionsCount', questionsCount.toString());
+      formData.append("file", csvFile);
+      formData.append("questionsCount", questionsCount.toString());
     }
 
     updateSurveyMutation.mutate(formData);
@@ -380,14 +406,17 @@ export default function AdminSurveysPage() {
   };
 
   // Filter surveys based on search term and status filter
-  const filteredSurveys = surveys?.surveys?.filter((survey: SurveyWithAuthor) => {
-    const matchesSearch = survey.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !statusFilter || survey.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  }) || [];
+  const filteredSurveys =
+    surveys?.surveys?.filter((survey: SurveyWithAuthor) => {
+      const matchesSearch = survey.title
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const matchesStatus = !statusFilter || survey.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    }) || [];
 
   return (
-    <DashboardLayout title="Surveys">
+    <DashboardLayout title="Manage Surveys">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -396,10 +425,12 @@ export default function AdminSurveysPage() {
           </div>
           <Dialog open={newSurveyOpen} onOpenChange={setNewSurveyOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => {
-                resetForm();
-                setNewSurveyOpen(true);
-              }}>
+              <Button
+                onClick={() => {
+                  resetForm();
+                  setNewSurveyOpen(true);
+                }}
+              >
                 <Plus className="mr-2 h-4 w-4" />
                 New Survey
               </Button>
@@ -429,7 +460,9 @@ export default function AdminSurveysPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center">
                             <FileSpreadsheet className="h-4 w-4 mr-2" />
-                            <span className="text-sm truncate max-w-[300px]">{csvFile.name}</span>
+                            <span className="text-sm truncate max-w-[300px]">
+                              {csvFile.name}
+                            </span>
                           </div>
                           <Button
                             type="button"
@@ -480,10 +513,19 @@ export default function AdminSurveysPage() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" type="button" onClick={() => setNewSurveyOpen(false)}>
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={() => setNewSurveyOpen(false)}
+                  >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={!csvFile || isUploading || createSurveyMutation.isPending}>
+                  <Button
+                    type="submit"
+                    disabled={
+                      !csvFile || isUploading || createSurveyMutation.isPending
+                    }
+                  >
                     {createSurveyMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -498,7 +540,7 @@ export default function AdminSurveysPage() {
             </DialogContent>
           </Dialog>
         </div>
-        
+
         <Card className="overflow-hidden">
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -545,14 +587,16 @@ export default function AdminSurveysPage() {
                 </Button>
               </div>
             </div>
-            
+
             {isLoading ? (
               <div className="flex justify-center items-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : error ? (
               <div className="bg-destructive/10 p-4 rounded-md text-center">
-                <p className="text-destructive">Error loading surveys. Please try again.</p>
+                <p className="text-destructive">
+                  Error loading surveys. Please try again.
+                </p>
               </div>
             ) : filteredSurveys.length === 0 ? (
               <div className="bg-muted/50 p-8 rounded-md text-center">
@@ -581,29 +625,39 @@ export default function AdminSurveysPage() {
                   <TableBody>
                     {filteredSurveys.map((survey: SurveyWithAuthor) => (
                       <TableRow key={survey.id}>
-                        <TableCell className="font-medium">{survey.title}</TableCell>
+                        <TableCell className="font-medium">
+                          {survey.title}
+                        </TableCell>
                         <TableCell>{survey.questionsCount}</TableCell>
                         <TableCell>
                           {format(new Date(survey.updatedAt), "MMM d, yyyy")}
                         </TableCell>
                         <TableCell>
                           <Badge
-                            variant={survey.status === "live" ? "default" : "secondary"}
+                            variant={
+                              survey.status === "live" ? "default" : "secondary"
+                            }
                           >
                             {survey.status === "live" ? "Live" : "Draft"}
                           </Badge>
                         </TableCell>
                         <TableCell>
                           <Badge
-                            variant={survey.teamId === null ? "outline" : "secondary"}
+                            variant={
+                              survey.teamId === null ? "outline" : "secondary"
+                            }
                           >
                             {survey.teamId === null ? "Global" : "Team-only"}
                           </Badge>
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="text-sm font-medium">{survey.author.name}</span>
-                            <span className="text-xs text-muted-foreground">{survey.author.email}</span>
+                            <span className="text-sm font-medium">
+                              {survey.author.name}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {survey.author.email}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell className="space-x-2">
@@ -612,7 +666,11 @@ export default function AdminSurveysPage() {
                             size="icon"
                             onClick={() => handleEditSurvey(survey)}
                             disabled={!isAuthor(survey)}
-                            title={isAuthor(survey) ? "Edit survey" : "Only the author can edit"}
+                            title={
+                              isAuthor(survey)
+                                ? "Edit survey"
+                                : "Only the author can edit"
+                            }
                           >
                             <Pencil className="h-4 w-4" />
                             <span className="sr-only">Edit</span>
@@ -623,7 +681,11 @@ export default function AdminSurveysPage() {
                             className="text-destructive hover:text-destructive"
                             onClick={() => handleDeleteClick(survey)}
                             disabled={!isAuthor(survey)}
-                            title={isAuthor(survey) ? "Delete survey" : "Only the author can delete"}
+                            title={
+                              isAuthor(survey)
+                                ? "Delete survey"
+                                : "Only the author can delete"
+                            }
                           >
                             <Trash2 className="h-4 w-4" />
                             <span className="sr-only">Delete</span>
@@ -638,7 +700,7 @@ export default function AdminSurveysPage() {
           </CardContent>
         </Card>
       </div>
-      
+
       {/* Edit Survey Modal */}
       <Dialog open={editSurveyOpen} onOpenChange={setEditSurveyOpen}>
         <DialogContent className="sm:max-w-[500px]">
@@ -666,7 +728,9 @@ export default function AdminSurveysPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         <FileSpreadsheet className="h-4 w-4 mr-2" />
-                        <span className="text-sm truncate max-w-[300px]">{csvFile.name}</span>
+                        <span className="text-sm truncate max-w-[300px]">
+                          {csvFile.name}
+                        </span>
                       </div>
                       <Button
                         type="button"
@@ -722,10 +786,17 @@ export default function AdminSurveysPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" type="button" onClick={() => setEditSurveyOpen(false)}>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => setEditSurveyOpen(false)}
+              >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isUploading || updateSurveyMutation.isPending}>
+              <Button
+                type="submit"
+                disabled={isUploading || updateSurveyMutation.isPending}
+              >
                 {updateSurveyMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -739,21 +810,23 @@ export default function AdminSurveysPage() {
           </form>
         </DialogContent>
       </Dialog>
-      
+
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the survey "{currentSurvey?.title}". 
+              This will permanently delete the survey "{currentSurvey?.title}".
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => currentSurvey && deleteSurveyMutation.mutate(currentSurvey.id)}
+              onClick={() =>
+                currentSurvey && deleteSurveyMutation.mutate(currentSurvey.id)
+              }
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deleteSurveyMutation.isPending}
             >
