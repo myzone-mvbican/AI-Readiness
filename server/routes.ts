@@ -919,10 +919,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Create survey data
+      const teamIdNum = parseInt(teamId);
+      const questionsCountNum = parseInt(questionsCount);
+      
+      if (isNaN(teamIdNum)) {
+        // Delete the uploaded file if validation fails
+        if (req.file && req.file.path) {
+          fs.unlinkSync(req.file.path);
+        }
+        
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid team ID format. Must be a valid number."
+        });
+      }
+      
+      if (isNaN(questionsCountNum)) {
+        // Delete the uploaded file if validation fails
+        if (req.file && req.file.path) {
+          fs.unlinkSync(req.file.path);
+        }
+        
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid questions count format. Must be a valid number."
+        });
+      }
+      
       const surveyData = {
         title,
-        teamId: parseInt(teamId),
-        questionsCount: parseInt(questionsCount),
+        teamId: teamIdNum,
+        questionsCount: questionsCountNum,
         status: status || 'draft',
         fileReference: req.file.path,
         authorId: req.user!.id
@@ -1004,14 +1031,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.file) {
         // Delete the old file if it exists
         if (existingSurvey.fileReference && fs.existsSync(existingSurvey.fileReference)) {
-          fs.unlinkSync(existingSurvey.fileReference);
+          try {
+            fs.unlinkSync(existingSurvey.fileReference);
+          } catch (fileError) {
+            console.error(`Error deleting file ${existingSurvey.fileReference}:`, fileError);
+            // Continue with update even if file deletion fails
+          }
         }
         
         updateData.fileReference = req.file.path;
         
         // If questions count is provided, use that value
         if (req.body.questionsCount) {
-          updateData.questionsCount = parseInt(req.body.questionsCount);
+          const questionsCountNum = parseInt(req.body.questionsCount);
+          
+          if (isNaN(questionsCountNum)) {
+            // Delete the uploaded file
+            try {
+              fs.unlinkSync(req.file.path);
+            } catch (fileError) {
+              console.error(`Error deleting file ${req.file.path}:`, fileError);
+            }
+            
+            return res.status(400).json({ 
+              success: false, 
+              message: "Invalid questions count format. Must be a valid number."
+            });
+          }
+          
+          updateData.questionsCount = questionsCountNum;
         }
       }
       
