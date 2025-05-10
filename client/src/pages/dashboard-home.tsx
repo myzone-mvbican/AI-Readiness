@@ -69,7 +69,7 @@ export default function DashboardHome() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-2">
-                <Link href="/dashboard/assessments/new" asChild>
+                <Link href="/dashboard/assessments" asChild>
                   <Button variant="outline" className="justify-start">
                     <ClipboardCheck className="mr-2 h-4 w-4" />
                     <span>View Assessments</span>

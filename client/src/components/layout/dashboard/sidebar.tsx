@@ -20,7 +20,7 @@ import {
 import {
   Home,
   ClipboardCheck,
-  BarChart3,
+  // BarChart3,
   PlusCircle,
   ScrollText,
   FileSpreadsheet,
@@ -74,11 +74,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       url: "/dashboard/assessments",
       icon: ClipboardCheck,
     },
-    {
-      title: "Reports",
-      url: "/dashboard/reports",
-      icon: BarChart3,
-    },
+    // {
+    //   title: "Reports",
+    //   url: "/dashboard/reports",
+    //   icon: BarChart3,
+    // },
   ];
 
   // Admin-only menu items that are only shown when the current team has admin role

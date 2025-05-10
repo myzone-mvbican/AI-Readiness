@@ -4,6 +4,12 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { GoogleAuthProvider } from "@/lib/google-auth-provider";
+import Header from "@/components/layout/header";
+import Footer from "@/components/layout/footer";
+import { AuthProvider } from "@/hooks/use-auth";
+import { ProtectedRoute } from "@/lib/protected-route";
+import { ThemeProvider } from "@/components/theme-provider";
+import { AdminProtectedRoute } from "./lib/admin-protected-route";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import AuthPage from "@/pages/auth";
@@ -13,16 +19,7 @@ import DashboardHome from "@/pages/dashboard-home";
 import SurveysPage from "@/pages/dashboard-surveys";
 import AdminSurveysPage from "@/pages/dashboard-admin-surveys";
 import UsersPage from "@/pages/dashboard-users";
-import Header from "@/components/layout/header";
-import Footer from "@/components/layout/footer";
-import { AuthProvider } from "@/hooks/use-auth";
-import { ProtectedRoute } from "@/lib/protected-route";
-
-// Import the team-aware protected route
-import { AdminProtectedRoute } from "./lib/admin-protected-route";
-
-// Make sure the dashboard settings page is properly imported
-import SettingsPage from "./pages/dashboard-settings";
+import AccountSettingsPage from "./pages/dashboard-settings";
 
 function Router() {
   const [location] = useLocation();
@@ -38,7 +35,10 @@ function Router() {
           component={SurveyNew}
         />
         <ProtectedRoute path="/dashboard/assessments" component={SurveysPage} />
-        <ProtectedRoute path="/dashboard/settings" component={SettingsPage} />
+        <ProtectedRoute
+          path="/dashboard/account/settings"
+          component={AccountSettingsPage}
+        />
         <AdminProtectedRoute
           path="/dashboard/surveys"
           component={AdminSurveysPage}
@@ -58,8 +58,6 @@ function Router() {
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/auth" component={AuthPage} />
-          <Route path="/login" component={AuthPage} />
-          <Route path="/signup" component={AuthPage} />
           <Route path="/about" component={SurveyPage} />
           <Route component={NotFound} />
         </Switch>
@@ -68,8 +66,6 @@ function Router() {
     </div>
   );
 }
-
-import { ThemeProvider } from "@/components/theme-provider";
 
 function App() {
   return (

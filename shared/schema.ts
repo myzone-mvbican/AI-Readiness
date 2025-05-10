@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -111,3 +111,38 @@ export interface GoogleUserPayload {
   exp: number;
   jti: string;
 }
+
+// Surveys schema
+export const surveys = pgTable("surveys", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  fileReference: text("file_reference").notNull(),
+  questionsCount: integer("questions_count").notNull(),
+  authorId: integer("author_id").notNull().references(() => users.id),
+  teamId: integer("team_id").notNull().references(() => teams.id),
+  status: text("status").default("draft").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Survey schemas
+export const insertSurveySchema = createInsertSchema(surveys).pick({
+  title: true,
+  fileReference: true,
+  questionsCount: true,
+  authorId: true,
+  teamId: true,
+  status: true,
+});
+
+export const updateSurveySchema = createInsertSchema(surveys).pick({
+  title: true,
+  fileReference: true,
+  questionsCount: true,
+  status: true,
+}).partial();
+
+// Survey types
+export type Survey = typeof surveys.$inferSelect;
+export type InsertSurvey = z.infer<typeof insertSurveySchema>;
+export type UpdateSurvey = z.infer<typeof updateSurveySchema>;

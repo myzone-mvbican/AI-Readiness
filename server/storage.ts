@@ -53,6 +53,15 @@ export interface IStorage {
   addUserToTeam(userTeamData: InsertUserTeam): Promise<UserTeam>;
   updateUserTeams(userId: number, teamIds: number[]): Promise<void>;
 
+  // Survey operations
+  getSurveys(teamId: number): Promise<Survey[]>;
+  getSurveyById(id: number): Promise<Survey | undefined>;
+  createSurvey(surveyData: InsertSurvey): Promise<Survey>;
+  updateSurvey(id: number, surveyData: UpdateSurvey): Promise<Survey | undefined>;
+  deleteSurvey(id: number): Promise<boolean>;
+  getSurveyWithAuthor(id: number): Promise<(Survey & { author: { name: string, email: string } }) | undefined>;
+  getSurveysWithAuthors(teamId: number): Promise<(Survey & { author: { name: string, email: string } })[]>;
+
   // Authentication operations
   generateToken(user: User): string;
   verifyToken(token: string): { userId: number } | null;
@@ -719,6 +728,148 @@ export class MemStorage implements IStorage {
     } catch (error) {
       console.error('Error disconnecting Google account:', error);
       throw error;
+    }
+  }
+
+  // Survey Operations
+
+  async getSurveys(teamId: number): Promise<Survey[]> {
+    try {
+      const result = await db
+        .select()
+        .from(surveys)
+        .where(eq(surveys.teamId, teamId))
+        .orderBy(desc(surveys.updatedAt));
+      
+      return result;
+    } catch (error) {
+      console.error('Error getting surveys:', error);
+      return [];
+    }
+  }
+
+  async getSurveyById(id: number): Promise<Survey | undefined> {
+    try {
+      const [survey] = await db
+        .select()
+        .from(surveys)
+        .where(eq(surveys.id, id));
+      
+      return survey;
+    } catch (error) {
+      console.error(`Error getting survey with id ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async createSurvey(surveyData: InsertSurvey): Promise<Survey> {
+    try {
+      const [survey] = await db
+        .insert(surveys)
+        .values(surveyData)
+        .returning();
+      
+      return survey;
+    } catch (error) {
+      console.error('Error creating survey:', error);
+      throw error;
+    }
+  }
+
+  async updateSurvey(id: number, surveyData: UpdateSurvey): Promise<Survey | undefined> {
+    try {
+      // Get the current survey
+      const currentSurvey = await this.getSurveyById(id);
+      if (!currentSurvey) {
+        return undefined;
+      }
+
+      // Update the survey
+      const [updatedSurvey] = await db
+        .update(surveys)
+        .set({
+          ...surveyData,
+          updatedAt: new Date()
+        })
+        .where(eq(surveys.id, id))
+        .returning();
+      
+      return updatedSurvey;
+    } catch (error) {
+      console.error(`Error updating survey with id ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async deleteSurvey(id: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(surveys)
+        .where(eq(surveys.id, id));
+      
+      return true;
+    } catch (error) {
+      console.error(`Error deleting survey with id ${id}:`, error);
+      return false;
+    }
+  }
+
+  async getSurveyWithAuthor(id: number): Promise<(Survey & { author: { name: string, email: string } }) | undefined> {
+    try {
+      const result = await db.query.surveys.findFirst({
+        where: eq(surveys.id, id),
+        with: {
+          author: {
+            columns: {
+              name: true,
+              email: true
+            }
+          }
+        }
+      });
+      
+      if (!result) return undefined;
+      
+      // Manual join since we don't have relations defined
+      const author = await this.getUser(result.authorId);
+      if (!author) return undefined;
+      
+      return {
+        ...result,
+        author: {
+          name: author.name,
+          email: author.email
+        }
+      };
+    } catch (error) {
+      console.error(`Error getting survey with author for id ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async getSurveysWithAuthors(teamId: number): Promise<(Survey & { author: { name: string, email: string } })[]> {
+    try {
+      // Get all surveys for the team
+      const teamSurveys = await this.getSurveys(teamId);
+      
+      // Get author details for each survey
+      const surveysWithAuthors = await Promise.all(
+        teamSurveys.map(async (survey) => {
+          const author = await this.getUser(survey.authorId);
+          return {
+            ...survey,
+            author: {
+              name: author?.name || 'Unknown',
+              email: author?.email || 'unknown@example.com'
+            }
+          };
+        })
+      );
+      
+      return surveysWithAuthors;
+    } catch (error) {
+      console.error(`Error getting surveys with authors for team ${teamId}:`, error);
+      return [];
     }
   }
 }
