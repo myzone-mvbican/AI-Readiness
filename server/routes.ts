@@ -952,6 +952,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Process multiple teams (from teamIds string)
+      let selectedTeamIds: number[] = [];
+      if (req.body.teamIds) {
+        try {
+          // Parse the teamIds string, which can be either "global" or a JSON array of team IDs
+          if (req.body.teamIds === "global") {
+            // Global survey - no teams assigned
+            selectedTeamIds = [];
+          } else {
+            selectedTeamIds = JSON.parse(req.body.teamIds);
+            if (!Array.isArray(selectedTeamIds)) {
+              throw new Error("teamIds must be an array");
+            }
+          }
+        } catch (error) {
+          console.error("Invalid teamIds format:", error);
+          if (req.file && req.file.path) {
+            fs.unlinkSync(req.file.path);
+          }
+          return res.status(400).json({
+            success: false,
+            message: "Invalid teamIds format. Must be 'global' or a JSON array."
+          });
+        }
+      }
+      
       // Create survey data object with cleaned values
       const surveyData = {
         title,
@@ -962,11 +988,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       // Only add teamId if it has a valid value (not null or undefined)
+      // This is kept for backward compatibility - we'll use the junction table going forward
       if (teamIdNum !== null && teamIdNum !== undefined) {
         Object.assign(surveyData, { teamId: teamIdNum });
       }
       
       const newSurvey = await storage.createSurvey(surveyData);
+      
+      // Now, if we have selected team IDs, assign them using the junction table
+      if (selectedTeamIds.length > 0) {
+        await storage.updateSurveyTeams(newSurvey.id, selectedTeamIds);
+      }
       
       return res.status(201).json({
         success: true,
