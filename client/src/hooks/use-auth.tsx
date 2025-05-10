@@ -28,7 +28,11 @@ type AuthContextType = {
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<RegisterResponse, Error, RegisterData>;
   googleLoginMutation: UseMutationResult<LoginResponse, Error, GoogleLoginData>;
-  googleConnectMutation: UseMutationResult<LoginResponse, Error, GoogleLoginData>;
+  googleConnectMutation: UseMutationResult<
+    LoginResponse,
+    Error,
+    GoogleLoginData
+  >;
   googleDisconnectMutation: UseMutationResult<LoginResponse, Error, void>;
 };
 
@@ -94,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear auth state
       setToken(null);
       queryClient.setQueryData(["/api/user"], null);
-      
+
       // Also clear team selection and any team data
       localStorage.removeItem("selectedTeam");
       localStorage.removeItem("userData");
@@ -183,13 +187,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.success && data.token) {
         setToken(data.token);
         queryClient.setQueryData(["/api/user"], data.user);
-        
+
         // Invalidate teams query to ensure we get fresh data
         queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
-        
+
         // Clear any previously selected team to force auto-selection
         localStorage.removeItem("selectedTeam");
-        
+
         toast({
           title: "Login successful",
           description: "You have been logged in successfully.",
@@ -197,7 +201,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         toast({
           title: "Login failed",
-          description: data.message || "An error occurred during login.",
+          description: "Your login credentials are wrong.",
           variant: "destructive",
         });
       }
@@ -222,14 +226,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.success && data.token) {
         setToken(data.token);
         queryClient.setQueryData(["/api/user"], data.user);
-        
+
         // Invalidate teams query to ensure we get fresh data including the
         // automatically assigned Client team during registration
         queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
-        
+
         // Clear any previously selected team to force auto-selection
         localStorage.removeItem("selectedTeam");
-        
+
         toast({
           title: "Registration successful",
           description: "Your account has been created successfully.",
@@ -294,13 +298,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.success && data.token) {
         setToken(data.token);
         queryClient.setQueryData(["/api/user"], data.user);
-        
+
         // Invalidate teams query to ensure we get fresh data
         queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
-        
+
         // Clear any previously selected team to force auto-selection
         localStorage.removeItem("selectedTeam");
-        
+
         toast({
           title: "Google login successful",
           description: "You have been logged in successfully with Google.",
@@ -336,7 +340,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.success) {
         // Update user data in cache
         queryClient.setQueryData(["/api/user"], data.user);
-        
+
         toast({
           title: "Google account connected",
           description: "Your Google account has been connected successfully.",
@@ -361,21 +365,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Disconnect Google account from existing user
   const googleDisconnectMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("DELETE", "/api/auth/google/disconnect", null, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const res = await apiRequest(
+        "DELETE",
+        "/api/auth/google/disconnect",
+        null,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
       return await res.json();
     },
     onSuccess: (data: LoginResponse) => {
       if (data.success) {
         // Update user data in cache
         queryClient.setQueryData(["/api/user"], data.user);
-        
+
         toast({
           title: "Google account disconnected",
-          description: "Your Google account has been disconnected successfully.",
+          description:
+            "Your Google account has been disconnected successfully.",
         });
       } else {
         toast({

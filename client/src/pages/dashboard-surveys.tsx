@@ -1,4 +1,7 @@
+import { Link } from "wouter";
 import { DashboardLayout } from "@/components/layout/dashboard";
+import { Button } from "@/components/ui/button";
+import { FileText, PlusCircle } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -14,9 +17,6 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { FileText, PlusCircle } from "lucide-react";
-import { Link } from "wouter";
 
 // Sample data for assessments
 const sampleAssessments = [
