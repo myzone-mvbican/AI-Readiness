@@ -9,9 +9,12 @@ import {
   userTeamSchema,
   googleAuthSchema,
   googleConnectSchema,
+  insertSurveySchema,
+  updateSurveySchema,
   teams,
   users,
   userTeams,
+  surveys,
   type GoogleUserPayload
 } from "@shared/schema";
 import { authenticate, requireAdmin } from "./middleware/auth";
@@ -821,6 +824,275 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({
         success: false,
         message: "Failed to add user to team"
+      });
+    }
+  });
+
+  // Survey Administration routes (admin only)
+  
+  // Get all surveys for a team
+  app.get("/api/admin/surveys/:teamId", authenticate, requireAdmin, async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      if (isNaN(teamId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid team ID"
+        });
+      }
+      
+      const surveysWithAuthors = await storage.getSurveysWithAuthors(teamId);
+      
+      return res.status(200).json({
+        success: true,
+        surveys: surveysWithAuthors
+      });
+    } catch (error) {
+      console.error("Error getting surveys:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to retrieve surveys"
+      });
+    }
+  });
+  
+  // Get a specific survey with author details
+  app.get("/api/admin/surveys/detail/:id", authenticate, requireAdmin, async (req, res) => {
+    try {
+      const surveyId = parseInt(req.params.id);
+      if (isNaN(surveyId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid survey ID"
+        });
+      }
+      
+      const survey = await storage.getSurveyWithAuthor(surveyId);
+      
+      if (!survey) {
+        return res.status(404).json({
+          success: false,
+          message: "Survey not found"
+        });
+      }
+      
+      return res.status(200).json({
+        success: true,
+        survey
+      });
+    } catch (error) {
+      console.error(`Error getting survey ${req.params.id}:`, error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to retrieve survey"
+      });
+    }
+  });
+  
+  // Create a new survey
+  app.post("/api/admin/surveys", authenticate, requireAdmin, async (req, res) => {
+    try {
+      // Validate input
+      const result = insertSurveySchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid survey data", 
+          errors: result.error.format() 
+        });
+      }
+      
+      // Add author ID to the survey data
+      const surveyData = {
+        ...req.body,
+        authorId: req.user!.id
+      };
+      
+      const newSurvey = await storage.createSurvey(surveyData);
+      
+      return res.status(201).json({
+        success: true,
+        message: "Survey created successfully",
+        survey: newSurvey
+      });
+    } catch (error) {
+      console.error("Error creating survey:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to create survey"
+      });
+    }
+  });
+  
+  // Update a survey
+  app.put("/api/admin/surveys/:id", authenticate, requireAdmin, async (req, res) => {
+    try {
+      const surveyId = parseInt(req.params.id);
+      if (isNaN(surveyId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid survey ID"
+        });
+      }
+      
+      // Validate input
+      const result = updateSurveySchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid survey update data", 
+          errors: result.error.format() 
+        });
+      }
+      
+      // Check if survey exists
+      const existingSurvey = await storage.getSurveyById(surveyId);
+      if (!existingSurvey) {
+        return res.status(404).json({
+          success: false,
+          message: "Survey not found"
+        });
+      }
+      
+      const updatedSurvey = await storage.updateSurvey(surveyId, req.body);
+      
+      return res.status(200).json({
+        success: true,
+        message: "Survey updated successfully",
+        survey: updatedSurvey
+      });
+    } catch (error) {
+      console.error(`Error updating survey ${req.params.id}:`, error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to update survey"
+      });
+    }
+  });
+  
+  // Delete a survey
+  app.delete("/api/admin/surveys/:id", authenticate, requireAdmin, async (req, res) => {
+    try {
+      const surveyId = parseInt(req.params.id);
+      if (isNaN(surveyId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid survey ID"
+        });
+      }
+      
+      // Check if survey exists
+      const existingSurvey = await storage.getSurveyById(surveyId);
+      if (!existingSurvey) {
+        return res.status(404).json({
+          success: false,
+          message: "Survey not found"
+        });
+      }
+      
+      const deleted = await storage.deleteSurvey(surveyId);
+      
+      if (!deleted) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to delete survey"
+        });
+      }
+      
+      return res.status(200).json({
+        success: true,
+        message: "Survey deleted successfully"
+      });
+    } catch (error) {
+      console.error(`Error deleting survey ${req.params.id}:`, error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to delete survey"
+      });
+    }
+  });
+
+  // User-facing survey routes
+  
+  // Get surveys for current user's selected team
+  app.get("/api/surveys/:teamId", authenticate, async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      if (isNaN(teamId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid team ID"
+        });
+      }
+      
+      // Get all teams for the user to verify access
+      const userTeams = await storage.getTeamsByUserId(req.user!.id);
+      const teamIds = userTeams.map(team => team.id);
+      
+      // Check if user has access to this team
+      if (!teamIds.includes(teamId)) {
+        return res.status(403).json({
+          success: false,
+          message: "You don't have access to this team's surveys"
+        });
+      }
+      
+      const surveys = await storage.getSurveys(teamId);
+      
+      return res.status(200).json({
+        success: true,
+        surveys
+      });
+    } catch (error) {
+      console.error("Error getting surveys:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to retrieve surveys"
+      });
+    }
+  });
+  
+  // Get a specific survey
+  app.get("/api/surveys/detail/:id", authenticate, async (req, res) => {
+    try {
+      const surveyId = parseInt(req.params.id);
+      if (isNaN(surveyId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid survey ID"
+        });
+      }
+      
+      const survey = await storage.getSurveyById(surveyId);
+      
+      if (!survey) {
+        return res.status(404).json({
+          success: false,
+          message: "Survey not found"
+        });
+      }
+      
+      // Get all teams for the user to verify access
+      const userTeams = await storage.getTeamsByUserId(req.user!.id);
+      const teamIds = userTeams.map(team => team.id);
+      
+      // Check if user has access to this survey's team
+      if (!teamIds.includes(survey.teamId)) {
+        return res.status(403).json({
+          success: false,
+          message: "You don't have access to this survey"
+        });
+      }
+      
+      return res.status(200).json({
+        success: true,
+        survey
+      });
+    } catch (error) {
+      console.error(`Error getting survey ${req.params.id}:`, error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to retrieve survey"
       });
     }
   });
