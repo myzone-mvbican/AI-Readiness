@@ -18,9 +18,12 @@ import {
   type GoogleUserPayload
 } from "@shared/schema";
 import { authenticate, requireAdmin } from "./middleware/auth";
+import { upload } from "./middleware/upload";
 import cors from "cors";
 import { db } from "./db";
 import { eq, and, inArray } from "drizzle-orm";
+import { parse } from "papaparse";
+import * as fs from "fs";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Enable CORS
@@ -889,22 +892,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Create a new survey
-  app.post("/api/admin/surveys", authenticate, requireAdmin, async (req, res) => {
+  // Create a new survey with file upload
+  app.post("/api/admin/surveys", authenticate, requireAdmin, upload.single('file'), async (req, res) => {
     try {
-      // Validate input
-      const result = insertSurveySchema.safeParse(req.body);
-      if (!result.success) {
+      if (!req.file) {
         return res.status(400).json({ 
           success: false, 
-          message: "Invalid survey data", 
-          errors: result.error.format() 
+          message: "CSV file is required" 
         });
       }
       
-      // Add author ID to the survey data
+      // Get form data
+      const { title, teamId, questionsCount, status } = req.body;
+      
+      // Validate required fields
+      if (!title || !teamId || !questionsCount) {
+        // Delete the uploaded file if validation fails
+        if (req.file && req.file.path) {
+          fs.unlinkSync(req.file.path);
+        }
+        
+        return res.status(400).json({ 
+          success: false, 
+          message: "Missing required fields. Title, teamId, and questionsCount are required."
+        });
+      }
+      
+      // Create survey data
       const surveyData = {
-        ...req.body,
+        title,
+        teamId: parseInt(teamId),
+        questionsCount: parseInt(questionsCount),
+        status: status || 'draft',
+        fileReference: req.file.path,
         authorId: req.user!.id
       };
       
@@ -924,37 +944,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Update a survey
-  app.put("/api/admin/surveys/:id", authenticate, requireAdmin, async (req, res) => {
+  // Update a survey with optional file upload
+  app.put("/api/admin/surveys/:id", authenticate, requireAdmin, upload.single('file'), async (req, res) => {
     try {
       const surveyId = parseInt(req.params.id);
       if (isNaN(surveyId)) {
+        // Clean up any uploaded file
+        if (req.file && req.file.path) {
+          fs.unlinkSync(req.file.path);
+        }
+        
         return res.status(400).json({
           success: false,
           message: "Invalid survey ID"
         });
       }
       
-      // Validate input
-      const result = updateSurveySchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({ 
-          success: false, 
-          message: "Invalid survey update data", 
-          errors: result.error.format() 
-        });
-      }
-      
       // Check if survey exists
       const existingSurvey = await storage.getSurveyById(surveyId);
       if (!existingSurvey) {
+        // Clean up any uploaded file
+        if (req.file && req.file.path) {
+          fs.unlinkSync(req.file.path);
+        }
+        
         return res.status(404).json({
           success: false,
           message: "Survey not found"
         });
       }
       
-      const updatedSurvey = await storage.updateSurvey(surveyId, req.body);
+      // Ensure the user is the author of the survey
+      if (existingSurvey.authorId !== req.user!.id) {
+        // Clean up any uploaded file
+        if (req.file && req.file.path) {
+          fs.unlinkSync(req.file.path);
+        }
+        
+        return res.status(403).json({
+          success: false,
+          message: "Only the author can update this survey"
+        });
+      }
+      
+      // Prepare update data
+      const updateData: any = {};
+      
+      // Update title if provided
+      if (req.body.title) {
+        updateData.title = req.body.title;
+      }
+      
+      // Update status if provided
+      if (req.body.status) {
+        updateData.status = req.body.status;
+      }
+      
+      // If a new file was uploaded, update file reference and questions count
+      if (req.file) {
+        // Delete the old file if it exists
+        if (existingSurvey.fileReference && fs.existsSync(existingSurvey.fileReference)) {
+          fs.unlinkSync(existingSurvey.fileReference);
+        }
+        
+        updateData.fileReference = req.file.path;
+        
+        // If questions count is provided, use that value
+        if (req.body.questionsCount) {
+          updateData.questionsCount = parseInt(req.body.questionsCount);
+        }
+      }
+      
+      const updatedSurvey = await storage.updateSurvey(surveyId, updateData);
       
       return res.status(200).json({
         success: true,
@@ -970,7 +1031,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Delete a survey
+  // Delete a survey and its file
   app.delete("/api/admin/surveys/:id", authenticate, requireAdmin, async (req, res) => {
     try {
       const surveyId = parseInt(req.params.id);
@@ -988,6 +1049,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           success: false,
           message: "Survey not found"
         });
+      }
+      
+      // Ensure the user is the author of the survey
+      if (existingSurvey.authorId !== req.user!.id) {
+        return res.status(403).json({
+          success: false,
+          message: "Only the author can delete this survey"
+        });
+      }
+      
+      // Delete the associated file if it exists
+      if (existingSurvey.fileReference && fs.existsSync(existingSurvey.fileReference)) {
+        try {
+          fs.unlinkSync(existingSurvey.fileReference);
+        } catch (fileError) {
+          console.error(`Error deleting file ${existingSurvey.fileReference}:`, fileError);
+          // Continue with survey deletion even if file deletion fails
+        }
       }
       
       const deleted = await storage.deleteSurvey(surveyId);
