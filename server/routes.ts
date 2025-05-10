@@ -1070,6 +1070,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updateData.status = req.body.status;
       }
       
+      // Process team selection
+      let selectedTeamIds: number[] = [];
+      if (req.body.teamIds) {
+        try {
+          // Parse the teamIds string, which can be either "global" or a JSON array of team IDs
+          if (req.body.teamIds === "global") {
+            // Global survey - no teams assigned
+            selectedTeamIds = [];
+          } else {
+            selectedTeamIds = JSON.parse(req.body.teamIds);
+            if (!Array.isArray(selectedTeamIds)) {
+              throw new Error("teamIds must be an array");
+            }
+          }
+        } catch (error) {
+          console.error("Invalid teamIds format:", error);
+          if (req.file && req.file.path) {
+            fs.unlinkSync(req.file.path);
+          }
+          return res.status(400).json({
+            success: false,
+            message: "Invalid teamIds format. Must be 'global' or a JSON array."
+          });
+        }
+      }
+      
       // If a new file was uploaded, update file reference and questions count
       if (req.file) {
         // Delete the old file if it exists
@@ -1108,6 +1134,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const updatedSurvey = await storage.updateSurvey(surveyId, updateData);
       
+      // Update assigned teams if provided
+      if (req.body.teamIds) {
+        await storage.updateSurveyTeams(surveyId, selectedTeamIds);
+      }
+      
       return res.status(200).json({
         success: true,
         message: "Survey updated successfully",
@@ -1118,6 +1149,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({
         success: false,
         message: "Failed to update survey"
+      });
+    }
+  });
+  
+  // Get teams assigned to a survey
+  app.get("/api/admin/surveys/:id/teams", authenticate, requireAdmin, async (req, res) => {
+    try {
+      const surveyId = parseInt(req.params.id);
+      if (isNaN(surveyId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid survey ID"
+        });
+      }
+      
+      // Check if survey exists
+      const survey = await storage.getSurveyById(surveyId);
+      if (!survey) {
+        return res.status(404).json({
+          success: false,
+          message: "Survey not found"
+        });
+      }
+      
+      // Get teams associated with this survey
+      const teamIds = await storage.getSurveyTeams(surveyId);
+      
+      return res.status(200).json({
+        success: true,
+        teamIds
+      });
+    } catch (error) {
+      console.error(`Error retrieving teams for survey ${req.params.id}:`, error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to retrieve teams for survey"
       });
     }
   });
