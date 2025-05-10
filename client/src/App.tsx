@@ -16,7 +16,7 @@ import AuthPage from "@/pages/auth";
 import SurveyPage from "@/pages/survey";
 import SurveyNew from "@/pages/dashboard-survey-new";
 import DashboardHome from "@/pages/dashboard-home";
-import SurveysPage from "@/pages/dashboard-assessments";
+import SurveysPage from "@/pages/dashboard-surveys";
 import AdminSurveysPage from "@/pages/dashboard-surveys"; // Using the new reorganized module
 import UsersPage from "@/pages/dashboard-users";
 import AccountSettingsPage from "./pages/dashboard-settings";
