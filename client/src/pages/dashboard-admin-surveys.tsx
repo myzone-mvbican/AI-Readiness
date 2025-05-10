@@ -93,8 +93,18 @@ export default function AdminSurveysPage() {
   // Create a new survey
   const createSurveyMutation = useMutation({
     mutationFn: async (formData: FormData) => {
+      // Get the authentication token from localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+      
+      // We can't use the apiRequest helper directly because it doesn't support FormData
       const response = await fetch('/api/admin/surveys', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         body: formData
       });
       
@@ -128,8 +138,18 @@ export default function AdminSurveysPage() {
     mutationFn: async (formData: FormData) => {
       if (!currentSurvey) throw new Error('No survey selected for update');
       
+      // Get the authentication token from localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+      
+      // We can't use the apiRequest helper directly because it doesn't support FormData
       const response = await fetch(`/api/admin/surveys/${currentSurvey.id}`, {
         method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         body: formData
       });
       
