@@ -3,6 +3,7 @@ import {
   teams,
   userTeams,
   surveys,
+  surveyTeams,
   type User,
   type InsertUser,
   type UpdateUser,
@@ -15,9 +16,11 @@ import {
   type Survey,
   type InsertSurvey,
   type UpdateSurvey,
+  type SurveyTeam,
+  type InsertSurveyTeam,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, inArray, isNull, desc } from "drizzle-orm";
+import { eq, and, inArray, isNull, desc, or } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import fetch from "node-fetch";
@@ -567,6 +570,66 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
   }
+  // Survey-Team operations
+  async getSurveyTeams(surveyId: number): Promise<number[]> {
+    try {
+      const result = await db
+        .select()
+        .from(surveyTeams)
+        .where(eq(surveyTeams.surveyId, surveyId));
+      
+      return result.map(st => st.teamId);
+    } catch (error) {
+      console.error('Error getting survey teams:', error);
+      return [];
+    }
+  }
+
+  async addSurveyTeam(surveyId: number, teamId: number): Promise<void> {
+    try {
+      await db.insert(surveyTeams).values({
+        surveyId,
+        teamId,
+      });
+    } catch (error) {
+      console.error('Error adding survey team:', error);
+    }
+  }
+
+  async removeSurveyTeam(surveyId: number, teamId: number): Promise<void> {
+    try {
+      await db.delete(surveyTeams)
+        .where(and(
+          eq(surveyTeams.surveyId, surveyId),
+          eq(surveyTeams.teamId, teamId)
+        ));
+    } catch (error) {
+      console.error('Error removing survey team:', error);
+    }
+  }
+
+  async updateSurveyTeams(surveyId: number, teamIds: number[]): Promise<void> {
+    try {
+      // Begin transaction
+      await db.transaction(async (tx) => {
+        // Delete all existing survey-team relationships
+        await tx.delete(surveyTeams)
+          .where(eq(surveyTeams.surveyId, surveyId));
+        
+        // If there are team IDs, insert the new relationships
+        if (teamIds.length > 0) {
+          const values = teamIds.map(teamId => ({ 
+            surveyId, 
+            teamId 
+          }));
+          
+          await tx.insert(surveyTeams).values(values);
+        }
+      });
+    } catch (error) {
+      console.error('Error updating survey teams:', error);
+    }
+  }
 }
 
 export class MemStorage implements IStorage {
@@ -981,6 +1044,58 @@ export class MemStorage implements IStorage {
     } catch (error) {
       console.error(`Error getting surveys with authors for team ${teamId}:`, error);
       return [];
+    }
+  }
+  
+  // Survey-Team operations
+  async getSurveyTeams(surveyId: number): Promise<number[]> {
+    try {
+      const teamIds: number[] = [];
+      for (const [key, value] of this.surveyTeams.entries()) {
+        if (value.surveyId === surveyId) {
+          teamIds.push(value.teamId);
+        }
+      }
+      return teamIds;
+    } catch (error) {
+      console.error('Error getting survey teams:', error);
+      return [];
+    }
+  }
+
+  async addSurveyTeam(surveyId: number, teamId: number): Promise<void> {
+    try {
+      const key = `${surveyId}-${teamId}`;
+      this.surveyTeams.set(key, { surveyId, teamId });
+    } catch (error) {
+      console.error('Error adding survey team:', error);
+    }
+  }
+
+  async removeSurveyTeam(surveyId: number, teamId: number): Promise<void> {
+    try {
+      const key = `${surveyId}-${teamId}`;
+      this.surveyTeams.delete(key);
+    } catch (error) {
+      console.error('Error removing survey team:', error);
+    }
+  }
+
+  async updateSurveyTeams(surveyId: number, teamIds: number[]): Promise<void> {
+    try {
+      // Remove all existing survey-team associations for this survey
+      for (const [key, value] of this.surveyTeams.entries()) {
+        if (value.surveyId === surveyId) {
+          this.surveyTeams.delete(key);
+        }
+      }
+
+      // Add new associations
+      for (const teamId of teamIds) {
+        await this.addSurveyTeam(surveyId, teamId);
+      }
+    } catch (error) {
+      console.error('Error updating survey teams:', error);
     }
   }
 }
