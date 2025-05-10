@@ -96,13 +96,8 @@ export default function SurveyEditDialog({
 
   const teams = teamsData?.teams || [];
   
-  // Fetch teams associated with this survey
-  const { data: surveyTeamsData } = useQuery({
-    queryKey: ["/api/admin/surveys", survey.id, "teams"],
-    enabled: !!survey.id,
-  });
-  
-  const surveyTeamIds = surveyTeamsData?.teamIds || [];
+  // Get team IDs directly from the survey.teams array
+  const surveyTeamIds = (survey.teams || []).map(team => team.id);
 
   // Initialize form
   const form = useForm<EditSurveyFormValues>({
@@ -115,18 +110,24 @@ export default function SurveyEditDialog({
     },
   });
 
-  // Reset and update form only when the survey ID changes or when teams data is first loaded
+  // Reset and update form only when the survey ID changes
   useEffect(() => {
     if (survey) {
-      const visibility = surveyTeamIds.length > 0 ? "teams" : "global";
+      // Get team IDs from survey.teams
+      const teamIds = (survey.teams || []).map(team => team.id);
+      const visibility = teamIds.length > 0 ? "teams" : "global";
       
       // Create properly typed form values that match EditSurveyFormValues
       const formValues: EditSurveyFormValues = {
         title: survey.title,
-        visibility: surveyTeamIds.length > 0 ? "teams" : "global",
-        selectedTeams: surveyTeamIds.length > 0 ? surveyTeamIds : undefined,
+        visibility: visibility,
+        selectedTeams: teamIds.length > 0 ? teamIds : undefined,
         status: (survey.status === "draft" || survey.status === "public") ? survey.status : "draft",
       };
+      
+      // Log for debugging
+      console.log("Setting form values:", formValues);
+      console.log("Survey teams:", survey.teams);
       
       // Initialize the form once with setTimeout to prevent infinite loops
       setTimeout(() => {
@@ -134,7 +135,7 @@ export default function SurveyEditDialog({
         setQuestionsCount(survey.questionsCount);
       }, 0);
     }
-  }, [survey.id, surveyTeamsData]);
+  }, [survey.id, survey.teams]);
 
   // Reset form when dialog closes
   useEffect(() => {

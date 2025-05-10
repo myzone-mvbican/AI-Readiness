@@ -35,7 +35,7 @@ export type SurveyWithAuthor = {
     name: string;
     email: string;
   };
-  teams?: {
+  teams: {
     id: number;
     name: string;
   }[];
