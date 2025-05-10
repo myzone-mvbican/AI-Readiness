@@ -924,7 +924,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Optional teamId (null means global survey)
       let teamIdNum = null;
-      if (teamId && teamId !== "global" && teamId !== "null" && teamId !== "") {
+      if (teamId) {
         teamIdNum = parseInt(teamId);
         if (isNaN(teamIdNum)) {
           // Non-empty but invalid teamId
@@ -935,7 +935,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           return res.status(400).json({ 
             success: false, 
-            message: "Invalid team ID format. Must be a valid number or 'global' for everyone."
+            message: "Invalid team ID format. Must be a valid number or empty for global surveys."
           });
         }
       }
@@ -1036,18 +1036,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update status if provided
       if (req.body.status) {
         updateData.status = req.body.status;
-      }
-      
-      // Update teamId if provided - handle "global" value to set teamId to null
-      if (req.body.teamId !== undefined) {
-        if (req.body.teamId === "global" || req.body.teamId === "null" || req.body.teamId === "") {
-          updateData.teamId = null; // Set to null for global surveys
-        } else {
-          const teamIdNum = parseInt(req.body.teamId);
-          if (!isNaN(teamIdNum)) {
-            updateData.teamId = teamIdNum;
-          }
-        }
       }
       
       // If a new file was uploaded, update file reference and questions count
