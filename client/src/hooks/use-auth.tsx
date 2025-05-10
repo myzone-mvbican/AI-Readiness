@@ -149,6 +149,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Initial cached user data
   const [cachedUser, setCachedUser] = useState<User | null>(getCachedUser());
 
+  // Get the latest token before each query execution
+  const getTokenForQuery = () => localStorage.getItem("token");
+  
   const {
     data: user,
     error,
@@ -156,19 +159,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refetch: refetchUser,
   } = useQuery<User | null, Error>({
     queryKey: ["/api/user"],
-    queryFn: token
-      ? getQueryFn({
-          on401: "returnNull",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-      : () => Promise.resolve(null),
-    enabled: !!token,
-    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
-    refetchOnWindowFocus: true, // Refetch when window regains focus
-    refetchOnMount: true, // Always refetch when component using the query mounts
+    queryFn: async ({ queryKey }) => {
+      const currentToken = getTokenForQuery();
+      
+      // If token is missing during query execution, use cached data
+      if (!currentToken) {
+        const cachedData = getCachedUser();
+        return cachedData || null;
+      }
+      
+      // Make the request with current token
+      const res = await fetch(queryKey[0] as string, {
+        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${currentToken}`
+        }
+      });
+      
+      // Handle unauthorized specifically for user endpoint
+      if (res.status === 401) {
+        // Don't trigger global unauthorized event for user endpoint
+        // Just return cached user if available
+        return getCachedUser() || null;
+      }
+      
+      if (!res.ok) {
+        throw new Error(`Error fetching user: ${res.statusText}`);
+      }
+      
+      return await res.json();
+    },
+    enabled: !!token || !!getCachedUser(), // Enable if token exists OR we have cached user data
+    staleTime: 1000 * 60 * 15, // Consider data fresh for 15 minutes (increased from 5)
+    gcTime: 1000 * 60 * 60, // Keep in cache for 1 hour
+    refetchOnWindowFocus: false, // Don't automatically refetch on window focus
+    refetchOnMount: false, // Only refetch if data is stale
     initialData: cachedUser, // Use cached data as initial data
+    retry: false, // Don't retry failed requests
   });
 
   // Update localStorage when user data changes
@@ -329,7 +356,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Connect Google account to existing user
   const googleConnectMutation = useMutation({
     mutationFn: async (data: GoogleLoginData) => {
-      const res = await apiRequest("POST", "/api/auth/google/connect", data, {
+      const res = await apiRequest("POST", "/api/auth/google/connect", data, false, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -369,6 +396,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         "DELETE",
         "/api/auth/google/disconnect",
         null,
+        false,
         {
           headers: {
             Authorization: `Bearer ${token}`,
