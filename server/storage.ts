@@ -371,13 +371,22 @@ export class DatabaseStorage implements IStorage {
   // Survey Operations
   async getSurveys(teamId: number): Promise<Survey[]> {
     try {
-      const result = await db
+      // Get team-specific surveys
+      const teamSurveys = await db
         .select()
         .from(surveys)
         .where(eq(surveys.teamId, teamId))
         .orderBy(desc(surveys.updatedAt));
         
-      return result;
+      // Get global surveys (null teamId)
+      const globalSurveys = await db
+        .select()
+        .from(surveys)
+        .where(isNull(surveys.teamId))
+        .orderBy(desc(surveys.updatedAt));
+      
+      // Combine both result sets
+      return [...teamSurveys, ...globalSurveys];
     } catch (error) {
       console.error('Error getting surveys:', error);
       return [];
@@ -785,7 +794,7 @@ export class MemStorage implements IStorage {
     try {
       const result: Survey[] = [];
       
-      // Filter surveys by team ID or include global surveys (null teamId)
+      // Filter surveys by team ID
       for (const survey of this.surveys.values()) {
         // Include surveys that match the team OR are global (null teamId)
         if (survey.teamId === teamId || survey.teamId === null) {
