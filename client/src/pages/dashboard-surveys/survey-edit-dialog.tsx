@@ -115,18 +115,26 @@ export default function SurveyEditDialog({
     },
   });
 
-  // Reset and update form when survey or team data changes
+  // Reset and update form only when the survey ID changes or when teams data is first loaded
   useEffect(() => {
     if (survey) {
-      form.reset({
+      const visibility = surveyTeamIds.length > 0 ? "teams" : "global";
+      
+      // Use a ref to track if we've already initialized this survey
+      const formValues = {
         title: survey.title,
-        visibility: surveyTeamIds.length > 0 ? "teams" : "global",
+        visibility: visibility,
         selectedTeams: surveyTeamIds,
         status: survey.status as "draft" | "public",
-      });
-      setQuestionsCount(survey.questionsCount);
+      };
+      
+      // Initialize the form once with setTimeout to prevent infinite loops
+      setTimeout(() => {
+        form.reset(formValues);
+        setQuestionsCount(survey.questionsCount);
+      }, 0);
     }
-  }, [survey, form, surveyTeamIds]);
+  }, [survey.id, surveyTeamsData]);
 
   // Reset form when dialog closes
   useEffect(() => {
