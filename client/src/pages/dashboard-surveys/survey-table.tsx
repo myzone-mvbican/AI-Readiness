@@ -37,7 +37,9 @@ interface SurveyTableProps {
 
 export default function SurveyTable({ surveys }: SurveyTableProps) {
   const { user } = useAuth();
-  const [currentSurvey, setCurrentSurvey] = useState<SurveyWithAuthor | null>(null);
+  const [currentSurvey, setCurrentSurvey] = useState<SurveyWithAuthor | null>(
+    null,
+  );
   const [editSurveyOpen, setEditSurveyOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -65,43 +67,47 @@ export default function SurveyTable({ surveys }: SurveyTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Title</TableHead>
-              <TableHead>Questions</TableHead>
+              <TableHead>Questions #</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Last Updated</TableHead>
-              <TableHead>Team</TableHead>
+              <TableHead>Visibility</TableHead>
               <TableHead>Author</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {surveys.map((survey) => (
               <TableRow key={survey.id}>
-                <TableCell className="font-medium">{survey.title}</TableCell>
-                <TableCell>{survey.questionsCount}</TableCell>
+                <TableCell className="font-medium text-foreground">
+                  {survey.title}
+                </TableCell>
+                <TableCell className="text-foreground">
+                  {survey.questionsCount}
+                </TableCell>
                 <TableCell>
                   <Badge
-                    variant={survey.status === "public" ? "default" : "secondary"}
+                    variant={
+                      survey.status === "public" ? "default" : "secondary"
+                    }
                   >
                     {survey.status === "public" ? "Public" : "Draft"}
                   </Badge>
                 </TableCell>
-                <TableCell>
+                <TableCell className="text-foreground">
                   {formatDistanceToNow(new Date(survey.updatedAt), {
                     addSuffix: true,
                   })}
                 </TableCell>
                 <TableCell>
                   <Badge
-                    variant={
-                      survey.teamId === null ? "outline" : "secondary"
-                    }
+                    variant={survey.teamId === null ? "outline" : "secondary"}
                   >
                     {survey.teamId === null ? "Global" : "Team-only"}
                   </Badge>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium">
+                    <span className="text-sm font-medium text-foreground">
                       {survey.author.name}
                     </span>
                     <span className="text-xs text-muted-foreground">
@@ -109,7 +115,7 @@ export default function SurveyTable({ surveys }: SurveyTableProps) {
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="space-x-2">
+                <TableCell className="space-x-3">
                   <Button
                     variant="ghost"
                     size="icon"

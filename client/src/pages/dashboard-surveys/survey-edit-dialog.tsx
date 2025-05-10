@@ -4,6 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { SurveyWithAuthor } from "./survey-table";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { surveyStatusSchema } from "@shared/schema";
 
 import {
   Dialog,
@@ -13,7 +17,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +35,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FileSpreadsheet, FileUp, Loader2, X } from "lucide-react";
+
+// Form schema with zod validation
+const editSurveySchema = z.object({
+  title: z.string().min(3, "Title must be at least 3 characters"),
+  visibility: z.union([
+    z.literal("global"),
+    z.array(z.string()).min(1)
+  ]).default("global"),
+  status: z.enum(["draft", "public"]).default("draft"),
+});
+
+type EditSurveyFormValues = z.infer<typeof editSurveySchema>;
 
 interface EditSurveyDialogProps {
   open: boolean;
@@ -39,14 +62,9 @@ export default function SurveyEditDialog({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [surveyTitle, setSurveyTitle] = useState(survey.title);
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [questionsCount, setQuestionsCount] = useState(survey.questionsCount);
   const [isUploading, setIsUploading] = useState(false);
-  const [selectedTeamId, setSelectedTeamId] = useState<string>(
-    survey.teamId ? String(survey.teamId) : "global"
-  );
-  const [selectedStatus, setSelectedStatus] = useState<string>(survey.status);
 
   // Fetch teams for the dropdown
   const { data: teamsData } = useQuery({
@@ -56,14 +74,34 @@ export default function SurveyEditDialog({
 
   const teams = teamsData?.teams || [];
 
+  // Initialize form
+  const form = useForm<EditSurveyFormValues>({
+    resolver: zodResolver(editSurveySchema),
+    defaultValues: {
+      title: survey.title,
+      visibility: survey.teamId ? String(survey.teamId) : "global",
+      status: survey.status,
+    },
+  });
+
+  // Reset and update form when survey changes
   useEffect(() => {
     if (survey) {
-      setSurveyTitle(survey.title);
+      form.reset({
+        title: survey.title,
+        visibility: survey.teamId ? String(survey.teamId) : "global",
+        status: survey.status,
+      });
       setQuestionsCount(survey.questionsCount);
-      setSelectedTeamId(survey.teamId ? String(survey.teamId) : "global");
-      setSelectedStatus(survey.status);
     }
-  }, [survey]);
+  }, [survey, form]);
+
+  // Reset form when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setCsvFile(null);
+    }
+  }, [open]);
 
   // Update an existing survey
   const updateSurveyMutation = useMutation({
@@ -162,25 +200,24 @@ export default function SurveyEditDialog({
   };
 
   // Handle form submission to update the survey
-  const handleUpdateSurvey = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!surveyTitle.trim()) {
-      toast({
-        title: "Missing title",
-        description: "Please enter a survey title",
-        variant: "destructive",
-      });
-      return;
-    }
+  const onSubmit = async (data: EditSurveyFormValues) => {
+    console.log("Form data:", data);
 
     const formData = new FormData();
-    formData.append("title", surveyTitle);
-    formData.append("status", selectedStatus);
+    formData.append("title", data.title);
+    formData.append("status", data.status);
 
     // Only add teamId if it's not "global"
-    if (selectedTeamId !== "global") {
-      formData.append("teamId", selectedTeamId);
+    if (data.visibility !== "global") {
+      // Handle array of team IDs if needed
+      if (Array.isArray(data.visibility)) {
+        // For now, we're using the first team ID only
+        if (data.visibility.length > 0) {
+          formData.append("teamId", data.visibility[0]);
+        }
+      } else {
+        formData.append("teamId", data.visibility);
+      }
     }
 
     // If a new file was uploaded, include it
@@ -201,58 +238,84 @@ export default function SurveyEditDialog({
             Update survey details or replace the CSV file.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleUpdateSurvey}>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="edit-title">Survey Title</Label>
-              <Input
-                id="edit-title"
-                value={surveyTitle}
-                onChange={(e) => setSurveyTitle(e.target.value)}
-                placeholder="Enter survey title"
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Survey Title</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter survey title"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="visibility"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Visibility</FormLabel>
+                    <Select
+                      value={field.value as string}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select visibility" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="global">Global (Everyone)</SelectItem>
+                        {teams.map((team: any) => (
+                          <SelectItem key={team.id} value={String(team.id)}>
+                            {team.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="public">Public</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="edit-team">Visibility</Label>
-                <Select 
-                  value={selectedTeamId} 
-                  onValueChange={setSelectedTeamId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select visibility" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="global">Global (Everyone)</SelectItem>
-                    {teams.map((team: any) => (
-                      <SelectItem key={team.id} value={String(team.id)}>
-                        {team.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="edit-status">Status</Label>
-                <Select 
-                  value={selectedStatus} 
-                  onValueChange={setSelectedStatus}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="public">Public</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
             <div className="grid gap-2">
-              <Label htmlFor="edit-file">Replace CSV File (Optional)</Label>
+              <FormLabel htmlFor="file">Replace CSV File (Optional)</FormLabel>
               <div className="border border-input rounded-md px-3 py-2">
                 {csvFile ? (
                   <div className="flex items-center justify-between">
@@ -313,30 +376,35 @@ export default function SurveyEditDialog({
                 </p>
               )}
             </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isUploading || updateSurveyMutation.isPending}
-            >
-              {updateSurveyMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Updating...
-                </>
-              ) : (
-                "Update Survey"
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
+
+            <DialogFooter className="mt-4">
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={
+                  isUploading || 
+                  updateSurveyMutation.isPending || 
+                  !form.formState.isValid
+                }
+              >
+                {updateSurveyMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  "Update Survey"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
