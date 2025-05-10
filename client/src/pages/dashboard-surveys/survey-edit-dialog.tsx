@@ -228,17 +228,9 @@ export default function SurveyEditDialog({
     formData.append("title", data.title);
     formData.append("status", data.status);
 
-    // Only add teamId if it's not "global"
-    if (data.visibility !== "global") {
-      // Handle array of team IDs if needed
-      if (Array.isArray(data.visibility)) {
-        // For now, we're using the first team ID only
-        if (data.visibility.length > 0) {
-          formData.append("teamId", data.visibility[0]);
-        }
-      } else {
-        formData.append("teamId", data.visibility);
-      }
+    // Add teamIds if visibility is "teams"
+    if (data.visibility === "teams" && data.selectedTeams && data.selectedTeams.length > 0) {
+      formData.append("teamIds", JSON.stringify(data.selectedTeams));
     }
 
     // If a new file was uploaded, include it
