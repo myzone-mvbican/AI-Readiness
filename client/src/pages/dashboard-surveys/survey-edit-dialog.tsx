@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -34,15 +35,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileSpreadsheet, FileUp, Loader2, X } from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { 
+  Check,
+  ChevronsUpDown,
+  FileSpreadsheet, 
+  FileUp, 
+  Loader2, 
+  X 
+} from "lucide-react";
 
 // Form schema with zod validation
 const editSurveySchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   visibility: z.union([
     z.literal("global"),
-    z.string()
+    z.literal("teams")
   ]).default("global"),
+  selectedTeams: z.array(z.number()).optional(),
   status: z.enum(["draft", "public"]).default("draft"),
 });
 

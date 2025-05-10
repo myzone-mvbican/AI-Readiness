@@ -299,7 +299,13 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
                     <FormLabel>Visibility</FormLabel>
                     <Select
                       value={field.value as string}
-                      onValueChange={field.onChange}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        // Reset selected teams when switching to global
+                        if (value === "global") {
+                          form.setValue("selectedTeams", []);
+                        }
+                      }}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -308,17 +314,90 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="global">Global (Everyone)</SelectItem>
-                        {teams.map((team: any) => (
-                          <SelectItem key={team.id} value={String(team.id)}>
-                            {team.name}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="teams">Specific Teams</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              {form.watch("visibility") === "teams" && (
+                <FormField
+                  control={form.control}
+                  name="selectedTeams"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Teams</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={`justify-between ${!field.value?.length && "text-muted-foreground"}`}
+                            >
+                              {field.value?.length
+                                ? `${field.value.length} team${field.value.length > 1 ? "s" : ""} selected`
+                                : "Select teams"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[300px] p-0">
+                          <Command>
+                            <CommandInput placeholder="Search teams..." />
+                            <CommandEmpty>No teams found.</CommandEmpty>
+                            <CommandGroup>
+                              {teams.map((team: any) => (
+                                <CommandItem
+                                  key={team.id}
+                                  value={team.name}
+                                  onSelect={() => {
+                                    const newValue = field.value?.includes(team.id)
+                                      ? field.value.filter((value: number) => value !== team.id)
+                                      : [...(field.value || []), team.id];
+                                    form.setValue("selectedTeams", newValue);
+                                  }}
+                                >
+                                  <Check
+                                    className={`mr-2 h-4 w-4 ${
+                                      field.value?.includes(team.id) ? "opacity-100" : "opacity-0"
+                                    }`}
+                                  />
+                                  {team.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {field.value?.map((teamId: number) => {
+                          const team = teams.find((t: any) => t.id === teamId);
+                          return team ? (
+                            <Badge 
+                              key={teamId}
+                              variant="secondary"
+                              className="mr-1 mb-1"
+                            >
+                              {team.name}
+                              <X
+                                className="ml-1 h-3 w-3 cursor-pointer"
+                                onClick={() => {
+                                  const newValue = field.value.filter((id: number) => id !== teamId);
+                                  form.setValue("selectedTeams", newValue);
+                                }}
+                              />
+                            </Badge>
+                          ) : null;
+                        })}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <FormField
                 control={form.control}
