@@ -120,12 +120,12 @@ export default function SurveyEditDialog({
     if (survey) {
       const visibility = surveyTeamIds.length > 0 ? "teams" : "global";
       
-      // Use a ref to track if we've already initialized this survey
-      const formValues = {
+      // Create properly typed form values that match EditSurveyFormValues
+      const formValues: EditSurveyFormValues = {
         title: survey.title,
-        visibility: visibility,
-        selectedTeams: surveyTeamIds,
-        status: survey.status as "draft" | "public",
+        visibility: surveyTeamIds.length > 0 ? "teams" : "global",
+        selectedTeams: surveyTeamIds.length > 0 ? surveyTeamIds : undefined,
+        status: (survey.status === "draft" || survey.status === "public") ? survey.status : "draft",
       };
       
       // Initialize the form once with setTimeout to prevent infinite loops
