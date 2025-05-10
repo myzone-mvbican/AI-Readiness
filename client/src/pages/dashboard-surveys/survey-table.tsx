@@ -12,26 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
-} from "@/components/ui/dialog";
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import SurveyEditDialog from "./survey-edit-dialog";
+import SurveyDeleteDialog from "./survey-delete-dialog";
 
 export type SurveyWithAuthor = {
   id: number;
@@ -49,11 +31,11 @@ export type SurveyWithAuthor = {
   };
 };
 
-interface SurveysTableProps {
+interface SurveyTableProps {
   surveys: SurveyWithAuthor[];
 }
 
-export function SurveysTable({ surveys }: SurveysTableProps) {
+export default function SurveyTable({ surveys }: SurveyTableProps) {
   const { user } = useAuth();
   const [currentSurvey, setCurrentSurvey] = useState<SurveyWithAuthor | null>(null);
   const [editSurveyOpen, setEditSurveyOpen] = useState(false);
@@ -64,13 +46,13 @@ export function SurveysTable({ surveys }: SurveysTableProps) {
     return user?.id === survey.authorId;
   };
 
-  // Handle editing a survey
+  // Open the edit dialog for a survey
   const handleEditSurvey = (survey: SurveyWithAuthor) => {
     setCurrentSurvey(survey);
     setEditSurveyOpen(true);
   };
 
-  // Handle deleting a survey
+  // Open the delete confirmation dialog for a survey
   const handleDeleteClick = (survey: SurveyWithAuthor) => {
     setCurrentSurvey(survey);
     setDeleteDialogOpen(true);
@@ -166,64 +148,20 @@ export function SurveysTable({ surveys }: SurveysTableProps) {
 
       {/* Edit Survey Dialog */}
       {currentSurvey && (
-        <Dialog open={editSurveyOpen} onOpenChange={setEditSurveyOpen}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Edit Survey</DialogTitle>
-              <DialogDescription>
-                Update survey details.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4">
-              <div className="grid gap-4">
-                <div className="grid gap-2">
-                  <Label>Title</Label>
-                  <Input 
-                    value={currentSurvey.title}
-                    disabled
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label>Questions</Label>
-                  <Input 
-                    value={currentSurvey.questionsCount}
-                    disabled
-                  />
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                onClick={() => setEditSurveyOpen(false)}
-              >
-                Close
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <SurveyEditDialog
+          open={editSurveyOpen}
+          onOpenChange={setEditSurveyOpen}
+          survey={currentSurvey}
+        />
       )}
 
       {/* Delete Survey Dialog */}
       {currentSurvey && (
-        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will permanently delete the survey "{currentSurvey.title}".
-                This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <SurveyDeleteDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          survey={currentSurvey}
+        />
       )}
     </>
   );

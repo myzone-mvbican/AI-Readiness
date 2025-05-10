@@ -3,7 +3,7 @@ import { parse } from "papaparse";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { SurveyWithAuthor } from "./surveys-table";
+import { SurveyWithAuthor } from "./survey-table";
 
 import {
   Dialog,
@@ -31,7 +31,7 @@ interface EditSurveyDialogProps {
   survey: SurveyWithAuthor;
 }
 
-export function EditSurveyDialog({ 
+export default function SurveyEditDialog({ 
   open, 
   onOpenChange, 
   survey 

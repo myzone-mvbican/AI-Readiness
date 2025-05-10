@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { SurveyWithAuthor } from "./surveys-table";
+import { SurveyWithAuthor } from "./survey-table";
 
 import {
   AlertDialog,
@@ -21,7 +21,7 @@ interface DeleteSurveyDialogProps {
   survey: SurveyWithAuthor;
 }
 
-export function DeleteSurveyDialog({ 
+export default function SurveyDeleteDialog({ 
   open, 
   onOpenChange, 
   survey 
@@ -34,7 +34,7 @@ export function DeleteSurveyDialog({
     mutationFn: async () => {
       const response = await apiRequest(
         "DELETE",
-        `/api/admin/surveys/${survey.id}`,
+        `/api/admin/surveys/${survey.id}`
       );
 
       if (!response.ok) {
