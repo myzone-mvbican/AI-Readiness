@@ -15,6 +15,7 @@ import {
   PlusCircle,
   TrendingUp,
 } from "lucide-react";
+import { ProfileCompletionCard } from "@/components/dashboard/profile-completion-card";
 
 export default function DashboardHome() {
   return (
@@ -31,6 +32,9 @@ export default function DashboardHome() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {/* Profile Completion Card */}
+          <ProfileCompletionCard />
+
           {/* Start New Assessment Card */}
           <Card className="col-span-1">
             <CardHeader className="pb-2">
