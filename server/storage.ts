@@ -550,16 +550,33 @@ export class DatabaseStorage implements IStorage {
         allSurveys = await this.getSurveys(teamId);
       }
       
-      // Map through surveys and add author information
+      // Map through surveys and add author and team information
       const surveysWithAuthors = await Promise.all(
         allSurveys.map(async (survey) => {
           const author = await this.getUser(survey.authorId);
+          
+          // Get teams for this survey
+          const teamIds = await this.getSurveyTeams(survey.id);
+          let teams: { id: number, name: string }[] = [];
+          
+          if (teamIds.length > 0) {
+            // Fetch team details for each teamId
+            const teamPromises = teamIds.map(async (id) => {
+              const team = await this.getTeam(id);
+              return team ? { id: team.id, name: team.name } : null;
+            });
+            
+            // Filter out any null teams (those not found)
+            teams = (await Promise.all(teamPromises)).filter(Boolean) as { id: number, name: string }[];
+          }
+          
           return {
             ...survey,
             author: {
               name: author?.name || 'Unknown',
               email: author?.email || 'unknown@example.com'
-            }
+            },
+            teams: teams
           };
         })
       );
