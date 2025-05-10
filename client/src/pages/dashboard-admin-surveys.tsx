@@ -99,10 +99,9 @@ export default function AdminSurveysPage() {
     queryFn: async () => {
       // Default to team ID 0 if not set, which will fetch global surveys
       const fetchTeamId = teamId || 0;
-      const response = await fetch(`/api/admin/surveys/${fetchTeamId}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch surveys");
-      }
+      // Use the imported apiRequest helper instead of fetch directly
+      // This automatically adds the token from localStorage
+      const response = await apiRequest("GET", `/api/admin/surveys/${fetchTeamId}`);
       return response.json();
     },
   });
@@ -117,20 +116,28 @@ export default function AdminSurveysPage() {
       }
 
       // We can't use the apiRequest helper directly because it doesn't support FormData
-      const response = await fetch("/api/admin/surveys", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
+      // But we still need to use the same token pattern for consistency
+      try {
+        const response = await fetch("/api/admin/surveys", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to create survey");
+        // Handle non-ok responses
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Survey creation failed:", errorData);
+          throw new Error(errorData.message || "Failed to create survey");
+        }
+
+        return response.json();
+      } catch (err) {
+        console.error("Survey creation error:", err);
+        throw err;
       }
-
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
