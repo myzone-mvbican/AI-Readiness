@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -36,6 +37,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Check,
+  ChevronsUpDown,
   FileSpreadsheet,
   FileUp,
   Loader2,
@@ -48,8 +63,9 @@ const createSurveySchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   visibility: z.union([
     z.literal("global"),
-    z.string()
+    z.literal("teams")
   ]).default("global"),
+  selectedTeams: z.array(z.number()).optional(),
   status: z.enum(["draft", "public"]).default("draft"),
 });
 
@@ -83,6 +99,7 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
     defaultValues: {
       title: "",
       visibility: "global",
+      selectedTeams: [],
       status: "draft",
     },
   });
@@ -91,6 +108,7 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
     form.reset({
       title: "",
       visibility: "global",
+      selectedTeams: [],
       status: "draft",
     });
     setCsvFile(null);
@@ -229,17 +247,9 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
     formData.append("questionsCount", questionsCount.toString());
     formData.append("status", data.status);
 
-    // Only add teamId if it's not "global"
-    if (data.visibility !== "global") {
-      // Handle array of team IDs if needed
-      if (Array.isArray(data.visibility)) {
-        // For now, we're using the first team ID only
-        if (data.visibility.length > 0) {
-          formData.append("teamId", data.visibility[0]);
-        }
-      } else {
-        formData.append("teamId", data.visibility);
-      }
+    // Add teamIds if visibility is "teams"
+    if (data.visibility === "teams" && data.selectedTeams && data.selectedTeams.length > 0) {
+      formData.append("teamIds", JSON.stringify(data.selectedTeams));
     }
 
     createSurveyMutation.mutate(formData);
