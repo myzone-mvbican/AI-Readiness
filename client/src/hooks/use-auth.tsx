@@ -97,12 +97,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const handleUnauthorized = (event: CustomEvent) => {
       // Clear auth state
       setToken(null);
-      queryClient.setQueryData(["/api/user"], null);
+      
+      // Clear the entire query client cache to prevent stale data
+      queryClient.clear();
+      
+      // Update cached user state
+      setCachedUser(null);
 
-      // Also clear team selection and any team data
+      // Also clear all localStorage items related to authentication
+      localStorage.removeItem("token");
       localStorage.removeItem("selectedTeam");
       localStorage.removeItem("userData");
-      queryClient.removeQueries({ queryKey: ["/api/teams"] });
 
       // Show toast message
       toast({
@@ -375,8 +380,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (data: LoginResponse) => {
       if (data.success) {
-        // Update user data in cache
+        // Cache user data in query client and localStorage
         queryClient.setQueryData(["/api/user"], data.user);
+        localStorage.setItem("userData", JSON.stringify(data.user));
+        
+        // Update cached user state
+        setCachedUser(data.user);
 
         toast({
           title: "Google account connected",
@@ -417,8 +426,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (data: LoginResponse) => {
       if (data.success) {
-        // Update user data in cache
+        // Cache user data in query client and localStorage
         queryClient.setQueryData(["/api/user"], data.user);
+        localStorage.setItem("userData", JSON.stringify(data.user));
+        
+        // Update cached user state
+        setCachedUser(data.user);
 
         toast({
           title: "Google account disconnected",
