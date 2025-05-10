@@ -11,9 +11,27 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2 } from "lucide-react";
-import { EditSurveyDialog } from "./edit-survey-dialog";
-import { DeleteSurveyDialog } from "./delete-survey-dialog";
 import { formatDistanceToNow } from "date-fns";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export type SurveyWithAuthor = {
   id: number;
@@ -148,20 +166,64 @@ export function SurveysTable({ surveys }: SurveysTableProps) {
 
       {/* Edit Survey Dialog */}
       {currentSurvey && (
-        <EditSurveyDialog 
-          open={editSurveyOpen} 
-          onOpenChange={setEditSurveyOpen}
-          survey={currentSurvey}
-        />
+        <Dialog open={editSurveyOpen} onOpenChange={setEditSurveyOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Edit Survey</DialogTitle>
+              <DialogDescription>
+                Update survey details.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label>Title</Label>
+                  <Input 
+                    value={currentSurvey.title}
+                    disabled
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Questions</Label>
+                  <Input 
+                    value={currentSurvey.questionsCount}
+                    disabled
+                  />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                onClick={() => setEditSurveyOpen(false)}
+              >
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* Delete Survey Dialog */}
       {currentSurvey && (
-        <DeleteSurveyDialog
-          open={deleteDialogOpen}
-          onOpenChange={setDeleteDialogOpen}
-          survey={currentSurvey}
-        />
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the survey "{currentSurvey.title}".
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </>
   );
