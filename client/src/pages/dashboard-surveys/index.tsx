@@ -9,24 +9,11 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  ShieldCheck,
-  Plus,
-  Search,
-} from "lucide-react";
-// Import directly from components
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+import { ShieldCheck, Plus, Search, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import SurveyCreateDialog from "./survey-create-dialog";
+import SurveyTable from "./survey-table";
 
 export default function AdminSurveysPage() {
   const [newSurveyOpen, setNewSurveyOpen] = useState(false);
@@ -36,14 +23,10 @@ export default function AdminSurveysPage() {
   const { toast } = useToast();
 
   // Get surveys
-  // Log to see if we're getting data
   const { data: surveysData, isLoading } = useQuery({
     queryKey: ["/api/admin/surveys/0"],
     retry: false,
   });
-
-  // Add debugging to see what data structure we're getting
-  console.log("Surveys data:", surveysData);
 
   // Get surveys from the response and handle the correct structure
   const surveys = surveysData?.surveys || [];
@@ -65,7 +48,7 @@ export default function AdminSurveysPage() {
             <ShieldCheck className="h-6 w-6 text-blue-500" />
             <h2 className="text-xl font-semibold">Survey Administration</h2>
           </div>
-          <CreateSurveyDialog
+          <SurveyCreateDialog 
             open={newSurveyOpen}
             onOpenChange={setNewSurveyOpen}
           />
@@ -116,14 +99,14 @@ export default function AdminSurveysPage() {
 
             {isLoading ? (
               <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <Loader2 className="h-8 w-8 animate-spin" />
               </div>
             ) : filteredSurveys.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 No surveys found. Create a new survey to get started.
               </div>
             ) : (
-              <SurveysTable surveys={filteredSurveys} />
+              <SurveyTable surveys={filteredSurveys} />
             )}
           </CardContent>
         </Card>

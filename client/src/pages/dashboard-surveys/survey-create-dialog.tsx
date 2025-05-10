@@ -24,14 +24,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileSpreadsheet, FileUp, Loader2, Plus, X } from "lucide-react";
+import {
+  FileSpreadsheet,
+  FileUp,
+  Loader2,
+  Plus,
+  X,
+} from "lucide-react";
 
 interface CreateSurveyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function CreateSurveyDialog({ open, onOpenChange }: CreateSurveyDialogProps) {
+export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
