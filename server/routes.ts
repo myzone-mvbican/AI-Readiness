@@ -952,14 +952,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Create survey data object with cleaned values
       const surveyData = {
         title,
-        teamId: teamIdNum, // Can be null for global surveys
         questionsCount: questionsCountNum,
         status: status || 'draft',
         fileReference: req.file.path,
         authorId: req.user!.id
       };
+      
+      // Only add teamId if it has a valid value (not null or undefined)
+      if (teamIdNum !== null && teamIdNum !== undefined) {
+        Object.assign(surveyData, { teamId: teamIdNum });
+      }
       
       const newSurvey = await storage.createSurvey(surveyData);
       
