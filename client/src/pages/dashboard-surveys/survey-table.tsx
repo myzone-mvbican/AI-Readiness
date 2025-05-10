@@ -52,7 +52,9 @@ interface SurveyTableProps {
 
 export default function SurveyTable({ surveys }: SurveyTableProps) {
   const { user } = useAuth();
-  const [currentSurvey, setCurrentSurvey] = useState<SurveyWithAuthor | null>(null);
+  const [currentSurvey, setCurrentSurvey] = useState<SurveyWithAuthor | null>(
+    null,
+  );
   const [editSurveyOpen, setEditSurveyOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -63,17 +65,17 @@ export default function SurveyTable({ surveys }: SurveyTableProps) {
   });
 
   const teams: Team[] = teamsData?.teams || [];
-  
+
   // Format the visibility information based on survey teams
   const formatVisibility = (survey: SurveyWithAuthor): string => {
     if (!survey.teams || survey.teams.length === 0) {
       return "Global (Everyone)";
     }
-    
+
     if (survey.teams.length === 1) {
       return survey.teams[0].name;
     }
-    
+
     return `${survey.teams.length} teams`;
   };
 
@@ -138,18 +140,13 @@ export default function SurveyTable({ surveys }: SurveyTableProps) {
                   ) : survey.teams.length === 1 ? (
                     <Badge variant="secondary">{survey.teams[0].name}</Badge>
                   ) : survey.teams.length > 1 ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Badge variant="secondary">{`${survey.teams.length} teams`}</Badge>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <div className="flex flex-col gap-1">
-                          {survey.teams.map(team => (
-                            <span key={team.id}>{team.name}</span>
-                          ))}
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
+                    <div className="flex gap-2">
+                      {survey.teams.map((team) => (
+                        <Badge key={team.id} variant="secondary">
+                          {team.name}
+                        </Badge>
+                      ))}
+                    </div>
                   ) : (
                     <Badge variant="outline">Global (Everyone)</Badge>
                   )}
