@@ -377,22 +377,65 @@ export class DatabaseStorage implements IStorage {
   // Survey Operations
   async getSurveys(teamId: number): Promise<Survey[]> {
     try {
-      // Get team-specific surveys
-      const teamSurveys = await db
+      if (teamId === 0) {
+        // Return all surveys for admin
+        return await db
+          .select()
+          .from(surveys)
+          .orderBy(desc(surveys.updatedAt));
+      }
+      
+      // Get surveys visible to this team:
+      // 1. Global surveys (null teamId)
+      // 2. Surveys directly linked to the team (legacy)
+      const directSurveys = await db
         .select()
         .from(surveys)
-        .where(eq(surveys.teamId, teamId))
-        .orderBy(desc(surveys.updatedAt));
-        
-      // Get global surveys (null teamId)
-      const globalSurveys = await db
-        .select()
-        .from(surveys)
-        .where(isNull(surveys.teamId))
+        .where(
+          or(
+            isNull(surveys.teamId),  // Global surveys
+            eq(surveys.teamId, teamId) // Directly assigned (legacy)
+          )
+        )
         .orderBy(desc(surveys.updatedAt));
       
-      // Combine both result sets
-      return [...teamSurveys, ...globalSurveys];
+      // 3. Surveys assigned through the junction table
+      const relatedSurveyIds = await db
+        .select({ surveyId: surveyTeams.surveyId })
+        .from(surveyTeams)
+        .where(eq(surveyTeams.teamId, teamId));
+      
+      // If there are related surveys, fetch them
+      let relatedSurveys: Survey[] = [];
+      if (relatedSurveyIds.length > 0) {
+        relatedSurveys = await db
+          .select()
+          .from(surveys)
+          .where(inArray(surveys.id, relatedSurveyIds.map(s => s.surveyId)))
+          .orderBy(desc(surveys.updatedAt));
+      }
+      
+      // Combine both result sets, ensuring no duplicates
+      const allSurveyIds = new Set<number>();
+      const uniqueSurveys: Survey[] = [];
+      
+      // Process direct surveys first
+      for (const survey of directSurveys) {
+        if (!allSurveyIds.has(survey.id)) {
+          allSurveyIds.add(survey.id);
+          uniqueSurveys.push(survey);
+        }
+      }
+      
+      // Then add related surveys if not already included
+      for (const survey of relatedSurveys) {
+        if (!allSurveyIds.has(survey.id)) {
+          allSurveyIds.add(survey.id);
+          uniqueSurveys.push(survey);
+        }
+      }
+      
+      return uniqueSurveys;
     } catch (error) {
       console.error('Error getting surveys:', error);
       return [];
