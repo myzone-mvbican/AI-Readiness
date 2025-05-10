@@ -531,6 +531,7 @@ export class MemStorage implements IStorage {
   private teams: Map<number, Team>;
   private userTeams: Map<number, UserTeam>;
   private surveys: Map<number, Survey>;
+  private surveyTeams: Map<string, { surveyId: number, teamId: number }>;
   currentId: number;
   currentTeamId: number;
   currentUserTeamId: number;
@@ -541,6 +542,7 @@ export class MemStorage implements IStorage {
     this.teams = new Map();
     this.userTeams = new Map();
     this.surveys = new Map();
+    this.surveyTeams = new Map();
     this.currentId = 1;
     this.currentTeamId = 1;
     this.currentUserTeamId = 1;
