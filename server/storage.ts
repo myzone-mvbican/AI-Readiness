@@ -65,6 +65,12 @@ export interface IStorage {
   deleteSurvey(id: number): Promise<boolean>;
   getSurveyWithAuthor(id: number): Promise<(Survey & { author: { name: string, email: string } }) | undefined>;
   getSurveysWithAuthors(teamId: number): Promise<(Survey & { author: { name: string, email: string } })[]>;
+  
+  // Survey-Team operations
+  getSurveyTeams(surveyId: number): Promise<number[]>;
+  addSurveyTeam(surveyId: number, teamId: number): Promise<void>;
+  removeSurveyTeam(surveyId: number, teamId: number): Promise<void>;
+  updateSurveyTeams(surveyId: number, teamIds: number[]): Promise<void>;
 
   // Authentication operations
   generateToken(user: User): string;
