@@ -994,7 +994,7 @@ export class MemStorage implements IStorage {
     }
   }
 
-  async getSurveyWithAuthor(id: number): Promise<(Survey & { author: { name: string, email: string } }) | undefined> {
+  async getSurveyWithAuthor(id: number): Promise<(Survey & { author: { name: string, email: string }, teams?: { id: number, name: string }[] }) | undefined> {
     try {
       const survey = this.surveys.get(id);
       if (!survey) return undefined;
@@ -1002,12 +1002,22 @@ export class MemStorage implements IStorage {
       const author = this.users.get(survey.authorId);
       if (!author) return undefined;
       
+      // Get teams for this survey
+      const teamIds = await this.getSurveyTeams(id);
+      const teams = teamIds.length > 0 
+        ? teamIds.map(teamId => {
+            const team = this.teams.get(teamId);
+            return team ? { id: team.id, name: team.name } : null;
+          }).filter(Boolean) as { id: number, name: string }[]
+        : [];
+      
       return {
         ...survey,
         author: {
           name: author.name,
           email: author.email
-        }
+        },
+        teams: teams.length > 0 ? teams : undefined
       };
     } catch (error) {
       console.error(`Error getting survey with author for id ${id}:`, error);
@@ -1015,7 +1025,7 @@ export class MemStorage implements IStorage {
     }
   }
 
-  async getSurveysWithAuthors(teamId: number): Promise<(Survey & { author: { name: string, email: string } })[]> {
+  async getSurveysWithAuthors(teamId: number): Promise<(Survey & { author: { name: string, email: string }, teams?: { id: number, name: string }[] })[]> {
     try {
       let allSurveys: Survey[] = [];
       
@@ -1029,18 +1039,30 @@ export class MemStorage implements IStorage {
         allSurveys = await this.getSurveys(teamId);
       }
       
-      const surveysWithAuthors = allSurveys.map(survey => {
+      // Get all surveys with their authors and teams
+      const surveysWithAuthorsAndTeams = await Promise.all(allSurveys.map(async survey => {
         const author = this.users.get(survey.authorId);
+        
+        // Get teams for this survey
+        const teamIds = await this.getSurveyTeams(survey.id);
+        const teams = teamIds.length > 0 
+          ? teamIds.map(id => {
+              const team = this.teams.get(id);
+              return team ? { id: team.id, name: team.name } : null;
+            }).filter(Boolean) as { id: number, name: string }[]
+          : [];
+        
         return {
           ...survey,
           author: {
             name: author?.name || 'Unknown',
             email: author?.email || 'unknown@example.com'
-          }
+          },
+          teams: teams.length > 0 ? teams : undefined
         };
-      });
+      }));
       
-      return surveysWithAuthors;
+      return surveysWithAuthorsAndTeams;
     } catch (error) {
       console.error(`Error getting surveys with authors for team ${teamId}:`, error);
       return [];
