@@ -844,6 +844,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Team ID 0 is a special case to fetch all global surveys only
       const surveysWithAuthors = await storage.getSurveysWithAuthors(teamId);
       
       return res.status(200).json({
@@ -1157,7 +1158,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Get all teams for the user to verify access
+      // If the team ID is 0, we only want to get global surveys
+      if (teamId === 0) {
+        // Special case for global surveys (team ID null)
+        const surveys = await storage.getSurveys(0);
+        
+        return res.status(200).json({
+          success: true,
+          surveys
+        });
+      }
+      
+      // For non-zero team IDs, verify access first
       const userTeams = await storage.getTeamsByUserId(req.user!.id);
       const teamIds = userTeams.map(team => team.id);
       
@@ -1169,6 +1181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Get surveys for the team, including global surveys
       const surveys = await storage.getSurveys(teamId);
       
       return res.status(200).json({

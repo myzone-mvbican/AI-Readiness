@@ -785,9 +785,10 @@ export class MemStorage implements IStorage {
     try {
       const result: Survey[] = [];
       
-      // Filter surveys by team ID
+      // Filter surveys by team ID or include global surveys (null teamId)
       for (const survey of this.surveys.values()) {
-        if (survey.teamId === teamId) {
+        // Include surveys that match the team OR are global (null teamId)
+        if (survey.teamId === teamId || survey.teamId === null) {
           result.push(survey);
         }
       }
