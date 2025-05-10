@@ -32,13 +32,13 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
   isFormData: boolean = false,
-  options?: { headers?: Record<string, string> },
+  options: { headers?: Record<string, string> } = {},
 ): Promise<Response> {
   // Get token from localStorage for each request
   const token = localStorage.getItem("token");
 
   // Set up headers with Authorization if token exists
-  const headers: Record<string, string> = { ...options?.headers };
+  const headers: Record<string, string> = { ...options.headers };
 
   // Set Content-Type only if not FormData (FormData will set its own)
   if (data && !isFormData) {
@@ -66,10 +66,14 @@ export async function apiRequest(
     }
   }
 
-  const res = await fetch(url, fetchOptions);
-
-  await throwIfResNotOk(res);
-  return res;
+  try {
+    const res = await fetch(url, fetchOptions);
+    await throwIfResNotOk(res);
+    return res;
+  } catch (error) {
+    console.error(`API request to ${url} failed:`, error);
+    throw error;
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
