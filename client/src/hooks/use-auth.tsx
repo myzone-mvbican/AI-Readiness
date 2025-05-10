@@ -195,14 +195,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (data: LoginResponse) => {
       if (data.success && data.token) {
+        // Save token to state and localStorage
         setToken(data.token);
+        
+        // Cache user data in query client and localStorage
         queryClient.setQueryData(["/api/user"], data.user);
+        localStorage.setItem("userData", JSON.stringify(data.user));
 
         // Invalidate teams query to ensure we get fresh data
         queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
 
         // Clear any previously selected team to force auto-selection
         localStorage.removeItem("selectedTeam");
+        
+        // Update cached user state
+        setCachedUser(data.user);
 
         toast({
           title: "Login successful",
@@ -234,8 +241,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (data: RegisterResponse) => {
       if (data.success && data.token) {
+        // Save token to state and localStorage
         setToken(data.token);
+        
+        // Cache user data in query client and localStorage
         queryClient.setQueryData(["/api/user"], data.user);
+        localStorage.setItem("userData", JSON.stringify(data.user));
+        
+        // Update cached user state
+        setCachedUser(data.user);
 
         // Invalidate teams query to ensure we get fresh data including the
         // automatically assigned Client team during registration
@@ -312,8 +326,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (data: LoginResponse) => {
       if (data.success && data.token) {
+        // Save token to state and localStorage
         setToken(data.token);
+        
+        // Cache user data in query client and localStorage
         queryClient.setQueryData(["/api/user"], data.user);
+        localStorage.setItem("userData", JSON.stringify(data.user));
+        
+        // Update cached user state
+        setCachedUser(data.user);
 
         // Invalidate teams query to ensure we get fresh data
         queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
