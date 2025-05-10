@@ -122,8 +122,16 @@ export default function SurveyTable({ surveys }: SurveyTableProps) {
                   })}
                 </TableCell>
                 <TableCell>
-                  {survey.teamId === null ? (
+                  {survey.teamId === null || (survey.teams && survey.teams.length === 0) ? (
                     <Badge variant="outline">Global</Badge>
+                  ) : survey.teams && survey.teams.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {survey.teams.map(team => (
+                        <Badge key={team.id} variant="secondary">
+                          {team.name}
+                        </Badge>
+                      ))}
+                    </div>
                   ) : (
                     <Badge variant="secondary">
                       {getTeamName(survey.teamId)}
