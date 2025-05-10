@@ -17,7 +17,7 @@ import SurveyPage from "@/pages/survey";
 import SurveyNew from "@/pages/dashboard-survey-new";
 import DashboardHome from "@/pages/dashboard-home";
 import AssessmentsPage from "@/pages/dashboard-assessments";
-import AdminSurveysPage from "@/pages/dashboard-surveys";
+import AdminSurveysPage from "@/pages/dashboard-surveys/index";
 import UsersPage from "@/pages/dashboard-users";
 import AccountSettingsPage from "./pages/dashboard-settings";
 
