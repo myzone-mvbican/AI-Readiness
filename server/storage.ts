@@ -1093,7 +1093,7 @@ export class MemStorage implements IStorage {
             name: author?.name || 'Unknown',
             email: author?.email || 'unknown@example.com'
           },
-          teams: teams.length > 0 ? teams : undefined
+          teams: teams
         };
       }));
       
