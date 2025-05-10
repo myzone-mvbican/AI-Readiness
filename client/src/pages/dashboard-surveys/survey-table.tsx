@@ -30,6 +30,10 @@ export type SurveyWithAuthor = {
     name: string;
     email: string;
   };
+  teams?: {
+    id: number;
+    name: string;
+  }[];
 };
 
 export type Team = {

@@ -45,8 +45,15 @@ export default function SurveyDeleteDialog({
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate all survey-related queries
       queryClient.invalidateQueries({
         queryKey: ["/api/admin/surveys"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/surveys/0"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/surveys"],
       });
       onOpenChange(false);
       toast({
