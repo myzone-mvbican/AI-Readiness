@@ -132,16 +132,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [toast, setLocation]);
 
-  // Get cached user data from localStorage
+  // Get cached user data from localStorage with improved error handling
   const getCachedUser = (): User | null => {
     try {
       const cachedUserData = localStorage.getItem("userData");
       if (cachedUserData) {
         const cachedData = JSON.parse(cachedUserData);
-        return cachedData?.user || cachedData;
+        // Handle both formats: { user: User } and User directly
+        const userData = cachedData?.user || cachedData;
+        
+        // Validate that this is a user object by checking required fields
+        if (userData && typeof userData === 'object' && 'id' in userData && 'email' in userData) {
+          return userData as User;
+        }
       }
     } catch (e) {
       console.error("Error parsing cached user data:", e);
+      // Clear invalid data to prevent future errors
+      localStorage.removeItem("userData");
     }
     return null;
   };
@@ -159,36 +167,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refetch: refetchUser,
   } = useQuery<User | null, Error>({
     queryKey: ["/api/user"],
-    queryFn: async ({ queryKey }) => {
-      const currentToken = getTokenForQuery();
-      
-      // If token is missing during query execution, use cached data
-      if (!currentToken) {
-        const cachedData = getCachedUser();
-        return cachedData || null;
-      }
-      
-      // Make the request with current token
-      const res = await fetch(queryKey[0] as string, {
-        credentials: "include",
-        headers: {
-          Authorization: `Bearer ${currentToken}`
-        }
-      });
-      
-      // Handle unauthorized specifically for user endpoint
-      if (res.status === 401) {
-        // Don't trigger global unauthorized event for user endpoint
-        // Just return cached user if available
-        return getCachedUser() || null;
-      }
-      
-      if (!res.ok) {
-        throw new Error(`Error fetching user: ${res.statusText}`);
-      }
-      
-      return await res.json();
-    },
+    queryFn: getQueryFn({
+      on401: "returnNull", 
+      forcedToken: getTokenForQuery(),
+      requiresAuth: true,
+    }),
     enabled: !!token || !!getCachedUser(), // Enable if token exists OR we have cached user data
     staleTime: 1000 * 60 * 15, // Consider data fresh for 15 minutes (increased from 5)
     gcTime: 1000 * 60 * 60, // Keep in cache for 1 hour
@@ -295,16 +278,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear cached user data and selected team
       localStorage.removeItem("userData");
       localStorage.removeItem("selectedTeam");
+      localStorage.removeItem("token");
 
-      // Clear query cache
-      queryClient.setQueryData(["/api/user"], null);
-      queryClient.removeQueries({ queryKey: ["/api/teams"] });
+      // Clear query cache completely to ensure no stale data remains
+      queryClient.clear();
+      
+      // Reset local cache state
+      setCachedUser(null);
 
       // Show success toast
       toast({
         title: "Logged out",
         description: "You have been logged out successfully.",
       });
+      
+      // Redirect to auth page
+      setLocation("/auth");
     },
     onError: (error: Error) => {
       toast({
