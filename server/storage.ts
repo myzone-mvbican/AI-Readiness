@@ -917,13 +917,48 @@ export class MemStorage implements IStorage {
   // Survey Operations
   async getSurveys(teamId: number): Promise<Survey[]> {
     try {
+      const allSurveys = Array.from(this.surveys.values());
       const result: Survey[] = [];
       
-      // Filter surveys by team ID
-      for (const survey of this.surveys.values()) {
-        // Include surveys that match the team OR are global (null teamId)
-        if (survey.teamId === teamId || survey.teamId === null) {
-          result.push(survey);
+      // If teamId is 0, only return global surveys
+      if (teamId === 0) {
+        // Get surveys that are marked as global (null teamId) and have no teams assigned
+        for (const survey of allSurveys) {
+          if (survey.teamId === null) {
+            // Further check that survey doesn't have any teams in the junction table
+            const surveyTeamIds = await this.getSurveyTeams(survey.id);
+            if (surveyTeamIds.length === 0) {
+              result.push(survey);
+            }
+          }
+        }
+      } else {
+        // For a specific team, include:
+        // 1. Global surveys (teamId is null and no teams in junction table)
+        // 2. Surveys that have the specified teamId
+        // 3. Surveys that have an entry in the survey_teams junction table for this team
+        
+        for (const survey of allSurveys) {
+          // Add global surveys
+          if (survey.teamId === null) {
+            const surveyTeamIds = await this.getSurveyTeams(survey.id);
+            if (surveyTeamIds.length === 0) {
+              result.push(survey);
+              continue;
+            }
+          }
+          
+          // Add surveys matching this teamId
+          if (survey.teamId === teamId) {
+            result.push(survey);
+            continue;
+          }
+          
+          // Check the junction table for surveys assigned to this team
+          const surveyTeamIds = await this.getSurveyTeams(survey.id);
+          if (surveyTeamIds.includes(teamId)) {
+            result.push(survey);
+          }
         }
       }
       
