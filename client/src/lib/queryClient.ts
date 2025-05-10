@@ -31,6 +31,7 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
+  isFormData: boolean = false,
   options?: { headers?: Record<string, string> },
 ): Promise<Response> {
   // Get token from localStorage for each request
@@ -39,7 +40,8 @@ export async function apiRequest(
   // Set up headers with Authorization if token exists
   const headers: Record<string, string> = { ...options?.headers };
 
-  if (data) {
+  // Set Content-Type only if not FormData (FormData will set its own)
+  if (data && !isFormData) {
     headers["Content-Type"] = "application/json";
   }
 
@@ -48,12 +50,23 @@ export async function apiRequest(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(url, {
+  const fetchOptions: RequestInit = {
     method,
     headers,
-    body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
-  });
+  };
+
+  // Handle different body types
+  if (data) {
+    if (isFormData && data instanceof FormData) {
+      // FormData will set its own Content-Type with boundary
+      fetchOptions.body = data;
+    } else {
+      fetchOptions.body = JSON.stringify(data);
+    }
+  }
+
+  const res = await fetch(url, fetchOptions);
 
   await throwIfResNotOk(res);
   return res;
