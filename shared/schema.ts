@@ -125,6 +125,14 @@ export const surveys = pgTable("surveys", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Survey validation schemas
+export const surveyStatusSchema = z.enum(["draft", "public"]).default("draft");
+
+export const surveyVisibilitySchema = z.union([
+  z.literal("global"),
+  z.array(z.string()).min(1)
+]);
+
 // Survey schemas
 export const insertSurveySchema = createInsertSchema(surveys).pick({
   title: true,
@@ -136,14 +144,21 @@ export const insertSurveySchema = createInsertSchema(surveys).pick({
 }).partial({
   teamId: true,
   status: true,
+}).extend({
+  title: z.string().min(3, "Title must be at least 3 characters"),
+  status: surveyStatusSchema,
 });
 
 export const updateSurveySchema = createInsertSchema(surveys).pick({
   title: true,
   fileReference: true,
   questionsCount: true,
+  teamId: true,
   status: true,
-}).partial();
+}).partial().extend({
+  title: z.string().min(3, "Title must be at least 3 characters").optional(),
+  status: surveyStatusSchema.optional(),
+});
 
 // Survey types
 export type Survey = typeof surveys.$inferSelect;

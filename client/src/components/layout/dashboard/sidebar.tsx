@@ -85,12 +85,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const adminNavItems = isTeamAdmin
     ? [
         {
-          title: "Surveys",
+          title: "Manage Surveys",
           url: "/dashboard/surveys",
           icon: FileSpreadsheet,
         },
         {
-          title: "Users",
+          title: "Manage Users",
           url: "/dashboard/users",
           icon: Users,
         },

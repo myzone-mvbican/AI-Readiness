@@ -4,6 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { surveyStatusSchema } from "@shared/schema";
 
 import {
   Dialog,
@@ -14,7 +18,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +43,18 @@ import {
   X,
 } from "lucide-react";
 
+// Form schema with zod validation
+const createSurveySchema = z.object({
+  title: z.string().min(3, "Title must be at least 3 characters"),
+  visibility: z.union([
+    z.literal("global"),
+    z.array(z.string()).min(1)
+  ]).default("global"),
+  status: z.enum(["draft", "public"]).default("draft"),
+});
+
+type CreateSurveyFormValues = z.infer<typeof createSurveySchema>;
+
 interface CreateSurveyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -42,12 +65,9 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const [surveyTitle, setSurveyTitle] = useState("");
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [questionsCount, setQuestionsCount] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
-  const [selectedTeamId, setSelectedTeamId] = useState<string>("global");
-  const [selectedStatus, setSelectedStatus] = useState<string>("draft");
 
   // Fetch teams for the dropdown
   const { data: teamsData } = useQuery({
@@ -57,13 +77,25 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
 
   const teams = teamsData?.teams || [];
 
+  // Initialize form
+  const form = useForm<CreateSurveyFormValues>({
+    resolver: zodResolver(createSurveySchema),
+    defaultValues: {
+      title: "",
+      visibility: "global",
+      status: "draft",
+    },
+  });
+
   const resetForm = () => {
-    setSurveyTitle("");
+    form.reset({
+      title: "",
+      visibility: "global",
+      status: "draft",
+    });
     setCsvFile(null);
     setQuestionsCount(0);
     setIsUploading(false);
-    setSelectedTeamId("global");
-    setSelectedStatus("draft");
   };
 
   useEffect(() => {
@@ -170,17 +202,8 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
   };
 
   // Handle form submission to create a new survey
-  const handleCreateSurvey = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!surveyTitle.trim()) {
-      toast({
-        title: "Missing title",
-        description: "Please enter a survey title",
-        variant: "destructive",
-      });
-      return;
-    }
+  const onSubmit = async (data: CreateSurveyFormValues) => {
+    console.log("Form data:", data);
 
     if (!csvFile) {
       toast({
@@ -201,14 +224,22 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
     }
 
     const formData = new FormData();
-    formData.append("title", surveyTitle);
+    formData.append("title", data.title);
     formData.append("file", csvFile);
     formData.append("questionsCount", questionsCount.toString());
-    formData.append("status", selectedStatus);
+    formData.append("status", data.status);
 
     // Only add teamId if it's not "global"
-    if (selectedTeamId !== "global") {
-      formData.append("teamId", selectedTeamId);
+    if (data.visibility !== "global") {
+      // Handle array of team IDs if needed
+      if (Array.isArray(data.visibility)) {
+        // For now, we're using the first team ID only
+        if (data.visibility.length > 0) {
+          formData.append("teamId", data.visibility[0]);
+        }
+      } else {
+        formData.append("teamId", data.visibility);
+      }
     }
 
     createSurveyMutation.mutate(formData);
@@ -229,58 +260,84 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
             Upload a CSV file with survey questions.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleCreateSurvey}>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="title">Survey Title</Label>
-              <Input
-                id="title"
-                value={surveyTitle}
-                onChange={(e) => setSurveyTitle(e.target.value)}
-                placeholder="Enter survey title"
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Survey Title</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter survey title"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="visibility"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Visibility</FormLabel>
+                    <Select
+                      value={field.value as string}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select visibility" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="global">Global (Everyone)</SelectItem>
+                        {teams.map((team: any) => (
+                          <SelectItem key={team.id} value={String(team.id)}>
+                            {team.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="public">Public</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="team">Visibility</Label>
-                <Select 
-                  value={selectedTeamId} 
-                  onValueChange={setSelectedTeamId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select visibility" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="global">Global (Everyone)</SelectItem>
-                    {teams.map((team: any) => (
-                      <SelectItem key={team.id} value={String(team.id)}>
-                        {team.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="status">Status</Label>
-                <Select 
-                  value={selectedStatus} 
-                  onValueChange={setSelectedStatus}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="public">Public</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
             <div className="grid gap-2">
-              <Label htmlFor="file">CSV File</Label>
+              <FormLabel htmlFor="file">CSV File</FormLabel>
               <div className="border border-input rounded-md px-3 py-2">
                 {csvFile ? (
                   <div className="flex items-center justify-between">
@@ -337,32 +394,36 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
                 </p>
               )}
             </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={
-                !csvFile || isUploading || createSurveyMutation.isPending
-              }
-            >
-              {createSurveyMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                "Create Survey"
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
+
+            <DialogFooter className="mt-4">
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={
+                  !csvFile || 
+                  isUploading || 
+                  createSurveyMutation.isPending || 
+                  !form.formState.isValid
+                }
+              >
+                {createSurveyMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  "Create Survey"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

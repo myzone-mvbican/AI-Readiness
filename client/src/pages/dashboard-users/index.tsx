@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { DashboardLayout } from "@/components/layout/dashboard";
 import { Input } from "@/components/ui/input";
@@ -116,7 +116,20 @@ export default function UsersPage() {
 
   return (
     <DashboardLayout title="Manage Users">
-      <div className="space-y-4">
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 space-y-3">
+          <div className="col-span-1">
+            <div className="col-span-1 flex items-center space-x-2">
+              <ShieldCheck className="h-6 w-6 text-blue-500" />
+              <h2 className="text-xl font-semibold">Manage Users</h2>
+            </div>
+            <p className="text-muted-foreground mt-2">
+              Manage users to edit their information and assign them to specific
+              teams.
+            </p>
+          </div>
+          <div className="col-span-1 flex justify-end"></div>
+        </div>
         <div className="flex items-center justify-between">
           <div className="relative w-64">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
