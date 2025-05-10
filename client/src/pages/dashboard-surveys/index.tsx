@@ -14,8 +14,17 @@ import {
   Plus,
   Search,
 } from "lucide-react";
-import { CreateSurveyDialog } from "./create-survey-dialog";
-import { SurveysTable } from "./surveys-table";
+// Import directly from components
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
@@ -27,20 +36,26 @@ export default function AdminSurveysPage() {
   const { toast } = useToast();
 
   // Get surveys
-  const { data: surveys, isLoading } = useQuery({
-    queryKey: ["/api/admin/surveys", teamId],
+  // Log to see if we're getting data
+  const { data: surveysData, isLoading } = useQuery({
+    queryKey: ["/api/admin/surveys/0"],
     retry: false,
   });
 
+  // Add debugging to see what data structure we're getting
+  console.log("Surveys data:", surveysData);
+
+  // Get surveys from the response and handle the correct structure
+  const surveys = surveysData?.surveys || [];
+
   // Filter surveys based on search term and status filter
-  const filteredSurveys =
-    surveys?.surveys?.filter((survey: any) => {
-      const matchesSearch = survey.title
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-      const matchesStatus = !statusFilter || survey.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    }) || [];
+  const filteredSurveys = surveys.filter((survey: any) => {
+    const matchesSearch = survey.title
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesStatus = !statusFilter || survey.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <DashboardLayout title="Manage Surveys">
