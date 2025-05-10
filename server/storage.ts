@@ -174,13 +174,26 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUser(id: number): Promise<boolean> {
     try {
+      // First, delete all team associations for this user
+      await db
+        .delete(userTeams)
+        .where(eq(userTeams.userId, id));
+      
+      // Then, delete any surveys created by this user (or set them to a default user)
+      // This depends on your business logic - here we'll delete them
+      await db
+        .delete(surveys)
+        .where(eq(surveys.authorId, id));
+        
+      // Finally, delete the user
       const result = await db
         .delete(users)
         .where(eq(users.id, id));
+        
       return !!result;
     } catch (error) {
       console.error('Error deleting user:', error);
-      return false;
+      throw error; // Rethrow to handle at the route level
     }
   }
 
