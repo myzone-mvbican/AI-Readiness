@@ -11,6 +11,11 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Pencil, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import SurveyEditDialog from "./survey-edit-dialog";
@@ -59,11 +64,17 @@ export default function SurveyTable({ surveys }: SurveyTableProps) {
 
   const teams: Team[] = teamsData?.teams || [];
   
-  // Get team name from team ID
-  const getTeamName = (teamId: number | null): string => {
-    if (teamId === null) return "Global";
-    const team = teams.find(t => t.id === teamId);
-    return team ? team.name : "Team-only";
+  // Format the visibility information based on survey teams
+  const formatVisibility = (survey: SurveyWithAuthor): string => {
+    if (!survey.teams || survey.teams.length === 0) {
+      return "Global (Everyone)";
+    }
+    
+    if (survey.teams.length === 1) {
+      return survey.teams[0].name;
+    }
+    
+    return `${survey.teams.length} teams`;
   };
 
   // Check if the current user is the author of a survey
@@ -122,20 +133,25 @@ export default function SurveyTable({ surveys }: SurveyTableProps) {
                   })}
                 </TableCell>
                 <TableCell>
-                  {survey.teamId === null || (survey.teams && survey.teams.length === 0) ? (
-                    <Badge variant="outline">Global</Badge>
-                  ) : survey.teams && survey.teams.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
-                      {survey.teams.map(team => (
-                        <Badge key={team.id} variant="secondary">
-                          {team.name}
-                        </Badge>
-                      ))}
-                    </div>
+                  {!survey.teams || survey.teams.length === 0 ? (
+                    <Badge variant="outline">Global (Everyone)</Badge>
+                  ) : survey.teams.length === 1 ? (
+                    <Badge variant="secondary">{survey.teams[0].name}</Badge>
+                  ) : survey.teams.length > 1 ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="secondary">{`${survey.teams.length} teams`}</Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="flex flex-col gap-1">
+                          {survey.teams.map(team => (
+                            <span key={team.id}>{team.name}</span>
+                          ))}
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
                   ) : (
-                    <Badge variant="secondary">
-                      {getTeamName(survey.teamId)}
-                    </Badge>
+                    <Badge variant="outline">Global (Everyone)</Badge>
                   )}
                 </TableCell>
                 <TableCell>

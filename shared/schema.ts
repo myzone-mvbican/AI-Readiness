@@ -119,7 +119,9 @@ export const surveys = pgTable("surveys", {
   fileReference: text("file_reference").notNull(),
   questionsCount: integer("questions_count").notNull(),
   authorId: integer("author_id").notNull().references(() => users.id),
-  teamId: integer("team_id").references(() => teams.id), // Keep for backward compatibility
+  // Marked as deprecated - using survey_teams junction table instead
+  // We keep it as a nullable field for backward compatibility
+  teamId: integer("team_id").references(() => teams.id),
   status: text("status").default("draft").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
