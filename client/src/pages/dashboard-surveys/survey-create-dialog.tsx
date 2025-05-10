@@ -48,7 +48,7 @@ const createSurveySchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   visibility: z.union([
     z.literal("global"),
-    z.array(z.string()).min(1)
+    z.string()
   ]).default("global"),
   status: z.enum(["draft", "public"]).default("draft"),
 });

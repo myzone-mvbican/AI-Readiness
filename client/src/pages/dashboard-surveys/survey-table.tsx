@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
 import {
   Table,
   TableBody,
@@ -31,17 +32,35 @@ export type SurveyWithAuthor = {
   };
 };
 
+export type Team = {
+  id: number;
+  name: string;
+};
+
 interface SurveyTableProps {
   surveys: SurveyWithAuthor[];
 }
 
 export default function SurveyTable({ surveys }: SurveyTableProps) {
   const { user } = useAuth();
-  const [currentSurvey, setCurrentSurvey] = useState<SurveyWithAuthor | null>(
-    null,
-  );
+  const [currentSurvey, setCurrentSurvey] = useState<SurveyWithAuthor | null>(null);
   const [editSurveyOpen, setEditSurveyOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  // Fetch teams to display team names in visibility column
+  const { data: teamsData } = useQuery({
+    queryKey: ["/api/admin/teams"],
+    retry: false,
+  });
+
+  const teams: Team[] = teamsData?.teams || [];
+  
+  // Get team name from team ID
+  const getTeamName = (teamId: number | null): string => {
+    if (teamId === null) return "Global";
+    const team = teams.find(t => t.id === teamId);
+    return team ? team.name : "Team-only";
+  };
 
   // Check if the current user is the author of a survey
   const isAuthor = (survey: SurveyWithAuthor) => {
@@ -99,11 +118,13 @@ export default function SurveyTable({ surveys }: SurveyTableProps) {
                   })}
                 </TableCell>
                 <TableCell>
-                  <Badge
-                    variant={survey.teamId === null ? "outline" : "secondary"}
-                  >
-                    {survey.teamId === null ? "Global" : "Team-only"}
-                  </Badge>
+                  {survey.teamId === null ? (
+                    <Badge variant="outline">Global</Badge>
+                  ) : (
+                    <Badge variant="secondary">
+                      {getTeamName(survey.teamId)}
+                    </Badge>
+                  )}
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col">
