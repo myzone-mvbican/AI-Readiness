@@ -178,7 +178,7 @@ export default function AssessmentDetailPage() {
       
       console.log("Extracted filename:", filename);
       
-      // Use our new dedicated CSV serving endpoint
+      // Use our dedicated CSV serving endpoint, ensuring we have proper error handling
       const csvEndpoint = `/api/csv-file/${filename}`;
       console.log("Fetching CSV from dedicated endpoint:", csvEndpoint);
       

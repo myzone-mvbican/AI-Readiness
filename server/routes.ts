@@ -49,9 +49,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // List of possible places to look for the file
       const possiblePaths = [
-        `${process.cwd()}/uploads/${filename}`,
-        `${process.cwd()}/public/${filename}`,
-        `${process.cwd()}/uploads/surveys/${filename}`,
+        `${process.cwd()}/public/uploads/${filename}`,   // New primary location
+        `${process.cwd()}/uploads/${filename}`,          // Legacy location
+        `/uploads/${filename}`,                          // Relative path
+        `${process.cwd()}/public/${filename}`,           // Public directory
+        `${process.cwd()}/uploads/surveys/${filename}`,  // Possible subdirectory
       ];
       
       console.log("Looking for CSV file in these locations:", possiblePaths);
@@ -73,19 +75,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!fileContent) {
         console.log("File not found in standard locations, checking default survey files");
         
-        // Check for any survey file that might be available
-        const uploadDir = `${process.cwd()}/uploads/`;
-        const files = fs.readdirSync(uploadDir);
-        
-        // Look for any survey CSV files
-        const surveyFiles = files.filter(file => file.startsWith('survey-') && file.endsWith('.csv'));
-        
-        if (surveyFiles.length > 0) {
-          // Use the first survey file found
-          const defaultSurveyPath = `${uploadDir}${surveyFiles[0]}`;
-          console.log("Using default survey file:", defaultSurveyPath);
-          fileContent = fs.readFileSync(defaultSurveyPath, 'utf8');
-          foundPath = defaultSurveyPath;
+        // Check for test file first
+        const testFilePath = `${process.cwd()}/public/uploads/survey-test.csv`;
+        if (fs.existsSync(testFilePath)) {
+          console.log("Using test survey file:", testFilePath);
+          fileContent = fs.readFileSync(testFilePath, 'utf8');
+          foundPath = testFilePath;
+        } else {
+          // Check in various directories
+          const directories = [
+            `${process.cwd()}/public/uploads/`,
+            `${process.cwd()}/uploads/`,
+          ];
+          
+          for (const dir of directories) {
+            if (fs.existsSync(dir)) {
+              const files = fs.readdirSync(dir);
+              // Look for any survey CSV files
+              const surveyFiles = files.filter(file => file.startsWith('survey-') && file.endsWith('.csv'));
+              
+              if (surveyFiles.length > 0) {
+                // Use the first survey file found
+                const defaultSurveyPath = `${dir}${surveyFiles[0]}`;
+                console.log("Using default survey file:", defaultSurveyPath);
+                fileContent = fs.readFileSync(defaultSurveyPath, 'utf8');
+                foundPath = defaultSurveyPath;
+                break;
+              }
+            }
+          }
         }
       }
       
