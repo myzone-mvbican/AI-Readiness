@@ -534,73 +534,36 @@ export class DatabaseStorage implements IStorage {
   // Survey Operations
   async getSurveys(teamId: number): Promise<Survey[]> {
     try {
-      if (teamId === 0) {
-        // For global surveys (teamId 0), only get surveys with "public" status
-        // and no team assignments
-        
-        // First, get all surveys that have team assignments
-        const assignedSurveys = await db
-          .select({ surveyId: surveyTeams.surveyId })
-          .from(surveyTeams);
-        
-        // Extract just the surveyIds into an array
-        const assignedSurveyIds = assignedSurveys.map(s => s.surveyId);
-        
-        // If there are no assigned surveys, just get all public surveys
-        if (assignedSurveyIds.length === 0) {
-          return await db
-            .select()
-            .from(surveys)
-            .where(eq(surveys.status, "public"))
-            .orderBy(desc(surveys.updatedAt));
-        }
-        
-        // Otherwise, filter out the assigned surveys
-        return await db
-          .select()
-          .from(surveys)
-          .where(
-            and(
-              // Only include published surveys
-              eq(surveys.status, "public"),
-              // Exclude any surveys that are in the assigned list
-              not(inArray(surveys.id, assignedSurveyIds))
-            )
-          )
-          .orderBy(desc(surveys.updatedAt));
-      }
+      // Two types of surveys to return:
+      // 1. Global surveys = public surveys NOT assigned to any team
+      // 2. Team-specific surveys = public surveys assigned to the requested team
       
-      // Get surveys visible to this team:
-      // 1. Global surveys (not assigned to any team)
-      // 2. Surveys assigned to this specific team
-      
-      // First get all surveys assigned to ANY team
-      const allTeamAssignments = await db
-        .select({ surveyId: surveyTeams.surveyId })
+      // Get all team assignments to identify which surveys have team assignments
+      const allAssignedSurveys = await db
+        .select()
         .from(surveyTeams);
+        
+      // Get the unique survey IDs that have ANY team assignment
+      const assignedSurveyIds = [...new Set(allAssignedSurveys.map(s => s.surveyId))];
       
-      const assignedSurveyIds = allTeamAssignments.map(s => s.surveyId);
-      
-      // Get global surveys (not assigned to any team)
+      // STEP 1: Get global surveys (public surveys with no team assignments)
       let globalSurveys: Survey[] = [];
       
-      // Only fetch global surveys if there are any assigned surveys
-      // (otherwise all public surveys are global)
+      // First check if we have any assigned surveys at all in the system
       if (assignedSurveyIds.length > 0) {
+        // Get public surveys that are NOT assigned to any team
         globalSurveys = await db
           .select()
           .from(surveys)
           .where(
             and(
-              // Only include published surveys
               eq(surveys.status, "public"),
-              // Ensure the survey isn't assigned to any teams
               not(inArray(surveys.id, assignedSurveyIds))
             )
           )
           .orderBy(desc(surveys.updatedAt));
       } else {
-        // If no team assignments exist, all public surveys are global
+        // If no team assignments exist at all, then all public surveys are global
         globalSurveys = await db
           .select()
           .from(surveys)
@@ -608,28 +571,33 @@ export class DatabaseStorage implements IStorage {
           .orderBy(desc(surveys.updatedAt));
       }
       
-      // Get surveys specifically assigned to this team
-      const teamSurveyIds = await db
-        .select({ surveyId: surveyTeams.surveyId })
-        .from(surveyTeams)
-        .where(eq(surveyTeams.teamId, teamId));
-      
-      // If there are team-specific surveys, fetch them
-      let teamSurveys: Survey[] = [];
-      if (teamSurveyIds.length > 0) {
-        teamSurveys = await db
-          .select()
-          .from(surveys)
-          .where(
-            and(
-              // Only include published surveys
-              eq(surveys.status, "public"),
-              // Include surveys assigned to this team
-              inArray(surveys.id, teamSurveyIds.map(s => s.surveyId))
-            )
-          )
-          .orderBy(desc(surveys.updatedAt));
+      // If teamId is 0, we only want global surveys
+      if (teamId === 0) {
+        return globalSurveys;
       }
+      
+      // STEP 2: Get team-specific surveys (assigned directly to the requested team)
+      // Get survey IDs assigned to the requested team
+      const teamSpecificSurveyIds = allAssignedSurveys
+        .filter(assignment => assignment.teamId === teamId)
+        .map(assignment => assignment.surveyId);
+      
+      // If no surveys are assigned to this team, just return global surveys
+      if (teamSpecificSurveyIds.length === 0) {
+        return globalSurveys;
+      }
+      
+      // Otherwise, fetch the team-specific surveys
+      const teamSurveys = await db
+        .select()
+        .from(surveys)
+        .where(
+          and(
+            eq(surveys.status, "public"),
+            inArray(surveys.id, teamSpecificSurveyIds)
+          )
+        )
+        .orderBy(desc(surveys.updatedAt));
       
       // Combine both result sets, ensuring no duplicates
       const allSurveyIds = new Set<number>();
@@ -637,16 +605,13 @@ export class DatabaseStorage implements IStorage {
       
       // Process global surveys first
       for (const survey of globalSurveys) {
-        if (!allSurveyIds.has(survey.id)) {
-          allSurveyIds.add(survey.id);
-          uniqueSurveys.push(survey);
-        }
+        allSurveyIds.add(survey.id);
+        uniqueSurveys.push(survey);
       }
       
-      // Then add team-specific surveys if not already included
+      // Then add team-specific surveys (if not duplicates)
       for (const survey of teamSurveys) {
         if (!allSurveyIds.has(survey.id)) {
-          allSurveyIds.add(survey.id);
           uniqueSurveys.push(survey);
         }
       }
