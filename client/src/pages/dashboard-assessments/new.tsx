@@ -67,10 +67,10 @@ export default function NewAssessmentPage() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch available survey templates
+  // Fetch available survey templates for public (global) surveys
   const { data: surveysData, isLoading: isLoadingSurveys } =
     useQuery<SurveysResponse>({
-      queryKey: ["/api/surveys"],
+      queryKey: ["/api/surveys", 0], // Using 0 to fetch global surveys
       staleTime: 60 * 1000, // 1 minute
     });
 
