@@ -46,7 +46,6 @@ export default function SurveyQuestion({
             type="button"
             disabled={disabled}
             onClick={() => {
-              console.log(`Clicked on option with value: ${option.value}`);
               onChange(option.value);
             }}
             className={`px-4 py-2 rounded-md border ${
