@@ -535,40 +535,75 @@ export class DatabaseStorage implements IStorage {
   async getSurveys(teamId: number): Promise<Survey[]> {
     try {
       if (teamId === 0) {
-        // Return all surveys for admin
+        // For global surveys (teamId 0), only get surveys with no team assignments
+        // First, get all surveys that have team assignments
+        const assignedSurveys = await db
+          .select({ surveyId: surveyTeams.surveyId })
+          .from(surveyTeams);
+        
+        const assignedSurveyIds = new Set(assignedSurveys.map(s => s.surveyId));
+        
+        // Return only surveys that are not assigned to any team (truly global)
         return await db
           .select()
           .from(surveys)
+          .where(
+            and(
+              // Only include published surveys
+              eq(surveys.status, "public"),
+              // Ensure the survey isn't assigned to any teams
+              not(inArray(surveys.id, Array.from(assignedSurveyIds)))
+            )
+          )
           .orderBy(desc(surveys.updatedAt));
       }
       
       // Get surveys visible to this team:
-      // 1. Global surveys (null teamId)
+      // 1. Global surveys (no team assignments)
       // 2. Surveys directly linked to the team (legacy)
-      const directSurveys = await db
+      // 3. Surveys assigned through the junction table
+      
+      // Get surveys assigned to teams
+      const assignedSurveys = await db
+        .select({ surveyId: surveyTeams.surveyId })
+        .from(surveyTeams);
+        
+      const assignedSurveyIds = new Set(assignedSurveys.map(s => s.surveyId));
+      
+      // Get global surveys (not assigned to any team)
+      const globalSurveys = await db
         .select()
         .from(surveys)
         .where(
-          or(
-            isNull(surveys.teamId),  // Global surveys
-            eq(surveys.teamId, teamId) // Directly assigned (legacy)
+          and(
+            // Only include published surveys
+            eq(surveys.status, "public"),
+            // Ensure the survey isn't assigned to any teams
+            not(inArray(surveys.id, Array.from(assignedSurveyIds)))
           )
         )
         .orderBy(desc(surveys.updatedAt));
       
-      // 3. Surveys assigned through the junction table
-      const relatedSurveyIds = await db
+      // Get surveys assigned to this specific team
+      const teamSurveyIds = await db
         .select({ surveyId: surveyTeams.surveyId })
         .from(surveyTeams)
         .where(eq(surveyTeams.teamId, teamId));
       
-      // If there are related surveys, fetch them
-      let relatedSurveys: Survey[] = [];
-      if (relatedSurveyIds.length > 0) {
-        relatedSurveys = await db
+      // If there are team-specific surveys, fetch them
+      let teamSurveys: Survey[] = [];
+      if (teamSurveyIds.length > 0) {
+        teamSurveys = await db
           .select()
           .from(surveys)
-          .where(inArray(surveys.id, relatedSurveyIds.map(s => s.surveyId)))
+          .where(
+            and(
+              // Only include published surveys
+              eq(surveys.status, "public"),
+              // Include surveys assigned to this team
+              inArray(surveys.id, teamSurveyIds.map(s => s.surveyId))
+            )
+          )
           .orderBy(desc(surveys.updatedAt));
       }
       
@@ -576,16 +611,16 @@ export class DatabaseStorage implements IStorage {
       const allSurveyIds = new Set<number>();
       const uniqueSurveys: Survey[] = [];
       
-      // Process direct surveys first
-      for (const survey of directSurveys) {
+      // Process global surveys first
+      for (const survey of globalSurveys) {
         if (!allSurveyIds.has(survey.id)) {
           allSurveyIds.add(survey.id);
           uniqueSurveys.push(survey);
         }
       }
       
-      // Then add related surveys if not already included
-      for (const survey of relatedSurveys) {
+      // Then add team-specific surveys if not already included
+      for (const survey of teamSurveys) {
         if (!allSurveyIds.has(survey.id)) {
           allSurveyIds.add(survey.id);
           uniqueSurveys.push(survey);
