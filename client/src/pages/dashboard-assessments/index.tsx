@@ -47,9 +47,10 @@ export default function AssessmentsPage() {
   };
 
   // Format date for display
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | Date) => {
     try {
-      return format(new Date(dateString), "MMM d, yyyy");
+      const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+      return format(date, "MMM d, yyyy");
     } catch (e) {
       return "Invalid date";
     }
