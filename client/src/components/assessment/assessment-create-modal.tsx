@@ -78,15 +78,13 @@ export function AssessmentCreateModal() {
   useEffect(() => {
     // Only load team when the modal is opened
     if (assessmentCreateModal.isOpen) {
-      // First verify the current user's token matches the token when team was selected
+      // Check if we have a token (are logged in)
       const currentToken = localStorage.getItem("token");
-      const teamSelectionToken = localStorage.getItem("teamSelectionToken");
       
-      // If tokens don't match, team was selected in a different session/account
-      if (currentToken !== teamSelectionToken) {
-        console.log("Token mismatch detected, clearing selected team to prevent stale data");
+      // If no token is present, don't load any team selection
+      if (!currentToken) {
+        console.log("No authentication token found, clearing team selection");
         localStorage.removeItem("selectedTeam");
-        localStorage.setItem("teamSelectionToken", currentToken || "");
         setSelectedTeam(null);
         return;
       }
