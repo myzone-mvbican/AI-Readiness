@@ -370,7 +370,7 @@ export default function AssessmentDetailPage() {
     if (!surveyQuestions.length) return 0;
     if (!answers.length) return 0;
     
-    // Count how many questions have been answered
+    // Count how many questions have been answered with a valid value (including 0 for neutral)
     const answeredCount = answers.filter(a => a.a !== null && a.a !== undefined).length;
     console.log(`Progress: ${answeredCount} of ${surveyQuestions.length} questions answered`);
     
@@ -458,43 +458,10 @@ export default function AssessmentDetailPage() {
       
       return categoryScores;
     } 
-    // Fall back to default categories
+    // If we don't have survey questions, return empty array
     else {
-      // Group questions into categories
-      const categories = {
-        "Strategy & Vision": fallbackQuestions.slice(0, 2),
-        "Implementation": fallbackQuestions.slice(2, 4),
-        "Data & Information": fallbackQuestions.slice(4, 6),
-        "Technology & Integration": fallbackQuestions.slice(6, 8),
-        "Skills & Literacy": fallbackQuestions.slice(8, 10), 
-        "Governance & Risk": fallbackQuestions.slice(10, 12),
-        "Culture & Change-Readiness": fallbackQuestions.slice(12, 15)
-      };
-      
-      // Calculate average score for each category
-      const categoryScores = Object.entries(categories).map(([name, questions]) => {
-        const questionIndices = questions.map(q => fallbackQuestions.indexOf(q));
-        const categoryAnswers = questionIndices.map(idx => idx >= 0 && idx < answers.length ? answers[idx] : null).filter(Boolean);
-        
-        // Calculate average score
-        const sum = categoryAnswers.reduce((acc, ans) => {
-          // Convert from -2 to +2 scale to 0 to 10 scale
-          const score = ans && ans.a !== null ? ((ans.a + 2) * 2.5) : 0;
-          return acc + score;
-        }, 0);
-        
-        const avg = categoryAnswers.length > 0 
-          ? Math.round((sum / categoryAnswers.length) * 10) / 10
-          : 0;
-          
-        return {
-          subject: name,
-          score: avg,
-          fullMark: 10,
-        };
-      });
-      
-      return categoryScores;
+      console.log("No survey questions available for radar chart");
+      return [];
     }
   };
   
@@ -759,12 +726,12 @@ export default function AssessmentDetailPage() {
                     {answers.length > 0 && (
                       <div className="space-y-4">
                         <h3 className="text-lg font-bold">
-                          Question {currentStep + 1} of {answers.length}
+                          Question {currentStep + 1} of {surveyQuestions.length}
                         </h3>
                         
                         {/* Display the question text with description from CSV */}
                         <p className="text-lg mb-6">
-                          {surveyQuestions[currentStep]?.text || fallbackQuestions[currentStep]?.text || `Question ${currentStep + 1}`}
+                          {surveyQuestions[currentStep]?.text || `Question ${currentStep + 1}`}
                         </p>
                         
                         <QuestionRating
@@ -772,7 +739,7 @@ export default function AssessmentDetailPage() {
                           value={answers[currentStep]?.a || null}
                           onChange={(value) => updateAnswer(currentStep, value)}
                           disabled={isSubmitting}
-                          questionDescription={surveyQuestions[currentStep]?.description || fallbackQuestions[currentStep]?.description}
+                          questionDescription={surveyQuestions[currentStep]?.description}
                         />
                         
                         <div className="flex justify-between mt-6 pt-4 border-t">
