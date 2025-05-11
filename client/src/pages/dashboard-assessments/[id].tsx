@@ -386,6 +386,7 @@ export default function AssessmentDetailPage() {
   };
 
   // Handle updating an answer, ensuring proper handling of zero value
+  // and automatically advancing to the next question
   const updateAnswer = (index: number, value: number) => {
     const newAnswers = [...answers];
 
@@ -405,6 +406,11 @@ export default function AssessmentDetailPage() {
     }
 
     setAnswers(newAnswers);
+    
+    // Automatically advance to next question if not on the last question
+    if (index < answers.length - 1) {
+      setCurrentStep(index + 1);
+    }
   };
 
   // Calculate progress percentage based on the number of survey questions
