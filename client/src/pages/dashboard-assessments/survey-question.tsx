@@ -22,16 +22,8 @@ export default function SurveyQuestion({
   ];
 
   // Properly handle the equality comparison for the zero value
-  const isOptionSelected = (optionValue: number) => {
-    console.log(
-      "isOptionSelected",
-      value,
-      "===",
-      optionValue,
-      ":",
-      value === optionValue,
-    );
-    if (value === "null") return false;
+  const isOptionSelected = (optionValue: number) => { 
+    if (value === null) return false;
     return value === optionValue;
   };
 
