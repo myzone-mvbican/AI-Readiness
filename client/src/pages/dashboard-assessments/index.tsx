@@ -1,7 +1,14 @@
-import { Link } from "wouter";
+import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { 
+  Clipboard, 
+  PlusCircle, 
+  Search, 
+  Loader2,
+  FileBarChart2
+} from "lucide-react";
 import { useAssessmentCreateModal } from "@/hooks/use-assessment-create-modal";
 import {
   Table,
@@ -12,17 +19,28 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Assessment } from "@shared/schema";
-
-interface AssessmentsResponse {
-  success: boolean;
-  assessments: Assessment[];
-}
+import { AssessmentsResponse, Assessment } from "./types";
+import {
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import { getColumns } from "./columns";
 
 export default function AssessmentsPage() {
   const assessmentCreateModal = useAssessmentCreateModal();
+  
+  // State for sorting and filtering
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [globalFilter, setGlobalFilter] = useState("");
   
   // Fetch assessments from the API
   const { data, isLoading, error } = useQuery<AssessmentsResponse>({
@@ -32,58 +50,51 @@ export default function AssessmentsPage() {
 
   const assessments = data?.assessments || [];
 
-  // Format assessment status for display
-  const formatStatus = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "completed":
-        return "Completed";
-      case "in-progress":
-        return "In Progress";
-      case "draft":
-        return "Draft";
-      default:
-        return status;
-    }
-  };
+  // Get columns configuration
+  const columns = getColumns();
 
-  // Format date for display
-  const formatDate = (dateString: string | Date) => {
-    try {
-      const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
-      return format(date, "MMM d, yyyy");
-    } catch (e) {
-      return "Invalid date";
-    }
-  };
+  // Set up table
+  const table = useReactTable({
+    data: assessments,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      globalFilter,
+    },
+  });
 
-  // Format score for display
-  const formatScore = (score: number | null) => {
-    if (score === null) return "-";
-    return `${score}/100`;
-  };
-
-  // Function to get status badge color
-  const getStatusBadgeClass = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "completed":
-        return "bg-green-100 text-green-800";
-      case "in-progress":
-        return "bg-blue-100 text-blue-800";
-      case "draft":
-        return "bg-gray-100 text-gray-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
+  // Loading state
+  if (isLoading) {
+    return (
+      <DashboardLayout title="Your Assessments">
+        <div className="flex items-center justify-center h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout title="Your Assessments">
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 space-y-3">
           <div className="col-span-1">
-            <h1 className="text-2xl font-bold tracking-tight dark:text-white">
-              Your Assessments
-            </h1>
+            <div className="col-span-1 flex items-center space-x-2">
+              <FileBarChart2 className="h-6 w-6 text-blue-500" />
+              <h2 className="text-xl font-semibold dark:text-white">
+                Your Assessments
+              </h2>
+            </div>
             <p className="text-muted-foreground mt-2">
               View all your completed and in-progress AI readiness assessments.
             </p>
@@ -96,16 +107,7 @@ export default function AssessmentsPage() {
           </div>
         </div>
 
-        {isLoading ? (
-          // Loading skeleton
-          <div className="space-y-4">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex items-center space-x-4">
-                <Skeleton className="h-8 w-full" />
-              </div>
-            ))}
-          </div>
-        ) : error ? (
+        {error ? (
           // Error state
           <div className="text-center py-8 text-red-500">
             <p>Failed to load assessments. Please try again.</p>
@@ -119,43 +121,90 @@ export default function AssessmentsPage() {
             </p>
           </div>
         ) : (
-          // Assessments table
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Assessment Name</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Score</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {assessments.map((assessment) => (
-                <TableRow key={assessment.id}>
-                  <TableCell className="font-medium">
-                    {assessment.title}
-                  </TableCell>
-                  <TableCell>{formatDate(assessment.createdAt)}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeClass(assessment.status)}`}
-                    >
-                      {formatStatus(assessment.status)}
-                    </span>
-                  </TableCell>
-                  <TableCell>{formatScore(assessment.score)}</TableCell>
-                  <TableCell>
-                    <Link href={`/dashboard/assessments/${assessment.id}`}>
-                      <Button variant="outline" size="sm">
-                        View
-                      </Button>
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <>
+            {/* Search and filter controls */}
+            <div className="flex items-center justify-between">
+              <div className="relative w-64">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search assessments..."
+                  value={globalFilter}
+                  onChange={(e) => setGlobalFilter(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+            </div>
+
+            {/* Assessments data table */}
+            <div className="relative rounded-md border overflow-auto">
+              <Table className="w-full whitespace-nowrap">
+                <TableHeader>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <TableHead key={header.id}>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext(),
+                              )}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        data-state={row.getIsSelected() && "selected"}
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id} className="p-0 px-4">
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={columns.length}
+                        className="h-24 text-center"
+                      >
+                        No assessments found.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Pagination controls */}
+            <div className="flex items-center justify-end space-x-2 py-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+              >
+                Next
+              </Button>
+            </div>
+          </>
         )}
       </div>
     </DashboardLayout>

@@ -24,10 +24,11 @@ import {
 import {
   Loader2,
   Save,
-  CheckCircle2,
+  InfoIcon,
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
+  CheckCircle2,
 } from "lucide-react";
 import { Assessment } from "@shared/schema";
 import { format } from "date-fns";
@@ -68,7 +69,7 @@ export default function AssessmentDetailPage() {
   >([]);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
   const [answers, setAnswers] = useState<
-    Array<{ q: string; a: number | null; r?: string }>
+    Array<{ q: number; a: number | null | undefined; r?: string }>
   >([]);
 
   // Load survey questions from CSV file reference
@@ -169,41 +170,6 @@ export default function AssessmentDetailPage() {
 
           // Set the survey questions
           setSurveyQuestions(questions);
-
-          // Initialize answers for new assessments or sync existing ones
-          if (questions.length > 0) {
-            if (answers.length === 0) {
-              // For new assessments, initialize empty answers
-              const initialAnswers = questions.map((q) => ({
-                q: Number(q.number), // Store question number as a number type
-                a: null,
-              }));
-              setAnswers(initialAnswers);
-              console.log('Initialized new answers with numbers:', initialAnswers);
-            } else {
-              // For existing assessments, ensure all questions have answers by merging
-              // Make a map of existing answers by question number
-              const answerMap = new Map();
-              answers.forEach(answer => {
-                if (answer.q !== null && answer.q !== undefined) {
-                  answerMap.set(Number(answer.q), answer.a);
-                }
-              });
-              
-              // Create complete answer list based on questions, using existing answers where available
-              const syncedAnswers = questions.map((q) => {
-                const questionNumber = Number(q.number);
-                return {
-                  q: questionNumber,
-                  a: answerMap.has(questionNumber) ? answerMap.get(questionNumber) : null,
-                };
-              });
-              
-              setAnswers(syncedAnswers);
-              console.log('Synced existing answers with question template:', syncedAnswers);
-            }
-          }
-
           setIsLoadingQuestions(false);
         },
         error: () => {
@@ -234,6 +200,8 @@ export default function AssessmentDetailPage() {
 
   const assessment = data?.assessment;
 
+  // Is assessment completed?
+  const isCompleted = assessment?.status === "completed";
   // Combined loading state for all async operations
   const isFullyLoading = isLoading || isLoadingQuestions;
 
@@ -243,21 +211,10 @@ export default function AssessmentDetailPage() {
       // Load any existing saved answers from the assessment
       if (assessment.answers && assessment.answers.length > 0) {
         // Convert any string question IDs to numbers and ensure proper structure
-        const fixedAnswers = assessment.answers.map(answer => {
-          // Handle null or undefined q values by using the index as a fallback
-          const questionId = answer.q !== null && answer.q !== undefined 
-            ? (typeof answer.q === 'string' ? Number(answer.q) : answer.q) 
-            : 0; // Default to 0 if missing
-          
-          return {
-            q: questionId,
-            a: answer.a
-          };
+        const fixedAnswers = assessment.answers.map(({ q, a }) => {
+          return { q, a };
         });
-        
-        console.log('Loaded answers from DB:', assessment.answers);
-        console.log('Fixed answers for state:', fixedAnswers);
-        
+
         // Make sure to set the state
         setAnswers(fixedAnswers);
       }
@@ -323,11 +280,11 @@ export default function AssessmentDetailPage() {
   // Find first unanswered question and navigate to it
   useEffect(() => {
     // Only proceed when loading is complete
-    if (isFullyLoading) {
+    if (isFullyLoading || isCompleted) {
       return;
     }
 
-    if (answers.length > 0 && assessment && assessment.status !== "completed") {
+    if (answers.length > 0) {
       // Find the first unanswered question
       // Make sure to handle null, undefined and use strict equality for better zero handling
       const firstUnansweredIndex = answers.findIndex(
@@ -336,16 +293,10 @@ export default function AssessmentDetailPage() {
 
       if (firstUnansweredIndex !== -1) {
         // If there's an unanswered question, go to it
-        setCurrentStep(firstUnansweredIndex);
+        setTimeout(() => setCurrentStep(firstUnansweredIndex), 500);
       }
     }
-  }, [
-    answers,
-    assessment,
-    isFullyLoading,
-    isLoadingQuestions,
-    surveyQuestions,
-  ]);
+  }, [answers, isFullyLoading, isCompleted]);
 
   // Update assessment mutation
   const updateAssessmentMutation = useMutation<
@@ -378,7 +329,7 @@ export default function AssessmentDetailPage() {
           queryKey: ["/api/assessments"],
         });
 
-        navigate(`/dashboard/assessments`);
+        // navigate(`/dashboard/assessments`);
       } else {
         // Just saving progress
         toast({
@@ -404,7 +355,7 @@ export default function AssessmentDetailPage() {
   // Handle saving progress
   const handleSave = () => {
     setIsSubmitting(true);
-    
+
     // Ensure all answers have proper question numbers
     const validatedAnswers = answers.map((answer, index) => {
       // Make sure q field is always properly set and is a number
@@ -413,17 +364,15 @@ export default function AssessmentDetailPage() {
         const questionNumber = surveyQuestions[index]?.number || index + 1;
         return {
           ...answer,
-          q: Number(questionNumber)
+          q: Number(questionNumber),
         };
       }
       return {
         ...answer,
-        q: typeof answer.q === 'string' ? Number(answer.q) : answer.q
+        q: typeof answer.q === "string" ? Number(answer.q) : answer.q,
       };
     });
-    
-    console.log('Saving answers with validated structure:', validatedAnswers);
-    
+
     updateAssessmentMutation.mutate({
       status: "in-progress",
       answers: validatedAnswers,
@@ -449,7 +398,7 @@ export default function AssessmentDetailPage() {
   // Confirm assessment completion
   const confirmComplete = () => {
     setIsSubmitting(true);
-    
+
     // Ensure all answers have proper question numbers before completing
     const validatedAnswers = answers.map((answer, index) => {
       // Make sure q field is always properly set and is a number
@@ -458,17 +407,15 @@ export default function AssessmentDetailPage() {
         const questionNumber = surveyQuestions[index]?.number || index + 1;
         return {
           ...answer,
-          q: Number(questionNumber)
+          q: Number(questionNumber),
         };
       }
       return {
         ...answer,
-        q: typeof answer.q === 'string' ? Number(answer.q) : answer.q
+        q: typeof answer.q === "string" ? Number(answer.q) : answer.q,
       };
     });
-    
-    console.log('Completing assessment with validated structure:', validatedAnswers);
-    
+
     updateAssessmentMutation.mutate({
       status: "completed",
       answers: validatedAnswers,
@@ -478,8 +425,6 @@ export default function AssessmentDetailPage() {
   // Handle updating an answer, ensuring proper handling of zero value
   // and automatically advancing to the next question
   const updateAnswer = (index: number, value: number) => {
-    console.log(`Updating answer at index ${index} with value ${value}`);
-
     const newAnswers = [...answers];
 
     // Always ensure we have a proper question number
@@ -500,23 +445,18 @@ export default function AssessmentDetailPage() {
       };
     }
 
-    // Log the answer being updated to help debug
-    console.log(`Answer after update:`, newAnswers[index]);
-
     setAnswers(newAnswers);
-    
-    // No auto-saving, removed
-    // No auto-advancing, removed
   };
 
   // Calculate progress percentage based on the number of survey questions
   const calculateProgress = () => {
-    if (!surveyQuestions.length) return 0;
-    if (!answers.length) return 0;
+    if (!surveyQuestions.length || !answers.length) {
+      return 0;
+    }
 
     // Count how many questions have been answered with a valid value (including 0 for neutral)
     const answeredCount = answers.filter(
-      (a) => a.a !== null && a.a !== undefined && a.a !== "",
+      (a) => a.a !== null && a.a !== undefined,
     ).length;
 
     // Calculate percentage based on the total number of survey questions
@@ -526,11 +466,12 @@ export default function AssessmentDetailPage() {
   // Check if all questions are answered (for Complete button)
   const allQuestionsAnswered = () => {
     // If we don't have survey questions or answers, return false
-    if (!surveyQuestions.length || !answers.length) return false;
+    if (!surveyQuestions.length || !answers.length) {
+      return false;
+    }
 
     // Check if we have the same number of answers as questions
     if (answers.length < surveyQuestions.length) {
-      console.log("Not all questions have answers objects");
       return false;
     }
 
@@ -540,17 +481,10 @@ export default function AssessmentDetailPage() {
       const answerValue = answers[i]?.a;
       // Using strict comparison to check for null/undefined/""
       // Note that 0 as a value will pass this check (which is what we want)
-      if (
-        answerValue === null ||
-        answerValue === undefined ||
-        answerValue === ""
-      ) {
-        console.log(`Question ${i + 1} is unanswered, value:`, answerValue);
+      if (answerValue === null || answerValue === undefined) {
         return false;
       }
     }
-
-    console.log("All questions have been answered");
     return true;
   };
 
@@ -562,9 +496,6 @@ export default function AssessmentDetailPage() {
       return "Invalid date";
     }
   };
-
-  // Is assessment completed?
-  const isCompleted = assessment?.status === "completed";
 
   // Get status badge
   const getStatusBadge = () => {
@@ -609,6 +540,8 @@ export default function AssessmentDetailPage() {
     );
   }
 
+  const currentProgress = calculateProgress();
+
   return (
     <DashboardLayout title={assessment.title}>
       <div className="space-y-6">
@@ -636,20 +569,17 @@ export default function AssessmentDetailPage() {
               Completion Progress
             </span>
             <span className="text-sm font-medium text-foreground">
-              {calculateProgress()}%
+              {currentProgress}%
             </span>
           </div>
-          <Progress
-            value={calculateProgress()}
-            className="h-2 text-foreground"
-          />
+          <Progress value={currentProgress} className="h-2 text-foreground" />
         </div>
         <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold text-foreground">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3">
+            <h2 className="text-xl font-bold text-foreground text-center md:text-start">
               Assessment Questions
             </h2>
-            <div className="flex items-center gap-2">
+            <div className="flex justify-center md:justify-end items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -678,30 +608,32 @@ export default function AssessmentDetailPage() {
           <Card className="border-2 border-muted">
             <CardHeader className="bg-muted">
               <CardTitle className="flex items-center space-x-3">
-                <h3 className="text-lg font-bold">
+                <h3 className="text-xs md:text-sm text-muted-foreground">
                   Question {currentStep + 1} of {surveyQuestions.length}
                 </h3>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <CheckCircle2 className="h-4 w-4" />
+                    <InfoIcon className="h-4 w-4" />
                   </TooltipTrigger>
-                  <TooltipContent className="p-2">
+                  <TooltipContent className="p-2 max-w-[400px]">
                     {surveyQuestions[currentStep]?.description}
                   </TooltipContent>
                 </Tooltip>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm md:text-lg md:text-xl text-foreground font-bold">
                 {/* Display the question text with description from CSV */}
-                <p className="text-lg">
+                <p>
+                  "
                   {surveyQuestions[currentStep]?.text ||
                     `Question ${currentStep + 1}`}
+                  "
                 </p>
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
               <SurveyQuestion
-                question="What is your level of agreement with this statement?"
-                value={answers[currentStep]?.a || null}
+                question={surveyQuestions[currentStep]?.text}
+                value={answers[currentStep]?.a}
                 onChange={(value) => updateAnswer(currentStep, value)}
                 disabled={isSubmitting}
               />
@@ -752,11 +684,11 @@ export default function AssessmentDetailPage() {
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Save className="mr-2 h-4 w-4" />
+                <Save className="h-4 w-4" />
               )}
-              Save Progress
+              <div className="hidden md:block ms-2">Save Progress</div>
             </Button>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -766,8 +698,10 @@ export default function AssessmentDetailPage() {
                     disabled={isSubmitting || !allQuestionsAnswered()}
                     className={!allQuestionsAnswered() ? "opacity-50" : ""}
                   >
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Complete Assessment
+                    <CheckCircle2 className="h-4 w-4" />
+                    <div className="hidden md:block ms-2">
+                      Complete Assessement
+                    </div>
                   </Button>
                 </div>
               </TooltipTrigger>

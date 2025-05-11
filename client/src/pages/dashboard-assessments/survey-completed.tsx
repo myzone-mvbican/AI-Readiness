@@ -34,10 +34,10 @@ import { Separator } from "@/components/ui/separator";
 interface SurveyErrorProps {
   assessment: {
     title: string;
-    score: number;
+    score: number | null;
     answers: Array<{
-      q: string;
-      a: number | null;
+      q: number | null | undefined;
+      a: 0 | 2 | 1 | -1 | -2 | null | undefined;
     }>;
   };
   surveyQuestions: Array<{
