@@ -336,6 +336,11 @@ export default function AssessmentDetailPage() {
           title: "Progress saved",
           description: "Your progress has been saved.",
         });
+        
+        // Invalidate the current assessment query to ensure latest data
+        queryClient.invalidateQueries({
+          queryKey: [`/api/assessments/${assessmentId}`],
+        });
       }
     },
     onError: (error) => {
