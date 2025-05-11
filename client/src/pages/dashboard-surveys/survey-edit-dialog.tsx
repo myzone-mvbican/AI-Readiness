@@ -127,10 +127,6 @@ export default function SurveyEditDialog({
             : "draft",
       };
 
-      // Log for debugging
-      console.log("Setting form values:", formValues);
-      console.log("Survey teams:", survey.teams);
-
       // Initialize the form once with setTimeout to prevent infinite loops
       setTimeout(() => {
         form.reset(formValues);
@@ -168,11 +164,9 @@ export default function SurveyEditDialog({
       queryClient.invalidateQueries({
         queryKey: ["/api/admin/surveys"],
       });
+      // Invalidate all global survey-related queries
       queryClient.invalidateQueries({
         queryKey: ["/api/admin/surveys/0"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["/api/surveys"],
       });
       // Also invalidate specific survey detail
       queryClient.invalidateQueries({
@@ -232,8 +226,7 @@ export default function SurveyEditDialog({
           setQuestionsCount(validQuestions);
           setIsUploading(false);
         },
-        error: (error) => {
-          console.error("Error parsing CSV:", error);
+        error: () => {
           toast({
             title: "Error parsing CSV",
             description: "The CSV file could not be parsed correctly",
@@ -243,7 +236,6 @@ export default function SurveyEditDialog({
         },
       });
     } catch (error) {
-      console.error("Error reading file:", error);
       toast({
         title: "Error reading file",
         description: "The file could not be read",
@@ -255,8 +247,6 @@ export default function SurveyEditDialog({
 
   // Handle form submission to update the survey
   const onSubmit = async (data: EditSurveyFormValues) => {
-    console.log("Form data:", data);
-
     const formData = new FormData();
     formData.append("title", data.title);
     formData.append("status", data.status);

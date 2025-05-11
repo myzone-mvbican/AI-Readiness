@@ -61,10 +61,9 @@ import {
 // Form schema with zod validation
 const createSurveySchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
-  visibility: z.union([
-    z.literal("global"),
-    z.literal("teams")
-  ]).default("global"),
+  visibility: z
+    .union([z.literal("global"), z.literal("teams")])
+    .default("global"),
   selectedTeams: z.array(z.number()).optional(),
   status: z.enum(["draft", "public"]).default("draft"),
 });
@@ -76,7 +75,10 @@ interface CreateSurveyDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyDialogProps) {
+export default function SurveyCreateDialog({
+  open,
+  onOpenChange,
+}: CreateSurveyDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -129,7 +131,7 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
         "POST",
         "/api/admin/surveys",
         formData,
-        true
+        true,
       );
 
       if (!response.ok) {
@@ -144,11 +146,9 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
       queryClient.invalidateQueries({
         queryKey: ["/api/admin/surveys"],
       });
+      // Invalidate all global survey-related queries
       queryClient.invalidateQueries({
         queryKey: ["/api/admin/surveys/0"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["/api/surveys"],
       });
       onOpenChange(false);
       toast({
@@ -206,7 +206,6 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
           setIsUploading(false);
         },
         error: (error) => {
-          console.error("Error parsing CSV:", error);
           toast({
             title: "Error parsing CSV",
             description: "The CSV file could not be parsed correctly",
@@ -216,7 +215,6 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
         },
       });
     } catch (error) {
-      console.error("Error reading file:", error);
       toast({
         title: "Error reading file",
         description: "The file could not be read",
@@ -228,8 +226,6 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
 
   // Handle form submission to create a new survey
   const onSubmit = async (data: CreateSurveyFormValues) => {
-    console.log("Form data:", data);
-
     if (!csvFile) {
       toast({
         title: "Missing file",
@@ -255,7 +251,11 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
     formData.append("status", data.status);
 
     // Add teamIds if visibility is "teams"
-    if (data.visibility === "teams" && data.selectedTeams && data.selectedTeams.length > 0) {
+    if (
+      data.visibility === "teams" &&
+      data.selectedTeams &&
+      data.selectedTeams.length > 0
+    ) {
       formData.append("teamIds", JSON.stringify(data.selectedTeams));
     }
 
@@ -280,168 +280,181 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="col-span-1 md:col-span-2">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Survey Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter survey title" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="col-span-1 md:col-span-1">
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select
+                        value={field.value as "draft" | "public"}
+                        onValueChange={(value: "draft" | "public") => {
+                          // Use setTimeout to avoid maximum update depth exceeded error
+                          setTimeout(() => {
+                            field.onChange(value);
+                          }, 0);
+                        }}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="draft">Draft</SelectItem>
+                          <SelectItem value="public">Public</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
             <FormField
               control={form.control}
-              name="title"
+              name="visibility"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Survey Title</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Enter survey title"
-                      {...field}
-                    />
-                  </FormControl>
+                  <FormLabel>Visibility</FormLabel>
+                  <Select
+                    value={field.value as string}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+
+                      // Reset selected teams when switching to global
+                      // Use setTimeout to avoid maximum update depth exceeded error
+                      if (value === "global") {
+                        setTimeout(() => {
+                          form.setValue("selectedTeams", []);
+                        }, 0);
+                      }
+                    }}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select visibility" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="global">Global (Everyone)</SelectItem>
+                      <SelectItem value="teams">Specific Teams</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            {form.watch("visibility") === "teams" && (
               <FormField
                 control={form.control}
-                name="visibility"
+                name="selectedTeams"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Visibility</FormLabel>
-                    <Select
-                      value={field.value as string}
-                      onValueChange={(value) => {
-                        field.onChange(value);
-                        
-                        // Reset selected teams when switching to global
-                        // Use setTimeout to avoid maximum update depth exceeded error
-                        if (value === "global") {
-                          setTimeout(() => {
-                            form.setValue("selectedTeams", []);
-                          }, 0);
-                        }
-                      }}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select visibility" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="global">Global (Everyone)</SelectItem>
-                        <SelectItem value="teams">Specific Teams</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Teams</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={`justify-between ${!field.value?.length && "text-muted-foreground"}`}
+                          >
+                            {field.value?.length
+                              ? `${field.value.length} team${field.value.length > 1 ? "s" : ""} selected`
+                              : "Select teams"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[300px] p-0">
+                        <Command>
+                          <CommandInput placeholder="Search teams..." />
+                          <CommandEmpty>No teams found.</CommandEmpty>
+                          <CommandGroup>
+                            {teams.map((team: any) => (
+                              <CommandItem
+                                key={team.id}
+                                value={team.name}
+                                onSelect={() => {
+                                  const newValue = field.value?.includes(
+                                    team.id,
+                                  )
+                                    ? field.value.filter(
+                                        (value: number) => value !== team.id,
+                                      )
+                                    : [...(field.value || []), team.id];
 
-              {form.watch("visibility") === "teams" && (
-                <FormField
-                  control={form.control}
-                  name="selectedTeams"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Teams</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              className={`justify-between ${!field.value?.length && "text-muted-foreground"}`}
-                            >
-                              {field.value?.length
-                                ? `${field.value.length} team${field.value.length > 1 ? "s" : ""} selected`
-                                : "Select teams"}
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[300px] p-0">
-                          <Command>
-                            <CommandInput placeholder="Search teams..." />
-                            <CommandEmpty>No teams found.</CommandEmpty>
-                            <CommandGroup>
-                              {teams.map((team: any) => (
-                                <CommandItem
-                                  key={team.id}
-                                  value={team.name}
-                                  onSelect={() => {
-                                    const newValue = field.value?.includes(team.id)
-                                      ? field.value.filter((value: number) => value !== team.id)
-                                      : [...(field.value || []), team.id];
-                                    
-                                    // Use setTimeout to avoid maximum update depth exceeded error
-                                    setTimeout(() => {
-                                      form.setValue("selectedTeams", newValue);
-                                    }, 0);
-                                  }}
-                                >
-                                  <Check
-                                    className={`mr-2 h-4 w-4 ${
-                                      field.value?.includes(team.id) ? "opacity-100" : "opacity-0"
-                                    }`}
-                                  />
-                                  {team.name}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {field.value?.map((teamId: number) => {
-                          const team = teams.find((t: any) => t.id === teamId);
-                          return team ? (
-                            <Badge 
-                              key={teamId}
-                              variant="secondary"
-                              className="mr-1 mb-1"
-                            >
-                              {team.name}
-                              <X
-                                className="ml-1 h-3 w-3 cursor-pointer"
-                                onClick={() => {
-                                  const newValue = field.value.filter((id: number) => id !== teamId);
                                   // Use setTimeout to avoid maximum update depth exceeded error
                                   setTimeout(() => {
                                     form.setValue("selectedTeams", newValue);
                                   }, 0);
                                 }}
-                              />
-                            </Badge>
-                          ) : null;
-                        })}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="public">Public</SelectItem>
-                      </SelectContent>
-                    </Select>
+                              >
+                                <Check
+                                  className={`mr-2 h-4 w-4 ${
+                                    field.value?.includes(team.id)
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  }`}
+                                />
+                                {team.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {field.value?.map((teamId: number) => {
+                        const team = teams.find((t: any) => t.id === teamId);
+                        return team ? (
+                          <Badge
+                            key={teamId}
+                            variant="secondary"
+                            className="mr-1 mb-1"
+                          >
+                            {team.name}
+                            <X
+                              className="ml-1 h-3 w-3 cursor-pointer"
+                              onClick={() => {
+                                const newValue = field.value.filter(
+                                  (id: number) => id !== teamId,
+                                );
+                                // Use setTimeout to avoid maximum update depth exceeded error
+                                setTimeout(() => {
+                                  form.setValue("selectedTeams", newValue);
+                                }, 0);
+                              }}
+                            />
+                          </Badge>
+                        ) : null;
+                      })}
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
+            )}
 
             <div className="grid gap-2">
               <FormLabel htmlFor="file">CSV File</FormLabel>
@@ -513,9 +526,9 @@ export default function SurveyCreateDialog({ open, onOpenChange }: CreateSurveyD
               <Button
                 type="submit"
                 disabled={
-                  !csvFile || 
-                  isUploading || 
-                  createSurveyMutation.isPending || 
+                  !csvFile ||
+                  isUploading ||
+                  createSurveyMutation.isPending ||
                   !form.formState.isValid
                 }
               >
