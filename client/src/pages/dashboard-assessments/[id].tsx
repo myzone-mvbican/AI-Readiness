@@ -288,14 +288,15 @@ export default function AssessmentDetailPage() {
 
     if (answers.length > 0 && assessment && assessment.status !== "completed") {
       // Find the first unanswered question
-      const firstUnansweredIndex = answers.findIndex((a) => a.a === null);
+      // Make sure to handle null, undefined and use strict equality for better zero handling
+      const firstUnansweredIndex = answers.findIndex((a) => a.a === null || a.a === undefined);
 
       if (firstUnansweredIndex !== -1) {
         // If there's an unanswered question, go to it
         setCurrentStep(firstUnansweredIndex);
       }
     }
-  }, [answers, assessment, isFullyLoading]);
+  }, [answers, assessment, isFullyLoading, isLoadingQuestions, surveyQuestions]);
 
   // Update assessment mutation
   const updateAssessmentMutation = useMutation<
@@ -388,6 +389,8 @@ export default function AssessmentDetailPage() {
   // Handle updating an answer, ensuring proper handling of zero value
   // and automatically advancing to the next question
   const updateAnswer = (index: number, value: number) => {
+    console.log(`Updating answer at index ${index} with value ${value}`);
+    
     const newAnswers = [...answers];
 
     if (newAnswers[index]) {
@@ -405,7 +408,16 @@ export default function AssessmentDetailPage() {
       };
     }
 
+    // Log the answer being updated to help debug
+    console.log(`Answer after update:`, newAnswers[index]);
+    
     setAnswers(newAnswers);
+    
+    // Save immediately after each answer is selected
+    updateAssessmentMutation.mutate({
+      status: "in-progress",
+      answers: newAnswers,
+    });
     
     // Automatically advance to next question if not on the last question
     if (index < answers.length - 1) {
@@ -420,9 +432,11 @@ export default function AssessmentDetailPage() {
 
     // Count how many questions have been answered with a valid value (including 0 for neutral)
     const answeredCount = answers.filter(
-      (a) => a.a !== null && a.a !== undefined,
+      (a) => a.a !== null && a.a !== undefined && a.a !== "",
     ).length;
 
+    console.log(`Progress calculation: ${answeredCount} answered out of ${surveyQuestions.length} questions`);
+    
     // Calculate percentage based on the total number of survey questions
     return Math.round((answeredCount / surveyQuestions.length) * 100);
   };
@@ -434,19 +448,23 @@ export default function AssessmentDetailPage() {
 
     // Check if we have the same number of answers as questions
     if (answers.length < surveyQuestions.length) {
+      console.log("Not all questions have answers objects");
       return false;
     }
 
-    // Check if all answers have a value that is not null or undefined
+    // Check if all answers have a value that is not null or undefined or empty string
     // This will properly handle 0 as a valid answer (neutral)
     for (let i = 0; i < surveyQuestions.length; i++) {
-      // Using strict comparison to check for null/undefined
+      const answerValue = answers[i]?.a;
+      // Using strict comparison to check for null/undefined/""
       // Note that 0 as a value will pass this check (which is what we want)
-      if (answers[i]?.a === null || answers[i]?.a === undefined) {
+      if (answerValue === null || answerValue === undefined || answerValue === "") {
+        console.log(`Question ${i+1} is unanswered, value:`, answerValue);
         return false;
       }
     }
 
+    console.log("All questions have been answered");
     return true;
   };
 

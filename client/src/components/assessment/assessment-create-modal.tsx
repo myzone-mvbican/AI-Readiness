@@ -48,8 +48,8 @@ const createAssessmentFormSchema = z.object({
     .string()
     .min(3, "Title must be at least 3 characters")
     .max(100, "Title must be less than 100 characters"),
-  surveyTemplateId: z.coerce.number({
-    required_error: "Please select a survey template",
+  surveyTemplateId: z.string().refine((val) => !isNaN(parseInt(val)), {
+    message: "Please select a survey template",
   }),
 });
 
@@ -249,15 +249,7 @@ export function AssessmentCreateModal() {
                 >
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
-                  disabled={
-                    isLoading || 
-                    !form.watch("title") || 
-                    form.watch("title")?.length < 3 || 
-                    !form.watch("surveyTemplateId")
-                  }
-                >
+                <Button type="submit" disabled={isLoading}>
                   {isLoading && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}

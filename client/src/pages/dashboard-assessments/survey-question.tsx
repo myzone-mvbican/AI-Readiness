@@ -8,7 +8,7 @@ export default function SurveyQuestion({
   questionDescription,
 }: {
   question: string;
-  value: number | null;
+  value: number | "null";
   onChange: (value: number) => void;
   disabled: boolean;
   questionDescription?: string;
@@ -23,7 +23,15 @@ export default function SurveyQuestion({
 
   // Properly handle the equality comparison for the zero value
   const isOptionSelected = (optionValue: number) => {
-    if (value === null) return false;
+    console.log(
+      "isOptionSelected",
+      value,
+      "===",
+      optionValue,
+      ":",
+      value === optionValue,
+    );
+    if (value === "null") return false;
     return value === optionValue;
   };
 
