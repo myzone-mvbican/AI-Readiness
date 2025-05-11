@@ -525,7 +525,7 @@ export default function AssessmentDetailPage() {
                       {answers.map((answer, index) => (
                         <div key={answer.q} className="py-4">
                           <h3 className="font-medium">
-                            Question {index + 1}: {dummyQuestions[index] || `Question ${index + 1}`}
+                            Question {index + 1}: {assessmentQuestions[index]?.text || `Question ${index + 1}`}
                           </h3>
                           <p className="mt-2">
                             Your answer: {
@@ -581,9 +581,9 @@ export default function AssessmentDetailPage() {
                           Question {currentStep + 1} of {answers.length}
                         </h3>
                         
-                        {/* Use a dummy question text since we don't have the actual questions */}
+                        {/* Display the question text with tooltip */}
                         <p className="text-lg mb-6">
-                          {dummyQuestions[currentStep] || `Question ${currentStep + 1}`}
+                          {assessmentQuestions[currentStep]?.text || `Question ${currentStep + 1}`}
                         </p>
                         
                         <QuestionRating
@@ -591,6 +591,7 @@ export default function AssessmentDetailPage() {
                           value={answers[currentStep]?.a || null}
                           onChange={(value) => updateAnswer(currentStep, value)}
                           disabled={isSubmitting}
+                          questionDescription={assessmentQuestions[currentStep]?.description}
                         />
                         
                         <div className="flex justify-between mt-6 pt-4 border-t">
