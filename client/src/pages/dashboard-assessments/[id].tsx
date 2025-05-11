@@ -152,42 +152,66 @@ export default function AssessmentDetailPage() {
   const loadSurveyQuestions = async (fileReference: string) => {
     try {
       setIsLoadingQuestions(true);
-      console.log("Loading survey template:", fileReference);
       
-      // Try different paths to find the CSV file
+      // Validate the file reference
+      if (!fileReference) {
+        console.error("Invalid file reference:", fileReference);
+        throw new Error("Invalid file reference provided");
+      }
+      
+      console.log("Loading survey template with file reference:", fileReference);
+      
+      // Create a list of possible paths to try
       const paths = [
         `/uploads/${fileReference}`,
+        `/uploads/surveys/${fileReference}`,
         fileReference.startsWith('/') ? fileReference : `/${fileReference}`, 
         `/public/${fileReference}`,
-        `/uploads/surveys/${fileReference}`
+        fileReference.includes('survey-') ? `/uploads/${fileReference}` : `/uploads/survey-${fileReference}`,
       ];
+      
+      console.log("Will try these paths in order:", paths);
       
       let response: Response | null = null;
       let foundPath = '';
+      let successDetails = '';
       
       // Try each path until we find one that works
       for (const path of paths) {
         console.log("Trying path:", path);
         try {
           const tempResponse = await fetch(path);
+          console.log(`Response for ${path}:`, tempResponse.status, tempResponse.statusText);
+          
           if (tempResponse.ok) {
             response = tempResponse;
             foundPath = path;
-            console.log("Found working path:", path);
+            successDetails = `Status: ${tempResponse.status}, Content-Type: ${tempResponse.headers.get('content-type')}`;
+            console.log("Found working path:", path, "with details:", successDetails);
             break;
+          } else {
+            console.log(`Path ${path} failed with status:`, tempResponse.status, tempResponse.statusText);
           }
         } catch (e) {
-          console.log("Path failed:", path);
+          console.log("Path failed with exception:", path, e);
         }
       }
       
       if (!response || !response.ok) {
-        console.error(`Failed to load survey file from any path`);
+        console.error(`Failed to load survey file from any path. Tried:`, paths);
         throw new Error(`Failed to load survey file: could not find the file at any expected location`);
       }
       
       const csvData = await response.text();
       console.log(`CSV data loaded from ${foundPath}, length:`, csvData.length);
+      
+      // Validate CSV data - show the first few characters to debug
+      if (csvData.length === 0) {
+        console.error("Empty CSV data received");
+        throw new Error("Empty survey file");
+      }
+      
+      console.log("CSV data preview:", csvData.substring(0, 100));
       
       // Parse CSV with PapaParse
       Papa.parse(csvData, {
@@ -269,35 +293,65 @@ export default function AssessmentDetailPage() {
   // Set answers from fetched data
   useEffect(() => {
     if (assessment) {
-      console.log("Assessment loaded:", assessment);
+      console.log("Assessment loaded (full data):", JSON.stringify(assessment, null, 2));
       
       // Get survey template information
       if (assessment.surveyTemplateId) {
+        // Debug the survey data if it exists
+        if (assessment.survey) {
+          console.log("Survey data from assessment:", JSON.stringify(assessment.survey, null, 2));
+        }
+        
         // Fetch the survey template details if not already provided
         if (!assessment.survey || !assessment.survey.fileReference) {
           console.log("Need to fetch survey template details for ID:", assessment.surveyTemplateId);
-          fetch(`/api/surveys/detail/${assessment.surveyTemplateId}`, {
+          
+          // Get API URL
+          const apiUrl = `/api/surveys/detail/${assessment.surveyTemplateId}`;
+          console.log("Fetching survey details from:", apiUrl);
+          
+          // Try to load from the correct API endpoint
+          fetch(apiUrl, {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`,
               'Content-Type': 'application/json'
             }
           })
-            .then(response => response.json())
+            .then(response => {
+              console.log("Survey API response status:", response.status);
+              return response.json();
+            })
             .then(data => {
+              console.log("Survey API response data:", JSON.stringify(data, null, 2));
               if (data.success && data.survey) {
-                console.log("Fetched survey template:", data.survey);
+                console.log("Fetched survey template:", JSON.stringify(data.survey, null, 2));
                 if (data.survey.fileReference) {
                   console.log("Loading survey questions from:", data.survey.fileReference);
                   loadSurveyQuestions(data.survey.fileReference);
                 } else {
                   console.error("Fetched survey has no file reference:", data.survey);
+                  toast({
+                    title: "Survey Error",
+                    description: "The survey template doesn't have a valid file reference.",
+                    variant: "destructive"
+                  });
                 }
               } else {
                 console.error("Failed to fetch survey template:", data);
+                toast({
+                  title: "Survey Error",
+                  description: "Failed to fetch the survey template.",
+                  variant: "destructive"
+                });
               }
             })
             .catch(error => {
               console.error("Error fetching survey template:", error);
+              toast({
+                title: "Survey Error",
+                description: "An error occurred while fetching the survey template.",
+                variant: "destructive"
+              });
             });
         } else {
           // Use the file reference from the assessment.survey
@@ -306,6 +360,11 @@ export default function AssessmentDetailPage() {
         }
       } else {
         console.error("No survey template ID found in the assessment:", assessment);
+        toast({
+          title: "Assessment Error",
+          description: "This assessment doesn't have a valid survey template.",
+          variant: "destructive"
+        });
       }
       
       // Initialize answers
