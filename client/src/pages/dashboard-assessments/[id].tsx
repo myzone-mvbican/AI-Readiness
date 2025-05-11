@@ -214,26 +214,48 @@ export default function AssessmentDetailPage() {
       Papa.parse(csvData, {
         header: true,
         skipEmptyLines: true,
+        dynamicTyping: false, // Keep everything as strings
+        transform: (value) => value?.trim(), // Trim whitespace
         complete: (results) => {
           console.log("CSV parsing complete, rows:", results.data.length);
           
+          // Debug the CSV structure
+          if (results.data.length > 0) {
+            const firstRow = results.data[0];
+            console.log("CSV headers:", Object.keys(firstRow));
+            console.log("First row:", JSON.stringify(firstRow));
+          } else {
+            console.error("CSV parse returned empty data array");
+          }
+          
           // Map the parsed data to our format
           const questions = results.data
-            .map((row: any) => {
-              const questionNumber = parseInt(row["Question Number"], 10);
-              if (isNaN(questionNumber)) return null;
+            .map((row: any, index: number) => {
+              // Check if the row has the expected properties
+              if (!row["Question Number"]) {
+                console.error(`Row ${index} missing Question Number, row data:`, JSON.stringify(row));
+                return null;
+              }
               
-              return {
+              const questionNumber = parseInt(row["Question Number"], 10);
+              if (isNaN(questionNumber)) {
+                console.error(`Row ${index} has invalid Question Number:`, row["Question Number"]);
+                return null;
+              }
+              
+              const question = {
                 number: questionNumber,
                 category: row["Category"] ? row["Category"].trim() : "",
                 text: row["Question Summary"] ? row["Question Summary"].trim() : "",
                 description: row["Question Details"] ? row["Question Details"].trim() : ""
               };
+              
+              return question;
             })
             .filter((q: any): q is { text: string; description: string; category: string; number: number } => q !== null)
             .sort((a, b) => a.number - b.number);
           
-          console.log("Processed questions:", questions);
+          console.log("Processed questions count:", questions.length);
           
           // Set the survey questions
           setSurveyQuestions(questions);
