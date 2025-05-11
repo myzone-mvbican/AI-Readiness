@@ -6,7 +6,6 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
-  ResponsiveContainer,
 } from "recharts";
 import {
   Card,
@@ -111,12 +110,16 @@ export default function SurveyCompleted({
   };
 
   // Helper function to find question text by ID
-  const getQuestionTextById = (questionId: number | null | undefined): string => {
+  const getQuestionTextById = (
+    questionId: number | null | undefined,
+  ): string => {
     if (questionId === null || questionId === undefined) {
       return `Unknown Question`;
     }
     // Find the matching question by number
-    const question = surveyQuestions.find((q: SurveyQuestion) => q.number === questionId);
+    const question = surveyQuestions.find(
+      (q: SurveyQuestion) => q.number === questionId,
+    );
     return question?.text || `Question ${questionId}`;
   };
 
@@ -172,68 +175,72 @@ export default function SurveyCompleted({
               </CardHeader>
               <CardContent>
                 <div className="py-4">
-                  <ChartContainer config={{
-                    // Basic config object needed for shadcn chart
-                    theme: {
-                      light: "light",
-                      dark: "dark",
-                    },
-                  }} className="h-[350px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart outerRadius="80%" data={getRadarChartData()}>
-                        <PolarGrid strokeDasharray="3 3" />
-                        <PolarAngleAxis
-                          dataKey="subject"
-                          tick={{
-                            fill: "var(--foreground)",
-                            fontSize: 12,
-                          }}
-                        />
-                        <PolarRadiusAxis
-                          domain={[0, 10]}
-                          tick={{ fill: "var(--foreground)" }}
-                        />
-                        <Radar
-                          name="Organization Score"
-                          dataKey="score"
-                          stroke="var(--primary)"
-                          fill="var(--primary)"
-                          fillOpacity={0.5}
-                        />
-                        <ChartTooltip
-                          content={({ active, payload }) => {
-                            if (active && payload && payload.length) {
-                              const data = payload[0];
-                              return (
-                                <ChartTooltipContent
-                                  className="rounded-lg border bg-background p-2 shadow-sm"
-                                >
-                                  <div className="grid grid-cols-2 gap-2">
-                                    <div className="flex flex-col">
-                                      <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                        Category
-                                      </span>
-                                      <span className="font-bold">
-                                        {data.payload.subject}
-                                      </span>
-                                    </div>
-                                    <div className="flex flex-col">
-                                      <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                        Score
-                                      </span>
-                                      <span className="font-bold">
-                                        {data.value}/10
-                                      </span>
-                                    </div>
+                  <ChartContainer
+                    config={{
+                      // Config for the score data point
+                      score: {
+                        color: "hsl(var(--primary))"
+                      }
+                    }}
+                    className="h-[350px] w-full"
+                  >
+                    <RadarChart outerRadius="80%" data={getRadarChartData()}>
+                      <PolarGrid strokeDasharray="3 3" />
+                      <PolarAngleAxis
+                        dataKey="subject"
+                        tick={{
+                          fill: "hsl(var(--foreground))",
+                          fontSize: 12,
+                        }}
+                      />
+                      <PolarRadiusAxis
+                        domain={[0, 10]}
+                        tick={{ fill: "hsl(var(--foreground))" }}
+                      />
+                      <Radar
+                        name="Organization Score"
+                        dataKey="score"
+                        stroke="hsl(var(--primary))"
+                        fill="hsl(var(--primary))"
+                        fillOpacity={0.5}
+                        dot={{
+                          r: 4,
+                          fillOpacity: 1,
+                        }}
+                      />
+                      <ChartTooltip
+                        itemName="score"
+                        itemKey="score"
+                        content={({ active, payload, label }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0];
+                            return (
+                              <div className="rounded-lg border bg-background p-2 shadow-sm">
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div className="flex flex-col">
+                                    <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                      Category
+                                    </span>
+                                    <span className="font-bold">
+                                      {data.payload.subject}
+                                    </span>
                                   </div>
-                                </ChartTooltipContent>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
-                      </RadarChart>
-                    </ResponsiveContainer>
+                                  <div className="flex flex-col">
+                                    <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                      Score
+                                    </span>
+                                    <span className="font-bold">
+                                      {data.value}/10
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                    </RadarChart>
                   </ChartContainer>
                 </div>
               </CardContent>
