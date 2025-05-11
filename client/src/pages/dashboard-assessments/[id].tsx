@@ -25,6 +25,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Loader2, Save, CheckCircle2, AlertTriangle, ChevronLeft, ArrowLeft, ArrowRight } from "lucide-react";
+import {
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer
+} from "recharts";
 import { Assessment } from "@shared/schema";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -339,6 +348,47 @@ export default function AssessmentDetailPage() {
     }
   };
   
+  // Function to prepare data for radar chart
+  const getRadarChartData = () => {
+    if (!assessment || !answers || answers.length === 0) return [];
+    
+    // Group questions into categories
+    const categories = {
+      "Strategy & Vision": assessmentQuestions.slice(0, 2),
+      "Implementation": assessmentQuestions.slice(2, 4),
+      "Data & Information": assessmentQuestions.slice(4, 6),
+      "Technology & Integration": assessmentQuestions.slice(6, 8),
+      "Skills & Literacy": assessmentQuestions.slice(8, 10), 
+      "Governance & Risk": assessmentQuestions.slice(10, 12),
+      "Culture & Change-Readiness": assessmentQuestions.slice(12, 15)
+    };
+    
+    // Calculate average score for each category
+    const categoryScores = Object.entries(categories).map(([name, questions]) => {
+      const questionIndices = questions.map(q => assessmentQuestions.indexOf(q));
+      const categoryAnswers = questionIndices.map(idx => idx >= 0 && idx < answers.length ? answers[idx] : null).filter(Boolean);
+      
+      // Calculate average score
+      const sum = categoryAnswers.reduce((acc, ans) => {
+        // Convert from -2 to +2 scale to 0 to 10 scale
+        const score = ans && ans.a !== null ? ((ans.a + 2) * 2.5) : 0;
+        return acc + score;
+      }, 0);
+      
+      const avg = categoryAnswers.length > 0 
+        ? Math.round((sum / categoryAnswers.length) * 10) / 10
+        : 0;
+        
+      return {
+        subject: name,
+        score: avg,
+        fullMark: 10,
+      };
+    });
+    
+    return categoryScores;
+  };
+  
   // Is assessment completed?
   const isCompleted = assessment?.status === "completed";
   const progressPercentage = calculateProgress();
@@ -494,6 +544,28 @@ export default function AssessmentDetailPage() {
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
+                        {/* Radar Chart */}
+                        <div className="py-4">
+                          <h3 className="font-medium mb-4">AI Readiness By Category</h3>
+                          <div className="h-[400px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <RadarChart outerRadius="80%" data={getRadarChartData()}>
+                                <PolarGrid strokeDasharray="3 3" />
+                                <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--foreground)', fontSize: 12 }} />
+                                <PolarRadiusAxis domain={[0, 10]} tick={{ fill: 'var(--foreground)' }} />
+                                <Radar
+                                  name="Organization Score"
+                                  dataKey="score"
+                                  stroke="var(--primary)"
+                                  fill="var(--primary)"
+                                  fillOpacity={0.5}
+                                />
+                                <RechartsTooltip formatter={(value) => [`${value}/10`, 'Score']} />
+                              </RadarChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                        
                         <div className="py-4">
                           <h3 className="font-medium mb-2">What This Score Means</h3>
                           <p className="text-muted-foreground">
