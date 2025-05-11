@@ -44,10 +44,11 @@ interface Survey {
 }
 
 const createAssessmentFormSchema = z.object({
-  title: z.string()
+  title: z
+    .string()
     .min(3, "Title must be at least 3 characters")
     .max(100, "Title must be less than 100 characters"),
-  surveyId: z.coerce.number({
+  surveyTemplateId: z.coerce.number({
     required_error: "Please select a survey template",
   }),
 });
@@ -111,7 +112,7 @@ export function AssessmentCreateModal() {
     try {
       const response = await apiRequest("POST", "/api/assessments", {
         title: values.title,
-        surveyId: values.surveyId,
+        surveyTemplateId: values.surveyTemplateId,
       });
 
       const data = await response.json();
@@ -203,10 +204,10 @@ export function AssessmentCreateModal() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
-                name="surveyId"
+                name="surveyTemplateId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Survey Template</FormLabel>
@@ -248,7 +249,15 @@ export function AssessmentCreateModal() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isLoading}>
+                <Button 
+                  type="submit" 
+                  disabled={
+                    isLoading || 
+                    !form.watch("title") || 
+                    form.watch("title")?.length < 3 || 
+                    !form.watch("surveyTemplateId")
+                  }
+                >
                   {isLoading && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
