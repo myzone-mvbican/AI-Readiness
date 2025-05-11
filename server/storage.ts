@@ -4,6 +4,7 @@ import {
   userTeams,
   surveys,
   surveyTeams,
+  assessments,
   type User,
   type InsertUser,
   type UpdateUser,
@@ -18,6 +19,10 @@ import {
   type UpdateSurvey,
   type SurveyTeam,
   type InsertSurveyTeam,
+  type Assessment,
+  type InsertAssessment,
+  type UpdateAssessment,
+  type AssessmentAnswer,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, inArray, isNull, desc, or } from "drizzle-orm";
@@ -93,6 +98,134 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // Assessment operations implementation
+  async getAssessmentsByUserId(userId: number): Promise<Assessment[]> {
+    try {
+      const result = await db.select().from(assessments)
+        .where(eq(assessments.userId, userId))
+        .orderBy(desc(assessments.updatedAt));
+      
+      return result.map(assessment => ({
+        ...assessment,
+        answers: JSON.parse(assessment.answers)
+      }));
+    } catch (error) {
+      console.error('Error getting assessments:', error);
+      return [];
+    }
+  }
+
+  async getAssessmentById(id: number): Promise<Assessment | undefined> {
+    try {
+      const [result] = await db.select().from(assessments)
+        .where(eq(assessments.id, id));
+      
+      if (!result) return undefined;
+      
+      return {
+        ...result,
+        answers: JSON.parse(result.answers)
+      };
+    } catch (error) {
+      console.error(`Error getting assessment ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async createAssessment(assessmentData: InsertAssessment): Promise<Assessment> {
+    try {
+      // Convert answers to JSON string for storage
+      const dataToInsert = {
+        ...assessmentData,
+        answers: JSON.stringify(assessmentData.answers)
+      };
+      
+      const [result] = await db.insert(assessments)
+        .values(dataToInsert)
+        .returning();
+      
+      return {
+        ...result,
+        answers: assessmentData.answers // Use the original typed array
+      };
+    } catch (error) {
+      console.error('Error creating assessment:', error);
+      throw error;
+    }
+  }
+
+  async updateAssessment(id: number, assessmentData: UpdateAssessment): Promise<Assessment | undefined> {
+    try {
+      // Check if assessment exists
+      const existingAssessment = await this.getAssessmentById(id);
+      if (!existingAssessment) return undefined;
+      
+      // Prepare update data
+      const updateData: any = { ...assessmentData };
+      
+      // If answers are provided, convert to JSON string
+      if (assessmentData.answers) {
+        updateData.answers = JSON.stringify(assessmentData.answers);
+      }
+      
+      // Update the record
+      const [result] = await db.update(assessments)
+        .set({
+          ...updateData,
+          updatedAt: new Date()
+        })
+        .where(eq(assessments.id, id))
+        .returning();
+      
+      // Return the updated assessment with parsed answers
+      return {
+        ...result,
+        answers: JSON.parse(result.answers)
+      };
+    } catch (error) {
+      console.error(`Error updating assessment ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async deleteAssessment(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(assessments)
+        .where(eq(assessments.id, id))
+        .returning({ id: assessments.id });
+      
+      return result.length > 0;
+    } catch (error) {
+      console.error(`Error deleting assessment ${id}:`, error);
+      return false;
+    }
+  }
+
+  async getAssessmentWithSurveyInfo(id: number): Promise<(Assessment & { survey: { title: string } }) | undefined> {
+    try {
+      const [result] = await db
+        .select({
+          assessment: assessments,
+          surveyTitle: surveys.title
+        })
+        .from(assessments)
+        .innerJoin(surveys, eq(assessments.surveyTemplateId, surveys.id))
+        .where(eq(assessments.id, id));
+      
+      if (!result) return undefined;
+      
+      return {
+        ...result.assessment,
+        answers: JSON.parse(result.assessment.answers),
+        survey: {
+          title: result.surveyTitle
+        }
+      };
+    } catch (error) {
+      console.error(`Error getting assessment with survey info ${id}:`, error);
+      return undefined;
+    }
+  }
   async getUser(id: number): Promise<User | undefined> {
     try {
       const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -692,10 +825,12 @@ export class MemStorage implements IStorage {
   private userTeams: Map<number, UserTeam>;
   private surveys: Map<number, Survey>;
   private surveyTeams: Map<string, { surveyId: number, teamId: number }>;
+  private assessments: Map<number, Assessment>;
   currentId: number;
   currentTeamId: number;
   currentUserTeamId: number;
   currentSurveyId: number;
+  currentAssessmentId: number;
 
   constructor() {
     this.users = new Map();
@@ -703,10 +838,12 @@ export class MemStorage implements IStorage {
     this.userTeams = new Map();
     this.surveys = new Map();
     this.surveyTeams = new Map();
+    this.assessments = new Map();
     this.currentId = 1;
     this.currentTeamId = 1;
     this.currentUserTeamId = 1;
     this.currentSurveyId = 1;
+    this.currentAssessmentId = 1;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -1207,6 +1344,101 @@ export class MemStorage implements IStorage {
       }
     } catch (error) {
       console.error('Error updating survey teams:', error);
+    }
+  }
+
+  // Assessment operations
+  async getAssessmentsByUserId(userId: number): Promise<Assessment[]> {
+    try {
+      const result: Assessment[] = [];
+      // Filter assessments by user ID
+      for (const assessment of this.assessments.values()) {
+        if (assessment.userId === userId) {
+          result.push(assessment);
+        }
+      }
+      
+      // Sort by updated date descending
+      return result.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    } catch (error) {
+      console.error('Error getting assessments:', error);
+      return [];
+    }
+  }
+
+  async getAssessmentById(id: number): Promise<Assessment | undefined> {
+    return this.assessments.get(id);
+  }
+
+  async createAssessment(assessmentData: InsertAssessment): Promise<Assessment> {
+    try {
+      const id = ++this.currentAssessmentId;
+      
+      const assessment: Assessment = {
+        id,
+        title: assessmentData.title,
+        userId: assessmentData.userId,
+        surveyTemplateId: assessmentData.surveyTemplateId,
+        status: assessmentData.status,
+        score: null,
+        answers: assessmentData.answers,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      this.assessments.set(id, assessment);
+      return assessment;
+    } catch (error) {
+      console.error('Error creating assessment:', error);
+      throw error;
+    }
+  }
+
+  async updateAssessment(id: number, assessmentData: UpdateAssessment): Promise<Assessment | undefined> {
+    try {
+      const existingAssessment = this.assessments.get(id);
+      if (!existingAssessment) return undefined;
+      
+      const updatedAssessment: Assessment = {
+        ...existingAssessment,
+        ...assessmentData,
+        updatedAt: new Date(),
+      };
+      
+      // Handle answers array separately to preserve existing answers if not provided
+      if (assessmentData.answers) {
+        updatedAssessment.answers = assessmentData.answers;
+      }
+      
+      this.assessments.set(id, updatedAssessment);
+      return updatedAssessment;
+    } catch (error) {
+      console.error(`Error updating assessment ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async deleteAssessment(id: number): Promise<boolean> {
+    return this.assessments.delete(id);
+  }
+
+  async getAssessmentWithSurveyInfo(id: number): Promise<(Assessment & { survey: { title: string } }) | undefined> {
+    try {
+      const assessment = this.assessments.get(id);
+      if (!assessment) return undefined;
+      
+      const survey = this.surveys.get(assessment.surveyTemplateId);
+      if (!survey) return undefined;
+      
+      return {
+        ...assessment,
+        survey: {
+          title: survey.title
+        }
+      };
+    } catch (error) {
+      console.error(`Error getting assessment with survey info ${id}:`, error);
+      return undefined;
     }
   }
 }
