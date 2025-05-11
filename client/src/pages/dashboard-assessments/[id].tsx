@@ -396,13 +396,14 @@ export default function AssessmentDetailPage() {
     });
   };
   
-  // Handle updating an answer
+  // Handle updating an answer, ensuring proper handling of zero value
   const updateAnswer = (questionIndex: number, value: number) => {
+    console.log(`Updating answer ${questionIndex} with value: ${value}`);
     const newAnswers = [...answers];
     if (newAnswers[questionIndex]) {
       newAnswers[questionIndex] = {
         ...newAnswers[questionIndex],
-        a: value
+        a: value // value can be -2, -1, 0, 1, or 2
       };
       setAnswers(newAnswers);
     }
@@ -434,41 +435,88 @@ export default function AssessmentDetailPage() {
   const getRadarChartData = () => {
     if (!assessment || !answers || answers.length === 0) return [];
     
-    // Group questions into categories
-    const categories = {
-      "Strategy & Vision": assessmentQuestions.slice(0, 2),
-      "Implementation": assessmentQuestions.slice(2, 4),
-      "Data & Information": assessmentQuestions.slice(4, 6),
-      "Technology & Integration": assessmentQuestions.slice(6, 8),
-      "Skills & Literacy": assessmentQuestions.slice(8, 10), 
-      "Governance & Risk": assessmentQuestions.slice(10, 12),
-      "Culture & Change-Readiness": assessmentQuestions.slice(12, 15)
-    };
-    
-    // Calculate average score for each category
-    const categoryScores = Object.entries(categories).map(([name, questions]) => {
-      const questionIndices = questions.map(q => assessmentQuestions.indexOf(q));
-      const categoryAnswers = questionIndices.map(idx => idx >= 0 && idx < answers.length ? answers[idx] : null).filter(Boolean);
+    // Use categories from survey questions if available
+    if (surveyQuestions.length > 0) {
+      // Group questions by category
+      const categoryMap = new Map();
       
-      // Calculate average score
-      const sum = categoryAnswers.reduce((acc, ans) => {
-        // Convert from -2 to +2 scale to 0 to 10 scale
-        const score = ans && ans.a !== null ? ((ans.a + 2) * 2.5) : 0;
-        return acc + score;
-      }, 0);
-      
-      const avg = categoryAnswers.length > 0 
-        ? Math.round((sum / categoryAnswers.length) * 10) / 10
-        : 0;
+      surveyQuestions.forEach((question, index) => {
+        const category = question.category;
+        if (!category) return;
         
-      return {
-        subject: name,
-        score: avg,
-        fullMark: 10,
+        if (!categoryMap.has(category)) {
+          categoryMap.set(category, []);
+        }
+        
+        // Add this question's index to the category
+        categoryMap.get(category).push(index);
+      });
+      
+      // Calculate average score for each category
+      const categoryScores = Array.from(categoryMap.entries()).map(([category, questionIndices]) => {
+        // Get answers for this category's questions
+        const categoryAnswers = questionIndices
+          .map(idx => answers[idx])
+          .filter(a => a && a.a !== null);
+        
+        // Calculate average score
+        const sum = categoryAnswers.reduce((acc, ans) => {
+          // Convert from -2 to +2 scale to 0 to 10 scale
+          const score = ((ans.a + 2) * 2.5);
+          return acc + score;
+        }, 0);
+        
+        const avg = categoryAnswers.length > 0 
+          ? Math.round((sum / categoryAnswers.length) * 10) / 10
+          : 0;
+          
+        return {
+          subject: category,
+          score: avg,
+          fullMark: 10,
+        };
+      });
+      
+      return categoryScores;
+    } 
+    // Fall back to default categories
+    else {
+      // Group questions into categories
+      const categories = {
+        "Strategy & Vision": fallbackQuestions.slice(0, 2),
+        "Implementation": fallbackQuestions.slice(2, 4),
+        "Data & Information": fallbackQuestions.slice(4, 6),
+        "Technology & Integration": fallbackQuestions.slice(6, 8),
+        "Skills & Literacy": fallbackQuestions.slice(8, 10), 
+        "Governance & Risk": fallbackQuestions.slice(10, 12),
+        "Culture & Change-Readiness": fallbackQuestions.slice(12, 15)
       };
-    });
-    
-    return categoryScores;
+      
+      // Calculate average score for each category
+      const categoryScores = Object.entries(categories).map(([name, questions]) => {
+        const questionIndices = questions.map(q => fallbackQuestions.indexOf(q));
+        const categoryAnswers = questionIndices.map(idx => idx >= 0 && idx < answers.length ? answers[idx] : null).filter(Boolean);
+        
+        // Calculate average score
+        const sum = categoryAnswers.reduce((acc, ans) => {
+          // Convert from -2 to +2 scale to 0 to 10 scale
+          const score = ans && ans.a !== null ? ((ans.a + 2) * 2.5) : 0;
+          return acc + score;
+        }, 0);
+        
+        const avg = categoryAnswers.length > 0 
+          ? Math.round((sum / categoryAnswers.length) * 10) / 10
+          : 0;
+          
+        return {
+          subject: name,
+          score: avg,
+          fullMark: 10,
+        };
+      });
+      
+      return categoryScores;
+    }
   };
   
   // Is assessment completed?
@@ -814,8 +862,8 @@ export default function AssessmentDetailPage() {
                       <div className="inline-block">
                         <Button 
                           onClick={handleComplete}
-                          disabled={isSubmitting || progressPercentage < 100}
-                          className={(progressPercentage < 100) ? "opacity-50" : ""}
+                          disabled={isSubmitting || !allQuestionsAnswered()}
+                          className={(!allQuestionsAnswered()) ? "opacity-50" : ""}
                         >
                           <CheckCircle2 className="mr-2 h-4 w-4" />
                           Complete Assessment
@@ -823,7 +871,7 @@ export default function AssessmentDetailPage() {
                       </div>
                     </TooltipTrigger>
                     <TooltipContent className="p-2">
-                      {progressPercentage < 100 
+                      {!allQuestionsAnswered() 
                         ? "Please answer all questions to complete the assessment" 
                         : "Complete assessment and view results"}
                     </TooltipContent>
