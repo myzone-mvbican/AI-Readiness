@@ -600,7 +600,7 @@ export default function AssessmentDetailPage() {
               <div className="flex flex-col items-end gap-2">
                 {getStatusBadge()}
                 <span className="text-sm text-muted-foreground">
-                  Created: {getFormattedDate(assessment.createdAt)}
+                  Last Updated: {getFormattedDate(assessment.updatedAt)}
                 </span>
               </div>
             </div>
@@ -700,7 +700,7 @@ export default function AssessmentDetailPage() {
                       {answers.map((answer, index) => (
                         <div key={answer.q} className="py-4">
                           <h3 className="font-medium">
-                            Question {index + 1}: {assessmentQuestions[index]?.text || `Question ${index + 1}`}
+                            Question {index + 1}: {surveyQuestions[index]?.text || answer.q || `Question ${index + 1}`}
                           </h3>
                           <p className="mt-2">
                             Your answer: {
