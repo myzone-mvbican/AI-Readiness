@@ -1550,7 +1550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create a blank answers array with just question IDs
       // We're using simple sequential numbering for question IDs: "q1", "q2", etc.
       const blankAnswers = Array.from({ length: survey.questionsCount }, (_, i) => ({
-        q: `q${i + 1}`
+        q: i + 1
       }));
       
       // Create the assessment
