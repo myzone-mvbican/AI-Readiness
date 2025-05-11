@@ -316,10 +316,8 @@ export default function AssessmentDetailPage() {
   
   // Handle completing assessment
   const handleComplete = () => {
-    // Check if all questions have been answered
-    const allAnswered = answers.every(answer => answer.a !== null);
-    
-    if (!allAnswered) {
+    // Use our improved allQuestionsAnswered function to check completion status
+    if (!allQuestionsAnswered()) {
       toast({
         title: "Unable to complete",
         description: "Please answer all questions before completing the assessment.",
@@ -389,8 +387,11 @@ export default function AssessmentDetailPage() {
       return false;
     }
     
-    // Check if all answers have a value that is not null
+    // Check if all answers have a value that is not null or undefined
+    // This will properly handle 0 as a valid answer (neutral)
     for (let i = 0; i < surveyQuestions.length; i++) {
+      // Using strict comparison to check for null/undefined
+      // Note that 0 as a value will pass this check (which is what we want)
       if (answers[i]?.a === null || answers[i]?.a === undefined) {
         console.log(`Question ${i+1} is not answered`);
         return false;
