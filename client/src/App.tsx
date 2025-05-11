@@ -14,9 +14,10 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import AuthPage from "@/pages/auth";
 import AboutPage from "@/pages/about";
-import SurveyNew from "@/pages/dashboard-survey-new";
 import DashboardHome from "@/pages/dashboard-home";
 import AssessmentsPage from "@/pages/dashboard-assessments";
+import NewAssessmentPage from "@/pages/dashboard-assessments/new";
+import AssessmentDetailPage from "@/pages/dashboard-assessments/[id]";
 import AdminSurveysPage from "@/pages/dashboard-surveys";
 import AdminUsersPage from "@/pages/dashboard-users";
 import AccountSettingsPage from "./pages/dashboard-settings";
@@ -32,7 +33,11 @@ function Router() {
         <ProtectedRoute path="/dashboard" component={DashboardHome} />
         <ProtectedRoute
           path="/dashboard/assessments/new"
-          component={SurveyNew}
+          component={NewAssessmentPage}
+        />
+        <ProtectedRoute
+          path="/dashboard/assessments/:id"
+          component={AssessmentDetailPage}
         />
         <ProtectedRoute
           path="/dashboard/assessments"

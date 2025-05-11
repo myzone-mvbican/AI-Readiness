@@ -1,0 +1,608 @@
+import { useState, useEffect } from "react";
+import { useRoute, useLocation } from "wouter";
+import { DashboardLayout } from "@/components/layout/dashboard";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Loader2, Save, CheckCircle2, AlertTriangle, ChevronLeft, ArrowLeft, ArrowRight } from "lucide-react";
+import { Assessment } from "@shared/schema";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+
+interface AssessmentResponse {
+  success: boolean;
+  assessment: Assessment & { survey: { title: string } };
+}
+
+interface UpdateAssessmentResponse {
+  success: boolean;
+  assessment: Assessment;
+}
+
+/**
+ * Component for rating a survey question
+ */
+function QuestionRating({ 
+  question, 
+  value, 
+  onChange, 
+  disabled 
+}: { 
+  question: string; 
+  value: number | null; 
+  onChange: (value: number) => void;
+  disabled: boolean;
+}) {
+  const options = [
+    { value: -2, label: "Strongly Disagree" },
+    { value: -1, label: "Disagree" },
+    { value: 0, label: "Neutral" },
+    { value: 1, label: "Agree" },
+    { value: 2, label: "Strongly Agree" },
+  ];
+
+  return (
+    <div className="py-4">
+      <h3 className="text-md font-medium mb-3">{question}</h3>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            disabled={disabled}
+            onClick={() => onChange(option.value)}
+            className={`px-4 py-2 rounded-md border ${
+              value === option.value
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-background hover:bg-accent hover:text-accent-foreground"
+            } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function AssessmentDetailPage() {
+  const [, params] = useRoute("/dashboard/assessments/:id");
+  const [, navigate] = useLocation();
+  const assessmentId = params?.id ? parseInt(params.id) : null;
+  const { toast } = useToast();
+  
+  const [currentStep, setCurrentStep] = useState(0);
+  const [answers, setAnswers] = useState<Array<{q: string; a: number | null; r?: string}>>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
+  
+  // Dummy question text mapping
+  // In a real application, this would come from your survey template CSV or database
+  const dummyQuestions = [
+    "We have a clear AI strategy aligned with our business goals",
+    "Our organization has invested in AI training for employees",
+    "We have implemented AI solutions that demonstrably improve our business processes",
+    "Data governance practices in our organization support AI initiatives",
+    "We have a pipeline to identify and prioritize AI use cases",
+    "Our organization has the necessary technical infrastructure for AI deployment",
+    "Our leadership team actively champions AI adoption",
+    "We have an ethical framework for AI implementation",
+    "We measure and track the ROI of our AI investments",
+    "We engage with external AI partners and the wider AI ecosystem"
+  ];
+  
+  // Fetch assessment data
+  const {
+    data,
+    isLoading,
+    error,
+  } = useQuery<AssessmentResponse>({
+    queryKey: [`/api/assessments/${assessmentId}`],
+    enabled: !!assessmentId,
+    staleTime: 30 * 1000, // 30 seconds
+  });
+  
+  const assessment = data?.assessment;
+  
+  // Set answers from fetched data
+  useEffect(() => {
+    if (assessment?.answers) {
+      setAnswers(assessment.answers);
+    }
+  }, [assessment]);
+  
+  // Update assessment mutation
+  const updateAssessmentMutation = useMutation<
+    UpdateAssessmentResponse,
+    Error, 
+    { status?: string; answers: typeof answers }
+  >({
+    mutationFn: async (updateData) => {
+      const response = await apiRequest(
+        "PATCH", 
+        `/api/assessments/${assessmentId}`,
+        updateData
+      );
+      return response.json();
+    },
+    onSuccess: (data, variables) => {
+      // If completing the assessment, navigate to results view
+      if (variables.status === "completed") {
+        toast({
+          title: "Assessment completed",
+          description: "Your AI readiness assessment has been completed successfully."
+        });
+        
+        // Invalidate queries
+        queryClient.invalidateQueries({ 
+          queryKey: [`/api/assessments/${assessmentId}`]
+        });
+        queryClient.invalidateQueries({ 
+          queryKey: ["/api/assessments"]
+        });
+        
+        navigate(`/dashboard/assessments`);
+      } else {
+        // Just saving progress
+        toast({
+          title: "Progress saved",
+          description: "Your progress has been saved."
+        });
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "Error updating assessment",
+        description: error.message || "Failed to update assessment. Please try again.",
+        variant: "destructive"
+      });
+    },
+    onSettled: () => {
+      setIsSubmitting(false);
+      setCompleteDialogOpen(false);
+    }
+  });
+  
+  // Handle saving progress
+  const handleSave = () => {
+    setIsSubmitting(true);
+    updateAssessmentMutation.mutate({
+      status: "in-progress",
+      answers
+    });
+  };
+  
+  // Handle completing assessment
+  const handleComplete = () => {
+    // Check if all questions have been answered
+    const allAnswered = answers.every(answer => answer.a !== null);
+    
+    if (!allAnswered) {
+      toast({
+        title: "Unable to complete",
+        description: "Please answer all questions before completing the assessment.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setCompleteDialogOpen(true);
+  };
+  
+  // Confirm assessment completion
+  const confirmComplete = () => {
+    setIsSubmitting(true);
+    updateAssessmentMutation.mutate({
+      status: "completed",
+      answers
+    });
+  };
+  
+  // Handle updating an answer
+  const updateAnswer = (questionIndex: number, value: number) => {
+    const newAnswers = [...answers];
+    if (newAnswers[questionIndex]) {
+      newAnswers[questionIndex] = {
+        ...newAnswers[questionIndex],
+        a: value
+      };
+      setAnswers(newAnswers);
+    }
+  };
+  
+  // Calculate progress percentage
+  const calculateProgress = () => {
+    if (!answers.length) return 0;
+    const answeredCount = answers.filter(a => a.a !== null).length;
+    return Math.round((answeredCount / answers.length) * 100);
+  };
+  
+  // Get formatted date
+  const getFormattedDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), "MMM d, yyyy");
+    } catch (e) {
+      return "Invalid date";
+    }
+  };
+  
+  // Is assessment completed?
+  const isCompleted = assessment?.status === "completed";
+  const progressPercentage = calculateProgress();
+  
+  // Get status badge
+  const getStatusBadge = () => {
+    const status = assessment?.status || "";
+    
+    switch(status) {
+      case "completed":
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Completed</Badge>;
+      case "in-progress":
+        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">In Progress</Badge>;
+      default:
+        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">Draft</Badge>;
+    }
+  };
+  
+  if (isLoading) {
+    return (
+      <DashboardLayout title="Assessment">
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+  
+  if (error || !assessment) {
+    return (
+      <DashboardLayout title="Assessment">
+        <div className="space-y-6">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate("/dashboard/assessments")}
+          >
+            <ChevronLeft className="mr-2 h-4 w-4" /> Back to Assessments
+          </Button>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-red-500">Error</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Failed to load assessment. It may have been deleted or you don't have permission to view it.</p>
+            </CardContent>
+            <CardFooter>
+              <Button onClick={() => navigate("/dashboard/assessments")}>
+                Return to Assessments
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+  
+  return (
+    <DashboardLayout title={assessment.title}>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate("/dashboard/assessments")}
+          >
+            <ChevronLeft className="mr-2 h-4 w-4" /> Back to Assessments
+          </Button>
+          
+          {!isCompleted && (
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={handleSave}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Save Progress
+              </Button>
+              
+              <Button 
+                onClick={handleComplete}
+                disabled={isSubmitting || progressPercentage < 100}
+              >
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                Complete Assessment
+              </Button>
+            </div>
+          )}
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="text-2xl">{assessment.title}</CardTitle>
+                <CardDescription className="mt-2">
+                  Based on: {assessment.survey.title}
+                </CardDescription>
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                {getStatusBadge()}
+                <span className="text-sm text-muted-foreground">
+                  Created: {getFormattedDate(assessment.createdAt)}
+                </span>
+              </div>
+            </div>
+          </CardHeader>
+          
+          <CardContent>
+            {!isCompleted && (
+              <div className="mb-6">
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm font-medium">Completion Progress</span>
+                  <span className="text-sm font-medium">{progressPercentage}%</span>
+                </div>
+                <Progress value={progressPercentage} className="h-2" />
+              </div>
+            )}
+            
+            {assessment.status === "completed" ? (
+              <div className="space-y-6">
+                <div className="flex items-center justify-center py-6">
+                  <div className="bg-green-100 rounded-full p-6">
+                    <CheckCircle2 className="h-12 w-12 text-green-600" />
+                  </div>
+                </div>
+                
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold">Assessment Completed</h2>
+                  <p className="text-muted-foreground mt-2">
+                    You scored {assessment.score} out of 100 on this AI readiness assessment.
+                  </p>
+                </div>
+                
+                <Tabs defaultValue="results" className="mt-6">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="results">Results</TabsTrigger>
+                    <TabsTrigger value="responses">Your Responses</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="results" className="py-4">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>AI Readiness Score: {assessment.score}/100</CardTitle>
+                        <CardDescription>
+                          This score represents your organization's current AI readiness level
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="py-4">
+                          <h3 className="font-medium mb-2">What This Score Means</h3>
+                          <p className="text-muted-foreground">
+                            Based on your responses, your organization is at the
+                            {assessment.score && assessment.score >= 80
+                              ? " advanced "
+                              : assessment.score && assessment.score >= 60
+                              ? " intermediate "
+                              : assessment.score && assessment.score >= 40
+                              ? " developing "
+                              : " beginning "}
+                            stage of AI readiness.
+                          </p>
+                        </div>
+                        
+                        <div className="py-4">
+                          <h3 className="font-medium mb-2">Recommendations</h3>
+                          <p className="text-muted-foreground">
+                            Consider focusing on improving your data governance and AI strategy alignment.
+                            Regular reassessments every quarter can help track your organization's progress.
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  
+                  <TabsContent value="responses">
+                    <ScrollArea className="h-[500px] rounded-md border p-4">
+                      {answers.map((answer, index) => (
+                        <div key={answer.q} className="py-4">
+                          <h3 className="font-medium">
+                            Question {index + 1}: {dummyQuestions[index] || `Question ${index + 1}`}
+                          </h3>
+                          <p className="mt-2">
+                            Your answer: {
+                              answer.a === 2 ? "Strongly Agree" :
+                              answer.a === 1 ? "Agree" :
+                              answer.a === 0 ? "Neutral" :
+                              answer.a === -1 ? "Disagree" :
+                              answer.a === -2 ? "Strongly Disagree" :
+                              "Not answered"
+                            }
+                          </p>
+                          <Separator className="my-4" />
+                        </div>
+                      ))}
+                    </ScrollArea>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-xl font-bold">Assessment Questions</h2>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+                      disabled={currentStep === 0}
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Previous
+                    </Button>
+                    <span className="text-sm">
+                      {currentStep + 1} of {answers.length}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentStep(Math.min(answers.length - 1, currentStep + 1))}
+                      disabled={currentStep === answers.length - 1}
+                    >
+                      Next
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </div>
+                </div>
+                
+                <Card className="border-2 border-muted">
+                  <CardContent className="pt-6">
+                    {answers.length > 0 && (
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-bold">
+                          Question {currentStep + 1} of {answers.length}
+                        </h3>
+                        
+                        {/* Use a dummy question text since we don't have the actual questions */}
+                        <p className="text-lg mb-6">
+                          {dummyQuestions[currentStep] || `Question ${currentStep + 1}`}
+                        </p>
+                        
+                        <QuestionRating
+                          question="What is your level of agreement with this statement?"
+                          value={answers[currentStep]?.a || null}
+                          onChange={(value) => updateAnswer(currentStep, value)}
+                          disabled={isSubmitting}
+                        />
+                        
+                        <div className="flex justify-between mt-6 pt-4 border-t">
+                          <Button
+                            variant="outline"
+                            onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+                            disabled={currentStep === 0}
+                          >
+                            <ArrowLeft className="h-4 w-4 mr-2" />
+                            Previous
+                          </Button>
+                          
+                          <Button
+                            onClick={() => setCurrentStep(Math.min(answers.length - 1, currentStep + 1))}
+                            disabled={currentStep === answers.length - 1}
+                          >
+                            Next
+                            <ArrowRight className="h-4 w-4 ml-2" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+                
+                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 flex items-start">
+                  <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5 mr-3 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-medium text-yellow-800">Important Note</h4>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      Your answers are saved when you click "Save Progress". To finalize your assessment,
+                      answer all questions and click "Complete Assessment". Completed assessments cannot be modified.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+          
+          {!isCompleted && (
+            <CardFooter className="flex justify-between border-t bg-muted/50 px-6 py-4">
+              <Button 
+                variant="outline" 
+                onClick={() => navigate("/dashboard/assessments")}
+              >
+                Cancel
+              </Button>
+              
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={handleSave}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="mr-2 h-4 w-4" />
+                  )}
+                  Save Progress
+                </Button>
+                
+                <Button 
+                  onClick={handleComplete}
+                  disabled={isSubmitting || progressPercentage < 100}
+                >
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Complete Assessment
+                </Button>
+              </div>
+            </CardFooter>
+          )}
+        </Card>
+      </div>
+      
+      {/* Confirmation Dialog for Completing Assessment */}
+      <AlertDialog open={completeDialogOpen} onOpenChange={setCompleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Complete Assessment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to complete this assessment? Once completed, you won't be able to make any further changes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                confirmComplete();
+              }}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              Yes, Complete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </DashboardLayout>
+  );
+}
