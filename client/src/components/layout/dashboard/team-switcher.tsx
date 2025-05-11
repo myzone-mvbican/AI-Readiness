@@ -89,7 +89,6 @@ export function TeamSwitcher({}: TeamSwitcherProps) {
           setSelectedTeam(parsedSavedTeam);
           return parsedSavedTeam;
         } catch (e) {
-          console.error("Error parsing saved team:", e);
           localStorage.removeItem("selectedTeam"); // Clear invalid data
         }
       }

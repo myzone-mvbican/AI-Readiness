@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
@@ -67,8 +68,6 @@ type CreateAssessmentFormValues = z.infer<typeof createAssessmentFormSchema>;
 export function AssessmentCreateModal() {
   const assessmentCreateModal = useAssessmentCreateModal();
   const [isLoading, setIsLoading] = useState(false);
-  const [surveys, setSurveys] = useState<Survey[]>([]);
-  const [isSurveysLoading, setIsSurveysLoading] = useState(true);
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
@@ -80,21 +79,19 @@ export function AssessmentCreateModal() {
     if (assessmentCreateModal.isOpen) {
       // Check if we have a token (are logged in)
       const currentToken = localStorage.getItem("token");
-      
+
       // If no token is present, don't load any team selection
       if (!currentToken) {
-        console.log("No authentication token found, clearing team selection");
         localStorage.removeItem("selectedTeam");
         setSelectedTeam(null);
         return;
       }
-      
+
       const savedTeam = localStorage.getItem("selectedTeam");
       if (savedTeam) {
         try {
           setSelectedTeam(JSON.parse(savedTeam));
         } catch (e) {
-          console.error("Error parsing saved team:", e);
           setSelectedTeam(null);
         }
       } else {
@@ -105,153 +102,82 @@ export function AssessmentCreateModal() {
 
   const form = useForm<CreateAssessmentFormValues>({
     resolver: zodResolver(createAssessmentFormSchema),
+    defaultValues: {
+      title: "",
+      surveyTemplateId: "",
+    },
   });
 
-  // Define the fetchSurveys function using useCallback to avoid dependency cycles
-  const fetchSurveys = useCallback(async () => {
-    // First clear any existing surveys to avoid stale data
-    setSurveys([]);
-    setIsSurveysLoading(true);
-    
-    try {
-      // Get the teamId from localStorage, or use 0 for global surveys
-      const teamId = selectedTeam?.id || 0;
-      console.log(`Fetching surveys for team ID: ${teamId}`);
-      
-      let data: any = null;
-      
-      try {
-        // Attempt to fetch team surveys first
-        console.log(`Attempting to fetch surveys for team: ${teamId}`);
-        const response = await fetch(`/api/surveys/${teamId}`, {
-          headers: {
-            "Authorization": `Bearer ${localStorage.getItem("token")}`
-          }
-        });
-        
-        // If we get a 403 error, try fetching global surveys instead
-        if (response.status === 403) {
-          console.warn(`Access denied for team ${teamId}, falling back to global surveys`);
+  // Fetch teams data using React Query
+  const { data: teamsData } = useQuery({
+    queryKey: ["/api/teams"],
+    enabled: assessmentCreateModal.isOpen,
+  });
+
+  // Effect to handle team verification when teams data changes
+  useEffect(() => {
+    if (teamsData && (teamsData as any).success) {
+      const storedTeam = localStorage.getItem("selectedTeam");
+      if (storedTeam) {
+        try {
+          const selectedTeamData = JSON.parse(storedTeam);
+          const teamExists = (teamsData as any).teams.some(
+            (team: { id: number }) => team.id === selectedTeamData.id
+          );
           
-          // Clear the selected team since it's no longer accessible
-          setSelectedTeam(null);
+          if (!teamExists) {
+            console.log("Selected team no longer accessible, clearing selection");
+            localStorage.removeItem("selectedTeam");
+            setSelectedTeam(null);
+          }
+        } catch (e) {
           localStorage.removeItem("selectedTeam");
-          
-          // Try global surveys as fallback
-          console.log("Fetching global surveys as fallback");
-          const globalResponse = await fetch("/api/surveys/0", {
-            headers: {
-              "Authorization": `Bearer ${localStorage.getItem("token")}`
-            }
-          });
-          
-          if (!globalResponse.ok) {
-            throw new Error(`Failed to fetch global surveys: ${globalResponse.status}`);
-          }
-          
-          data = await globalResponse.json();
-          console.log("Successfully fetched global surveys as fallback");
-        } else if (!response.ok) {
-          throw new Error(`Failed to fetch surveys: ${response.status}`);
-        } else {
-          // Process the normal response
-          data = await response.json();
-          console.log(`Successfully fetched surveys for team ${teamId}`);
+          setSelectedTeam(null);
         }
-      } catch (error) {
-        console.error("Network error fetching surveys:", error);
-        throw error; // Re-throw to be caught by outer try/catch
       }
+    }
+  }, [teamsData]);
 
-      if (data && data.success) {
-        // Filter published surveys
-        const filteredSurveys = data.surveys.filter(
-          (survey: Survey) => survey.status === "public",
-        );
+  // Get team ID for surveys query
+  const teamId = selectedTeam?.id || 0;
+  
+  // Fetch surveys based on selected team
+  const { 
+    data: surveysData, 
+    isLoading: isSurveysLoading
+  } = useQuery({
+    queryKey: ["/api/surveys", teamId],
+    enabled: assessmentCreateModal.isOpen,
+  });
 
-        console.log(`Found ${filteredSurveys.length} published surveys`);
-        setSurveys(filteredSurveys);
-      } else {
-        console.error("API returned error:", data?.message || "Unknown error");
-        toast({
-          title: "Error",
-          description: data?.message || "Failed to load survey templates",
-          variant: "destructive",
-        });
-        // Reset surveys to empty array on error
-        setSurveys([]);
-      }
-    } catch (error: any) {
-      console.error("Error fetching surveys:", error.message || error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to load survey templates",
-        variant: "destructive",
-      });
-      // Reset surveys to empty array on error
-      setSurveys([]);
-      // Clear the selected team on error as it might be the cause
+  // Handle survey error fallback
+  useEffect(() => {
+    // Check if we have a query error by seeing if surveys is missing but should be loaded
+    if (isSurveysLoading === false && !surveysData && teamId !== 0) {
+      console.warn(`Possible issue with team ${teamId}, falling back to global surveys`);
+      
+      // Clear the selected team since it's no longer accessible
       setSelectedTeam(null);
       localStorage.removeItem("selectedTeam");
-    } finally {
-      setIsSurveysLoading(false);
+      
+      // Invalidate the global surveys query to trigger a refetch
+      queryClient.invalidateQueries({ queryKey: ["/api/surveys", 0] });
+      
+      toast({
+        title: "Team access error",
+        description: "Falling back to global surveys",
+        variant: "destructive",
+      });
     }
-  }, [toast, selectedTeam]);
+  }, [surveysData, isSurveysLoading, teamId, queryClient, toast]);
 
-  // Use the modal open state to trigger data loading
-  useEffect(() => {
-    const fetchTeamAndSurveys = async () => {
-      if (assessmentCreateModal.isOpen) {
-        try {
-          // Refresh the team context to ensure we have the latest team ID
-          const teamsResponse = await fetch("/api/teams", {
-            headers: {
-              "Authorization": `Bearer ${localStorage.getItem("token")}`
-            }
-          });
-          
-          if (teamsResponse.ok) {
-            const teamsData = await teamsResponse.json();
-            console.log("Refreshed teams data:", teamsData);
-            
-            // Check localStorage for selected team
-            const storedTeamId = localStorage.getItem("selectedTeam");
-            if (storedTeamId) {
-              try {
-                const selectedTeamData = JSON.parse(storedTeamId);
-                console.log("Using selected team from localStorage:", selectedTeamData);
-                
-                // Verify this team still exists in the user's teams
-                const teamExists = teamsData.teams.some(
-                  (team: { id: number }) => team.id === selectedTeamData.id
-                );
-                
-                if (!teamExists) {
-                  console.warn("Selected team no longer exists in user's teams, clearing selection");
-                  localStorage.removeItem("selectedTeam");
-                }
-              } catch (e) {
-                console.error("Error parsing selected team:", e);
-                localStorage.removeItem("selectedTeam");
-              }
-            }
-          }
-          
-          // Now fetch surveys with the refreshed team context
-          fetchSurveys();
-        } catch (error) {
-          console.error("Error refreshing team data:", error);
-          // Still try to fetch surveys with existing team context
-          fetchSurveys();
-        }
-      }
-    };
+  // Process the surveys data to get public surveys
+  const publicSurveys = ((surveysData as any)?.success && Array.isArray((surveysData as any)?.surveys))
+    ? (surveysData as any).surveys.filter((survey: Survey) => survey.status === "public")
+    : [];
     
-    // Call the function when the modal opens
-    if (assessmentCreateModal.isOpen) {
-      fetchTeamAndSurveys();
-    }
-  }, [assessmentCreateModal.isOpen, fetchSurveys]);
+  // Set surveys state - this allows the component to use the same variable name as before
+  const surveys = publicSurveys;
 
   const onSubmit = async (values: CreateAssessmentFormValues) => {
     setIsLoading(true);
@@ -268,8 +194,6 @@ export function AssessmentCreateModal() {
         return;
       }
 
-      console.log(`Creating assessment for team: ${selectedTeam.id} (${selectedTeam.name}), survey: ${values.surveyTemplateId}`);
-      
       const response = await apiRequest("POST", "/api/assessments", {
         title: values.title,
         surveyTemplateId: parseInt(values.surveyTemplateId),
@@ -278,7 +202,6 @@ export function AssessmentCreateModal() {
       const data = await response.json();
 
       if (!response.ok) {
-        console.error("Error response:", data);
         throw new Error(data.message || "Failed to create assessment");
       }
 
@@ -299,18 +222,16 @@ export function AssessmentCreateModal() {
         description: "Assessment created successfully",
       });
     } catch (error: any) {
-      console.error("Error creating assessment:", error);
-      
       // Provide specific error message to the user
       toast({
         title: "Error",
-        description: 
+        description:
           error instanceof Error
             ? error.message
             : "Failed to create assessment. Please try again.",
         variant: "destructive",
       });
-      
+
       // If the error is related to team access, let's refresh the team data
       if (error.message && error.message.includes("access to this team")) {
         // Refresh localStorage team data
@@ -319,7 +240,6 @@ export function AssessmentCreateModal() {
           try {
             setSelectedTeam(JSON.parse(savedTeam));
           } catch (e) {
-            console.error("Error parsing saved team:", e);
             // Clear invalid team data
             localStorage.removeItem("selectedTeam");
             setSelectedTeam(null);
@@ -371,7 +291,7 @@ export function AssessmentCreateModal() {
                   <FormItem>
                     <FormLabel>Assessment Title</FormLabel>
                     <FormControl>
-                      <input
+                      <Input
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         placeholder="Enter assessment title"
                         {...field}
@@ -402,7 +322,7 @@ export function AssessmentCreateModal() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {surveys.map((survey) => (
+                        {surveys.map((survey: Survey) => (
                           <SelectItem
                             key={survey.id}
                             value={survey.id.toString()}
