@@ -108,6 +108,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem("token");
       localStorage.removeItem("selectedTeam");
       localStorage.removeItem("userData");
+      
+      // Clear any session storage items that might have stale state
+      sessionStorage.clear();
+      
+      console.log("Clearing authentication data during unauthorized event");
 
       // Show toast message
       toast({
@@ -294,10 +299,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear token
       setToken(null);
 
-      // Clear cached user data and selected team
+      // Clear all authentication-related data from localStorage
       localStorage.removeItem("userData");
       localStorage.removeItem("selectedTeam");
       localStorage.removeItem("token");
+      
+      // Clear any session storage items that might have stale state
+      sessionStorage.clear();
+      
+      // Add a log to verify team data is cleared
+      console.log("Clearing authentication data and team context during logout");
 
       // Clear query cache completely to ensure no stale data remains
       queryClient.clear();

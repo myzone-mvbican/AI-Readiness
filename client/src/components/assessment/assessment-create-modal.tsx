@@ -74,17 +74,23 @@ export function AssessmentCreateModal() {
   const queryClient = useQueryClient();
   const [selectedTeam, setSelectedTeam] = useState<TeamWithRole | null>(null);
 
-  // Load selected team from localStorage
+  // Load selected team from localStorage whenever the modal opens
   useEffect(() => {
-    const savedTeam = localStorage.getItem("selectedTeam");
-    if (savedTeam) {
-      try {
-        setSelectedTeam(JSON.parse(savedTeam));
-      } catch (e) {
-        console.error("Error parsing saved team:", e);
+    // Only load team when the modal is opened
+    if (assessmentCreateModal.isOpen) {
+      const savedTeam = localStorage.getItem("selectedTeam");
+      if (savedTeam) {
+        try {
+          setSelectedTeam(JSON.parse(savedTeam));
+        } catch (e) {
+          console.error("Error parsing saved team:", e);
+          setSelectedTeam(null);
+        }
+      } else {
+        setSelectedTeam(null);
       }
     }
-  }, []);
+  }, [assessmentCreateModal.isOpen]);
 
   const form = useForm<CreateAssessmentFormValues>({
     resolver: zodResolver(createAssessmentFormSchema),
@@ -92,10 +98,15 @@ export function AssessmentCreateModal() {
 
   useEffect(() => {
     const fetchSurveys = async () => {
+      // First clear any existing surveys to avoid stale data
+      setSurveys([]);
       setIsSurveysLoading(true);
+      
       try {
         // Get the teamId from localStorage, or use 0 for global surveys
         const teamId = selectedTeam?.id || 0;
+        console.log(`Fetching surveys for team ID: ${teamId}`);
+        
         const response = await apiRequest("GET", `/api/surveys/${teamId}`);
         const data = await response.json();
 
@@ -105,25 +116,33 @@ export function AssessmentCreateModal() {
             (survey: Survey) => survey.status === "public",
           );
 
+          console.log(`Found ${filteredSurveys.length} published surveys for team ${teamId}`);
           setSurveys(filteredSurveys);
         } else {
+          console.error("API returned error:", data.message);
           toast({
             title: "Error",
-            description: "Failed to load survey templates",
+            description: data.message || "Failed to load survey templates",
             variant: "destructive",
           });
+          // Reset surveys to empty array on error
+          setSurveys([]);
         }
-      } catch (error) {
+      } catch (error: any) {
+        console.error("Error fetching surveys:", error.message || error);
         toast({
           title: "Error",
-          description: "Failed to load survey templates",
+          description: error.message || "Failed to load survey templates",
           variant: "destructive",
         });
+        // Reset surveys to empty array on error
+        setSurveys([]);
       } finally {
         setIsSurveysLoading(false);
       }
     };
 
+    // Only fetch surveys if modal is open and we have team information
     if (assessmentCreateModal.isOpen) {
       fetchSurveys();
     }
@@ -133,14 +152,28 @@ export function AssessmentCreateModal() {
     setIsLoading(true);
 
     try {
+      // Make sure we have a team selected before creating the assessment
+      if (!selectedTeam) {
+        toast({
+          title: "Error",
+          description: "No team selected. Please select a team first.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      console.log(`Creating assessment for team: ${selectedTeam.id} (${selectedTeam.name}), survey: ${values.surveyTemplateId}`);
+      
       const response = await apiRequest("POST", "/api/assessments", {
         title: values.title,
-        surveyTemplateId: values.surveyTemplateId,
+        surveyTemplateId: parseInt(values.surveyTemplateId),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
+        console.error("Error response:", data);
         throw new Error(data.message || "Failed to create assessment");
       }
 
@@ -160,15 +193,34 @@ export function AssessmentCreateModal() {
         title: "Success",
         description: "Assessment created successfully",
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Error creating assessment:", error);
+      
+      // Provide specific error message to the user
       toast({
         title: "Error",
-        description:
+        description: 
           error instanceof Error
             ? error.message
-            : "Failed to create assessment",
+            : "Failed to create assessment. Please try again.",
         variant: "destructive",
       });
+      
+      // If the error is related to team access, let's refresh the team data
+      if (error.message && error.message.includes("access to this team")) {
+        // Refresh localStorage team data
+        const savedTeam = localStorage.getItem("selectedTeam");
+        if (savedTeam) {
+          try {
+            setSelectedTeam(JSON.parse(savedTeam));
+          } catch (e) {
+            console.error("Error parsing saved team:", e);
+            // Clear invalid team data
+            localStorage.removeItem("selectedTeam");
+            setSelectedTeam(null);
+          }
+        }
+      }
     } finally {
       setIsLoading(false);
     }
