@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { DashboardLayout } from "@/components/layout/dashboard";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
+import { useAssessmentCreateModal } from "@/hooks/use-assessment-create-modal";
 import {
   Table,
   TableHeader,
@@ -21,6 +22,8 @@ interface AssessmentsResponse {
 }
 
 export default function AssessmentsPage() {
+  const assessmentCreateModal = useAssessmentCreateModal();
+  
   // Fetch assessments from the API
   const { data, isLoading, error } = useQuery<AssessmentsResponse>({
     queryKey: ["/api/assessments"],
@@ -85,12 +88,10 @@ export default function AssessmentsPage() {
             </p>
           </div>
           <div className="col-span-1 flex justify-end">
-            <Link href="/dashboard/assessments/new">
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                New Assessment
-              </Button>
-            </Link>
+            <Button onClick={assessmentCreateModal.onOpen}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              New Assessment
+            </Button>
           </div>
         </div>
 

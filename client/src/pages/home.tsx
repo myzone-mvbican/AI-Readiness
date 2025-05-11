@@ -1,8 +1,11 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
+import { useAssessmentCreateModal } from "@/hooks/use-assessment-create-modal";
 
 export default function Home() {
+  const assessmentCreateModal = useAssessmentCreateModal();
+  
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
@@ -21,15 +24,14 @@ export default function Home() {
                 benchmarks.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row justify-start space-y-4 sm:space-y-0 sm:space-x-4">
-                <Link href="/dashboard/assessments/new">
-                  <Button
-                    size="lg"
-                    className="bg-blue-600 hover:bg-blue-700 text-white transition-colors rounded-md shadow-md px-6 py-3 w-full sm:w-auto"
-                  >
-                    Start Assessment
-                    <ChevronRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
+                <Button
+                  size="lg"
+                  onClick={assessmentCreateModal.onOpen}
+                  className="bg-blue-600 hover:bg-blue-700 text-white transition-colors rounded-md shadow-md px-6 py-3 w-full sm:w-auto"
+                >
+                  Start Assessment
+                  <ChevronRight className="ml-2 h-5 w-5" />
+                </Button>
                 <Link href="/about">
                   <Button
                     variant="outline"
