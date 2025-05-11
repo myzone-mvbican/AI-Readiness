@@ -1519,17 +1519,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Calculate the score as sum of all answers
         const answers = req.body.answers || existingAssessment.answers;
         const answerValues = answers
-          .map(a => typeof a.a === 'number' ? a.a : 0)
-          .filter(value => typeof value === 'number');
+          .map(a => {
+            // Explicitly check for number type, including 0
+            return typeof a.a === 'number' ? a.a : null;
+          })
+          .filter(value => value !== null); // Filter out null values
+        
+        console.log("Answer values for score calculation:", answerValues);
         
         // Only calculate score if there are answers
         if (answerValues.length > 0) {
           // Adjust score to be 0-100 
           // -2 to +2 per question, adjust to 0-4, convert to percentage
           const rawScore = answerValues.reduce((sum, val) => sum + val, 0);
+          console.log("Raw score:", rawScore);
+          
           const maxPossible = answers.length * 2; // Max score is +2 per question
           const adjustedScore = (rawScore + answers.length * 2) / (answers.length * 4) * 100;
           score = Math.round(adjustedScore);
+          
+          console.log("Adjusted score:", score);
         }
       }
       
