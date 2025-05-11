@@ -22,9 +22,10 @@ export function ProfileCompletionCard({ user }: ProfileCompletionCardProps) {
     let filledFields = 0;
     let totalFields = 4; // company, industry, employeeCount, googleAccountLinked
 
-    if (user.company) filledFields++;
-    if (user.industry) filledFields++;
-    if (user.employeeCount) filledFields++;
+    // Check for both null and empty string
+    if (user.company && user.company.trim() !== '') filledFields++;
+    if (user.industry && user.industry.trim() !== '') filledFields++;
+    if (user.employeeCount && user.employeeCount.trim() !== '') filledFields++;
     if (user.googleId) filledFields++; // googleAccountLinked
 
     return Math.round((filledFields / totalFields) * 100);
