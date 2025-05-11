@@ -33,6 +33,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", message: "Server is healthy" });
   });
+  
+  // Endpoint to serve CSV files directly
+  app.get("/api/csv-file/:filename", async (req, res) => {
+    try {
+      const filename = req.params.filename;
+      console.log("CSV file requested:", filename);
+      
+      if (!filename) {
+        return res.status(400).json({
+          success: false,
+          message: "Filename is required"
+        });
+      }
+      
+      // Only allow specific file patterns for security
+      if (!filename.match(/^survey-[0-9]+-[0-9]+\.csv$/)) {
+        console.log("Invalid filename format:", filename);
+        return res.status(400).json({
+          success: false,
+          message: "Invalid filename format"
+        });
+      }
+      
+      // Construct the file path
+      const filePath = `${process.cwd()}/uploads/${filename}`;
+      console.log("Looking for CSV file at:", filePath);
+      
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        console.log("File not found:", filePath);
+        return res.status(404).json({
+          success: false,
+          message: "File not found"
+        });
+      }
+      
+      // Read the file content
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      console.log(`Serving CSV file (${fileContent.length} bytes)`);
+      
+      // Set appropriate headers
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      
+      // Send the file content
+      return res.send(fileContent);
+    } catch (error) {
+      console.error("Error serving CSV file:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Error serving CSV file"
+      });
+    }
+  });
 
   // User signup endpoint (with support for both /signup and /register paths)
   app.post(["/api/signup", "/api/register"], async (req, res) => {

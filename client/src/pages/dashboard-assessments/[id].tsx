@@ -156,58 +156,55 @@ export default function AssessmentDetailPage() {
       // Validate the file reference
       if (!fileReference) {
         console.error("Invalid file reference:", fileReference);
+        toast({
+          title: "Error",
+          description: "Invalid file reference provided",
+          variant: "destructive",
+        });
         throw new Error("Invalid file reference provided");
       }
       
       console.log("Loading survey template with file reference:", fileReference);
       
-      // Create a list of possible paths to try
-      const paths = [
-        `/uploads/${fileReference}`,
-        `/uploads/surveys/${fileReference}`,
-        fileReference.startsWith('/') ? fileReference : `/${fileReference}`, 
-        `/public/${fileReference}`,
-        fileReference.includes('survey-') ? `/uploads/${fileReference}` : `/uploads/survey-${fileReference}`,
-      ];
+      // Extract the filename from the file reference path
+      // The file reference might be a full path like "/home/runner/workspace/uploads/survey-123.csv"
+      // or just the filename like "survey-123.csv"
+      let filename = fileReference;
       
-      console.log("Will try these paths in order:", paths);
-      
-      let response: Response | null = null;
-      let foundPath = '';
-      let successDetails = '';
-      
-      // Try each path until we find one that works
-      for (const path of paths) {
-        console.log("Trying path:", path);
-        try {
-          const tempResponse = await fetch(path);
-          console.log(`Response for ${path}:`, tempResponse.status, tempResponse.statusText);
-          
-          if (tempResponse.ok) {
-            response = tempResponse;
-            foundPath = path;
-            successDetails = `Status: ${tempResponse.status}, Content-Type: ${tempResponse.headers.get('content-type')}`;
-            console.log("Found working path:", path, "with details:", successDetails);
-            break;
-          } else {
-            console.log(`Path ${path} failed with status:`, tempResponse.status, tempResponse.statusText);
-          }
-        } catch (e) {
-          console.log("Path failed with exception:", path, e);
-        }
+      // If it's a path, extract just the filename
+      if (fileReference.includes('/')) {
+        filename = fileReference.split('/').pop() || '';
       }
       
-      if (!response || !response.ok) {
-        console.error(`Failed to load survey file from any path. Tried:`, paths);
-        throw new Error(`Failed to load survey file: could not find the file at any expected location`);
+      console.log("Extracted filename:", filename);
+      
+      // Use our new dedicated CSV serving endpoint
+      const csvEndpoint = `/api/csv-file/${filename}`;
+      console.log("Fetching CSV from dedicated endpoint:", csvEndpoint);
+      
+      const response = await fetch(csvEndpoint);
+      
+      if (!response.ok) {
+        console.error(`Failed to load survey file: ${response.status} ${response.statusText}`);
+        toast({
+          title: "Error",
+          description: `Failed to load survey file: ${response.statusText}`,
+          variant: "destructive",
+        });
+        throw new Error(`Failed to load survey file: ${response.statusText}`);
       }
       
       const csvData = await response.text();
-      console.log(`CSV data loaded from ${foundPath}, length:`, csvData.length);
+      console.log(`CSV data loaded, length:`, csvData.length);
       
       // Validate CSV data - show the first few characters to debug
       if (csvData.length === 0) {
         console.error("Empty CSV data received");
+        toast({
+          title: "Error",
+          description: "Empty survey file",
+          variant: "destructive",
+        });
         throw new Error("Empty survey file");
       }
       
