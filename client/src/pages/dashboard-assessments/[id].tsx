@@ -152,18 +152,26 @@ export default function AssessmentDetailPage() {
   const loadSurveyQuestions = async (fileReference: string) => {
     try {
       setIsLoadingQuestions(true);
-      const response = await fetch(`/${fileReference}`);
+      console.log("Loading survey template:", fileReference);
+      
+      // Make sure to use the correct path for the CSV file
+      const response = await fetch(`/uploads/surveys/${fileReference}`);
+      
       if (!response.ok) {
+        console.error(`Failed to load survey file: ${response.status} ${response.statusText}`);
         throw new Error(`Failed to load survey file: ${response.statusText}`);
       }
       
       const csvData = await response.text();
+      console.log("CSV data loaded, length:", csvData.length);
       
       // Parse CSV with PapaParse
       Papa.parse(csvData, {
         header: true,
         skipEmptyLines: true,
         complete: (results) => {
+          console.log("CSV parsing complete, rows:", results.data.length);
+          
           // Map the parsed data to our format
           const questions = results.data
             .map((row: any) => {
@@ -180,7 +188,22 @@ export default function AssessmentDetailPage() {
             .filter((q: any): q is { text: string; description: string; category: string; number: number } => q !== null)
             .sort((a, b) => a.number - b.number);
           
+          console.log("Processed questions:", questions);
+          
+          // Set the survey questions
           setSurveyQuestions(questions);
+          
+          // If we have an answers array that doesn't match the questions length,
+          // initialize it with the correct number of questions
+          if (answers.length === 0 && questions.length > 0) {
+            console.log("Initializing answers array with", questions.length, "items");
+            const initialAnswers = questions.map((q, index) => ({
+              q: q.text,
+              a: null
+            }));
+            setAnswers(initialAnswers);
+          }
+          
           setIsLoadingQuestions(false);
         },
         error: (error) => {
@@ -204,8 +227,7 @@ export default function AssessmentDetailPage() {
     }
   };
   
-  // No fallback questions - we'll only use real data from CSV
-  const fallbackQuestions: Array<{text: string, description: string}> = [];
+  // Remove all references to fallbackQuestions
   
   // Fetch assessment data
   const {
@@ -223,6 +245,14 @@ export default function AssessmentDetailPage() {
   // Set answers from fetched data
   useEffect(() => {
     if (assessment) {
+      // Load survey questions from CSV file first
+      if (assessment.survey && assessment.survey.fileReference) {
+        console.log("Loading survey questions from:", assessment.survey.fileReference);
+        loadSurveyQuestions(assessment.survey.fileReference);
+      } else {
+        console.error("No survey file reference found:", assessment);
+      }
+      
       // Initialize answers
       if (assessment.answers) {
         // Handle string or array format
@@ -231,11 +261,7 @@ export default function AssessmentDetailPage() {
           : assessment.answers;
         
         setAnswers(parsedAnswers);
-      }
-      
-      // Load survey questions from CSV file
-      if (assessment.survey && assessment.survey.fileReference) {
-        loadSurveyQuestions(assessment.survey.fileReference);
+        console.log("Loaded answers:", parsedAnswers);
       }
     }
   }, [assessment]);
