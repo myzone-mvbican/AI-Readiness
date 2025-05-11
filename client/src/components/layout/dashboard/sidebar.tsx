@@ -86,12 +86,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ? [
         {
           title: "Manage Surveys",
-          url: "/dashboard/surveys",
+          url: "/dashboard/admin/surveys",
           icon: FileSpreadsheet,
         },
         {
           title: "Manage Users",
-          url: "/dashboard/users",
+          url: "/dashboard/admin/users",
           icon: Users,
         },
       ]
@@ -170,12 +170,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               className="bg-blue-500 text-white hover:bg-blue-600 hover:text-white"
-              tooltip="Create New Assessment"
+              tooltip="Start New Assessment"
               asChild
             >
               <Link href="/dashboard/assessments/new">
                 <PlusCircle />
-                <span>Create New Assessment</span>
+                <span>Start New Assessment</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

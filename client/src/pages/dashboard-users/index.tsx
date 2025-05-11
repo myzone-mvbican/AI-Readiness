@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Search, Loader2, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { DashboardLayout } from "@/components/layout/dashboard";
@@ -38,7 +38,6 @@ import { UserDeleteDialog } from "./user-delete-dialog";
 
 export default function UsersPage() {
   const { user: currentUser } = useAuth();
-  const queryClient = useQueryClient();
 
   // State for sorting and filtering
   const [sorting, setSorting] = useState<SortingState>([]);

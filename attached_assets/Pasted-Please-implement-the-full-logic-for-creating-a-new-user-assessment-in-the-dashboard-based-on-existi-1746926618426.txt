@@ -1,0 +1,95 @@
+Please implement the full logic for creating a new user assessment in the dashboard (based on existing layout we previously created). This flow should respect multi-team visibility, support auto-saving, and prepare data for PDF/reporting use.
+
+🧠 1. Trigger Points
+“Create New Assessment” can be triggered from:
+Sidebar quick create button
+Welcome screen widget
+
+When clicked:
+Open a modal to select an assessment (survey)
+Fetch from /surveys
+
+Only show surveys:
+status === "public"
+visibility === "global" OR user is part of the current team and survey is assigned to that team.
+If only 1 matching survey, skip the modal and immediately create the assessment.
+
+🧾 2. Create Draft Assessment
+Once a survey is selected:
+
+Automatically create a new draft assessment via:
+POST /api/assessments
+Payload:
+{
+  "surveyTemplateId": "<selected survey ID>",
+  "title": "<survey title>",
+  "status": "draft",
+  "answers": [
+    { "q": "question-id-1" },
+    { "q": "question-id-2" },
+    ...
+  ]
+}
+Backend should:
+Pull question list from the selected survey template
+
+Generate blank answers with just "q" keys
+Set user ID from JWT
+
+Redirect the user to:
+/dashboard/assessments/new?id=<assessmentId>
+
+✍️ 3. Answering and Auto-Saving
+Each question response is scored using:
+-2 = Strongly Disagree → +2 = Strongly Agree
+On selection:
+
+Update the corresponding answer in:
+{ "q": "question-id", "a": 2 }
+Optional: store "r" (recommendation) later
+
+Auto-save to backend via:
+PATCH /api/assessments/:id
+Auto-save on each question change (debounce optional)
+
+✅ Data Structure
+Assessment {
+  id: string
+  title: string
+  userId: string
+  surveyTemplateId: string
+  status: "draft" | "in-progress" | "completed"
+  createdAt: Date
+  score?: number
+  answers: {
+    q: string
+    a?: -2 | -1 | 0 | 1 | 2
+    r?: string
+  }[]
+}
+📄 Future PDF Export
+PDF should not be generated on assessment submission
+
+Instead, generate on-demand when the user clicks Download PDF
+
+Call:
+GET /api/assessments/:id/pdf
+Backend returns a generated PDF based on stored data
+
+No need to persist the PDF file
+
+🔒 Permissions
+Only authenticated users can create assessments
+
+Visibility of available surveys is determined by:
+
+Survey status === "public"
+
+AND visibility === "global" OR matching the user’s active team
+
+⚠️ Do Not:
+Do not store teamId in the assessment model
+
+Do not show surveys marked as "draft" in the selector modal
+
+Do not allow editing of answers after status is set to "completed"

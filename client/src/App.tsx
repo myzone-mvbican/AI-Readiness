@@ -13,12 +13,12 @@ import { AdminProtectedRoute } from "./lib/admin-protected-route";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import AuthPage from "@/pages/auth";
-import SurveyPage from "@/pages/survey";
+import AboutPage from "@/pages/about";
 import SurveyNew from "@/pages/dashboard-survey-new";
 import DashboardHome from "@/pages/dashboard-home";
 import AssessmentsPage from "@/pages/dashboard-assessments";
-import AdminSurveysPage from "@/pages/dashboard-surveys/index";
-import UsersPage from "@/pages/dashboard-users";
+import AdminSurveysPage from "@/pages/dashboard-surveys";
+import AdminUsersPage from "@/pages/dashboard-users";
 import AccountSettingsPage from "./pages/dashboard-settings";
 
 function Router() {
@@ -34,16 +34,22 @@ function Router() {
           path="/dashboard/assessments/new"
           component={SurveyNew}
         />
-        <ProtectedRoute path="/dashboard/assessments" component={AssessmentsPage} />
+        <ProtectedRoute
+          path="/dashboard/assessments"
+          component={AssessmentsPage}
+        />
         <ProtectedRoute
           path="/dashboard/account/settings"
           component={AccountSettingsPage}
         />
         <AdminProtectedRoute
-          path="/dashboard/surveys"
+          path="/dashboard/admin/surveys"
           component={AdminSurveysPage}
         />
-        <AdminProtectedRoute path="/dashboard/users" component={UsersPage} />
+        <AdminProtectedRoute
+          path="/dashboard/admin/users"
+          component={AdminUsersPage}
+        />
         <ProtectedRoute path="/dashboard/:rest*" component={DashboardHome} />
         <Route component={NotFound} />
       </Switch>
@@ -58,7 +64,7 @@ function Router() {
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/auth" component={AuthPage} />
-          <Route path="/about" component={SurveyPage} />
+          <Route path="/about" component={AboutPage} />
           <Route component={NotFound} />
         </Switch>
       </main>

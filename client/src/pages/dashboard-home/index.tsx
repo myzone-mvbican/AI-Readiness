@@ -9,13 +9,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  BarChart3,
-  ClipboardCheck,
-  PlusCircle,
-  TrendingUp,
-} from "lucide-react";
-import { ProfileCompletionCard } from "@/components/dashboard/profile-completion-card";
+import { BarChart3, ClipboardCheck, TrendingUp } from "lucide-react";
+import { ProfileCompletionCard } from "./widgets/profile-completion";
+import { NewAssessmentCard } from "./widgets/new-assessment";
 
 export default function DashboardHome() {
   return (
@@ -32,46 +28,20 @@ export default function DashboardHome() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {/* Profile Completion Card */}
-          <ProfileCompletionCard />
-
           {/* Start New Assessment Card */}
-          <Card className="col-span-1">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-center text-lg font-medium">
-                Start New Assessment
-              </CardTitle>
-              <CardDescription className="text-center">
-                Create a new AI readiness assessment for your organization
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center justify-center text-center py-4">
-                <div className="rounded-full bg-primary/10 p-3 mb-3">
-                  <PlusCircle className="h-8 w-8 text-primary" />
-                </div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Complete the Q2 2025 assessment to measure your organization's
-                  AI readiness
-                </p>
-                <Link href="/dashboard/assessments/new" asChild>
-                  <Button className="w-full">Create New Assessment</Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+          <NewAssessmentCard />
 
           {/* Quick Actions */}
           <Card className="col-span-1">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-medium">
+              <CardTitle className="text-lg font-medium text-center">
                 Quick Actions
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-center">
                 Frequently used tools and actions
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="mt-[3rem]">
               <div className="flex flex-col gap-2">
                 <Link href="/dashboard/assessments" asChild>
                   <Button variant="outline" className="justify-start">
@@ -92,6 +62,9 @@ export default function DashboardHome() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Profile Completion Card */}
+          <ProfileCompletionCard />
         </div>
       </div>
     </DashboardLayout>
