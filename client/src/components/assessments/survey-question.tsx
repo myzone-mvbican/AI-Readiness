@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { QuestionRating } from '@/components/survey/question-rating';
+import { QuestionRating } from './question-rating';
 import { SurveyQuestion } from '@/lib/survey-data';
 
 interface SurveyQuestionComponentProps {
@@ -33,7 +33,7 @@ export function SurveyQuestionComponent({
       
       {/* Display the question text with description from CSV */}
       <p className="text-lg mb-6">
-        {surveyQuestion?.text || `Question ${currentStep + 1}`}
+        {surveyQuestion?.question || `Question ${currentStep + 1}`}
       </p>
       
       <QuestionRating
@@ -41,7 +41,7 @@ export function SurveyQuestionComponent({
         value={value}
         onChange={onChange}
         disabled={isSubmitting}
-        questionDescription={surveyQuestion?.description}
+        questionDescription={surveyQuestion?.details}
       />
       
       <div className="flex justify-between mt-6 pt-4 border-t">
