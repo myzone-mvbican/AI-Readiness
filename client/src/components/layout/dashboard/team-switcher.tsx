@@ -194,12 +194,9 @@ export function TeamSwitcher({}: TeamSwitcherProps) {
     // Update local state
     setSelectedTeam(team);
     
-    // Store current token along with the team selection to track session changes
-    const currentToken = localStorage.getItem("token");
-    
-    // Store selected team and token in localStorage
+    // Just store selected team in localStorage
+    // The token check happens when teams are loaded in assessment-create-modal
     localStorage.setItem("selectedTeam", JSON.stringify(team));
-    localStorage.setItem("teamSelectionToken", currentToken || "");
     
     // If actually changing teams, clear all survey-related queries to prevent stale data
     if (isTeamChange) {

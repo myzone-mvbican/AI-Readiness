@@ -108,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem("token");
       localStorage.removeItem("selectedTeam");
       localStorage.removeItem("userData");
+      localStorage.removeItem("teamSelectionToken"); // Remove any old references
       
       // Clear any session storage items that might have stale state
       sessionStorage.clear();
@@ -303,6 +304,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem("userData");
       localStorage.removeItem("selectedTeam");
       localStorage.removeItem("token");
+      localStorage.removeItem("teamSelectionToken"); // Remove any old references
       
       // Clear any session storage items that might have stale state
       sessionStorage.clear();
