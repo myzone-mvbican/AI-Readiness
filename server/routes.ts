@@ -1364,6 +1364,245 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Assessment routes
+  
+  // Get all assessments for the current user
+  app.get("/api/assessments", authenticate, async (req, res) => {
+    try {
+      const assessments = await storage.getAssessmentsByUserId(req.user!.id);
+      
+      return res.status(200).json({
+        success: true,
+        assessments
+      });
+    } catch (error) {
+      console.error("Error fetching assessments:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch assessments"
+      });
+    }
+  });
+  
+  // Get a specific assessment by ID
+  app.get("/api/assessments/:id", authenticate, async (req, res) => {
+    try {
+      const assessmentId = parseInt(req.params.id);
+      if (isNaN(assessmentId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid assessment ID"
+        });
+      }
+      
+      const assessment = await storage.getAssessmentWithSurveyInfo(assessmentId);
+      
+      if (!assessment) {
+        return res.status(404).json({
+          success: false,
+          message: "Assessment not found"
+        });
+      }
+      
+      // Verify that the user owns this assessment
+      if (assessment.userId !== req.user!.id) {
+        return res.status(403).json({
+          success: false,
+          message: "You do not have permission to access this assessment"
+        });
+      }
+      
+      return res.status(200).json({
+        success: true,
+        assessment
+      });
+    } catch (error) {
+      console.error("Error fetching assessment:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch assessment"
+      });
+    }
+  });
+  
+  // Create a new assessment
+  app.post("/api/assessments", authenticate, async (req, res) => {
+    try {
+      const { surveyTemplateId, title } = req.body;
+      
+      if (!surveyTemplateId || !title) {
+        return res.status(400).json({
+          success: false,
+          message: "Survey template ID and title are required"
+        });
+      }
+      
+      // Get the survey to prepare answers array
+      const survey = await storage.getSurveyById(parseInt(surveyTemplateId));
+      
+      if (!survey) {
+        return res.status(404).json({
+          success: false,
+          message: "Survey template not found"
+        });
+      }
+      
+      // Create a blank answers array with just question IDs
+      // We're using simple sequential numbering for question IDs: "q1", "q2", etc.
+      const blankAnswers = Array.from({ length: survey.questionsCount }, (_, i) => ({
+        q: `q${i + 1}`
+      }));
+      
+      // Create the assessment
+      const newAssessment = await storage.createAssessment({
+        title,
+        surveyTemplateId: parseInt(surveyTemplateId),
+        userId: req.user!.id,
+        status: "draft",
+        answers: blankAnswers
+      });
+      
+      return res.status(201).json({
+        success: true,
+        assessment: newAssessment
+      });
+    } catch (error) {
+      console.error("Error creating assessment:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to create assessment"
+      });
+    }
+  });
+  
+  // Update an assessment (for saving answers or changing status)
+  app.patch("/api/assessments/:id", authenticate, async (req, res) => {
+    try {
+      const assessmentId = parseInt(req.params.id);
+      if (isNaN(assessmentId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid assessment ID"
+        });
+      }
+      
+      // Get the existing assessment
+      const existingAssessment = await storage.getAssessmentById(assessmentId);
+      
+      if (!existingAssessment) {
+        return res.status(404).json({
+          success: false,
+          message: "Assessment not found"
+        });
+      }
+      
+      // Verify ownership
+      if (existingAssessment.userId !== req.user!.id) {
+        return res.status(403).json({
+          success: false,
+          message: "You do not have permission to update this assessment"
+        });
+      }
+      
+      // Check if the assessment is already completed
+      if (existingAssessment.status === "completed") {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot update a completed assessment"
+        });
+      }
+      
+      // Calculate score if moving to completed
+      let score = null;
+      if (req.body.status === "completed" && existingAssessment.status !== "completed") {
+        // Calculate the score as sum of all answers
+        const answers = req.body.answers || existingAssessment.answers;
+        const answerValues = answers
+          .map(a => typeof a.a === 'number' ? a.a : 0)
+          .filter(value => typeof value === 'number');
+        
+        // Only calculate score if there are answers
+        if (answerValues.length > 0) {
+          // Adjust score to be 0-100 
+          // -2 to +2 per question, adjust to 0-4, convert to percentage
+          const rawScore = answerValues.reduce((sum, val) => sum + val, 0);
+          const maxPossible = answers.length * 2; // Max score is +2 per question
+          const adjustedScore = (rawScore + answers.length * 2) / (answers.length * 4) * 100;
+          score = Math.round(adjustedScore);
+        }
+      }
+      
+      // Update the assessment
+      const updatedAssessment = await storage.updateAssessment(assessmentId, {
+        ...req.body,
+        score
+      });
+      
+      return res.status(200).json({
+        success: true,
+        assessment: updatedAssessment
+      });
+    } catch (error) {
+      console.error("Error updating assessment:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to update assessment"
+      });
+    }
+  });
+  
+  // Delete an assessment
+  app.delete("/api/assessments/:id", authenticate, async (req, res) => {
+    try {
+      const assessmentId = parseInt(req.params.id);
+      if (isNaN(assessmentId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid assessment ID"
+        });
+      }
+      
+      // Get the assessment to verify ownership
+      const assessment = await storage.getAssessmentById(assessmentId);
+      
+      if (!assessment) {
+        return res.status(404).json({
+          success: false,
+          message: "Assessment not found"
+        });
+      }
+      
+      // Verify ownership
+      if (assessment.userId !== req.user!.id) {
+        return res.status(403).json({
+          success: false,
+          message: "You do not have permission to delete this assessment"
+        });
+      }
+      
+      // Delete the assessment
+      const deleted = await storage.deleteAssessment(assessmentId);
+      
+      if (!deleted) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to delete assessment"
+        });
+      }
+      
+      return res.status(200).json({
+        success: true,
+        message: "Assessment deleted successfully"
+      });
+    } catch (error) {
+      console.error("Error deleting assessment:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to delete assessment"
+      });
+    }
+  });
     
   const httpServer = createServer(app);
 
