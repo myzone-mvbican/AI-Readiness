@@ -17,7 +17,6 @@ import AuthPage from "@/pages/auth";
 import AboutPage from "@/pages/about";
 import DashboardHome from "@/pages/dashboard-home";
 import AssessmentsPage from "@/pages/dashboard-assessments";
-import NewAssessmentPage from "@/pages/dashboard-assessments/new";
 import AssessmentDetailPage from "@/pages/dashboard-assessments/[id]";
 import AdminSurveysPage from "@/pages/dashboard-surveys";
 import AdminUsersPage from "@/pages/dashboard-users";
@@ -32,10 +31,6 @@ function Router() {
     return (
       <Switch>
         <ProtectedRoute path="/dashboard" component={DashboardHome} />
-        <ProtectedRoute
-          path="/dashboard/assessments/new"
-          component={NewAssessmentPage}
-        />
         <ProtectedRoute
           path="/dashboard/assessments/:id"
           component={AssessmentDetailPage}
