@@ -1,13 +1,14 @@
 import { Link } from "wouter";
 import { DashboardLayout } from "@/components/layout/dashboard";
 import { Button } from "@/components/ui/button";
-import { FileText, PlusCircle } from "lucide-react";
+import { FileText, PlusCircle, Loader2 } from "lucide-react";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle, 
+  CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   Table,

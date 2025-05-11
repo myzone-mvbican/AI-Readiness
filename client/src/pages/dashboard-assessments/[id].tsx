@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import Papa from "papaparse";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -23,502 +25,1023 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Loader2, Save, CheckCircle2, AlertTriangle, ChevronLeft, ArrowLeft, ArrowRight } from "lucide-react";
 import {
-  Loader2,
-  Save,
-  CheckCircle2,
-  AlertTriangle,
-  ChevronLeft,
-} from "lucide-react";
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer
+} from "recharts";
 import { Assessment } from "@shared/schema";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { Link } from "wouter";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 
-// Import survey helper functions
+interface AssessmentResponse {
+  success: boolean;
+  assessment: Assessment & { survey: { title: string } };
+}
+
+interface UpdateAssessmentResponse {
+  success: boolean;
+  assessment: Assessment;
+}
+
+/**
+ * Component for rating a survey question
+ */
 import { 
-  parseCSV, 
-  SurveyQuestion, 
-  getQuestionTextById,
-  setSurveyQuestionsCache
-} from "@/lib/survey-data";
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
+import { HelpCircle } from "lucide-react";
 
-// Import our new components
-import { LoadingScreen } from "@/components/assessments/loading-screen";
-import { SurveyCompletion } from "@/components/assessments/survey-completion";
-import { SurveyQuestionComponent } from "@/components/assessments/survey-question";
-import { SurveyResponses } from "@/components/assessments/survey-responses";
+function QuestionRating({ 
+  question, 
+  value, 
+  onChange, 
+  disabled,
+  questionDescription
+}: { 
+  question: string; 
+  value: number | null; 
+  onChange: (value: number) => void;
+  disabled: boolean;
+  questionDescription?: string;
+}) {
+  const options = [
+    { value: -2, label: "Strongly Disagree" },
+    { value: -1, label: "Disagree" },
+    { value: 0, label: "Neutral" },
+    { value: 1, label: "Agree" },
+    { value: 2, label: "Strongly Agree" },
+  ];
+
+  // Properly handle the equality comparison for the zero value
+  const isOptionSelected = (optionValue: number) => {
+    if (value === null) return false;
+    // Use strict equality to properly compare the value with 0
+    // Adding debugging to see what's happening
+    console.log(`Comparing ${value} === ${optionValue}: ${value === optionValue}`);
+    return value === optionValue; 
+  };
+
+  return (
+    <div className="py-4">
+      <div className="flex items-start mb-3">
+        <div className="flex-1">
+          <h3 className="text-md font-medium">{question}</h3>
+          {questionDescription && (
+            <div className="mt-2 text-sm text-muted-foreground bg-muted/30 p-3 rounded-md border border-muted">
+              <p>{questionDescription}</p>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2 mt-4">
+        {options.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            disabled={disabled}
+            onClick={() => {
+              console.log(`Clicked on option with value: ${option.value}`);
+              onChange(option.value);
+            }}
+            className={`px-4 py-2 rounded-md border ${
+              isOptionSelected(option.value)
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-background hover:bg-accent hover:text-accent-foreground"
+            } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function AssessmentDetailPage() {
   const [, params] = useRoute("/dashboard/assessments/:id");
   const [, navigate] = useLocation();
+  const assessmentId = params?.id ? parseInt(params.id) : null;
   const { toast } = useToast();
-  const id = params?.id;
-
-  // State
+  
   const [currentStep, setCurrentStep] = useState(0);
-  const [answers, setAnswers] = useState<{ q: string; a?: number; r?: string }[]>([]);
-  const [surveyQuestions, setSurveyQuestions] = useState<SurveyQuestion[]>([]);
+  const [answers, setAnswers] = useState<Array<{q: string; a: number | null; r?: string}>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [isCSVLoading, setIsCSVLoading] = useState(false);
+  const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
+  const [surveyQuestions, setSurveyQuestions] = useState<Array<{
+    number: number;
+    text: string;
+    description: string;
+    category: string;
+  }>>([]);
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
+  const [isLoadingAnswers, setIsLoadingAnswers] = useState(false);
+  
+  // Load survey questions from CSV file reference
+  const loadSurveyQuestions = async (fileReference: string) => {
+    try {
+      setIsLoadingQuestions(true);
+      
+      // Validate the file reference
+      if (!fileReference) {
+        console.error("Invalid file reference:", fileReference);
+        toast({
+          title: "Error",
+          description: "Invalid file reference provided",
+          variant: "destructive",
+        });
+        throw new Error("Invalid file reference provided");
+      }
+      
+      console.log("Loading survey template with file reference:", fileReference);
+      
+      // Extract the filename from the file reference path
+      // The file reference might be a full path like "/home/runner/workspace/uploads/survey-123.csv"
+      // or just the filename like "survey-123.csv"
+      let filename = fileReference;
+      
+      // If it's a path, extract just the filename
+      if (fileReference.includes('/')) {
+        filename = fileReference.split('/').pop() || '';
+      }
+      
+      console.log("Extracted filename:", filename);
+      
+      // Use our dedicated CSV serving endpoint, ensuring we have proper error handling
+      const csvEndpoint = `/api/csv-file/${filename}`;
+      console.log("Fetching CSV from dedicated endpoint:", csvEndpoint);
+      
+      const response = await fetch(csvEndpoint);
+      
+      if (!response.ok) {
+        console.error(`Failed to load survey file: ${response.status} ${response.statusText}`);
+        toast({
+          title: "Error",
+          description: `Failed to load survey file: ${response.statusText}`,
+          variant: "destructive",
+        });
+        throw new Error(`Failed to load survey file: ${response.statusText}`);
+      }
+      
+      const csvData = await response.text();
+      console.log(`CSV data loaded, length:`, csvData.length);
+      
+      // Validate CSV data - show the first few characters to debug
+      if (csvData.length === 0) {
+        console.error("Empty CSV data received");
+        toast({
+          title: "Error",
+          description: "Empty survey file",
+          variant: "destructive",
+        });
+        throw new Error("Empty survey file");
+      }
+      
+      console.log("CSV data preview:", csvData.substring(0, 100));
+      
+      // Parse CSV with PapaParse
+      Papa.parse(csvData, {
+        header: true,
+        skipEmptyLines: true,
+        dynamicTyping: false, // Keep everything as strings
+        transform: (value) => value?.trim(), // Trim whitespace
+        complete: (results) => {
+          console.log("CSV parsing complete, rows:", results.data.length);
+          
+          // Debug the CSV structure
+          if (results.data.length > 0) {
+            const firstRow = results.data[0];
+            console.log("CSV headers:", Object.keys(firstRow));
+            console.log("First row:", JSON.stringify(firstRow));
+          } else {
+            console.error("CSV parse returned empty data array");
+          }
+          
+          // Map the parsed data to our format
+          const questions = results.data
+            .map((row: any, index: number) => {
+              // Check if the row has the expected properties
+              if (!row["Question Number"]) {
+                console.error(`Row ${index} missing Question Number, row data:`, JSON.stringify(row));
+                return null;
+              }
+              
+              const questionNumber = parseInt(row["Question Number"], 10);
+              if (isNaN(questionNumber)) {
+                console.error(`Row ${index} has invalid Question Number:`, row["Question Number"]);
+                return null;
+              }
+              
+              const question = {
+                number: questionNumber,
+                category: row["Category"] ? row["Category"].trim() : "",
+                text: row["Question Summary"] ? row["Question Summary"].trim() : "",
+                description: row["Question Details"] ? row["Question Details"].trim() : ""
+              };
+              
+              return question;
+            })
+            .filter((q: any): q is { text: string; description: string; category: string; number: number } => q !== null)
+            .sort((a, b) => a.number - b.number);
+          
+          console.log("Processed questions count:", questions.length);
+          
+          // Set the survey questions
+          setSurveyQuestions(questions);
+          
+          // If we have an answers array that doesn't match the questions length,
+          // initialize it with the correct number of questions
+          if (answers.length === 0 && questions.length > 0) {
+            console.log("Initializing answers array with", questions.length, "items");
+            const initialAnswers = questions.map((q, index) => ({
+              q: q.number.toString(), // Store question number/ID instead of full text
+              a: null
+            }));
+            setAnswers(initialAnswers);
+          }
+          
+          setIsLoadingQuestions(false);
+        },
+        error: (error) => {
+          console.error("Error parsing survey CSV:", error);
+          toast({
+            title: "Error loading survey questions",
+            description: "Failed to parse the survey template file.",
+            variant: "destructive"
+          });
+          setIsLoadingQuestions(false);
+        }
+      });
+    } catch (error) {
+      console.error("Error loading survey file:", error);
+      toast({
+        title: "Error loading survey",
+        description: "Failed to load the survey template file.",
+        variant: "destructive"
+      });
+      setIsLoadingQuestions(false);
+    }
+  };
+  
+  // Remove all references to fallbackQuestions
   
   // Fetch assessment data
   const {
-    data: assessment,
+    data,
+    isLoading,
     error,
-    isLoading: isAssessmentLoading,
-  } = useQuery({
-    queryKey: [`/api/assessments/${id}`],
-    enabled: !!id,
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes
+  } = useQuery<AssessmentResponse>({
+    queryKey: [`/api/assessments/${assessmentId}`],
+    enabled: !!assessmentId,
+    staleTime: 30 * 1000, // 30 seconds
   });
-
-  // Get survey template data after we have assessment
-  const {
-    data: surveyTemplate,
-    isLoading: isSurveyLoading,
-  } = useQuery({
-    queryKey: [`/api/surveys/detail/${assessment?.assessment?.surveyTemplateId}`],
-    enabled: !!assessment?.assessment?.surveyTemplateId,
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes
-  });
-
-  // Handle CSV loading once we have the survey template
+  
+  const assessment = data?.assessment;
+  
+  // Combined loading state for all async operations
+  const isFullyLoading = isLoading || isLoadingQuestions || isLoadingAnswers;
+  
+  // Set answers from fetched data
   useEffect(() => {
-    if (surveyTemplate?.survey?.fileReference) {
-      setIsCSVLoading(true);
-      // Fetch and parse the CSV file
-      fetch(`/api/csv-file/${surveyTemplate.survey.fileReference}`)
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.text();
-        })
-        .then((csvText) => {
-          const questions = parseCSV(csvText);
-          setSurveyQuestions(questions);
-          setSurveyQuestionsCache(questions);
-          setIsCSVLoading(false);
-        })
-        .catch((error) => {
-          console.error("Error loading CSV:", error);
-          setIsCSVLoading(false);
-          toast({
-            title: "Error loading survey questions",
-            description: "There was a problem loading the survey questions. Please try again later.",
-            variant: "destructive",
-          });
-        });
-    }
-  }, [surveyTemplate?.survey?.fileReference, toast]);
-
-  // Initialize answers from assessment data (or create empty ones if starting fresh)
-  useEffect(() => {
-    if (assessment?.assessment) {
-      // Parse existing answers from the database
-      try {
-        const loadedAnswers = JSON.parse(assessment.assessment.answers);
-        setAnswers(loadedAnswers);
-        
-        // Find the first unanswered question and set it as the current step
-        if (assessment.assessment.status === 'in-progress') {
-          const firstUnansweredIndex = loadedAnswers.findIndex(
-            (a: { q: string; a?: number }) => a.a === undefined || a.a === null
-          );
-          
-          if (firstUnansweredIndex !== -1) {
-            setCurrentStep(firstUnansweredIndex);
-          }
-        }
-      } catch (e) {
-        console.error("Error parsing answers:", e);
-        // If there's an error, create empty answers
-        if (surveyQuestions.length > 0) {
-          const newAnswers = surveyQuestions.map((q) => ({
-            q: q.number.toString(),
-            a: undefined,
-          }));
-          setAnswers(newAnswers);
-        }
-      }
-    } else if (surveyQuestions.length > 0 && !assessment?.assessment?.answers) {
-      // Create new empty answers if we have questions but no assessment answers
-      const newAnswers = surveyQuestions.map((q) => ({
-        q: q.number.toString(),
-        a: undefined,
-      }));
-      setAnswers(newAnswers);
-    }
-  }, [assessment?.assessment, surveyQuestions]);
-
-  // Save answers mutation
-  const saveAnswersMutation = useMutation({
-    mutationFn: async (data: typeof answers) => {
-      return apiRequest("PATCH", `/api/assessments/${id}`, {
-        answers: data,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ 
-        queryKey: [`/api/assessments/${id}`] 
-      });
-      toast({
-        title: "Progress saved",
-        description: "Your assessment progress has been saved.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error saving progress",
-        description: error.message || "There was a problem saving your progress.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Complete assessment mutation
-  const completeAssessmentMutation = useMutation({
-    mutationFn: async () => {
-      // Calculate score based on positive answers
-      const total = answers.length;
-      const answered = answers.filter((a) => a.a !== undefined && a.a !== null).length;
-      const score = Math.round(
-        (answers.reduce((sum, answer) => {
-          const val = answer.a || 0;
-          return sum + (val > 0 ? val : 0);
-        }, 0) /
-          (total * 2)) *
-          100
-      );
-
-      return apiRequest("PATCH", `/api/assessments/${id}`, {
-        status: "completed",
-        score,
-        answers,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ 
-        queryKey: [`/api/assessments/${id}`] 
-      });
-      setConfirmDialogOpen(false);
-      toast({
-        title: "Assessment completed",
-        description: "Your assessment has been submitted successfully.",
-      });
-    },
-    onError: (error) => {
-      setConfirmDialogOpen(false);
-      toast({
-        title: "Error completing assessment",
-        description: error.message || "There was a problem completing your assessment.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Update a specific answer
-  const updateAnswer = (index: number, value: number) => {
-    const newAnswers = [...answers];
-    if (newAnswers[index]) {
-      newAnswers[index].a = value;
-      setAnswers(newAnswers);
-    }
-  };
-
-  // Save current progress
-  const saveProgress = () => {
-    setIsSubmitting(true);
-    saveAnswersMutation.mutate(answers, {
-      onSettled: () => {
-        setIsSubmitting(false);
-      },
-    });
-  };
-
-  // Complete the assessment
-  const completeAssessment = () => {
-    setIsSubmitting(true);
-    completeAssessmentMutation.mutate(undefined, {
-      onSettled: () => {
-        setIsSubmitting(false);
-      },
-    });
-  };
-
-  // Download results as CSV
-  const downloadResults = () => {
-    if (!assessment?.assessment) return;
-
-    // Create CSV content
-    let csvContent = "Question,Answer,Score\n";
-    
-    answers.forEach((answer, index) => {
-      const questionText = getQuestionTextById(answer.q);
-      const answerText = 
-        answer.a === 2 ? "Strongly Agree" :
-        answer.a === 1 ? "Agree" :
-        answer.a === 0 ? "Neutral" :
-        answer.a === -1 ? "Disagree" :
-        answer.a === -2 ? "Strongly Disagree" : "Not answered";
+    if (assessment) {
+      setIsLoadingAnswers(true);
+      console.log("Assessment loaded (full data):", JSON.stringify(assessment, null, 2));
       
-      csvContent += `"${questionText}","${answerText}",${answer.a || 0}\n`;
+      // Get survey template information
+      if (assessment.surveyTemplateId) {
+        // Debug the survey data if it exists
+        if (assessment.survey) {
+          console.log("Survey data from assessment:", JSON.stringify(assessment.survey, null, 2));
+        }
+        
+        // Fetch the survey template details if not already provided
+        if (!assessment.survey || !assessment.survey.fileReference) {
+          console.log("Need to fetch survey template details for ID:", assessment.surveyTemplateId);
+          
+          // Get API URL
+          const apiUrl = `/api/surveys/detail/${assessment.surveyTemplateId}`;
+          console.log("Fetching survey details from:", apiUrl);
+          
+          // Try to load from the correct API endpoint
+          fetch(apiUrl, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json'
+            }
+          })
+            .then(response => {
+              console.log("Survey API response status:", response.status);
+              return response.json();
+            })
+            .then(data => {
+              console.log("Survey API response data:", JSON.stringify(data, null, 2));
+              if (data.success && data.survey) {
+                console.log("Fetched survey template:", JSON.stringify(data.survey, null, 2));
+                if (data.survey.fileReference) {
+                  console.log("Loading survey questions from:", data.survey.fileReference);
+                  loadSurveyQuestions(data.survey.fileReference);
+                } else {
+                  console.error("Fetched survey has no file reference:", data.survey);
+                  toast({
+                    title: "Survey Error",
+                    description: "The survey template doesn't have a valid file reference.",
+                    variant: "destructive"
+                  });
+                }
+              } else {
+                console.error("Failed to fetch survey template:", data);
+                toast({
+                  title: "Survey Error",
+                  description: "Failed to fetch the survey template.",
+                  variant: "destructive"
+                });
+              }
+            })
+            .catch(error => {
+              console.error("Error fetching survey template:", error);
+              toast({
+                title: "Survey Error",
+                description: "An error occurred while fetching the survey template.",
+                variant: "destructive"
+              });
+            });
+        } else {
+          // Use the file reference from the assessment.survey
+          console.log("Using survey file reference from assessment:", assessment.survey.fileReference);
+          loadSurveyQuestions(assessment.survey.fileReference);
+        }
+      } else {
+        console.error("No survey template ID found in the assessment:", assessment);
+        toast({
+          title: "Assessment Error",
+          description: "This assessment doesn't have a valid survey template.",
+          variant: "destructive"
+        });
+      }
+      
+      // Initialize answers
+      if (assessment.answers) {
+        // Handle string or array format
+        const parsedAnswers = typeof assessment.answers === "string" 
+          ? JSON.parse(assessment.answers) 
+          : assessment.answers;
+        
+        setAnswers(parsedAnswers);
+        console.log("Loaded answers:", parsedAnswers);
+      }
+      
+      // Turn off loading state for answers
+      setIsLoadingAnswers(false);
+    }
+  }, [assessment]);
+  
+  // Find first unanswered question and navigate to it
+  useEffect(() => {
+    if (answers.length > 0 && assessment && assessment.status !== "completed") {
+      // Find the first unanswered question
+      const firstUnansweredIndex = answers.findIndex(a => a.a === null);
+      
+      if (firstUnansweredIndex !== -1) {
+        // If there's an unanswered question, go to it
+        setCurrentStep(firstUnansweredIndex);
+      }
+    }
+  }, [answers, assessment]);
+  
+  // Update assessment mutation
+  const updateAssessmentMutation = useMutation<
+    UpdateAssessmentResponse,
+    Error, 
+    { status?: string; answers: typeof answers }
+  >({
+    mutationFn: async (updateData) => {
+      const response = await apiRequest(
+        "PATCH", 
+        `/api/assessments/${assessmentId}`,
+        updateData
+      );
+      return response.json();
+    },
+    onSuccess: (data, variables) => {
+      // If completing the assessment, navigate to results view
+      if (variables.status === "completed") {
+        toast({
+          title: "Assessment completed",
+          description: "Your AI readiness assessment has been completed successfully."
+        });
+        
+        // Invalidate queries
+        queryClient.invalidateQueries({ 
+          queryKey: [`/api/assessments/${assessmentId}`]
+        });
+        queryClient.invalidateQueries({ 
+          queryKey: ["/api/assessments"]
+        });
+        
+        navigate(`/dashboard/assessments`);
+      } else {
+        // Just saving progress
+        toast({
+          title: "Progress saved",
+          description: "Your progress has been saved."
+        });
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "Error updating assessment",
+        description: error.message || "Failed to update assessment. Please try again.",
+        variant: "destructive"
+      });
+    },
+    onSettled: () => {
+      setIsSubmitting(false);
+      setCompleteDialogOpen(false);
+    }
+  });
+  
+  // Handle saving progress
+  const handleSave = () => {
+    setIsSubmitting(true);
+    updateAssessmentMutation.mutate({
+      status: "in-progress",
+      answers
     });
-
-    // Create download link
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `assessment-results-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
-
-  // Show loading state when all data isn't loaded yet
-  const isLoading = isAssessmentLoading || isSurveyLoading || isCSVLoading;
-
-  // If loading, show a loading skeleton
-  if (isLoading) {
+  
+  // Handle completing assessment
+  const handleComplete = () => {
+    // Use our improved allQuestionsAnswered function to check completion status
+    if (!allQuestionsAnswered()) {
+      toast({
+        title: "Unable to complete",
+        description: "Please answer all questions before completing the assessment.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setCompleteDialogOpen(true);
+  };
+  
+  // Confirm assessment completion
+  const confirmComplete = () => {
+    setIsSubmitting(true);
+    updateAssessmentMutation.mutate({
+      status: "completed",
+      answers
+    });
+  };
+  
+  // Handle updating an answer, ensuring proper handling of zero value
+  const updateAnswer = (questionIndex: number, value: number) => {
+    console.log(`Updating answer ${questionIndex} with value: ${value}`);
+    const newAnswers = [...answers];
+    
+    if (newAnswers[questionIndex]) {
+      // Update existing answer
+      newAnswers[questionIndex] = {
+        ...newAnswers[questionIndex],
+        a: value // value can be -2, -1, 0, 1, or 2
+      };
+      console.log(`Updated answer: ${JSON.stringify(newAnswers[questionIndex])}`);
+    } else {
+      // Create new answer if it doesn't exist
+      const questionNumber = surveyQuestions[questionIndex]?.number || questionIndex + 1;
+      newAnswers[questionIndex] = {
+        q: questionNumber.toString(), // Store question number/ID instead of full text
+        a: value
+      };
+      console.log(`Created new answer: ${JSON.stringify(newAnswers[questionIndex])}`);
+    }
+    
+    setAnswers(newAnswers);
+  };
+  
+  // Helper function to find question text by ID
+  const getQuestionTextById = (questionId: string) => {
+    // Convert questionId string to number
+    const qId = parseInt(questionId, 10);
+    // Find the matching question by number
+    const question = surveyQuestions.find(q => q.number === qId);
+    return question?.text || `Question ${questionId}`;
+  };
+  
+  // Calculate progress percentage based on the number of survey questions
+  const calculateProgress = () => {
+    if (!surveyQuestions.length) return 0;
+    if (!answers.length) return 0;
+    
+    // Count how many questions have been answered with a valid value (including 0 for neutral)
+    const answeredCount = answers.filter(a => a.a !== null && a.a !== undefined).length;
+    console.log(`Progress: ${answeredCount} of ${surveyQuestions.length} questions answered`);
+    
+    // Calculate percentage based on the total number of survey questions
+    return Math.round((answeredCount / surveyQuestions.length) * 100);
+  };
+  
+  // Check if all questions are answered (for Complete button)
+  const allQuestionsAnswered = () => {
+    // If we don't have survey questions or answers, return false
+    if (!surveyQuestions.length || !answers.length) return false;
+    
+    // Check if we have the same number of answers as questions
+    if (answers.length < surveyQuestions.length) {
+      console.log(`Not all questions answered: ${answers.length} answers for ${surveyQuestions.length} questions`);
+      return false;
+    }
+    
+    // Check if all answers have a value that is not null or undefined
+    // This will properly handle 0 as a valid answer (neutral)
+    for (let i = 0; i < surveyQuestions.length; i++) {
+      // Using strict comparison to check for null/undefined
+      // Note that 0 as a value will pass this check (which is what we want)
+      if (answers[i]?.a === null || answers[i]?.a === undefined) {
+        console.log(`Question ${i+1} is not answered`);
+        return false;
+      }
+    }
+    
+    console.log("All questions are answered");
+    return true;
+  };
+  
+  // Get formatted date
+  const getFormattedDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), "MMM d, yyyy");
+    } catch (e) {
+      return "Invalid date";
+    }
+  };
+  
+  // Function to prepare data for radar chart
+  const getRadarChartData = () => {
+    if (!assessment || !answers || answers.length === 0) return [];
+    
+    // Use categories from survey questions if available
+    if (surveyQuestions.length > 0) {
+      // Group questions by category
+      const categoryMap = new Map();
+      
+      surveyQuestions.forEach((question, index) => {
+        const category = question.category;
+        if (!category) return;
+        
+        if (!categoryMap.has(category)) {
+          categoryMap.set(category, []);
+        }
+        
+        // Add this question's index to the category
+        categoryMap.get(category).push(index);
+      });
+      
+      // Calculate average score for each category
+      const categoryScores = Array.from(categoryMap.entries()).map(([category, questionIndices]) => {
+        // Get answers for this category's questions
+        const categoryAnswers = questionIndices
+          .map(idx => answers[idx])
+          .filter(a => a && a.a !== null);
+        
+        // Calculate average score
+        const sum = categoryAnswers.reduce((acc, ans) => {
+          // Convert from -2 to +2 scale to 0 to 10 scale
+          const score = ((ans.a + 2) * 2.5);
+          return acc + score;
+        }, 0);
+        
+        const avg = categoryAnswers.length > 0 
+          ? Math.round((sum / categoryAnswers.length) * 10) / 10
+          : 0;
+          
+        return {
+          subject: category,
+          score: avg,
+          fullMark: 10,
+        };
+      });
+      
+      return categoryScores;
+    } 
+    // If we don't have survey questions, return empty array
+    else {
+      console.log("No survey questions available for radar chart");
+      return [];
+    }
+  };
+  
+  // Is assessment completed?
+  const isCompleted = assessment?.status === "completed";
+  const progressPercentage = calculateProgress();
+  
+  // Get status badge
+  const getStatusBadge = () => {
+    const status = assessment?.status || "";
+    
+    switch(status) {
+      case "completed":
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Completed</Badge>;
+      case "in-progress":
+        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">In Progress</Badge>;
+      default:
+        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">Draft</Badge>;
+    }
+  };
+  
+  if (isFullyLoading) {
     return (
-      <DashboardLayout>
-        <div className="container py-6">
-          <div className="flex items-center mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/dashboard/assessments")}
-              className="mr-2"
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Back
-            </Button>
-            <Skeleton className="h-8 w-56" />
+      <DashboardLayout title="Assessment">
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-64" />
+          <div className="flex justify-center items-center p-10">
+            <div className="text-center">
+              <Loader2 className="h-12 w-12 animate-spin mb-4 mx-auto text-primary" />
+              <h3 className="text-lg font-medium mb-2">Loading assessment data...</h3>
+              <p className="text-muted-foreground">
+                {isLoading ? "Loading assessment..." : ""}
+                {isLoadingQuestions ? "Loading survey questions..." : ""}
+                {isLoadingAnswers ? "Loading your answers..." : ""}
+              </p>
+            </div>
           </div>
-          <LoadingScreen />
+          <Skeleton className="h-64 w-full" />
         </div>
       </DashboardLayout>
     );
   }
-
-  // If error or assessment not found, show an error message
-  if (error || !assessment?.assessment) {
+  
+  if (error || !assessment) {
     return (
-      <DashboardLayout>
-        <div className="container py-6">
-          <div className="flex items-center mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/dashboard/assessments")}
-              className="mr-2"
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Back
-            </Button>
-            <h1 className="text-2xl font-bold">Assessment Not Found</h1>
-          </div>
+      <DashboardLayout title="Assessment">
+        <div className="space-y-6">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate("/dashboard/assessments")}
+          >
+            <ChevronLeft className="mr-2 h-4 w-4" /> Back to Assessments
+          </Button>
+          
           <Card>
-            <CardContent className="flex flex-col items-center justify-center pt-6">
-              <AlertTriangle className="h-16 w-16 text-yellow-500 mb-4" />
+            <CardHeader>
+              <CardTitle className="text-red-500">Error</CardTitle>
+            </CardHeader>
+            <CardContent>
               <p>Failed to load assessment. It may have been deleted or you don't have permission to view it.</p>
-              <Button onClick={() => navigate("/dashboard/assessments")} className="mt-4">
+            </CardContent>
+            <CardFooter>
+              <Button onClick={() => navigate("/dashboard/assessments")}>
                 Return to Assessments
               </Button>
-            </CardContent>
+            </CardFooter>
           </Card>
         </div>
       </DashboardLayout>
     );
   }
-
-  const { title, status, createdAt, score } = assessment.assessment;
-  const maxScore = answers.length * 2; // Max score is 2 (strongly agree) per question
-  const answeredCount = answers.filter((a) => a.a !== undefined && a.a !== null).length;
-  const progress = (answeredCount / answers.length) * 100;
-
-  // For completed assessments, show the completion view
-  if (status === "completed") {
-    return (
-      <DashboardLayout>
-        <div className="container py-6">
-          <div className="flex items-center mb-6">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/dashboard/assessments")}
-              className="mr-2"
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">{title}</h1>
-              <p className="text-muted-foreground">
-                Completed on {format(new Date(createdAt), "MMMM d, yyyy")}
-              </p>
-            </div>
-          </div>
-
-          <Tabs defaultValue="results" className="w-full">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
-              <TabsTrigger value="results">Results</TabsTrigger>
-              <TabsTrigger value="responses">Responses</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="results">
-              <SurveyCompletion 
-                assessment={assessment.assessment}
-                score={score || 0}
-                maxScore={maxScore}
-                onDownloadResults={downloadResults}
-              />
-            </TabsContent>
-            
-            <TabsContent value="responses">
-              <SurveyResponses answers={answers} />
-            </TabsContent>
-          </Tabs>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  // For in-progress assessments, show the question form
+  
   return (
-    <DashboardLayout>
-      <div className="container py-6">
-        <div className="flex items-center mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            asChild
-            className="mr-2"
+    <DashboardLayout title={assessment.title}>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate("/dashboard/assessments")}
           >
-            <Link href="/dashboard/assessments">
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Back
-            </Link>
+            <ChevronLeft className="mr-2 h-4 w-4" /> Back to Assessments
           </Button>
-          <div className="flex-1">
-            <div className="flex items-center justify-between w-full">
-              <div>
-                <h1 className="text-2xl font-bold">{title}</h1>
-                <p className="text-muted-foreground">
-                  Started on {format(new Date(createdAt), "MMMM d, yyyy")}
-                </p>
-              </div>
-              <Badge variant={status === "in-progress" ? "secondary" : "outline"}>
-                {status === "in-progress" ? "In Progress" : "Draft"}
-              </Badge>
+          
+          {!isCompleted && (
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={handleSave}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Save Progress
+              </Button>
+              
+              <Button 
+                onClick={handleComplete}
+                disabled={isSubmitting || progressPercentage < 100}
+              >
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                Complete Assessment
+              </Button>
             </div>
-          </div>
+          )}
         </div>
-
+        
         <Card>
           <CardHeader>
-            <CardTitle>AI Readiness Assessment</CardTitle>
-            <CardDescription>
-              Please indicate your level of agreement with each statement
-            </CardDescription>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="text-2xl">{assessment.title}</CardTitle>
+                <CardDescription className="mt-2">
+                  Based on: {assessment.survey.title}
+                </CardDescription>
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                {getStatusBadge()}
+                <span className="text-sm text-muted-foreground">
+                  Last Updated: {getFormattedDate(assessment.updatedAt)}
+                </span>
+              </div>
+            </div>
           </CardHeader>
           
           <CardContent>
-            <div className="mb-6">
-              <div className="flex justify-between text-sm mb-1">
-                <span>Progress: {Math.round(progress)}%</span>
-                <span>{answeredCount} of {answers.length} questions</span>
+            {!isCompleted && (
+              <div className="mb-6">
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm font-medium">Completion Progress</span>
+                  <span className="text-sm font-medium">{progressPercentage}%</span>
+                </div>
+                <Progress value={progressPercentage} className="h-2" />
               </div>
-              <Progress value={progress} className="h-2" />
-            </div>
-
-            <SurveyQuestionComponent
-              currentStep={currentStep}
-              totalSteps={answers.length}
-              surveyQuestion={surveyQuestions[currentStep]}
-              value={answers[currentStep]?.a || null}
-              onChange={(value) => updateAnswer(currentStep, value)}
-              onNext={() => setCurrentStep(Math.min(answers.length - 1, currentStep + 1))}
-              onPrevious={() => setCurrentStep(Math.max(0, currentStep - 1))}
-              isSubmitting={isSubmitting}
-            />
+            )}
+            
+            {assessment.status === "completed" ? (
+              <div className="space-y-6">
+                <div className="flex items-center justify-center py-6">
+                  <div className="bg-green-100 rounded-full p-6">
+                    <CheckCircle2 className="h-12 w-12 text-green-600" />
+                  </div>
+                </div>
+                
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold">Assessment Completed</h2>
+                  <p className="text-muted-foreground mt-2">
+                    You scored {assessment.score} out of 100 on this AI readiness assessment.
+                  </p>
+                </div>
+                
+                <Tabs defaultValue="results" className="mt-6">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="results">Results</TabsTrigger>
+                    <TabsTrigger value="responses">Your Responses</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="results" className="py-4">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>AI Readiness Score: {assessment.score}/100</CardTitle>
+                        <CardDescription>
+                          This score represents your organization's current AI readiness level
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {/* Radar Chart */}
+                        <div className="py-4">
+                          <h3 className="font-medium mb-4">AI Readiness By Category</h3>
+                          <div className="h-[400px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <RadarChart outerRadius="80%" data={getRadarChartData()}>
+                                <PolarGrid strokeDasharray="3 3" />
+                                <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--foreground)', fontSize: 12 }} />
+                                <PolarRadiusAxis domain={[0, 10]} tick={{ fill: 'var(--foreground)' }} />
+                                <Radar
+                                  name="Organization Score"
+                                  dataKey="score"
+                                  stroke="var(--primary)"
+                                  fill="var(--primary)"
+                                  fillOpacity={0.5}
+                                />
+                                <RechartsTooltip formatter={(value) => [`${value}/10`, 'Score']} />
+                              </RadarChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                        
+                        <div className="py-4">
+                          <h3 className="font-medium mb-2">What This Score Means</h3>
+                          <p className="text-muted-foreground">
+                            Based on your responses, your organization is at the
+                            {assessment.score && assessment.score >= 80
+                              ? " advanced "
+                              : assessment.score && assessment.score >= 60
+                              ? " intermediate "
+                              : assessment.score && assessment.score >= 40
+                              ? " developing "
+                              : " beginning "}
+                            stage of AI readiness.
+                          </p>
+                        </div>
+                        
+                        <div className="py-4">
+                          <h3 className="font-medium mb-2">Recommendations</h3>
+                          <p className="text-muted-foreground">
+                            Consider focusing on improving your data governance and AI strategy alignment.
+                            Regular reassessments every quarter can help track your organization's progress.
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  
+                  <TabsContent value="responses">
+                    <ScrollArea className="h-[500px] rounded-md border p-4">
+                      {answers.map((answer, index) => (
+                        <div key={answer.q} className="py-4">
+                          <h3 className="font-medium">
+                            Question {index + 1}: {getQuestionTextById(answer.q)}
+                          </h3>
+                          <p className="mt-2">
+                            Your answer: {
+                              answer.a === 2 ? "Strongly Agree" :
+                              answer.a === 1 ? "Agree" :
+                              answer.a === 0 ? "Neutral" :
+                              answer.a === -1 ? "Disagree" :
+                              answer.a === -2 ? "Strongly Disagree" :
+                              "Not answered"
+                            }
+                          </p>
+                          <Separator className="my-4" />
+                        </div>
+                      ))}
+                    </ScrollArea>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-xl font-bold">Assessment Questions</h2>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+                      disabled={currentStep === 0}
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Previous
+                    </Button>
+                    <span className="text-sm">
+                      {currentStep + 1} of {answers.length}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentStep(Math.min(answers.length - 1, currentStep + 1))}
+                      disabled={currentStep === answers.length - 1}
+                    >
+                      Next
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </div>
+                </div>
+                
+                <Card className="border-2 border-muted">
+                  <CardContent className="pt-6">
+                    {answers.length > 0 && (
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-bold">
+                          Question {currentStep + 1} of {surveyQuestions.length}
+                        </h3>
+                        
+                        {/* Display the question text with description from CSV */}
+                        <p className="text-lg mb-6">
+                          {surveyQuestions[currentStep]?.text || `Question ${currentStep + 1}`}
+                        </p>
+                        
+                        <QuestionRating
+                          question="What is your level of agreement with this statement?"
+                          value={answers[currentStep]?.a || null}
+                          onChange={(value) => updateAnswer(currentStep, value)}
+                          disabled={isSubmitting}
+                          questionDescription={surveyQuestions[currentStep]?.description}
+                        />
+                        
+                        <div className="flex justify-between mt-6 pt-4 border-t">
+                          <Button
+                            variant="outline"
+                            onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+                            disabled={currentStep === 0}
+                          >
+                            <ArrowLeft className="h-4 w-4 mr-2" />
+                            Previous
+                          </Button>
+                          
+                          <Button
+                            onClick={() => setCurrentStep(Math.min(answers.length - 1, currentStep + 1))}
+                            disabled={currentStep === answers.length - 1}
+                          >
+                            Next
+                            <ArrowRight className="h-4 w-4 ml-2" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+                
+                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 flex items-start">
+                  <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5 mr-3 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-medium text-yellow-800">Important Note</h4>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      Your answers are saved when you click "Save Progress". To finalize your assessment,
+                      answer all questions and click "Complete Assessment". Completed assessments cannot be modified.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
-
-          <div className="p-6 pt-0 flex flex-wrap justify-between gap-2 border-t mt-6">
-            <Button
-              variant="outline"
-              onClick={saveProgress}
+          
+          {!isCompleted && (
+            <CardFooter className="flex justify-between border-t bg-muted/50 px-6 py-4">
+              <Button 
+                variant="outline" 
+                onClick={() => navigate("/dashboard/assessments")}
+              >
+                Cancel
+              </Button>
+              
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={handleSave}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="mr-2 h-4 w-4" />
+                  )}
+                  Save Progress
+                </Button>
+                
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="inline-block">
+                        <Button 
+                          onClick={handleComplete}
+                          disabled={isSubmitting || !allQuestionsAnswered()}
+                          className={(!allQuestionsAnswered()) ? "opacity-50" : ""}
+                        >
+                          <CheckCircle2 className="mr-2 h-4 w-4" />
+                          Complete Assessment
+                        </Button>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="p-2">
+                      {!allQuestionsAnswered() 
+                        ? "Please answer all questions to complete the assessment" 
+                        : "Complete assessment and view results"}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            </CardFooter>
+          )}
+        </Card>
+      </div>
+      
+      {/* Confirmation Dialog for Completing Assessment */}
+      <AlertDialog open={completeDialogOpen} onOpenChange={setCompleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Complete Assessment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to complete this assessment? Once completed, you won't be able to make any further changes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                confirmComplete();
+              }}
               disabled={isSubmitting}
             >
-              {saveAnswersMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Progress
-                </>
-              )}
-            </Button>
-
-            <Button
-              onClick={() => setConfirmDialogOpen(true)}
-              disabled={
-                isSubmitting ||
-                answeredCount < answers.length // All questions must be answered
-              }
-            >
-              {completeAssessmentMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Completing...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Complete Assessment
-                </>
-              )}
-            </Button>
-          </div>
-        </Card>
-
-        {/* Confirmation Dialog */}
-        <AlertDialog 
-          open={confirmDialogOpen} 
-          onOpenChange={setConfirmDialogOpen}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Complete Assessment</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to complete this assessment? You won't be able to change your answers after completion.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={completeAssessment}>
-                Complete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
+              {isSubmitting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              Yes, Complete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
