@@ -155,7 +155,7 @@ export default function AssessmentDetailPage() {
       console.log("Loading survey template:", fileReference);
       
       // Make sure to use the correct path for the CSV file
-      const response = await fetch(`/uploads/surveys/${fileReference}`);
+      const response = await fetch(`/uploads/${fileReference}`);
       
       if (!response.ok) {
         console.error(`Failed to load survey file: ${response.status} ${response.statusText}`);
