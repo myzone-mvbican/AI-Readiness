@@ -415,6 +415,12 @@ export default function AssessmentDetailPage() {
     return Math.round((answeredCount / answers.length) * 100);
   };
   
+  // Check if all questions are answered (for Complete button)
+  const allQuestionsAnswered = () => {
+    if (!answers.length) return false;
+    return answers.every(a => a.a !== null);
+  };
+  
   // Get formatted date
   const getFormattedDate = (dateString: string) => {
     try {
@@ -729,9 +735,9 @@ export default function AssessmentDetailPage() {
                           Question {currentStep + 1} of {answers.length}
                         </h3>
                         
-                        {/* Display the question text with tooltip */}
+                        {/* Display the question text with description from CSV */}
                         <p className="text-lg mb-6">
-                          {assessmentQuestions[currentStep]?.text || `Question ${currentStep + 1}`}
+                          {surveyQuestions[currentStep]?.text || fallbackQuestions[currentStep]?.text || `Question ${currentStep + 1}`}
                         </p>
                         
                         <QuestionRating
@@ -739,7 +745,7 @@ export default function AssessmentDetailPage() {
                           value={answers[currentStep]?.a || null}
                           onChange={(value) => updateAnswer(currentStep, value)}
                           disabled={isSubmitting}
-                          questionDescription={assessmentQuestions[currentStep]?.description}
+                          questionDescription={surveyQuestions[currentStep]?.description || fallbackQuestions[currentStep]?.description}
                         />
                         
                         <div className="flex justify-between mt-6 pt-4 border-t">
