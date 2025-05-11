@@ -1,4 +1,12 @@
-import { pgTable, text, serial, timestamp, integer, boolean, uniqueIndex } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  timestamp,
+  integer,
+  boolean,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -25,8 +33,12 @@ export const users = pgTable("users", {
 
 export const userTeams = pgTable("user_teams", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  teamId: integer("team_id").notNull().references(() => teams.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  teamId: integer("team_id")
+    .notNull()
+    .references(() => teams.id),
   role: text("role").default("client").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -57,14 +69,16 @@ export const loginSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-export const updateUserSchema = createInsertSchema(users).pick({
-  name: true,
-  company: true,
-  employeeCount: true,
-  industry: true,
-  password: true,
-  googleId: true,
-}).partial();
+export const updateUserSchema = createInsertSchema(users)
+  .pick({
+    name: true,
+    company: true,
+    employeeCount: true,
+    industry: true,
+    password: true,
+    googleId: true,
+  })
+  .partial();
 
 // Team schemas
 export const insertTeamSchema = createInsertSchema(teams).pick({
@@ -118,7 +132,9 @@ export const surveys = pgTable("surveys", {
   title: text("title").notNull(),
   fileReference: text("file_reference").notNull(),
   questionsCount: integer("questions_count").notNull(),
-  authorId: integer("author_id").notNull().references(() => users.id),
+  authorId: integer("author_id")
+    .notNull()
+    .references(() => users.id),
   // Marked as deprecated - using survey_teams junction table instead
   // We keep it as a nullable field for backward compatibility
   teamId: integer("team_id").references(() => teams.id),
@@ -128,16 +144,24 @@ export const surveys = pgTable("surveys", {
 });
 
 // Survey-Teams junction table for many-to-many relationship
-export const surveyTeams = pgTable("survey_teams", {
-  id: serial("id").primaryKey(),
-  surveyId: integer("survey_id").notNull().references(() => surveys.id, { onDelete: 'cascade' }),
-  teamId: integer("team_id").notNull().references(() => teams.id, { onDelete: 'cascade' }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-}, (table) => {
-  return {
-    unq: uniqueIndex('survey_team_unq').on(table.surveyId, table.teamId),
-  };
-});
+export const surveyTeams = pgTable(
+  "survey_teams",
+  {
+    id: serial("id").primaryKey(),
+    surveyId: integer("survey_id")
+      .notNull()
+      .references(() => surveys.id, { onDelete: "cascade" }),
+    teamId: integer("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => {
+    return {
+      unq: uniqueIndex("survey_team_unq").on(table.surveyId, table.teamId),
+    };
+  },
+);
 
 // Survey-Teams schema
 export const insertSurveyTeamSchema = createInsertSchema(surveyTeams).pick({
@@ -150,35 +174,41 @@ export const surveyStatusSchema = z.enum(["draft", "public"]).default("draft");
 
 export const surveyVisibilitySchema = z.union([
   z.literal("global"),
-  z.array(z.string()).min(1)
+  z.array(z.string()).min(1),
 ]);
 
 // Survey schemas
-export const insertSurveySchema = createInsertSchema(surveys).pick({
-  title: true,
-  fileReference: true,
-  questionsCount: true,
-  authorId: true,
-  teamId: true,
-  status: true,
-}).partial({
-  teamId: true,
-  status: true,
-}).extend({
-  title: z.string().min(3, "Title must be at least 3 characters"),
-  status: surveyStatusSchema,
-});
+export const insertSurveySchema = createInsertSchema(surveys)
+  .pick({
+    title: true,
+    fileReference: true,
+    questionsCount: true,
+    authorId: true,
+    teamId: true,
+    status: true,
+  })
+  .partial({
+    teamId: true,
+    status: true,
+  })
+  .extend({
+    title: z.string().min(3, "Title must be at least 3 characters"),
+    status: surveyStatusSchema,
+  });
 
-export const updateSurveySchema = createInsertSchema(surveys).pick({
-  title: true,
-  fileReference: true,
-  questionsCount: true,
-  teamId: true,
-  status: true,
-}).partial().extend({
-  title: z.string().min(3, "Title must be at least 3 characters").optional(),
-  status: surveyStatusSchema.optional(),
-});
+export const updateSurveySchema = createInsertSchema(surveys)
+  .pick({
+    title: true,
+    fileReference: true,
+    questionsCount: true,
+    teamId: true,
+    status: true,
+  })
+  .partial()
+  .extend({
+    title: z.string().min(3, "Title must be at least 3 characters").optional(),
+    status: surveyStatusSchema.optional(),
+  });
 
 // Survey types
 export type Survey = typeof surveys.$inferSelect;
@@ -193,8 +223,12 @@ export type InsertSurveyTeam = z.infer<typeof insertSurveyTeamSchema>;
 export const assessments = pgTable("assessments", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  surveyTemplateId: integer("survey_template_id").notNull().references(() => surveys.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  surveyTemplateId: integer("survey_template_id")
+    .notNull()
+    .references(() => surveys.id),
   status: text("status").default("draft").notNull(),
   score: integer("score"),
   answers: text("answers").notNull(), // JSON string of answers array
@@ -203,36 +237,52 @@ export const assessments = pgTable("assessments", {
 });
 
 // Assessment validation schemas
-export const assessmentStatusSchema = z.enum(["draft", "in-progress", "completed"]).default("draft");
+export const assessmentStatusSchema = z
+  .enum(["draft", "in-progress", "completed"])
+  .default("draft");
 
 export const assessmentAnswerSchema = z.object({
-  q: z.string(), // question id
-  a: z.union([z.literal(-2), z.literal(-1), z.literal(0), z.literal(1), z.literal(2), z.null()]).optional(), // answer score
+  q: z.number(), // question id
+  a: z
+    .union([
+      z.literal(-2),
+      z.literal(-1),
+      z.literal(0),
+      z.literal(1),
+      z.literal(2),
+      z.null(),
+    ])
+    .optional(), // answer score
   r: z.string().optional(), // recommendation
 });
 
-export const insertAssessmentSchema = createInsertSchema(assessments).pick({
-  title: true,
-  userId: true,
-  surveyTemplateId: true,
-  status: true,
-}).extend({
-  status: assessmentStatusSchema,
-  answers: z.array(assessmentAnswerSchema),
-});
+export const insertAssessmentSchema = createInsertSchema(assessments)
+  .pick({
+    title: true,
+    userId: true,
+    surveyTemplateId: true,
+    status: true,
+  })
+  .extend({
+    status: assessmentStatusSchema,
+    answers: z.array(assessmentAnswerSchema),
+  });
 
-export const updateAssessmentSchema = createInsertSchema(assessments).pick({
-  title: true,
-  status: true,
-  score: true,
-}).partial().extend({
-  status: assessmentStatusSchema.optional(),
-  answers: z.array(assessmentAnswerSchema).optional(),
-});
+export const updateAssessmentSchema = createInsertSchema(assessments)
+  .pick({
+    title: true,
+    status: true,
+    score: true,
+  })
+  .partial()
+  .extend({
+    status: assessmentStatusSchema.optional(),
+    answers: z.array(assessmentAnswerSchema).optional(),
+  });
 
 // Assessment types
-export type Assessment = typeof assessments.$inferSelect & { 
-  answers: Array<z.infer<typeof assessmentAnswerSchema>> 
+export type Assessment = typeof assessments.$inferSelect & {
+  answers: Array<z.infer<typeof assessmentAnswerSchema>>;
 };
 export type InsertAssessment = z.infer<typeof insertAssessmentSchema>;
 export type UpdateAssessment = z.infer<typeof updateAssessmentSchema>;
