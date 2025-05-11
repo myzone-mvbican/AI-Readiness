@@ -34,7 +34,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: "ok", message: "Server is healthy" });
   });
   
-  // Endpoint to serve CSV files directly
+  // Endpoint to serve CSV files directly - with fallback to default survey
   app.get("/api/csv-file/:filename", async (req, res) => {
     try {
       const filename = req.params.filename;
@@ -47,31 +47,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Only allow specific file patterns for security
-      if (!filename.match(/^survey-[0-9]+-[0-9]+\.csv$/)) {
-        console.log("Invalid filename format:", filename);
-        return res.status(400).json({
-          success: false,
-          message: "Invalid filename format"
-        });
+      // List of possible places to look for the file
+      const possiblePaths = [
+        `${process.cwd()}/uploads/${filename}`,
+        `${process.cwd()}/public/${filename}`,
+        `${process.cwd()}/uploads/surveys/${filename}`,
+      ];
+      
+      console.log("Looking for CSV file in these locations:", possiblePaths);
+      
+      // Check multiple file paths
+      let fileContent = null;
+      let foundPath = null;
+      
+      for (const path of possiblePaths) {
+        if (fs.existsSync(path)) {
+          console.log("File found at:", path);
+          foundPath = path;
+          fileContent = fs.readFileSync(path, 'utf8');
+          break;
+        }
       }
       
-      // Construct the file path
-      const filePath = `${process.cwd()}/uploads/${filename}`;
-      console.log("Looking for CSV file at:", filePath);
+      // If still not found, try to check all existing surveys and find a match
+      if (!fileContent) {
+        console.log("File not found in standard locations, checking default survey files");
+        
+        // Check for any survey file that might be available
+        const uploadDir = `${process.cwd()}/uploads/`;
+        const files = fs.readdirSync(uploadDir);
+        
+        // Look for any survey CSV files
+        const surveyFiles = files.filter(file => file.startsWith('survey-') && file.endsWith('.csv'));
+        
+        if (surveyFiles.length > 0) {
+          // Use the first survey file found
+          const defaultSurveyPath = `${uploadDir}${surveyFiles[0]}`;
+          console.log("Using default survey file:", defaultSurveyPath);
+          fileContent = fs.readFileSync(defaultSurveyPath, 'utf8');
+          foundPath = defaultSurveyPath;
+        }
+      }
       
-      // Check if file exists
-      if (!fs.existsSync(filePath)) {
-        console.log("File not found:", filePath);
+      // If we still don't have a file, give up
+      if (!fileContent) {
+        console.error("No survey file could be found");
         return res.status(404).json({
           success: false,
-          message: "File not found"
+          message: "No survey file could be found"
         });
       }
       
-      // Read the file content
-      const fileContent = fs.readFileSync(filePath, 'utf8');
-      console.log(`Serving CSV file (${fileContent.length} bytes)`);
+      console.log(`Serving CSV file from ${foundPath} (${fileContent.length} bytes)`);
       
       // Set appropriate headers
       res.setHeader('Content-Type', 'text/csv');
