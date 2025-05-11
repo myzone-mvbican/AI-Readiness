@@ -49,18 +49,25 @@ interface SurveyCompletedProps {
   surveyQuestions: SurveyQuestion[];
 }
 
-export default function SurveyError({
+export default function SurveyCompleted({
   assessment,
   surveyQuestions,
-}: SurveyErrorProps) {
+}: SurveyCompletedProps) {
   const { answers = [] } = assessment;
 
-  // Function to prepare data for radar chart
-  const getRadarChartData = () => {
-    // Group questions by category
-    const categoryMap = new Map();
+  // Define radar chart data type
+  interface RadarChartData {
+    subject: string;
+    score: number;
+    fullMark: number;
+  }
 
-    surveyQuestions.forEach((question, index) => {
+  // Function to prepare data for radar chart
+  const getRadarChartData = (): RadarChartData[] => {
+    // Group questions by category
+    const categoryMap = new Map<string, number[]>();
+
+    surveyQuestions.forEach((question: SurveyQuestion, index: number) => {
       const category = question.category;
       if (!category) return;
 
@@ -69,7 +76,7 @@ export default function SurveyError({
       }
 
       // Add this question's index to the category
-      categoryMap.get(category).push(index);
+      categoryMap.get(category)?.push(index);
     });
 
     // Calculate average score for each category
@@ -77,13 +84,13 @@ export default function SurveyError({
       ([category, questionIndices]) => {
         // Get answers for this category's questions
         const categoryAnswers = questionIndices
-          .map((idx) => answers[idx])
-          .filter((a) => a && a.a !== null);
+          .map((idx: number) => answers[idx])
+          .filter((a: any) => a && a.a !== null);
 
         // Calculate average score
-        const sum = categoryAnswers.reduce((acc, ans) => {
+        const sum = categoryAnswers.reduce((acc: number, ans: any) => {
           // Convert from -2 to +2 scale to 0 to 10 scale
-          const score = (ans.a + 2) * 2.5;
+          const score = ((ans.a || 0) + 2) * 2.5;
           return acc + score;
         }, 0);
 
@@ -104,11 +111,12 @@ export default function SurveyError({
   };
 
   // Helper function to find question text by ID
-  const getQuestionTextById = (questionId: string) => {
-    // Convert questionId string to number
-    const qId = parseInt(questionId, 10);
+  const getQuestionTextById = (questionId: number | null | undefined): string => {
+    if (questionId === null || questionId === undefined) {
+      return `Unknown Question`;
+    }
     // Find the matching question by number
-    const question = surveyQuestions.find((q) => q.number === qId);
+    const question = surveyQuestions.find((q: SurveyQuestion) => q.number === questionId);
     return question?.text || `Question ${questionId}`;
   };
 
@@ -139,7 +147,7 @@ export default function SurveyError({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-x-3">
-                  <span>AI Readiness Score: {assessment.score}/100</span>
+                  <span>AI Readiness Score: {assessment.score ?? 0}/100</span>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <InfoIcon className="h-4 w-4" />
@@ -152,11 +160,11 @@ export default function SurveyError({
                 </CardTitle>
                 <CardDescription>
                   Based on your responses, your organization is at the
-                  {assessment.score >= 80
+                  {(assessment.score ?? 0) >= 80
                     ? " advanced "
-                    : assessment.score >= 60
+                    : (assessment.score ?? 0) >= 60
                       ? " intermediate "
-                      : assessment.score >= 40
+                      : (assessment.score ?? 0) >= 40
                         ? " developing "
                         : " beginning "}
                   stage of AI readiness.
@@ -164,7 +172,13 @@ export default function SurveyError({
               </CardHeader>
               <CardContent>
                 <div className="py-4">
-                  <ChartContainer className="h-[350px] w-full">
+                  <ChartContainer config={{
+                    // Basic config object needed for shadcn chart
+                    theme: {
+                      light: "light",
+                      dark: "dark",
+                    },
+                  }} className="h-[350px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <RadarChart outerRadius="80%" data={getRadarChartData()}>
                         <PolarGrid strokeDasharray="3 3" />
@@ -227,8 +241,8 @@ export default function SurveyError({
           </TabsContent>
           <TabsContent value="responses">
             <ScrollArea className="h-[500px] rounded-md border p-4">
-              {answers.map((answer, index) => (
-                <div key={answer.q}>
+              {answers.map((answer: any, index: number) => (
+                <div key={`answer-${index}`}>
                   <h3 className="text-sm md:text-normal font-medium">
                     Question {index + 1}: {getQuestionTextById(answer.q)}
                   </h3>
