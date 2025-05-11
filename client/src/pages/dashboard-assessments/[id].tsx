@@ -370,9 +370,29 @@ export default function AssessmentDetailPage() {
   // Handle saving progress
   const handleSave = () => {
     setIsSubmitting(true);
+    
+    // Ensure all answers have proper question numbers
+    const validatedAnswers = answers.map((answer, index) => {
+      // Make sure q field is always properly set and is a number
+      if (answer.q === null || answer.q === undefined) {
+        // If q is missing, get it from the survey questions
+        const questionNumber = surveyQuestions[index]?.number || index + 1;
+        return {
+          ...answer,
+          q: Number(questionNumber)
+        };
+      }
+      return {
+        ...answer,
+        q: typeof answer.q === 'string' ? Number(answer.q) : answer.q
+      };
+    });
+    
+    console.log('Saving answers with validated structure:', validatedAnswers);
+    
     updateAssessmentMutation.mutate({
       status: "in-progress",
-      answers,
+      answers: validatedAnswers,
     });
   };
 
@@ -395,9 +415,29 @@ export default function AssessmentDetailPage() {
   // Confirm assessment completion
   const confirmComplete = () => {
     setIsSubmitting(true);
+    
+    // Ensure all answers have proper question numbers before completing
+    const validatedAnswers = answers.map((answer, index) => {
+      // Make sure q field is always properly set and is a number
+      if (answer.q === null || answer.q === undefined) {
+        // If q is missing, get it from the survey questions
+        const questionNumber = surveyQuestions[index]?.number || index + 1;
+        return {
+          ...answer,
+          q: Number(questionNumber)
+        };
+      }
+      return {
+        ...answer,
+        q: typeof answer.q === 'string' ? Number(answer.q) : answer.q
+      };
+    });
+    
+    console.log('Completing assessment with validated structure:', validatedAnswers);
+    
     updateAssessmentMutation.mutate({
       status: "completed",
-      answers,
+      answers: validatedAnswers,
     });
   };
 
@@ -408,15 +448,18 @@ export default function AssessmentDetailPage() {
 
     const newAnswers = [...answers];
 
+    // Always ensure we have a proper question number
+    const questionNumber = surveyQuestions[index]?.number || index + 1;
+
     if (newAnswers[index]) {
       // Update existing answer
       newAnswers[index] = {
         ...newAnswers[index],
+        q: Number(questionNumber), // Always ensure q is set as a number
         a: value, // value can be -2, -1, 0, 1, or 2
       };
     } else {
       // Create new answer if it doesn't exist
-      const questionNumber = surveyQuestions[index]?.number || index + 1;
       newAnswers[index] = {
         q: Number(questionNumber), // Ensure the question ID is a number, not a string
         a: value,
