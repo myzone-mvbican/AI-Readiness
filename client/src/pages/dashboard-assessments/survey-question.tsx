@@ -8,7 +8,7 @@ export default function SurveyQuestion({
   questionDescription,
 }: {
   question: string;
-  value: number | "null";
+  value: number | null | undefined;
   onChange: (value: number) => void;
   disabled: boolean;
   questionDescription?: string;
@@ -22,16 +22,18 @@ export default function SurveyQuestion({
   ];
 
   // Properly handle the equality comparison for the zero value
-  const isOptionSelected = (optionValue: number) => { 
-    if (value === null) return false;
+  const isOptionSelected = (optionValue: number) => {
+    if (value === null || value === undefined) return false;
     return value === optionValue;
   };
 
   return (
-    <div className="">
+    <div className="survey-question">
       <div className="flex items-start mb-3">
         <div className="flex-1">
-          <h3 className="text-md font-medium">{question}</h3>
+          <h3 className="text-xs md:text-lg text-muted-foreground font-medium">
+            What is your level of agreement with this statement?
+          </h3>
           {questionDescription && (
             <div className="mt-2 text-sm text-muted-foreground bg-muted/30 p-3 rounded-md border border-muted">
               <p>{questionDescription}</p>
@@ -50,8 +52,8 @@ export default function SurveyQuestion({
             }}
             className={`px-4 py-2 rounded-md border ${
               isOptionSelected(option.value)
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-background hover:bg-accent hover:text-accent-foreground"
+                ? "bg-primary text-primary-foreground border-primary text-xs font-bold"
+                : "bg-background hover:bg-accent hover:text-accent-foreground text-xs font-bold"
             } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             {option.label}
