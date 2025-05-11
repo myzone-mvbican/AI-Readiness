@@ -75,6 +75,14 @@ export interface IStorage {
   removeSurveyTeam(surveyId: number, teamId: number): Promise<void>;
   updateSurveyTeams(surveyId: number, teamIds: number[]): Promise<void>;
 
+  // Assessment operations
+  getAssessmentsByUserId(userId: number): Promise<Assessment[]>;
+  getAssessmentById(id: number): Promise<Assessment | undefined>;
+  createAssessment(assessmentData: InsertAssessment): Promise<Assessment>; 
+  updateAssessment(id: number, assessmentData: UpdateAssessment): Promise<Assessment | undefined>;
+  deleteAssessment(id: number): Promise<boolean>;
+  getAssessmentWithSurveyInfo(id: number): Promise<(Assessment & { survey: { title: string } }) | undefined>;
+
   // Authentication operations
   generateToken(user: User): string;
   verifyToken(token: string): { userId: number } | null;

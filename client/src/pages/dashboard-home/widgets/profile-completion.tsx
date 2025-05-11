@@ -10,34 +10,45 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, ChevronRight, User2 } from "lucide-react";
+import { CheckCircle2, ChevronRight } from "lucide-react";
 
 export function ProfileCompletionCard() {
   const { user } = useAuth();
 
   // Calculate profile completeness
-  const { completionPercentage, completedFields, incompleteFields } = useMemo(() => {
-    if (!user) {
-      return { completionPercentage: 0, completedFields: [], incompleteFields: [] };
-    }
+  const { completionPercentage, completedFields, incompleteFields } =
+    useMemo(() => {
+      if (!user) {
+        return {
+          completionPercentage: 0,
+          completedFields: [],
+          incompleteFields: [],
+        };
+      }
 
-    const fieldsToCheck = [
-      { name: "company", value: user.company, label: "Company" },
-      { name: "industry", value: user.industry, label: "Industry" },
-      { name: "employeeCount", value: user.employeeCount, label: "Team Size" },
-      { name: "googleId", value: user.googleId, label: "Google Account" },
-    ];
+      const fieldsToCheck = [
+        { name: "company", value: user.company, label: "Company" },
+        { name: "industry", value: user.industry, label: "Industry" },
+        {
+          name: "employeeCount",
+          value: user.employeeCount,
+          label: "Team Size",
+        },
+        { name: "googleId", value: user.googleId, label: "Google Account" },
+      ];
 
-    const completed = fieldsToCheck.filter((field) => !!field.value);
-    const incomplete = fieldsToCheck.filter((field) => !field.value);
-    const percentage = Math.round((completed.length / fieldsToCheck.length) * 100);
+      const completed = fieldsToCheck.filter((field) => !!field.value);
+      const incomplete = fieldsToCheck.filter((field) => !field.value);
+      const percentage = Math.round(
+        (completed.length / fieldsToCheck.length) * 100,
+      );
 
-    return {
-      completionPercentage: percentage,
-      completedFields: completed,
-      incompleteFields: incomplete,
-    };
-  }, [user]);
+      return {
+        completionPercentage: percentage,
+        completedFields: completed,
+        incompleteFields: incomplete,
+      };
+    }, [user]);
 
   // If user is not logged in or data is not loaded yet
   if (!user) {
@@ -50,10 +61,10 @@ export function ProfileCompletionCard() {
       <Card className="col-span-1 overflow-hidden relative">
         <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium">
+          <CardTitle className="text-lg font-medium text-center">
             Profile Complete
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-center">
             Your profile information is fully up to date
           </CardDescription>
         </CardHeader>
@@ -68,8 +79,11 @@ export function ProfileCompletionCard() {
             <p className="text-sm text-muted-foreground mb-4">
               You're all set to get the most from your AI Readiness Dashboard.
             </p>
-            <Link href="/dashboard/settings" asChild>
-              <Button variant="outline" className="w-full flex items-center gap-1">
+            <Link href="/dashboard/account/settings" asChild>
+              <Button
+                variant="outline"
+                className="w-full flex items-center gap-1"
+              >
                 Edit Profile
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -107,17 +121,17 @@ export function ProfileCompletionCard() {
             <ul className="space-y-1">
               {incompleteFields.map((field) => (
                 <li key={field.name} className="text-sm flex items-center">
-                  <div className="h-4 w-4 flex items-center justify-center mr-2">⬜</div>
+                  <div className="h-4 w-4 flex items-center justify-center mr-2">
+                    ⬜
+                  </div>
                   {field.label}
                 </li>
               ))}
             </ul>
           </div>
 
-          <Link href="/dashboard/settings" asChild>
-            <Button className="w-full">
-              Complete Your Profile
-            </Button>
+          <Link href="/dashboard/account/settings" asChild>
+            <Button className="w-full">Complete Your Profile</Button>
           </Link>
         </div>
       </CardContent>

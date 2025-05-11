@@ -188,3 +188,52 @@ export type UpdateSurvey = z.infer<typeof updateSurveySchema>;
 // Survey-Team types
 export type SurveyTeam = typeof surveyTeams.$inferSelect;
 export type InsertSurveyTeam = z.infer<typeof insertSurveyTeamSchema>;
+
+// Assessment schema
+export const assessments = pgTable("assessments", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  surveyTemplateId: integer("survey_template_id").notNull().references(() => surveys.id),
+  status: text("status").default("draft").notNull(),
+  score: integer("score"),
+  answers: text("answers").notNull(), // JSON string of answers array
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Assessment validation schemas
+export const assessmentStatusSchema = z.enum(["draft", "in-progress", "completed"]).default("draft");
+
+export const assessmentAnswerSchema = z.object({
+  q: z.string(), // question id
+  a: z.union([z.literal(-2), z.literal(-1), z.literal(0), z.literal(1), z.literal(2), z.null()]).optional(), // answer score
+  r: z.string().optional(), // recommendation
+});
+
+export const insertAssessmentSchema = createInsertSchema(assessments).pick({
+  title: true,
+  userId: true,
+  surveyTemplateId: true,
+  status: true,
+}).extend({
+  status: assessmentStatusSchema,
+  answers: z.array(assessmentAnswerSchema),
+});
+
+export const updateAssessmentSchema = createInsertSchema(assessments).pick({
+  title: true,
+  status: true,
+  score: true,
+}).partial().extend({
+  status: assessmentStatusSchema.optional(),
+  answers: z.array(assessmentAnswerSchema).optional(),
+});
+
+// Assessment types
+export type Assessment = typeof assessments.$inferSelect & { 
+  answers: Array<z.infer<typeof assessmentAnswerSchema>> 
+};
+export type InsertAssessment = z.infer<typeof insertAssessmentSchema>;
+export type UpdateAssessment = z.infer<typeof updateAssessmentSchema>;
+export type AssessmentAnswer = z.infer<typeof assessmentAnswerSchema>;
