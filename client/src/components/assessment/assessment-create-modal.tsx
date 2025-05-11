@@ -68,8 +68,9 @@ export function AssessmentCreateModal() {
     const fetchSurveys = async () => {
       setIsSurveysLoading(true);
       try {
-        const res = await fetch('/api/surveys/0');
-        const data = await res.json();
+        // Use proper authentication by using apiRequest instead of fetch
+        const response = await apiRequest('GET', '/api/surveys/0');
+        const data = await response.json();
         
         if (data.success) {
           // Filter published surveys
@@ -79,6 +80,7 @@ export function AssessmentCreateModal() {
           
           setSurveys(filteredSurveys);
         } else {
+          console.error("Failed to load surveys:", data);
           toast({
             title: "Error",
             description: "Failed to load survey templates",
