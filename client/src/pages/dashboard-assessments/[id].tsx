@@ -170,15 +170,38 @@ export default function AssessmentDetailPage() {
           // Set the survey questions
           setSurveyQuestions(questions);
 
-          // If we have an answers array that doesn't match the questions length,
-          // initialize it with the correct number of questions
-          if (answers.length === 0 && questions.length > 0) {
-            const initialAnswers = questions.map((q) => ({
-              q: Number(q.number), // Store question number as a number type
-              a: null,
-            }));
-            setAnswers(initialAnswers);
-            console.log('Initialized answers with numbers:', initialAnswers);
+          // Initialize answers for new assessments or sync existing ones
+          if (questions.length > 0) {
+            if (answers.length === 0) {
+              // For new assessments, initialize empty answers
+              const initialAnswers = questions.map((q) => ({
+                q: Number(q.number), // Store question number as a number type
+                a: null,
+              }));
+              setAnswers(initialAnswers);
+              console.log('Initialized new answers with numbers:', initialAnswers);
+            } else {
+              // For existing assessments, ensure all questions have answers by merging
+              // Make a map of existing answers by question number
+              const answerMap = new Map();
+              answers.forEach(answer => {
+                if (answer.q !== null && answer.q !== undefined) {
+                  answerMap.set(Number(answer.q), answer.a);
+                }
+              });
+              
+              // Create complete answer list based on questions, using existing answers where available
+              const syncedAnswers = questions.map((q) => {
+                const questionNumber = Number(q.number);
+                return {
+                  q: questionNumber,
+                  a: answerMap.has(questionNumber) ? answerMap.get(questionNumber) : null,
+                };
+              });
+              
+              setAnswers(syncedAnswers);
+              console.log('Synced existing answers with question template:', syncedAnswers);
+            }
           }
 
           setIsLoadingQuestions(false);
@@ -219,13 +242,24 @@ export default function AssessmentDetailPage() {
     if (assessment) {
       // Load any existing saved answers from the assessment
       if (assessment.answers && assessment.answers.length > 0) {
-        // Convert any string question IDs to numbers
-        const fixedAnswers = assessment.answers.map(answer => ({
-          ...answer,
-          q: typeof answer.q === 'string' ? Number(answer.q) : answer.q
-        }));
+        // Convert any string question IDs to numbers and ensure proper structure
+        const fixedAnswers = assessment.answers.map(answer => {
+          // Handle null or undefined q values by using the index as a fallback
+          const questionId = answer.q !== null && answer.q !== undefined 
+            ? (typeof answer.q === 'string' ? Number(answer.q) : answer.q) 
+            : 0; // Default to 0 if missing
+          
+          return {
+            q: questionId,
+            a: answer.a
+          };
+        });
+        
+        console.log('Loaded answers from DB:', assessment.answers);
+        console.log('Fixed answers for state:', fixedAnswers);
+        
+        // Make sure to set the state
         setAnswers(fixedAnswers);
-        console.log('Loaded answers with numbers for question IDs:', fixedAnswers);
       }
 
       // Get survey template information
