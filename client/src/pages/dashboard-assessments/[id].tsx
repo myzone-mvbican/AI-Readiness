@@ -154,16 +154,40 @@ export default function AssessmentDetailPage() {
       setIsLoadingQuestions(true);
       console.log("Loading survey template:", fileReference);
       
-      // Make sure to use the correct path for the CSV file
-      const response = await fetch(`/uploads/${fileReference}`);
+      // Try different paths to find the CSV file
+      const paths = [
+        `/uploads/${fileReference}`,
+        fileReference.startsWith('/') ? fileReference : `/${fileReference}`, 
+        `/public/${fileReference}`,
+        `/uploads/surveys/${fileReference}`
+      ];
       
-      if (!response.ok) {
-        console.error(`Failed to load survey file: ${response.status} ${response.statusText}`);
-        throw new Error(`Failed to load survey file: ${response.statusText}`);
+      let response: Response | null = null;
+      let foundPath = '';
+      
+      // Try each path until we find one that works
+      for (const path of paths) {
+        console.log("Trying path:", path);
+        try {
+          const tempResponse = await fetch(path);
+          if (tempResponse.ok) {
+            response = tempResponse;
+            foundPath = path;
+            console.log("Found working path:", path);
+            break;
+          }
+        } catch (e) {
+          console.log("Path failed:", path);
+        }
+      }
+      
+      if (!response || !response.ok) {
+        console.error(`Failed to load survey file from any path`);
+        throw new Error(`Failed to load survey file: could not find the file at any expected location`);
       }
       
       const csvData = await response.text();
-      console.log("CSV data loaded, length:", csvData.length);
+      console.log(`CSV data loaded from ${foundPath}, length:`, csvData.length);
       
       // Parse CSV with PapaParse
       Papa.parse(csvData, {
@@ -245,12 +269,43 @@ export default function AssessmentDetailPage() {
   // Set answers from fetched data
   useEffect(() => {
     if (assessment) {
-      // Load survey questions from CSV file first
-      if (assessment.survey && assessment.survey.fileReference) {
-        console.log("Loading survey questions from:", assessment.survey.fileReference);
-        loadSurveyQuestions(assessment.survey.fileReference);
+      console.log("Assessment loaded:", assessment);
+      
+      // Get survey template information
+      if (assessment.surveyTemplateId) {
+        // Fetch the survey template details if not already provided
+        if (!assessment.survey || !assessment.survey.fileReference) {
+          console.log("Need to fetch survey template details for ID:", assessment.surveyTemplateId);
+          fetch(`/api/surveys/detail/${assessment.surveyTemplateId}`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json'
+            }
+          })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success && data.survey) {
+                console.log("Fetched survey template:", data.survey);
+                if (data.survey.fileReference) {
+                  console.log("Loading survey questions from:", data.survey.fileReference);
+                  loadSurveyQuestions(data.survey.fileReference);
+                } else {
+                  console.error("Fetched survey has no file reference:", data.survey);
+                }
+              } else {
+                console.error("Failed to fetch survey template:", data);
+              }
+            })
+            .catch(error => {
+              console.error("Error fetching survey template:", error);
+            });
+        } else {
+          // Use the file reference from the assessment.survey
+          console.log("Using survey file reference from assessment:", assessment.survey.fileReference);
+          loadSurveyQuestions(assessment.survey.fileReference);
+        }
       } else {
-        console.error("No survey file reference found:", assessment);
+        console.error("No survey template ID found in the assessment:", assessment);
       }
       
       // Initialize answers
