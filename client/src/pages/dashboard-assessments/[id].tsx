@@ -266,7 +266,7 @@ export default function AssessmentDetailPage() {
           if (answers.length === 0 && questions.length > 0) {
             console.log("Initializing answers array with", questions.length, "items");
             const initialAnswers = questions.map((q, index) => ({
-              q: q.text,
+              q: q.number.toString(), // Store question number/ID instead of full text
               a: null
             }));
             setAnswers(initialAnswers);
@@ -519,15 +519,24 @@ export default function AssessmentDetailPage() {
       console.log(`Updated answer: ${JSON.stringify(newAnswers[questionIndex])}`);
     } else {
       // Create new answer if it doesn't exist
-      const question = surveyQuestions[questionIndex]?.text || `Question ${questionIndex + 1}`;
+      const questionNumber = surveyQuestions[questionIndex]?.number || questionIndex + 1;
       newAnswers[questionIndex] = {
-        q: question,
+        q: questionNumber.toString(), // Store question number/ID instead of full text
         a: value
       };
       console.log(`Created new answer: ${JSON.stringify(newAnswers[questionIndex])}`);
     }
     
     setAnswers(newAnswers);
+  };
+  
+  // Helper function to find question text by ID
+  const getQuestionTextById = (questionId: string) => {
+    // Convert questionId string to number
+    const qId = parseInt(questionId, 10);
+    // Find the matching question by number
+    const question = surveyQuestions.find(q => q.number === qId);
+    return question?.text || `Question ${questionId}`;
   };
   
   // Calculate progress percentage based on the number of survey questions
@@ -651,12 +660,22 @@ export default function AssessmentDetailPage() {
     }
   };
   
-  if (isLoading) {
+  if (isFullyLoading) {
     return (
       <DashboardLayout title="Assessment">
         <div className="space-y-6">
           <Skeleton className="h-8 w-64" />
-          <Skeleton className="h-24 w-full" />
+          <div className="flex justify-center items-center p-10">
+            <div className="text-center">
+              <Loader2 className="h-12 w-12 animate-spin mb-4 mx-auto text-primary" />
+              <h3 className="text-lg font-medium mb-2">Loading assessment data...</h3>
+              <p className="text-muted-foreground">
+                {isLoading ? "Loading assessment..." : ""}
+                {isLoadingQuestions ? "Loading survey questions..." : ""}
+                {isLoadingAnswers ? "Loading your answers..." : ""}
+              </p>
+            </div>
+          </div>
           <Skeleton className="h-64 w-full" />
         </div>
       </DashboardLayout>
@@ -841,7 +860,7 @@ export default function AssessmentDetailPage() {
                       {answers.map((answer, index) => (
                         <div key={answer.q} className="py-4">
                           <h3 className="font-medium">
-                            Question {index + 1}: {surveyQuestions[index]?.text || answer.q || `Question ${index + 1}`}
+                            Question {index + 1}: {getQuestionTextById(answer.q)}
                           </h3>
                           <p className="mt-2">
                             Your answer: {
