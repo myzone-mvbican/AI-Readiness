@@ -204,69 +204,8 @@ export default function AssessmentDetailPage() {
     }
   };
   
-  // Using dummy questions as fallback only if CSV loading fails
-  const fallbackQuestions = [
-    {
-      text: "We have a clear AI strategy aligned with our business goals",
-      description: "A well-defined AI strategy helps prioritize initiatives and ensures resources are allocated efficiently toward business objectives."
-    },
-    {
-      text: "Our organization has invested in AI training for employees",
-      description: "Upskilling employees with AI knowledge creates internal champions and reduces resistance to adoption."
-    },
-    {
-      text: "We have implemented AI solutions that demonstrably improve our business processes",
-      description: "Successful AI implementations should show measurable improvements in efficiency, cost reduction, or new capabilities."
-    },
-    {
-      text: "Data governance practices in our organization support AI initiatives",
-      description: "Strong data governance ensures AI systems have access to high-quality, properly managed data sources."
-    },
-    {
-      text: "We have a pipeline to identify and prioritize AI use cases",
-      description: "A systematic approach to identifying use cases helps focus on high-value applications and prevents resource waste."
-    },
-    {
-      text: "Our organization has the necessary technical infrastructure for AI deployment",
-      description: "Adequate computing resources, data storage, and integration capabilities are essential for successful AI implementation."
-    },
-    {
-      text: "Our leadership team actively champions AI adoption",
-      description: "Executive sponsorship is critical for securing resources and driving organizational change toward AI adoption."
-    },
-    {
-      text: "We have an ethical framework for AI implementation",
-      description: "Ethical guidelines help ensure AI systems are developed responsibly and maintain stakeholder trust."
-    },
-    {
-      text: "We measure and track the ROI of our AI investments",
-      description: "Clear measurement frameworks help demonstrate value and guide future investment decisions."
-    },
-    {
-      text: "We engage with external AI partners and the wider AI ecosystem",
-      description: "External partnerships provide access to specialized expertise and help stay current with rapidly evolving AI technologies."
-    },
-    {
-      text: "We have a dedicated team focused on AI implementation",
-      description: "A specialized team can develop expertise and accelerate AI adoption across the organization."
-    },
-    {
-      text: "Our data infrastructure allows for real-time analytics and decision-making",
-      description: "Real-time capabilities enable more responsive business operations and improved customer experiences."
-    },
-    {
-      text: "We regularly review and update our AI governance policies",
-      description: "As AI technologies and regulations evolve, governance policies must be regularly updated to remain effective."
-    },
-    {
-      text: "We actively monitor for bias in our AI systems",
-      description: "Identifying and addressing bias is essential for fair, ethical AI systems that serve all stakeholders."
-    },
-    {
-      text: "We have mechanisms to explain AI decisions to stakeholders",
-      description: "Explainability builds trust and helps meet regulatory requirements for transparency."
-    }
-  ];
+  // No fallback questions - we'll only use real data from CSV
+  const fallbackQuestions: Array<{text: string, description: string}> = [];
   
   // Fetch assessment data
   const {
