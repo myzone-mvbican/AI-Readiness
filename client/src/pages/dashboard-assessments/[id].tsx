@@ -147,6 +147,7 @@ export default function AssessmentDetailPage() {
     category: string;
   }>>([]);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
+  const [isLoadingAnswers, setIsLoadingAnswers] = useState(false);
   
   // Load survey questions from CSV file reference
   const loadSurveyQuestions = async (fileReference: string) => {
@@ -309,9 +310,13 @@ export default function AssessmentDetailPage() {
   
   const assessment = data?.assessment;
   
+  // Combined loading state for all async operations
+  const isFullyLoading = isLoading || isLoadingQuestions || isLoadingAnswers;
+  
   // Set answers from fetched data
   useEffect(() => {
     if (assessment) {
+      setIsLoadingAnswers(true);
       console.log("Assessment loaded (full data):", JSON.stringify(assessment, null, 2));
       
       // Get survey template information
@@ -396,6 +401,9 @@ export default function AssessmentDetailPage() {
         setAnswers(parsedAnswers);
         console.log("Loaded answers:", parsedAnswers);
       }
+      
+      // Turn off loading state for answers
+      setIsLoadingAnswers(false);
     }
   }, [assessment]);
   
