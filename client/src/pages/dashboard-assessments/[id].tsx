@@ -84,6 +84,13 @@ function QuestionRating({
     { value: 2, label: "Strongly Agree" },
   ];
 
+  // Properly handle the equality comparison for the zero value
+  const isOptionSelected = (optionValue: number) => {
+    if (value === null) return false;
+    // Use strict equality to properly compare the value with 0
+    return value === optionValue;
+  };
+
   return (
     <div className="py-4">
       <div className="flex items-start mb-3">
@@ -111,7 +118,7 @@ function QuestionRating({
             disabled={disabled}
             onClick={() => onChange(option.value)}
             className={`px-4 py-2 rounded-md border ${
-              value === option.value
+              isOptionSelected(option.value)
                 ? "bg-primary text-primary-foreground border-primary"
                 : "bg-background hover:bg-accent hover:text-accent-foreground"
             } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
@@ -726,13 +733,27 @@ export default function AssessmentDetailPage() {
                   Save Progress
                 </Button>
                 
-                <Button 
-                  onClick={handleComplete}
-                  disabled={isSubmitting || progressPercentage < 100}
-                >
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Complete Assessment
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="inline-block">
+                        <Button 
+                          onClick={handleComplete}
+                          disabled={isSubmitting || progressPercentage < 100}
+                          className={(progressPercentage < 100) ? "opacity-50" : ""}
+                        >
+                          <CheckCircle2 className="mr-2 h-4 w-4" />
+                          Complete Assessment
+                        </Button>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="p-2">
+                      {progressPercentage < 100 
+                        ? "Please answer all questions to complete the assessment" 
+                        : "Complete assessment and view results"}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </CardFooter>
           )}
