@@ -1,43 +1,45 @@
 import React from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import {
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  ResponsiveContainer,
+  Tooltip as RechartsTooltip
+} from 'recharts';
 
 interface RadialChartProps {
   score: number;
 }
 
 export function RadialChart({ score }: RadialChartProps) {
+  // Sample data for radar chart
   const data = [
-    { name: 'Score', value: score },
-    { name: 'Remaining', value: 100 - score }
+    { category: 'Strategy', value: score, fullMark: 100 },
+    { category: 'Data', value: score - 10, fullMark: 100 },
+    { category: 'Technology', value: score - 5, fullMark: 100 },
+    { category: 'People', value: score + 5, fullMark: 100 },
+    { category: 'Process', value: score - 15, fullMark: 100 },
   ];
 
-  const COLORS = ['#10B981', '#E5E7EB'];
-
   return (
-    <div className="relative">
-      <ResponsiveContainer width="100%" height={300}>
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            innerRadius={60}
-            outerRadius={90}
-            startAngle={90}
-            endAngle={-270}
-            paddingAngle={0}
+    <div className="w-full h-[300px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
+          <PolarGrid />
+          <PolarAngleAxis dataKey="category" />
+          <PolarRadiusAxis domain={[0, 100]} />
+          <Radar
+            name="AI Readiness"
             dataKey="value"
-          >
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-        </PieChart>
+            stroke="#10B981"
+            fill="#10B981"
+            fillOpacity={0.5}
+          />
+          <RechartsTooltip />
+        </RadarChart>
       </ResponsiveContainer>
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-        <p className="text-4xl font-bold">{score}%</p>
-        <p className="text-sm text-muted-foreground">AI Readiness</p>
-      </div>
     </div>
   );
 }
