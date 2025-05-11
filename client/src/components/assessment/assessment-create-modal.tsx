@@ -44,6 +44,9 @@ interface Survey {
 }
 
 const createAssessmentFormSchema = z.object({
+  title: z.string()
+    .min(3, "Title must be at least 3 characters")
+    .max(100, "Title must be less than 100 characters"),
   surveyId: z.coerce.number({
     required_error: "Please select a survey template",
   }),
@@ -69,18 +72,17 @@ export function AssessmentCreateModal() {
       setIsSurveysLoading(true);
       try {
         // Use proper authentication by using apiRequest instead of fetch
-        const response = await apiRequest('GET', '/api/surveys/0');
+        const response = await apiRequest("GET", "/api/surveys/0");
         const data = await response.json();
-        
+
         if (data.success) {
           // Filter published surveys
-          const filteredSurveys = data.surveys.filter((survey: Survey) => 
-            survey.status === 'published'
+          const filteredSurveys = data.surveys.filter(
+            (survey: Survey) => survey.status === "public",
           );
-          
+
           setSurveys(filteredSurveys);
         } else {
-          console.error("Failed to load surveys:", data);
           toast({
             title: "Error",
             description: "Failed to load survey templates",
@@ -88,7 +90,6 @@ export function AssessmentCreateModal() {
           });
         }
       } catch (error) {
-        console.error("Error fetching surveys:", error);
         toast({
           title: "Error",
           description: "Failed to load survey templates",
@@ -108,37 +109,40 @@ export function AssessmentCreateModal() {
     setIsLoading(true);
 
     try {
-      const response = await apiRequest('POST', '/api/assessments', {
+      const response = await apiRequest("POST", "/api/assessments", {
+        title: values.title,
         surveyId: values.surveyId,
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to create assessment');
+        throw new Error(data.message || "Failed to create assessment");
       }
 
       // Invalidate assessments query to refresh the list
-      queryClient.invalidateQueries({ queryKey: ['/api/assessments'] });
-      
+      queryClient.invalidateQueries({ queryKey: ["/api/assessments"] });
+
       // Close the modal
       assessmentCreateModal.onClose();
-      
+
       // Reset the form
       form.reset();
-      
+
       // Navigate to the assessment page
       navigate(`/dashboard/assessments/${data.assessment.id}`);
-      
+
       toast({
         title: "Success",
         description: "Assessment created successfully",
       });
     } catch (error) {
-      console.error('Error creating assessment:', error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create assessment",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to create assessment",
         variant: "destructive",
       });
     } finally {
@@ -149,7 +153,10 @@ export function AssessmentCreateModal() {
   const availableSurveys = surveys.length > 0;
 
   return (
-    <Dialog open={assessmentCreateModal.isOpen} onOpenChange={assessmentCreateModal.onClose}>
+    <Dialog
+      open={assessmentCreateModal.isOpen}
+      onOpenChange={assessmentCreateModal.onClose}
+    >
       <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
           <DialogTitle>Start New Assessment</DialogTitle>
@@ -166,12 +173,37 @@ export function AssessmentCreateModal() {
         ) : !availableSurveys ? (
           <div className="py-6 text-center">
             <p className="text-muted-foreground">
-              No survey templates are available. Please contact your administrator.
+              No survey templates are available. Please contact your
+              administrator.
             </p>
           </div>
         ) : (
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-6 py-4"
+            >
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Assessment Title</FormLabel>
+                    <FormControl>
+                      <input
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder="Enter assessment title"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Give your assessment a descriptive title
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
               <FormField
                 control={form.control}
                 name="surveyId"
@@ -190,7 +222,10 @@ export function AssessmentCreateModal() {
                       </FormControl>
                       <SelectContent>
                         {surveys.map((survey) => (
-                          <SelectItem key={survey.id} value={survey.id.toString()}>
+                          <SelectItem
+                            key={survey.id}
+                            value={survey.id.toString()}
+                          >
                             {survey.title}
                           </SelectItem>
                         ))}
@@ -214,7 +249,9 @@ export function AssessmentCreateModal() {
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isLoading && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   Start Assessment
                 </Button>
               </DialogFooter>
