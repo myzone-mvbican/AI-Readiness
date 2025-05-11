@@ -1,12 +1,10 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { FilePlus, Loader2 } from "lucide-react";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 import {
   Dialog,
@@ -16,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -26,7 +24,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
 import {
   Select,
   SelectContent,
@@ -34,171 +31,155 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { useAssessmentCreateModal } from "@/hooks/use-assessment-create-modal";
 
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-
-interface SurveyTemplate {
+interface Survey {
   id: number;
   title: string;
-  questionsCount: number;
+  description: string;
   status: string;
+  version: string;
 }
 
-interface SurveysResponse {
-  success: boolean;
-  surveys: SurveyTemplate[];
-}
-
-interface CreateAssessmentResponse {
-  success: boolean;
-  assessment: {
-    id: number;
-    title: string;
-  };
-}
-
-const formSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
-  surveyTemplateId: z.string().refine((val) => !isNaN(parseInt(val)), {
-    message: "Please select a survey template",
+const createAssessmentFormSchema = z.object({
+  surveyId: z.coerce.number({
+    required_error: "Please select a survey template",
   }),
 });
 
-interface AssessmentCreateModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
+type CreateAssessmentFormValues = z.infer<typeof createAssessmentFormSchema>;
 
-export function AssessmentCreateModal({
-  open,
-  onOpenChange,
-}: AssessmentCreateModalProps) {
-  const [, navigate] = useLocation();
+export function AssessmentCreateModal() {
+  const assessmentCreateModal = useAssessmentCreateModal();
+  const [isLoading, setIsLoading] = useState(false);
+  const [surveys, setSurveys] = useState<Survey[]>([]);
+  const [isSurveysLoading, setIsSurveysLoading] = useState(true);
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [, navigate] = useLocation();
+  const queryClient = useQueryClient();
 
-  // Fetch available survey templates for public (global) surveys
-  const { data: surveysData, isLoading: isLoadingSurveys } =
-    useQuery<SurveysResponse>({
-      queryKey: ["/api/surveys", 0], // Using 0 to fetch global surveys
-      staleTime: 60 * 1000, // 1 minute
-      enabled: open, // Only fetch when modal is open
-    });
-
-  // Only show public surveys as templates
-  const availableSurveys =
-    surveysData?.surveys.filter((survey) => survey.status === "public") || [];
-
-  // If there's only one survey and the modal is open, auto-create the assessment with that survey
-  useEffect(() => {
-    if (open && !isLoadingSurveys && availableSurveys.length === 1) {
-      // Auto-create assessment with the single available survey
-      const title = `${availableSurveys[0].title} - ${new Date().toLocaleDateString()}`;
-      handleAutoCreate(availableSurveys[0].id.toString(), title);
-    }
-  }, [open, isLoadingSurveys, availableSurveys.length]);
-
-  // Initialize form
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: "",
-      surveyTemplateId: "",
-    },
+  const form = useForm<CreateAssessmentFormValues>({
+    resolver: zodResolver(createAssessmentFormSchema),
   });
 
-  // Create assessment mutation
-  const createAssessmentMutation = useMutation<
-    CreateAssessmentResponse,
-    Error,
-    z.infer<typeof formSchema>
-  >({
-    mutationFn: async (data) => {
-      const response = await apiRequest("POST", "/api/assessments", {
-        title: data.title,
-        surveyTemplateId: parseInt(data.surveyTemplateId, 10),
+  useEffect(() => {
+    const fetchSurveys = async () => {
+      setIsSurveysLoading(true);
+      try {
+        const res = await fetch('/api/surveys/0');
+        const data = await res.json();
+        
+        if (data.success) {
+          // Filter published surveys
+          const filteredSurveys = data.surveys.filter((survey: Survey) => 
+            survey.status === 'published'
+          );
+          
+          setSurveys(filteredSurveys);
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to load survey templates",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching surveys:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load survey templates",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSurveysLoading(false);
+      }
+    };
+
+    if (assessmentCreateModal.isOpen) {
+      fetchSurveys();
+    }
+  }, [assessmentCreateModal.isOpen, toast]);
+
+  const onSubmit = async (values: CreateAssessmentFormValues) => {
+    setIsLoading(true);
+
+    try {
+      const response = await apiRequest('POST', '/api/assessments', {
+        surveyId: values.surveyId,
       });
-      return response.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Assessment created",
-        description: "Your new assessment has been created successfully.",
-      });
-      
-      // Invalidate assessments cache
-      queryClient.invalidateQueries({ queryKey: ["/api/assessments"] });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to create assessment');
+      }
+
+      // Invalidate assessments query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['/api/assessments'] });
       
       // Close the modal
-      onOpenChange(false);
+      assessmentCreateModal.onClose();
       
-      // Navigate to the assessment
+      // Reset the form
+      form.reset();
+      
+      // Navigate to the assessment page
       navigate(`/dashboard/assessments/${data.assessment.id}`);
-    },
-    onError: (error) => {
+      
       toast({
-        title: "Error creating assessment",
-        description: error.message || "Failed to create assessment. Please try again.",
+        title: "Success",
+        description: "Assessment created successfully",
+      });
+    } catch (error) {
+      console.error('Error creating assessment:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create assessment",
         variant: "destructive",
       });
-      setIsSubmitting(false);
-    },
-  });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  // Handle auto-create for single survey scenario
-  async function handleAutoCreate(surveyTemplateId: string, title: string) {
-    setIsSubmitting(true);
-    createAssessmentMutation.mutate({ surveyTemplateId, title });
-  }
-
-  // Handle form submission
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSubmitting(true);
-    createAssessmentMutation.mutate(values);
-  }
+  const availableSurveys = surveys.length > 0;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={assessmentCreateModal.isOpen} onOpenChange={assessmentCreateModal.onClose}>
       <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center">
-            <FilePlus className="mr-2 h-5 w-5" />
-            Create New Assessment
-          </DialogTitle>
+          <DialogTitle>Start New Assessment</DialogTitle>
           <DialogDescription>
-            Start a new AI readiness assessment based on a survey template.
+            Choose a survey template to begin your AI readiness assessment.
           </DialogDescription>
         </DialogHeader>
 
-        {isLoadingSurveys ? (
+        {isSurveysLoading ? (
           <div className="flex justify-center items-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <span className="ml-2">Loading survey templates...</span>
           </div>
-        ) : availableSurveys.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <p>No survey templates available.</p>
-            <p className="mt-2">
-              Please contact an administrator to create survey templates.
+        ) : !availableSurveys ? (
+          <div className="py-6 text-center">
+            <p className="text-muted-foreground">
+              No survey templates are available. Please contact your administrator.
             </p>
           </div>
-        ) : availableSurveys.length > 1 ? (
+        ) : (
           <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-6"
-            >
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
               <FormField
                 control={form.control}
-                name="surveyTemplateId"
+                name="surveyId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Survey Template</FormLabel>
                     <Select
-                      disabled={isSubmitting}
+                      disabled={isLoading}
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      defaultValue={field.value?.toString()}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -206,39 +187,15 @@ export function AssessmentCreateModal({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {availableSurveys.map((survey) => (
-                          <SelectItem
-                            key={survey.id}
-                            value={survey.id.toString()}
-                          >
-                            {survey.title} ({survey.questionsCount} questions)
+                        {surveys.map((survey) => (
+                          <SelectItem key={survey.id} value={survey.id.toString()}>
+                            {survey.title}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      Choose the survey template for this assessment
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Assessment Title</FormLabel>
-                    <FormControl>
-                      <Input
-                        disabled={isSubmitting}
-                        placeholder="e.g., Q2 2025 AI Readiness Assessment"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Give your assessment a descriptive title
+                      Select the assessment template you want to complete
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -247,22 +204,20 @@ export function AssessmentCreateModal({
 
               <DialogFooter>
                 <Button
-                  type="submit"
-                  disabled={isSubmitting}
+                  type="button"
+                  variant="outline"
+                  onClick={assessmentCreateModal.onClose}
+                  disabled={isLoading}
                 >
-                  {isSubmitting && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  Create Assessment
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Start Assessment
                 </Button>
               </DialogFooter>
             </form>
           </Form>
-        ) : (
-          <div className="flex justify-center items-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="ml-2">Creating assessment...</span>
-          </div>
         )}
       </DialogContent>
     </Dialog>

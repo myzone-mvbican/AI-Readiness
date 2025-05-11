@@ -82,8 +82,9 @@ function App() {
           <GoogleAuthProvider>
             <AuthProvider>
               <Toaster />
-              <AssessmentCreateModalProvider />
-              <Router />
+              <AssessmentCreateModalProvider>
+                <Router />
+              </AssessmentCreateModalProvider>
             </AuthProvider>
           </GoogleAuthProvider>
         </TooltipProvider>
