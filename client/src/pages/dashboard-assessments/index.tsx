@@ -2,12 +2,12 @@ import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Clipboard, 
-  PlusCircle, 
-  Search, 
+import {
+  Clipboard,
+  PlusCircle,
+  Search,
   Loader2,
-  FileBarChart2
+  FileBarChart2,
 } from "lucide-react";
 import { useAssessmentCreateModal } from "@/hooks/use-assessment-create-modal";
 import {
@@ -35,13 +35,13 @@ import { getColumns } from "./columns";
 
 export default function AssessmentsPage() {
   const assessmentCreateModal = useAssessmentCreateModal();
-  
+
   // State for sorting and filtering
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [globalFilter, setGlobalFilter] = useState("");
-  
+
   // Fetch assessments from the API
   const { data, isLoading, error } = useQuery<AssessmentsResponse>({
     queryKey: ["/api/assessments"],
@@ -90,8 +90,8 @@ export default function AssessmentsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 space-y-3">
           <div className="col-span-1">
             <div className="col-span-1 flex items-center space-x-2">
-              <FileBarChart2 className="h-6 w-6 text-blue-500" />
-              <h2 className="text-xl font-semibold dark:text-white">
+              <FileBarChart2 className="h-6 w-6 text-foreground" />
+              <h2 className="text-xl text-foreground font-semibold">
                 Your Assessments
               </h2>
             </div>
@@ -102,7 +102,7 @@ export default function AssessmentsPage() {
           <div className="col-span-1 flex justify-end">
             <Button onClick={assessmentCreateModal.onOpen}>
               <PlusCircle className="mr-2 h-4 w-4" />
-              New Assessment
+              Start New Assessment
             </Button>
           </div>
         </div>

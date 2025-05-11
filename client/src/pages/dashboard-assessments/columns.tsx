@@ -14,7 +14,8 @@ interface GetColumnsProps {
 const formatDate = (dateString: string | Date | null) => {
   if (!dateString) return "-";
   try {
-    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    const date =
+      typeof dateString === "string" ? new Date(dateString) : dateString;
     return format(date, "MMM d, yyyy");
   } catch (e) {
     return "Invalid date";
@@ -27,54 +28,54 @@ const formatScore = (score: number | null) => {
   return `${score}/100`;
 };
 
-// Format status text
-const formatStatus = (status: string) => {
-  switch (status.toLowerCase()) {
-    case "completed":
-      return "Completed";
-    case "in-progress":
-      return "In Progress";
-    case "draft":
-      return "Draft";
-    default:
-      return status;
-  }
-};
-
 // Status badge component
 const StatusBadge = ({ status }: { status: string }) => {
   switch (status.toLowerCase()) {
     case "completed":
       return (
-        <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300 flex items-center gap-1">
+        <Badge
+          variant="outline"
+          className="bg-green-100 text-green-800 border-green-300 flex items-center gap-1"
+        >
           <CheckCircle className="h-3 w-3" />
           Completed
         </Badge>
       );
     case "in-progress":
       return (
-        <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300 flex items-center gap-1">
+        <Badge
+          variant="outline"
+          className="bg-blue-100 text-blue-800 border-blue-300 flex items-center gap-1"
+        >
           <Clock className="h-3 w-3" />
           In Progress
         </Badge>
       );
     case "draft":
       return (
-        <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-300 flex items-center gap-1">
+        <Badge
+          variant="outline"
+          className="bg-gray-100 text-gray-800 border-gray-300 flex items-center gap-1"
+        >
           <Edit3 className="h-3 w-3" />
           Draft
         </Badge>
       );
     default:
       return (
-        <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-300">
+        <Badge
+          variant="outline"
+          className="bg-gray-100 text-gray-800 border-gray-300"
+        >
           {status}
         </Badge>
       );
   }
 };
 
-export function getColumns({ onViewAssessment }: GetColumnsProps = {}): ColumnDef<Assessment>[] {
+export function getColumns({
+  onViewAssessment,
+}: GetColumnsProps = {}): ColumnDef<Assessment>[] {
   return [
     {
       accessorKey: "title",
@@ -91,11 +92,7 @@ export function getColumns({ onViewAssessment }: GetColumnsProps = {}): ColumnDe
         );
       },
       cell: ({ row }) => {
-        return (
-          <div className="font-medium">
-            {row.original.title}
-          </div>
-        );
+        return <div className="p-2 dark:text-white">{row.original.title}</div>;
       },
     },
     {
@@ -115,7 +112,7 @@ export function getColumns({ onViewAssessment }: GetColumnsProps = {}): ColumnDe
       cell: ({ row }) => {
         // Access the survey template ID
         const surveyId = row.original.surveyTemplateId || "-";
-        return <div>{surveyId}</div>;
+        return <div className="text-muted-foreground">{surveyId}</div>;
       },
     },
     {
@@ -130,7 +127,13 @@ export function getColumns({ onViewAssessment }: GetColumnsProps = {}): ColumnDe
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
-      cell: ({ row }) => formatDate(row.original.createdAt),
+      cell: ({ row }) => {
+        return (
+          <div className="text-muted-foreground">
+            {formatDate(row.original.createdAt)}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "status",
@@ -161,20 +164,29 @@ export function getColumns({ onViewAssessment }: GetColumnsProps = {}): ColumnDe
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
-      cell: ({ row }) => formatScore(row.original.score),
+      cell: ({ row }) => {
+        return (
+          <div className="text-muted-foreground">
+            {formatScore(row.original.score)}
+          </div>
+        );
+      },
     },
     {
       id: "actions",
       header: () => <div className="text-right">Actions</div>,
       cell: ({ row }) => {
         const assessment = row.original;
-        
+
         return (
-          <div className="flex justify-end">
+          <div className="flex justify-end p-1">
             <Link href={`/dashboard/assessments/${assessment.id}`}>
-              <Button variant="outline" size="sm" className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="flex items-center gap-1"
+              >
                 <Eye className="h-3.5 w-3.5" />
-                View
               </Button>
             </Link>
           </div>

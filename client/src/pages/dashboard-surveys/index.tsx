@@ -37,7 +37,7 @@ export default function AdminSurveysPage() {
           <div className="col-span-1">
             <div className="col-span-1 flex items-center space-x-2">
               <ShieldCheck className="h-6 w-6 text-blue-500" />
-              <h2 className="text-xl font-semibold dark:text-white">
+              <h2 className="text-xl text-foreground font-semibold">
                 Manage Surveys
               </h2>
             </div>

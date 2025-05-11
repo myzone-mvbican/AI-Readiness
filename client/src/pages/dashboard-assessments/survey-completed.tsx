@@ -6,7 +6,6 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
-  Tooltip as RechartsTooltip,
   ResponsiveContainer,
 } from "recharts";
 import {
@@ -31,7 +30,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 
-interface SurveyErrorProps {
+interface SurveyQuestion {
+  number: number;
+  category: string;
+  text: string;
+  detail?: string;
+}
+
+interface SurveyCompletedProps {
   assessment: {
     title: string;
     score: number | null;
@@ -40,9 +46,7 @@ interface SurveyErrorProps {
       a: 0 | 2 | 1 | -1 | -2 | null | undefined;
     }>;
   };
-  surveyQuestions: Array<{
-    category: string;
-  }>;
+  surveyQuestions: SurveyQuestion[];
 }
 
 export default function SurveyError({
@@ -160,7 +164,7 @@ export default function SurveyError({
               </CardHeader>
               <CardContent>
                 <div className="py-4">
-                  <div className="h-[350px] w-full">
+                  <ChartContainer className="h-[350px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <RadarChart outerRadius="80%" data={getRadarChartData()}>
                         <PolarGrid strokeDasharray="3 3" />
@@ -182,12 +186,41 @@ export default function SurveyError({
                           fill="var(--primary)"
                           fillOpacity={0.5}
                         />
-                        <RechartsTooltip
-                          formatter={(value) => [`${value}/10`, "Score"]}
+                        <ChartTooltip
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              const data = payload[0];
+                              return (
+                                <ChartTooltipContent
+                                  className="rounded-lg border bg-background p-2 shadow-sm"
+                                >
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div className="flex flex-col">
+                                      <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                        Category
+                                      </span>
+                                      <span className="font-bold">
+                                        {data.payload.subject}
+                                      </span>
+                                    </div>
+                                    <div className="flex flex-col">
+                                      <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                        Score
+                                      </span>
+                                      <span className="font-bold">
+                                        {data.value}/10
+                                      </span>
+                                    </div>
+                                  </div>
+                                </ChartTooltipContent>
+                              );
+                            }
+                            return null;
+                          }}
                         />
                       </RadarChart>
                     </ResponsiveContainer>
-                  </div>
+                  </ChartContainer>
                 </div>
               </CardContent>
             </Card>
