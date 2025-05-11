@@ -102,7 +102,15 @@ export const getQueryFn: <T>(options: {
     }
 
     try {
-      const res = await fetch(queryKey[0] as string, {
+      // Build the URL - if queryKey has more than one element, construct the URL with parameters
+      let url = queryKey[0] as string;
+      
+      // If second element is a number or string, append it to the URL
+      if (queryKey.length > 1 && (typeof queryKey[1] === 'number' || typeof queryKey[1] === 'string')) {
+        url = `${url}/${queryKey[1]}`;
+      }
+      
+      const res = await fetch(url, {
         credentials: "include",
         headers: requestHeaders,
       });
