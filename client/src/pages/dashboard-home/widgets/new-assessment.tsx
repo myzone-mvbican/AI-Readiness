@@ -1,4 +1,3 @@
-import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,8 +7,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PlusCircle } from "lucide-react";
+import { useAssessmentCreateModal } from "@/hooks/use-assessment-create-modal";
 
 export function NewAssessmentCard() {
+  const assessmentCreateModal = useAssessmentCreateModal();
+  
   return (
     <Card className="col-span-1">
       <CardHeader className="pb-2">
@@ -29,9 +31,12 @@ export function NewAssessmentCard() {
             Complete the latest assessment to measure your organization's AI
             readiness (and compare with industry averages - soon).
           </p>
-          <Link href="/dashboard/assessments/new" asChild>
-            <Button className="w-full">Start New Assessment</Button>
-          </Link>
+          <Button 
+            className="w-full"
+            onClick={assessmentCreateModal.onOpen}
+          >
+            Start New Assessment
+          </Button>
         </div>
       </CardContent>
     </Card>

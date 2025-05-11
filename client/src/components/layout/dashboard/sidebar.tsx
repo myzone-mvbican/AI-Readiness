@@ -7,6 +7,7 @@ import { NavUser } from "./nav-user";
 import { TeamSwitcher } from "./team-switcher";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useAssessmentCreateModal } from "@/hooks/use-assessment-create-modal";
 import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
@@ -39,6 +40,7 @@ const defaultUser = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [location] = useLocation();
   const { user } = useAuth();
+  const assessmentCreateModal = useAssessmentCreateModal();
 
   // Get the currently selected team from localStorage
   const [selectedTeam, setSelectedTeam] = React.useState<{
@@ -171,12 +173,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton
               className="bg-blue-500 text-white hover:bg-blue-600 hover:text-white"
               tooltip="Start New Assessment"
-              asChild
+              onClick={assessmentCreateModal.onOpen}
             >
-              <Link href="/dashboard/assessments/new">
-                <PlusCircle />
-                <span>Start New Assessment</span>
-              </Link>
+              <PlusCircle />
+              <span>Start New Assessment</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
