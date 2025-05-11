@@ -1,5 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { ChevronUp, ChevronDown, MoreHorizontal, Eye, CheckCircle, Clock, Edit3 } from "lucide-react";
+import { ArrowUpDown, Eye, CheckCircle, Clock, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -83,14 +83,10 @@ export function getColumns({ onViewAssessment }: GetColumnsProps = {}): ColumnDe
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="p-0 hover:bg-transparent"
+            className="-ml-2"
           >
             Assessment Name
-            {column.getIsSorted() === "asc" ? (
-              <ChevronUp className="ml-2 h-4 w-4" />
-            ) : column.getIsSorted() === "desc" ? (
-              <ChevronDown className="ml-2 h-4 w-4" />
-            ) : null}
+            <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         );
       },
@@ -109,14 +105,10 @@ export function getColumns({ onViewAssessment }: GetColumnsProps = {}): ColumnDe
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="p-0 hover:bg-transparent"
+            className="-ml-4"
           >
             Survey ID
-            {column.getIsSorted() === "asc" ? (
-              <ChevronUp className="ml-2 h-4 w-4" />
-            ) : column.getIsSorted() === "desc" ? (
-              <ChevronDown className="ml-2 h-4 w-4" />
-            ) : null}
+            <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         );
       },
@@ -132,14 +124,10 @@ export function getColumns({ onViewAssessment }: GetColumnsProps = {}): ColumnDe
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="p-0 hover:bg-transparent"
+          className="-ml-4"
         >
           Date Created
-          {column.getIsSorted() === "asc" ? (
-            <ChevronUp className="ml-2 h-4 w-4" />
-          ) : column.getIsSorted() === "desc" ? (
-            <ChevronDown className="ml-2 h-4 w-4" />
-          ) : null}
+          <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
       cell: ({ row }) => formatDate(row.original.createdAt),
@@ -150,14 +138,10 @@ export function getColumns({ onViewAssessment }: GetColumnsProps = {}): ColumnDe
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="p-0 hover:bg-transparent"
+          className="-ml-4"
         >
           Status
-          {column.getIsSorted() === "asc" ? (
-            <ChevronUp className="ml-2 h-4 w-4" />
-          ) : column.getIsSorted() === "desc" ? (
-            <ChevronDown className="ml-2 h-4 w-4" />
-          ) : null}
+          <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
@@ -171,14 +155,10 @@ export function getColumns({ onViewAssessment }: GetColumnsProps = {}): ColumnDe
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="p-0 hover:bg-transparent"
+          className="-ml-4"
         >
           Score
-          {column.getIsSorted() === "asc" ? (
-            <ChevronUp className="ml-2 h-4 w-4" />
-          ) : column.getIsSorted() === "desc" ? (
-            <ChevronDown className="ml-2 h-4 w-4" />
-          ) : null}
+          <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
       cell: ({ row }) => formatScore(row.original.score),
