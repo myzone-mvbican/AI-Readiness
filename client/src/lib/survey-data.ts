@@ -1,5 +1,38 @@
-import { SurveyQuestion, SurveySection } from "@/schemas/survey-schema";
+import { SurveyQuestion as SurveyQuestionType, SurveySection } from "@/schemas/survey-schema";
+
+// Re-export the type
+export type SurveyQuestion = SurveyQuestionType;
 import Papa from "papaparse";
+
+// Global cache for survey questions to share between components
+let surveyQuestionsCache: SurveyQuestion[] = [];
+
+export const setSurveyQuestionsCache = (questions: SurveyQuestion[]) => {
+  surveyQuestionsCache = questions;
+};
+
+export const getSurveyQuestionsCache = () => {
+  return surveyQuestionsCache;
+};
+
+// Get question text by ID
+export const getQuestionTextById = (questionId: string): string => {
+  if (!questionId) return "Unknown question";
+  
+  // Try to parse the question ID as a number
+  const questionNumber = parseInt(questionId, 10);
+  
+  // If it's a number, find the question by its number
+  if (!isNaN(questionNumber)) {
+    const question = surveyQuestionsCache.find(q => q.number === questionNumber);
+    if (question) {
+      return question.question;
+    }
+  }
+  
+  // If not found by number or the ID isn't a number, return the ID as fallback
+  return `Question ${questionId}`;
+};
 
 // Function to parse CSV data using PapaParse
 export const parseCSV = (csvData: string): SurveyQuestion[] => {
