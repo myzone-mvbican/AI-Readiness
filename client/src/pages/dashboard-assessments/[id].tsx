@@ -46,16 +46,26 @@ interface UpdateAssessmentResponse {
 /**
  * Component for rating a survey question
  */
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
+import { HelpCircle } from "lucide-react";
+
 function QuestionRating({ 
   question, 
   value, 
   onChange, 
-  disabled 
+  disabled,
+  questionDescription
 }: { 
   question: string; 
   value: number | null; 
   onChange: (value: number) => void;
   disabled: boolean;
+  questionDescription?: string;
 }) {
   const options = [
     { value: -2, label: "Strongly Disagree" },
@@ -67,7 +77,23 @@ function QuestionRating({
 
   return (
     <div className="py-4">
-      <h3 className="text-md font-medium mb-3">{question}</h3>
+      <div className="flex items-start mb-3">
+        <h3 className="text-md font-medium">{question}</h3>
+        {questionDescription && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="ml-2 text-muted-foreground hover:text-foreground">
+                  <HelpCircle size={16} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-md p-4">
+                <p className="text-sm">{questionDescription}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => (
           <button
@@ -100,19 +126,69 @@ export default function AssessmentDetailPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
   
-  // Dummy question text mapping
+  // Questions text mapping with descriptions for tooltips
   // In a real application, this would come from your survey template CSV or database
-  const dummyQuestions = [
-    "We have a clear AI strategy aligned with our business goals",
-    "Our organization has invested in AI training for employees",
-    "We have implemented AI solutions that demonstrably improve our business processes",
-    "Data governance practices in our organization support AI initiatives",
-    "We have a pipeline to identify and prioritize AI use cases",
-    "Our organization has the necessary technical infrastructure for AI deployment",
-    "Our leadership team actively champions AI adoption",
-    "We have an ethical framework for AI implementation",
-    "We measure and track the ROI of our AI investments",
-    "We engage with external AI partners and the wider AI ecosystem"
+  const assessmentQuestions = [
+    {
+      text: "We have a clear AI strategy aligned with our business goals",
+      description: "A well-defined AI strategy helps prioritize initiatives and ensures resources are allocated efficiently toward business objectives."
+    },
+    {
+      text: "Our organization has invested in AI training for employees",
+      description: "Upskilling employees with AI knowledge creates internal champions and reduces resistance to adoption."
+    },
+    {
+      text: "We have implemented AI solutions that demonstrably improve our business processes",
+      description: "Successful AI implementations should show measurable improvements in efficiency, cost reduction, or new capabilities."
+    },
+    {
+      text: "Data governance practices in our organization support AI initiatives",
+      description: "Strong data governance ensures AI systems have access to high-quality, properly managed data sources."
+    },
+    {
+      text: "We have a pipeline to identify and prioritize AI use cases",
+      description: "A systematic approach to identifying use cases helps focus on high-value applications and prevents resource waste."
+    },
+    {
+      text: "Our organization has the necessary technical infrastructure for AI deployment",
+      description: "Adequate computing resources, data storage, and integration capabilities are essential for successful AI implementation."
+    },
+    {
+      text: "Our leadership team actively champions AI adoption",
+      description: "Executive sponsorship is critical for securing resources and driving organizational change toward AI adoption."
+    },
+    {
+      text: "We have an ethical framework for AI implementation",
+      description: "Ethical guidelines help ensure AI systems are developed responsibly and maintain stakeholder trust."
+    },
+    {
+      text: "We measure and track the ROI of our AI investments",
+      description: "Clear measurement frameworks help demonstrate value and guide future investment decisions."
+    },
+    {
+      text: "We engage with external AI partners and the wider AI ecosystem",
+      description: "External partnerships provide access to specialized expertise and help stay current with rapidly evolving AI technologies."
+    },
+    {
+      text: "We have a dedicated team focused on AI implementation",
+      description: "A specialized team can develop expertise and accelerate AI adoption across the organization."
+    },
+    {
+      text: "Our data infrastructure allows for real-time analytics and decision-making",
+      description: "Real-time capabilities enable more responsive business operations and improved customer experiences."
+    },
+    {
+      text: "We regularly review and update our AI governance policies",
+      description: "As AI technologies and regulations evolve, governance policies must be regularly updated to remain effective."
+    },
+    {
+      text: "We actively monitor for bias in our AI systems",
+      description: "Identifying and addressing bias is essential for fair, ethical AI systems that serve all stakeholders."
+    },
+    {
+      text: "We have mechanisms to explain AI decisions to stakeholders",
+      description: "Explainability builds trust and helps meet regulatory requirements for transparency."
+    }
   ];
   
   // Fetch assessment data
@@ -134,6 +210,19 @@ export default function AssessmentDetailPage() {
       setAnswers(assessment.answers);
     }
   }, [assessment]);
+  
+  // Find first unanswered question and navigate to it
+  useEffect(() => {
+    if (answers.length > 0 && assessment && assessment.status !== "completed") {
+      // Find the first unanswered question
+      const firstUnansweredIndex = answers.findIndex(a => a.a === null);
+      
+      if (firstUnansweredIndex !== -1) {
+        // If there's an unanswered question, go to it
+        setCurrentStep(firstUnansweredIndex);
+      }
+    }
+  }, [answers, assessment]);
   
   // Update assessment mutation
   const updateAssessmentMutation = useMutation<
