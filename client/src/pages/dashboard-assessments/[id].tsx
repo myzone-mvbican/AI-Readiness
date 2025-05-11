@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import Papa from "papaparse";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Card,
@@ -94,23 +95,16 @@ function QuestionRating({
   return (
     <div className="py-4">
       <div className="flex items-start mb-3">
-        <h3 className="text-md font-medium">{question}</h3>
-        {questionDescription && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button className="ml-2 text-muted-foreground hover:text-foreground">
-                  <HelpCircle size={16} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-md p-4">
-                <p className="text-sm">{questionDescription}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
+        <div className="flex-1">
+          <h3 className="text-md font-medium">{question}</h3>
+          {questionDescription && (
+            <div className="mt-2 text-sm text-muted-foreground bg-muted/30 p-3 rounded-md border border-muted">
+              <p>{questionDescription}</p>
+            </div>
+          )}
+        </div>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 mt-4">
         {options.map((option) => (
           <button
             key={option.value}
@@ -141,10 +135,72 @@ export default function AssessmentDetailPage() {
   const [answers, setAnswers] = useState<Array<{q: string; a: number | null; r?: string}>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
+  const [surveyQuestions, setSurveyQuestions] = useState<Array<{
+    number: number;
+    text: string;
+    description: string;
+    category: string;
+  }>>([]);
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
   
-  // Questions text mapping with descriptions for tooltips
-  // In a real application, this would come from your survey template CSV or database
-  const assessmentQuestions = [
+  // Load survey questions from CSV file reference
+  const loadSurveyQuestions = async (fileReference: string) => {
+    try {
+      setIsLoadingQuestions(true);
+      const response = await fetch(`/${fileReference}`);
+      if (!response.ok) {
+        throw new Error(`Failed to load survey file: ${response.statusText}`);
+      }
+      
+      const csvData = await response.text();
+      
+      // Parse CSV with PapaParse
+      Papa.parse(csvData, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          // Map the parsed data to our format
+          const questions = results.data
+            .map((row: any) => {
+              const questionNumber = parseInt(row["Question Number"], 10);
+              if (isNaN(questionNumber)) return null;
+              
+              return {
+                number: questionNumber,
+                category: row["Category"] ? row["Category"].trim() : "",
+                text: row["Question Summary"] ? row["Question Summary"].trim() : "",
+                description: row["Question Details"] ? row["Question Details"].trim() : ""
+              };
+            })
+            .filter((q: any): q is { text: string; description: string; category: string; number: number } => q !== null)
+            .sort((a, b) => a.number - b.number);
+          
+          setSurveyQuestions(questions);
+          setIsLoadingQuestions(false);
+        },
+        error: (error) => {
+          console.error("Error parsing survey CSV:", error);
+          toast({
+            title: "Error loading survey questions",
+            description: "Failed to parse the survey template file.",
+            variant: "destructive"
+          });
+          setIsLoadingQuestions(false);
+        }
+      });
+    } catch (error) {
+      console.error("Error loading survey file:", error);
+      toast({
+        title: "Error loading survey",
+        description: "Failed to load the survey template file.",
+        variant: "destructive"
+      });
+      setIsLoadingQuestions(false);
+    }
+  };
+  
+  // Using dummy questions as fallback only if CSV loading fails
+  const fallbackQuestions = [
     {
       text: "We have a clear AI strategy aligned with our business goals",
       description: "A well-defined AI strategy helps prioritize initiatives and ensures resources are allocated efficiently toward business objectives."
@@ -222,8 +278,21 @@ export default function AssessmentDetailPage() {
   
   // Set answers from fetched data
   useEffect(() => {
-    if (assessment?.answers) {
-      setAnswers(assessment.answers);
+    if (assessment) {
+      // Initialize answers
+      if (assessment.answers) {
+        // Handle string or array format
+        const parsedAnswers = typeof assessment.answers === "string" 
+          ? JSON.parse(assessment.answers) 
+          : assessment.answers;
+        
+        setAnswers(parsedAnswers);
+      }
+      
+      // Load survey questions from CSV file
+      if (assessment.survey && assessment.survey.fileReference) {
+        loadSurveyQuestions(assessment.survey.fileReference);
+      }
     }
   }, [assessment]);
   
