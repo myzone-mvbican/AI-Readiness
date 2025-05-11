@@ -78,6 +78,19 @@ export function AssessmentCreateModal() {
   useEffect(() => {
     // Only load team when the modal is opened
     if (assessmentCreateModal.isOpen) {
+      // First verify the current user's token matches the token when team was selected
+      const currentToken = localStorage.getItem("token");
+      const teamSelectionToken = localStorage.getItem("teamSelectionToken");
+      
+      // If tokens don't match, team was selected in a different session/account
+      if (currentToken !== teamSelectionToken) {
+        console.log("Token mismatch detected, clearing selected team to prevent stale data");
+        localStorage.removeItem("selectedTeam");
+        localStorage.setItem("teamSelectionToken", currentToken || "");
+        setSelectedTeam(null);
+        return;
+      }
+      
       const savedTeam = localStorage.getItem("selectedTeam");
       if (savedTeam) {
         try {
@@ -121,6 +134,10 @@ export function AssessmentCreateModal() {
         // If we get a 403 error, try fetching global surveys instead
         if (response.status === 403) {
           console.warn(`Access denied for team ${teamId}, falling back to global surveys`);
+          
+          // Clear the selected team since it's no longer accessible
+          setSelectedTeam(null);
+          localStorage.removeItem("selectedTeam");
           
           // Try global surveys as fallback
           console.log("Fetching global surveys as fallback");
@@ -175,6 +192,9 @@ export function AssessmentCreateModal() {
       });
       // Reset surveys to empty array on error
       setSurveys([]);
+      // Clear the selected team on error as it might be the cause
+      setSelectedTeam(null);
+      localStorage.removeItem("selectedTeam");
     } finally {
       setIsSurveysLoading(false);
     }
