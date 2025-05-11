@@ -43,6 +43,15 @@ interface Survey {
   version: string;
 }
 
+// Type definition for selected team
+interface TeamWithRole {
+  id: number;
+  name: string;
+  role: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 const createAssessmentFormSchema = z.object({
   title: z
     .string()
@@ -63,6 +72,19 @@ export function AssessmentCreateModal() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
+  const [selectedTeam, setSelectedTeam] = useState<TeamWithRole | null>(null);
+
+  // Load selected team from localStorage
+  useEffect(() => {
+    const savedTeam = localStorage.getItem("selectedTeam");
+    if (savedTeam) {
+      try {
+        setSelectedTeam(JSON.parse(savedTeam));
+      } catch (e) {
+        console.error("Error parsing saved team:", e);
+      }
+    }
+  }, []);
 
   const form = useForm<CreateAssessmentFormValues>({
     resolver: zodResolver(createAssessmentFormSchema),
@@ -72,8 +94,9 @@ export function AssessmentCreateModal() {
     const fetchSurveys = async () => {
       setIsSurveysLoading(true);
       try {
-        // Use proper authentication by using apiRequest instead of fetch
-        const response = await apiRequest("GET", "/api/surveys/0");
+        // Get the teamId from localStorage, or use 0 for global surveys
+        const teamId = selectedTeam?.id || 0;
+        const response = await apiRequest("GET", `/api/surveys/${teamId}`);
         const data = await response.json();
 
         if (data.success) {
@@ -104,7 +127,7 @@ export function AssessmentCreateModal() {
     if (assessmentCreateModal.isOpen) {
       fetchSurveys();
     }
-  }, [assessmentCreateModal.isOpen, toast]);
+  }, [assessmentCreateModal.isOpen, toast, selectedTeam]);
 
   const onSubmit = async (values: CreateAssessmentFormValues) => {
     setIsLoading(true);
