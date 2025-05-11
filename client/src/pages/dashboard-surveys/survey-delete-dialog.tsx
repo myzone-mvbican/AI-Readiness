@@ -21,10 +21,10 @@ interface DeleteSurveyDialogProps {
   survey: SurveyWithAuthor;
 }
 
-export default function SurveyDeleteDialog({ 
-  open, 
-  onOpenChange, 
-  survey 
+export default function SurveyDeleteDialog({
+  open,
+  onOpenChange,
+  survey,
 }: DeleteSurveyDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -34,7 +34,7 @@ export default function SurveyDeleteDialog({
     mutationFn: async () => {
       const response = await apiRequest(
         "DELETE",
-        `/api/admin/surveys/${survey.id}`
+        `/api/admin/surveys/${survey.id}`,
       );
 
       if (!response.ok) {
@@ -49,11 +49,9 @@ export default function SurveyDeleteDialog({
       queryClient.invalidateQueries({
         queryKey: ["/api/admin/surveys"],
       });
+      // Invalidate all global survey-related queries
       queryClient.invalidateQueries({
         queryKey: ["/api/admin/surveys/0"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["/api/surveys"],
       });
       onOpenChange(false);
       toast({
@@ -76,8 +74,8 @@ export default function SurveyDeleteDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete the survey "{survey.title}" and all its data.
-            This action cannot be undone.
+            This will permanently delete the survey "{survey.title}" and all its
+            data. This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

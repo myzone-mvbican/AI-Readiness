@@ -216,6 +216,11 @@ export default function AssessmentDetailPage() {
   // Set answers from fetched data
   useEffect(() => {
     if (assessment) {
+      // Load any existing saved answers from the assessment
+      if (assessment.answers && assessment.answers.length > 0) {
+        setAnswers(assessment.answers);
+      }
+      
       // Get survey template information
       if (assessment.surveyTemplateId) {
         // Fetch the survey template details if not already provided
@@ -276,7 +281,8 @@ export default function AssessmentDetailPage() {
 
   // Find first unanswered question and navigate to it
   useEffect(() => {
-    if (!isFullyLoading) {
+    // Only proceed when loading is complete
+    if (isFullyLoading) {
       return;
     }
 
