@@ -25,7 +25,7 @@ import {
   type AssessmentAnswer,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, inArray, isNull, desc, or } from "drizzle-orm";
+import { eq, and, inArray, isNull, desc, or, not } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import fetch from "node-fetch";
@@ -535,15 +535,27 @@ export class DatabaseStorage implements IStorage {
   async getSurveys(teamId: number): Promise<Survey[]> {
     try {
       if (teamId === 0) {
-        // For global surveys (teamId 0), only get surveys with no team assignments
+        // For global surveys (teamId 0), only get surveys with "public" status
+        // and no team assignments
+        
         // First, get all surveys that have team assignments
         const assignedSurveys = await db
           .select({ surveyId: surveyTeams.surveyId })
           .from(surveyTeams);
         
-        const assignedSurveyIds = new Set(assignedSurveys.map(s => s.surveyId));
+        // Extract just the surveyIds into an array
+        const assignedSurveyIds = assignedSurveys.map(s => s.surveyId);
         
-        // Return only surveys that are not assigned to any team (truly global)
+        // If there are no assigned surveys, just get all public surveys
+        if (assignedSurveyIds.length === 0) {
+          return await db
+            .select()
+            .from(surveys)
+            .where(eq(surveys.status, "public"))
+            .orderBy(desc(surveys.updatedAt));
+        }
+        
+        // Otherwise, filter out the assigned surveys
         return await db
           .select()
           .from(surveys)
@@ -551,40 +563,52 @@ export class DatabaseStorage implements IStorage {
             and(
               // Only include published surveys
               eq(surveys.status, "public"),
-              // Ensure the survey isn't assigned to any teams
-              not(inArray(surveys.id, Array.from(assignedSurveyIds)))
+              // Exclude any surveys that are in the assigned list
+              not(inArray(surveys.id, assignedSurveyIds))
             )
           )
           .orderBy(desc(surveys.updatedAt));
       }
       
       // Get surveys visible to this team:
-      // 1. Global surveys (no team assignments)
-      // 2. Surveys directly linked to the team (legacy)
-      // 3. Surveys assigned through the junction table
+      // 1. Global surveys (not assigned to any team)
+      // 2. Surveys assigned to this specific team
       
-      // Get surveys assigned to teams
-      const assignedSurveys = await db
+      // First get all surveys assigned to ANY team
+      const allTeamAssignments = await db
         .select({ surveyId: surveyTeams.surveyId })
         .from(surveyTeams);
-        
-      const assignedSurveyIds = new Set(assignedSurveys.map(s => s.surveyId));
+      
+      const assignedSurveyIds = allTeamAssignments.map(s => s.surveyId);
       
       // Get global surveys (not assigned to any team)
-      const globalSurveys = await db
-        .select()
-        .from(surveys)
-        .where(
-          and(
-            // Only include published surveys
-            eq(surveys.status, "public"),
-            // Ensure the survey isn't assigned to any teams
-            not(inArray(surveys.id, Array.from(assignedSurveyIds)))
-          )
-        )
-        .orderBy(desc(surveys.updatedAt));
+      let globalSurveys: Survey[] = [];
       
-      // Get surveys assigned to this specific team
+      // Only fetch global surveys if there are any assigned surveys
+      // (otherwise all public surveys are global)
+      if (assignedSurveyIds.length > 0) {
+        globalSurveys = await db
+          .select()
+          .from(surveys)
+          .where(
+            and(
+              // Only include published surveys
+              eq(surveys.status, "public"),
+              // Ensure the survey isn't assigned to any teams
+              not(inArray(surveys.id, assignedSurveyIds))
+            )
+          )
+          .orderBy(desc(surveys.updatedAt));
+      } else {
+        // If no team assignments exist, all public surveys are global
+        globalSurveys = await db
+          .select()
+          .from(surveys)
+          .where(eq(surveys.status, "public"))
+          .orderBy(desc(surveys.updatedAt));
+      }
+      
+      // Get surveys specifically assigned to this team
       const teamSurveyIds = await db
         .select({ surveyId: surveyTeams.surveyId })
         .from(surveyTeams)
