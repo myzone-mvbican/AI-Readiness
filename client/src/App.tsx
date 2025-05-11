@@ -10,6 +10,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AdminProtectedRoute } from "./lib/admin-protected-route";
+import { AssessmentCreateModalProvider } from "@/components/assessment/assessment-create-modal-provider";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import AuthPage from "@/pages/auth";
@@ -86,6 +87,7 @@ function App() {
           <GoogleAuthProvider>
             <AuthProvider>
               <Toaster />
+              <AssessmentCreateModalProvider />
               <Router />
             </AuthProvider>
           </GoogleAuthProvider>
