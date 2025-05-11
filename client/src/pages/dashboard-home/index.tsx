@@ -10,10 +10,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { BarChart3, ClipboardCheck, TrendingUp } from "lucide-react";
-import { ProfileCompletionCard } from "./widgets/profile-completion";
-import { NewAssessmentCard } from "./widgets/new-assessment";
+import { ProfileCompletionCard } from "@/components/dashboard/profile-completion-card";
+import { NewAssessmentCard } from "@/components/dashboard/new-assessment-card";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function DashboardHome() {
+  const { user } = useAuth();
+  
   return (
     <DashboardLayout title="Welcome">
       <div className="flex flex-col gap-6">
@@ -64,7 +67,7 @@ export default function DashboardHome() {
           </Card>
 
           {/* Profile Completion Card */}
-          <ProfileCompletionCard />
+          {user && <ProfileCompletionCard user={user} />}
         </div>
       </div>
     </DashboardLayout>
