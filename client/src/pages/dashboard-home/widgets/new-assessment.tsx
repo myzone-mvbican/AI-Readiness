@@ -17,7 +17,7 @@ export function NewAssessmentCard() {
           Start New Assessment
         </CardTitle>
         <CardDescription className="text-center">
-          Create a new AI readiness assessment for your organization
+          Measure your organization AI readiness
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -26,8 +26,8 @@ export function NewAssessmentCard() {
             <PlusCircle className="h-8 w-8 text-primary" />
           </div>
           <p className="text-sm text-muted-foreground mb-4">
-            Complete the Q2 2025 assessment to measure your organization's AI
-            readiness
+            Complete the latest assessment to measure your organization's AI
+            readiness (and compare with industry averages - soon).
           </p>
           <Link href="/dashboard/assessments/new" asChild>
             <Button className="w-full">Start New Assessment</Button>
