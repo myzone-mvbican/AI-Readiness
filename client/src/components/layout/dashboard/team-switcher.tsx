@@ -188,9 +188,31 @@ export function TeamSwitcher({}: TeamSwitcherProps) {
   const availableTeams = teams?.teams?.length ? teams.teams : defaultTeams;
 
   const handleSelectTeam = (team: TeamWithRole) => {
+    // Check if we're switching to a different team
+    const isTeamChange = selectedTeam?.id !== team.id;
+    
+    // Update local state
     setSelectedTeam(team);
+    
     // Store selected team in localStorage
     localStorage.setItem("selectedTeam", JSON.stringify(team));
+    
+    // If actually changing teams, clear all survey-related queries to prevent stale data
+    if (isTeamChange) {
+      console.log(`Switching teams from ${selectedTeam?.name || 'none'} to ${team.name}`);
+      
+      // Invalidate all survey-related queries to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/surveys'] });
+      
+      // Clear assessments data too
+      queryClient.invalidateQueries({ queryKey: ['/api/assessments'] });
+      
+      // Show a toast to confirm team change
+      toast({
+        title: "Team changed",
+        description: `Switched to ${team.name}`,
+      });
+    }
   };
 
   // Enable team creation if:
