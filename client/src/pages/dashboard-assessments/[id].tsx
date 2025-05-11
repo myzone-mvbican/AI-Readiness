@@ -89,7 +89,9 @@ function QuestionRating({
   const isOptionSelected = (optionValue: number) => {
     if (value === null) return false;
     // Use strict equality to properly compare the value with 0
-    return value === optionValue;
+    // Adding debugging to see what's happening
+    console.log(`Comparing ${value} === ${optionValue}: ${value === optionValue}`);
+    return value === optionValue; 
   };
 
   return (
@@ -110,7 +112,10 @@ function QuestionRating({
             key={option.value}
             type="button"
             disabled={disabled}
-            onClick={() => onChange(option.value)}
+            onClick={() => {
+              console.log(`Clicked on option with value: ${option.value}`);
+              onChange(option.value);
+            }}
             className={`px-4 py-2 rounded-md border ${
               isOptionSelected(option.value)
                 ? "bg-primary text-primary-foreground border-primary"
@@ -400,26 +405,61 @@ export default function AssessmentDetailPage() {
   const updateAnswer = (questionIndex: number, value: number) => {
     console.log(`Updating answer ${questionIndex} with value: ${value}`);
     const newAnswers = [...answers];
+    
     if (newAnswers[questionIndex]) {
+      // Update existing answer
       newAnswers[questionIndex] = {
         ...newAnswers[questionIndex],
         a: value // value can be -2, -1, 0, 1, or 2
       };
-      setAnswers(newAnswers);
+      console.log(`Updated answer: ${JSON.stringify(newAnswers[questionIndex])}`);
+    } else {
+      // Create new answer if it doesn't exist
+      const question = surveyQuestions[questionIndex]?.text || `Question ${questionIndex + 1}`;
+      newAnswers[questionIndex] = {
+        q: question,
+        a: value
+      };
+      console.log(`Created new answer: ${JSON.stringify(newAnswers[questionIndex])}`);
     }
+    
+    setAnswers(newAnswers);
   };
   
-  // Calculate progress percentage
+  // Calculate progress percentage based on the number of survey questions
   const calculateProgress = () => {
+    if (!surveyQuestions.length) return 0;
     if (!answers.length) return 0;
-    const answeredCount = answers.filter(a => a.a !== null).length;
-    return Math.round((answeredCount / answers.length) * 100);
+    
+    // Count how many questions have been answered
+    const answeredCount = answers.filter(a => a.a !== null && a.a !== undefined).length;
+    console.log(`Progress: ${answeredCount} of ${surveyQuestions.length} questions answered`);
+    
+    // Calculate percentage based on the total number of survey questions
+    return Math.round((answeredCount / surveyQuestions.length) * 100);
   };
   
   // Check if all questions are answered (for Complete button)
   const allQuestionsAnswered = () => {
-    if (!answers.length) return false;
-    return answers.every(a => a.a !== null);
+    // If we don't have survey questions or answers, return false
+    if (!surveyQuestions.length || !answers.length) return false;
+    
+    // Check if we have the same number of answers as questions
+    if (answers.length < surveyQuestions.length) {
+      console.log(`Not all questions answered: ${answers.length} answers for ${surveyQuestions.length} questions`);
+      return false;
+    }
+    
+    // Check if all answers have a value that is not null
+    for (let i = 0; i < surveyQuestions.length; i++) {
+      if (answers[i]?.a === null || answers[i]?.a === undefined) {
+        console.log(`Question ${i+1} is not answered`);
+        return false;
+      }
+    }
+    
+    console.log("All questions are answered");
+    return true;
   };
   
   // Get formatted date
