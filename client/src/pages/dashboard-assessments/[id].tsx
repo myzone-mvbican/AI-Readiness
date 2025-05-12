@@ -316,6 +316,8 @@ export default function AssessmentDetailPage() {
       // If completing the assessment, navigate to results view
       if (variables.status === "completed") {
         toast({
+          variant: "default",
+          className: "bg-green-50 border-green-200 text-green-800",
           title: "Assessment completed",
           description:
             "Your AI readiness assessment has been completed successfully.",
@@ -333,10 +335,12 @@ export default function AssessmentDetailPage() {
       } else {
         // Just saving progress
         toast({
+          variant: "default",
+          className: "bg-green-50 border-green-200 text-green-800",
           title: "Progress saved",
           description: "Your progress has been saved.",
         });
-        
+
         // Invalidate the current assessment query to ensure latest data
         queryClient.invalidateQueries({
           queryKey: [`/api/assessments/${assessmentId}`],
@@ -372,6 +376,7 @@ export default function AssessmentDetailPage() {
           q: Number(questionNumber),
         };
       }
+
       return {
         ...answer,
         q: typeof answer.q === "string" ? Number(answer.q) : answer.q,
@@ -582,7 +587,7 @@ export default function AssessmentDetailPage() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3">
             <h2 className="text-xl font-bold text-foreground text-center md:text-start">
-              Assessment Questions
+              {surveyQuestions[currentStep]?.category || "Assessment questions"}
             </h2>
             <div className="flex justify-center md:justify-end items-center gap-2">
               <Button
@@ -712,7 +717,7 @@ export default function AssessmentDetailPage() {
               </TooltipTrigger>
               <TooltipContent className="p-2">
                 {!allQuestionsAnswered()
-                  ? "Please answer all questions to complete the assessment"
+                  ? "Please answer all questions to complete"
                   : "Complete assessment and view results"}
               </TooltipContent>
             </Tooltip>

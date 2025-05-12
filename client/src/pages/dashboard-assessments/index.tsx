@@ -2,13 +2,7 @@ import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Clipboard,
-  PlusCircle,
-  Search,
-  Loader2,
-  FileBarChart2,
-} from "lucide-react";
+import { PlusCircle, Search, Loader2, FileBarChart2 } from "lucide-react";
 import { useAssessmentCreateModal } from "@/hooks/use-assessment-create-modal";
 import {
   Table,
@@ -19,7 +13,6 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
-import { AssessmentsResponse, Assessment } from "./types";
 import {
   ColumnFiltersState,
   SortingState,
@@ -32,6 +25,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { getColumns } from "./columns";
+import { AssessmentsResponse } from "./types";
 
 export default function AssessmentsPage() {
   const assessmentCreateModal = useAssessmentCreateModal();

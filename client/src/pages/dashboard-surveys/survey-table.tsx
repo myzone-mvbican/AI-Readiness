@@ -78,10 +78,10 @@ export default function SurveyTable({ surveys }: SurveyTableProps) {
             <TableRow>
               <TableHead>Title</TableHead>
               <TableHead>Questions #</TableHead>
-              <TableHead>Status</TableHead>
               <TableHead>Last Updated</TableHead>
               <TableHead>Visibility</TableHead>
               <TableHead>Author</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -93,15 +93,6 @@ export default function SurveyTable({ surveys }: SurveyTableProps) {
                 </TableCell>
                 <TableCell className="text-foreground">
                   {survey.questionsCount}
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      survey.status === "public" ? "default" : "secondary"
-                    }
-                  >
-                    {survey.status === "public" ? "Public" : "Draft"}
-                  </Badge>
                 </TableCell>
                 <TableCell className="text-foreground">
                   {formatDistanceToNow(new Date(survey.updatedAt), {
@@ -134,6 +125,16 @@ export default function SurveyTable({ surveys }: SurveyTableProps) {
                       {survey.author.email}
                     </span>
                   </div>
+                </TableCell>
+
+                <TableCell>
+                  <Badge
+                    variant={
+                      survey.status === "public" ? "default" : "secondary"
+                    }
+                  >
+                    {survey.status === "public" ? "Public" : "Draft"}
+                  </Badge>
                 </TableCell>
                 <TableCell className="space-x-3">
                   <Button
