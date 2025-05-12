@@ -122,11 +122,11 @@ export function AssessmentCreateModal() {
         try {
           const selectedTeamData = JSON.parse(storedTeam);
           const teamExists = (teamsData as any).teams.some(
-            (team: { id: number }) => team.id === selectedTeamData.id
+            (team: { id: number }) => team.id === selectedTeamData.id,
           );
-          
+
           if (!teamExists) {
-            console.log("Selected team no longer accessible, clearing selection");
+            console.warn("Selected team no longer accessible.");
             localStorage.removeItem("selectedTeam");
             setSelectedTeam(null);
           }
@@ -140,29 +140,32 @@ export function AssessmentCreateModal() {
 
   // Get team ID for surveys query
   const teamId = selectedTeam?.id || 0;
-  
+
   // Fetch surveys based on selected team
-  const { 
-    data: surveysData, 
-    isLoading: isSurveysLoading
-  } = useQuery({
+  const { data: surveysData, isLoading: isSurveysLoading } = useQuery({
     queryKey: ["/api/surveys", teamId],
     enabled: assessmentCreateModal.isOpen,
   });
 
   // Handle survey error fallback
   useEffect(() => {
+    // Check if we have a token (are logged in)
+    const currentToken = localStorage.getItem("token");
+
+    // If no token is present, do nothing
+    if (!currentToken) {
+      return;
+    }
+
     // Check if we have a query error by seeing if surveys is missing but should be loaded
     if (isSurveysLoading === false && !surveysData && teamId !== 0) {
-      console.warn(`Possible issue with team ${teamId}, falling back to global surveys`);
-      
       // Clear the selected team since it's no longer accessible
       setSelectedTeam(null);
       localStorage.removeItem("selectedTeam");
-      
+
       // Invalidate the global surveys query to trigger a refetch
       queryClient.invalidateQueries({ queryKey: ["/api/surveys", 0] });
-      
+
       toast({
         title: "Team access error",
         description: "Falling back to global surveys",
@@ -172,10 +175,14 @@ export function AssessmentCreateModal() {
   }, [surveysData, isSurveysLoading, teamId, queryClient, toast]);
 
   // Process the surveys data to get public surveys
-  const publicSurveys = ((surveysData as any)?.success && Array.isArray((surveysData as any)?.surveys))
-    ? (surveysData as any).surveys.filter((survey: Survey) => survey.status === "public")
-    : [];
-    
+  const publicSurveys =
+    (surveysData as any)?.success &&
+    Array.isArray((surveysData as any)?.surveys)
+      ? (surveysData as any).surveys.filter(
+          (survey: Survey) => survey.status === "public",
+        )
+      : [];
+
   // Set surveys state - this allows the component to use the same variable name as before
   const surveys = publicSurveys;
 
@@ -218,7 +225,9 @@ export function AssessmentCreateModal() {
       navigate(`/dashboard/assessments/${data.assessment.id}`);
 
       toast({
-        title: "Success",
+        variant: "default",
+        className: "bg-green-50 border-green-200 text-green-800",
+        title: "Awesome",
         description: "Assessment created successfully",
       });
     } catch (error: any) {

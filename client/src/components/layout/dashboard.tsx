@@ -52,7 +52,7 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
       <SidebarInset>
         <header className="sticky top-0 bg-white dark:bg-gray-900 border-b flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 z-10">
           <div className="flex items-center w-full gap-2 px-5">
-            <SidebarTrigger className="-ml-1" />
+            <SidebarTrigger className="-ml-1 dark:text-foreground" />
             <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>
               <BreadcrumbList>
@@ -72,9 +72,7 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
             </div>
           </div>
         </header>
-        <main className="bg-white dark:bg-gray-900 flex-1 overflow-auto p-6">
-          {children}
-        </main>
+        <main className="bg-white dark:bg-gray-900 flex-1 p-6">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

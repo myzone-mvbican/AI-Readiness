@@ -174,8 +174,6 @@ export default function SettingsPage() {
         });
       }
     } catch (error) {
-      console.error("Error updating profile:", error);
-
       toast({
         title: "Update failed",
         description:
@@ -190,7 +188,7 @@ export default function SettingsPage() {
 
   return (
     <DashboardLayout title="Account Settings">
-      <h1 className="text-2xl font-bold tracking-tight dark:text-white mb-6">
+      <h1 className="text-2xl font-bold tracking-tight text-foreground mb-6">
         Account Settings
       </h1>
 
@@ -199,11 +197,11 @@ export default function SettingsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Profile section */}
           <div className="md:col-span-1">
-            <div className="sticky top-6">
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
+            <div className="sticky top-[5rem]">
+              <h2 className="text-lg font-semibold text-foreground">
                 Profile Information
               </h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 Update your personal information and password
               </p>
             </div>
@@ -305,11 +303,11 @@ export default function SettingsPage() {
 
           {/* Company Information section */}
           <div className="md:col-span-1">
-            <div className="sticky top-6">
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
+            <div className="sticky top-[5rem]">
+              <h2 className="text-lg font-semibold text-foreground">
                 Company Information
               </h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 Your organization details
               </p>
             </div>
@@ -458,11 +456,11 @@ export default function SettingsPage() {
         {/* Connected Accounts section */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
           <div className="md:col-span-1">
-            <div className="sticky top-6">
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
+            <div className="sticky top-[5rem]">
+              <h2 className="text-lg font-semibold text-foreground">
                 Connected Accounts
               </h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 Manage your connected social accounts
               </p>
             </div>
