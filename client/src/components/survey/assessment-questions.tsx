@@ -184,22 +184,36 @@ export function AssessmentQuestions({
   const handleAnswerChange = (answer: number | null) => {
     // Only proceed if user selected an answer (not null)
     if (answer !== null) {
+      // Create a copy of the answers array
       const updatedAnswers = [...answers];
+      
+      // Update the current question's answer
       updatedAnswers[currentQuestionIndex] = {
         ...updatedAnswers[currentQuestionIndex],
         a: answer as -2 | -1 | 0 | 1 | 2 | null,
       };
+      
+      // Update state
       setAnswers(updatedAnswers);
       
       // Calculate score immediately when answer is selected
       if (onScoreChange && typeof onScoreChange === 'function') {
-        const calculatedScore = calculateScore(updatedAnswers);
-        onScoreChange(calculatedScore);
+        try {
+          // Use our calculateScore helper function to get the score
+          const calculatedScore = calculateScore(updatedAnswers);
+          onScoreChange(calculatedScore);
+        } catch (error) {
+          console.error("Error calculating score:", error);
+        }
       }
       
       // Save to localStorage only when an answer is selected
-      if (LOCAL_STORAGE_KEY) {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedAnswers));
+      try {
+        if (LOCAL_STORAGE_KEY) {
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedAnswers));
+        }
+      } catch (error) {
+        console.error("Error saving to localStorage:", error);
       }
       
       // Automatically proceed to next question after a delay
@@ -336,10 +350,19 @@ export function AssessmentQuestions({
                 variant="ghost"
                 onClick={() => {
                   // Clear localStorage before canceling
-                  if (LOCAL_STORAGE_KEY) {
-                    localStorage.removeItem(LOCAL_STORAGE_KEY);
+                  try {
+                    console.log('Clearing localStorage key:', LOCAL_STORAGE_KEY);
+                    if (LOCAL_STORAGE_KEY) {
+                      localStorage.removeItem(LOCAL_STORAGE_KEY);
+                      console.log('LocalStorage cleared successfully');
+                    }
+                  } catch (error) {
+                    console.error('Error clearing localStorage:', error);
                   }
-                  onCancel();
+                  
+                  if (onCancel) {
+                    onCancel();
+                  }
                 }}
               >
                 Cancel
