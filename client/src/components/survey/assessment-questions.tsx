@@ -35,52 +35,40 @@ export function AssessmentQuestions({
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    if (surveyData && surveyData.fileReference) {
-      fetchQuestions();
+    if (surveyData && surveyData.id) {
+      fetchQuestions(surveyData.id);
     }
   }, [surveyData]);
 
-  const fetchQuestions = async () => {
+  const fetchQuestions = async (surveyId: number) => {
     setIsLoading(true);
     try {
-      const response = await fetch(surveyData.fileReference);
-      const csv = await response.text();
+      // Use the new API endpoint to get parsed questions
+      const response = await fetch(`/api/public/surveys/${surveyId}/questions`);
+      const data = await response.json();
       
-      // Parse CSV
-      parse(csv, {
-        header: true,
-        skipEmptyLines: true,
-        complete: (results) => {
-          const parsedQuestions = results.data
-            .filter((row: any) => row.question && row.question.trim() !== "")
-            .map((row: any, index: number) => ({
-              id: index + 1,
-              question: row.question,
-              category: row.category || "General",
-            }));
-          
-          setQuestions(parsedQuestions);
-          
-          // Initialize answers if needed
-          if (answers.length === 0) {
-            setAnswers(
-              parsedQuestions.map((q) => ({
-                q: q.id,
-                a: null,
-                r: "",
-              }))
-            );
-          }
-          
-          setIsLoading(false);
-        },
-        error: (error) => {
-          console.error("Error parsing CSV:", error);
-          setIsLoading(false);
-        },
-      });
+      if (data.success && data.questions) {
+        const parsedQuestions = data.questions
+          .filter((q: any) => q.question && q.question.trim() !== "");
+        
+        setQuestions(parsedQuestions);
+        
+        // Initialize answers if needed
+        if (answers.length === 0) {
+          setAnswers(
+            parsedQuestions.map((q: any) => ({
+              q: q.id,
+              a: null,
+              r: "",
+            }))
+          );
+        }
+      } else {
+        console.error("Failed to fetch questions:", data.message);
+      }
     } catch (error) {
       console.error("Error fetching questions:", error);
+    } finally {
       setIsLoading(false);
     }
   };

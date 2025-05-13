@@ -1447,6 +1447,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // Get questions for a specific survey (public endpoint)
+  app.get("/api/public/surveys/:id/questions", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid survey ID"
+        });
+      }
+
+      // Get survey details
+      const survey = await storage.getSurveyById(id);
+      
+      if (!survey) {
+        return res.status(404).json({
+          success: false,
+          message: "Survey not found"
+        });
+      }
+      
+      // Read and parse the CSV file
+      const fs = require('fs');
+      const { parse } = require('papaparse');
+      
+      const fileContent = fs.readFileSync(survey.fileReference, 'utf8');
+      
+      // Parse CSV
+      const parsedData = parse(fileContent, {
+        header: true,
+        skipEmptyLines: true,
+      });
+      
+      // Map CSV data to questions
+      const questions = parsedData.data.map((row: any, index: number) => ({
+        id: index + 1,
+        question: row.question || '',
+        category: row.category || '',
+      }));
+
+      return res.status(200).json({
+        success: true,
+        questions
+      });
+    } catch (error) {
+      console.error("Error fetching survey questions:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch survey questions"
+      });
+    }
+  });
 
   // Original protected survey endpoint
   app.get("/api/surveys/detail/:id", authenticate, async (req, res) => {
