@@ -390,21 +390,8 @@ export default function AssessmentDetailPage() {
     });
   };
 
-  // Handle completing assessment
-  const handleComplete = () => {
-    // Use our improved allQuestionsAnswered function to check completion status
-    if (!allQuestionsAnswered()) {
-      toast({
-        title: "Unable to complete",
-        description:
-          "Please answer all questions before completing the assessment.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setCompleteDialogOpen(true);
-  };
+  // This handleComplete function is not used anymore as we use onComplete in SurveyTemplate
+  // SurveyTemplate directly calls setCompleteDialogOpen(true)
 
   // Confirm assessment completion
   const confirmComplete = () => {
