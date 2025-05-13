@@ -1503,6 +1503,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // Create guest assessment (public endpoint)
+  app.post("/api/public/assessments", async (req, res) => {
+    try {
+      const { 
+        title, 
+        surveyId, 
+        email, 
+        name, 
+        company, 
+        answers, 
+        status, 
+        score 
+      } = req.body;
+
+      if (!surveyId || !answers || !Array.isArray(answers)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid assessment data. Required fields: surveyId, answers"
+        });
+      }
+
+      // Validate required fields
+      if (!title || !email || !name) {
+        return res.status(400).json({
+          success: false,
+          message: "Missing required fields: title, email, name"
+        });
+      }
+
+      // Create a guest assessment
+      const assessmentData = {
+        title,
+        surveyId,
+        userId: null, // null userId for guest assessments
+        guestName: name,
+        guestEmail: email,
+        guestCompany: company || "",
+        answers,
+        status: status || "completed",
+        score: score || 0,
+        isGuest: true
+      };
+
+      const assessment = await storage.createAssessment(assessmentData);
+
+      return res.status(201).json({
+        success: true,
+        message: "Guest assessment created successfully",
+        assessment
+      });
+    } catch (error) {
+      console.error("Error creating guest assessment:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to create guest assessment"
+      });
+    }
+  });
 
   // Original protected survey endpoint
   app.get("/api/surveys/detail/:id", authenticate, async (req, res) => {
