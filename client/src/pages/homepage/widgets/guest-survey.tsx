@@ -1,14 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { AssessmentAnswer } from "@shared/types";
 import SurveyTemplate from "@/components/survey/survey-template";
 import { Loader2 } from "lucide-react";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { 
-  getGuestAssessmentData, 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  getGuestAssessmentData,
   saveGuestAssessmentAnswers,
-  clearGuestAssessmentDataForSurvey
+  clearGuestAssessmentDataForSurvey,
 } from "@/lib/localStorage";
 
 interface SurveyQuestion {
@@ -33,7 +42,7 @@ export default function GuestSurvey({
   onSubmit,
   onCancel,
   onScoreChange,
-  hasSavedAnswers
+  hasSavedAnswers,
 }: GuestSurveyProps) {
   const { toast } = useToast();
   const [questions, setQuestions] = useState<SurveyQuestion[]>([]);
@@ -41,12 +50,17 @@ export default function GuestSurvey({
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResumeDialog, setShowResumeDialog] = useState(hasSavedAnswers);
-  const [autoAdvanceTimeout, setAutoAdvanceTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [autoAdvanceTimeout, setAutoAdvanceTimeout] =
+    useState<NodeJS.Timeout | null>(null);
+
+  // Use a ref to track if we've already handled resuming
+  const resumeHandled = useRef(false);
 
   // Fetch survey data using public API endpoint
   const { data: surveyData, isLoading: isSurveyLoading } = useQuery({
     queryKey: [`/api/public/surveys/detail/${surveyId}`],
     retry: false,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   // Fetch survey questions using public API endpoint
@@ -54,20 +68,29 @@ export default function GuestSurvey({
     queryKey: [`/api/public/surveys/${surveyId}/questions`],
     retry: false,
     enabled: !!surveyData?.success,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   // Load saved answers from localStorage when available
   useEffect(() => {
-    if (hasSavedAnswers) {
+    if (hasSavedAnswers && !resumeHandled.current) {
       const savedData = getGuestAssessmentData(surveyId);
       if (savedData?.answers?.length) {
         setAnswers(savedData.answers);
         if (savedData.currentStep !== undefined) {
           setCurrentStep(savedData.currentStep);
         }
+        
+        // Calculate and report the score from saved answers
+        if (onScoreChange && savedData.answers.length > 0) {
+          const score = calculateScore(savedData.answers);
+          onScoreChange(score);
+        }
+        
+        resumeHandled.current = true;
       }
     }
-  }, [surveyId, hasSavedAnswers]);
+  }, [surveyId, hasSavedAnswers, onScoreChange]);
 
   // Format questions when data is loaded
   useEffect(() => {
@@ -77,16 +100,18 @@ export default function GuestSurvey({
         number: q.id || q.number,
         text: q.question || q.text,
         description: q.description || "",
-        category: q.category || "General"
+        category: q.category || "General",
       }));
       setQuestions(formattedQuestions);
 
       // Initialize answers if none exist
       if (answers.length === 0) {
-        const initialAnswers = formattedQuestions.map((question: SurveyQuestion) => ({
-          q: question.number,
-          a: null
-        }));
+        const initialAnswers = formattedQuestions.map(
+          (question: SurveyQuestion) => ({
+            q: question.number,
+            a: null,
+          }),
+        );
         setAnswers(initialAnswers);
       }
     }
@@ -95,25 +120,28 @@ export default function GuestSurvey({
   // Handle answer changes
   const handleAnswerChange = (index: number, value: number) => {
     const updatedAnswers = [...answers];
-    
+
     // Find the corresponding answer object using the question number from questions[index]
     const questionNumber = questions[index]?.number;
-    const answerIndex = updatedAnswers.findIndex(a => a.q === questionNumber);
-    
+    const answerIndex = updatedAnswers.findIndex((a) => a.q === questionNumber);
+
     if (answerIndex !== -1) {
       // Update existing answer
-      updatedAnswers[answerIndex] = { ...updatedAnswers[answerIndex], a: value as any };
+      updatedAnswers[answerIndex] = {
+        ...updatedAnswers[answerIndex],
+        a: value as any,
+      };
     } else {
       // Add new answer
       updatedAnswers.push({ q: questionNumber, a: value as any });
     }
-    
+
     // Update state
     setAnswers(updatedAnswers);
-    
+
     // Save to localStorage
     saveGuestAssessmentAnswers(surveyId, updatedAnswers, currentStep);
-    
+
     // Calculate and report score
     if (onScoreChange) {
       const score = calculateScore(updatedAnswers);
@@ -139,38 +167,34 @@ export default function GuestSurvey({
 
   // Calculate a simple score from the answers
   const calculateScore = (answers: AssessmentAnswer[]): number => {
-    const validAnswers = answers.filter(a => a.a !== null && a.a !== undefined);
+    const validAnswers = answers.filter(
+      (a) => a.a !== null && a.a !== undefined,
+    );
     if (validAnswers.length === 0) return 0;
-    
-    const total = validAnswers.reduce((sum, answer) => sum + (answer.a || 0), 0);
-    
+
+    const total = validAnswers.reduce(
+      (sum, answer) => sum + (answer.a || 0),
+      0,
+    );
+
     // Convert to 0-100 scale (normalize from -2 to 2 range)
     return Math.round((total / (validAnswers.length * 2) + 1) * 50);
-  };
-
-  // Handle save (don't submit, just save current progress)
-  const handleSave = () => {
-    saveGuestAssessmentAnswers(surveyId, answers, currentStep);
-    toast({
-      title: "Progress Saved",
-      description: "Your answers have been saved. You can continue later.",
-    });
   };
 
   // Handle completion
   const handleComplete = () => {
     // First save current answers
     saveGuestAssessmentAnswers(surveyId, answers, currentStep);
-    
+
     // Then submit
     setIsSubmitting(true);
-    
+
     // Calculate final score
     const score = calculateScore(answers);
     if (onScoreChange) {
       onScoreChange(score);
     }
-    
+
     // Send answers to parent component
     onSubmit(answers);
   };
@@ -178,8 +202,8 @@ export default function GuestSurvey({
   // Handle cancellation
   const handleCancel = () => {
     if (onCancel) {
-      // First save current answers in case user wants to resume later
-      saveGuestAssessmentAnswers(surveyId, answers, currentStep);
+      // Clear saved data instead of saving
+      clearGuestAssessmentDataForSurvey(surveyId);
       onCancel();
     }
   };
@@ -192,21 +216,26 @@ export default function GuestSurvey({
   const handleStartFresh = () => {
     // Clear saved data
     clearGuestAssessmentDataForSurvey(surveyId);
-    
+
     // Reset answers
     if (questions.length > 0) {
-      const freshAnswers = questions.map(question => ({
+      const freshAnswers = questions.map((question) => ({
         q: question.number,
-        a: null
+        a: null,
       }));
       setAnswers(freshAnswers);
     } else {
       setAnswers([]);
     }
-    
+
     // Reset step
     setCurrentStep(0);
     setShowResumeDialog(false);
+    
+    // Reset score if there's a callback
+    if (onScoreChange) {
+      onScoreChange(0);
+    }
   };
 
   // Show loading state
@@ -236,16 +265,16 @@ export default function GuestSurvey({
         assessment={{
           title: surveyData.survey.title,
           updatedAt: new Date().toISOString(),
-          status: "in_progress"
+          status: "in_progress",
         }}
         surveyTitle={surveyData.survey.title}
         questions={questions}
         answers={answers}
+        isGuestMode={true}
         onAnswerChange={handleAnswerChange}
         isSubmitting={isSubmitting}
-        showSaveButton={true}
+        showSaveButton={false}
         onCancel={handleCancel}
-        onSave={handleSave}
         onComplete={handleComplete}
         currentStep={currentStep}
         setCurrentStep={(step) => {
@@ -260,12 +289,17 @@ export default function GuestSurvey({
           <AlertDialogHeader>
             <AlertDialogTitle>Resume Your Assessment</AlertDialogTitle>
             <AlertDialogDescription>
-              We found a previously started assessment. Would you like to resume where you left off?
+              We found a previously started assessment. Would you like to resume
+              where you left off?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleStartFresh}>Start Fresh</AlertDialogCancel>
-            <AlertDialogAction onClick={handleResumeSurvey}>Resume</AlertDialogAction>
+            <AlertDialogCancel onClick={handleStartFresh}>
+              Start Fresh
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleResumeSurvey}>
+              Resume
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

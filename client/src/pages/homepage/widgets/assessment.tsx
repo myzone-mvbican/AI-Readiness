@@ -1,9 +1,28 @@
 import { useState, useEffect } from "react";
 import { Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,7 +30,7 @@ import * as z from "zod";
 import {
   Card,
   CardContent,
-  CardDescription, 
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -25,20 +44,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { GuestAssessmentForm } from "./guest-assessment-form";
 import { useToast } from "@/hooks/use-toast";
-import SurveyCompleted from "@/components/survey/survey-completed";
 import { AssessmentAnswer } from "@shared/types";
+import SurveyCompleted from "@/components/survey/survey-completed";
+import { GuestAssessmentForm } from "./guest-form";
 import GuestSurvey from "./guest-survey";
-import { 
-  getGuestUser, 
-  saveGuestUser, 
-  GuestUser as StorageGuestUser, 
+import {
+  getGuestUser,
+  saveGuestUser,
+  GuestUser as StorageGuestUser,
   hasSavedGuestAssessment,
-  saveGuestAssessmentResult,
   clearGuestAssessmentDataForSurvey,
-  clearGuestAssessmentData,
-  getGuestAssessmentData
+  getGuestAssessmentData,
 } from "@/lib/localStorage";
 
 enum AssessmentStage {
@@ -48,16 +65,21 @@ enum AssessmentStage {
 }
 
 // Registration form schema
-const registrationSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(8, { message: "Password must be at least 8 characters" }),
-  confirmPassword: z.string().min(8, { message: "Please confirm your password" }),
-})
-.refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
+const registrationSchema = z
+  .object({
+    name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+    email: z.string().email({ message: "Please enter a valid email address" }),
+    password: z
+      .string()
+      .min(8, { message: "Password must be at least 8 characters" }),
+    confirmPassword: z
+      .string()
+      .min(8, { message: "Please confirm your password" }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 type RegistrationFormValues = z.infer<typeof registrationSchema>;
 
@@ -84,7 +106,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   const [assessmentResult, setAssessmentResult] = useState<any | null>(null);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Initialize react-hook-form with zod validation
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(registrationSchema),
@@ -98,7 +120,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
 
   // Default survey template ID
   const defaultSurveyId = 19;
-  
+
   // Check for saved answers in localStorage using our utility
   const [hasSavedAnswers, setHasSavedAnswers] = useState<boolean>(() => {
     return hasSavedGuestAssessment(defaultSurveyId);
@@ -174,11 +196,11 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
     }
   };
 
-  const handleInfoSubmit = (values: Omit<StorageGuestUser, 'id'>) => {
+  const handleInfoSubmit = (values: Omit<StorageGuestUser, "id">) => {
     // Store guest user info in localStorage using our utility
     const savedUser = saveGuestUser(values);
     setGuestUser(savedUser);
-    
+
     // Move to survey questions stage
     setStage(AssessmentStage.SURVEY_QUESTIONS);
   };
@@ -189,9 +211,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
 
     try {
       // Use the live-calculated score that's been tracked as the user answers questions
-      console.log("Using real-time score for final submission...");
       const score = currentScore > 0 ? currentScore : calculateScore(answers);
-      console.log("Final score for submission:", score);
 
       // Create assessment result data for local storage and display
       const assessmentResult: {
@@ -257,7 +277,8 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
 
       toast({
         title: "Assessment Completed",
-        description: "Your assessment has been saved anonymously for benchmarking purposes.",
+        description:
+          "Your assessment has been saved anonymously for benchmarking purposes.",
       });
     } catch (error) {
       console.error("Error submitting assessment:", error);
@@ -274,36 +295,37 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   // Handle registration form submission
   const handleRegistration = async (values: RegistrationFormValues) => {
     setIsSubmitting(true);
-    
+
     try {
       // Call the register API
-      const response = await fetch('/api/register', {
-        method: 'POST',
+      const response = await fetch("/api/register", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(values),
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
+        throw new Error(data.message || "Registration failed");
       }
-      
+
       // Registration successful
       toast({
         title: "Account created successfully",
         description: "You can now log in with your credentials.",
       });
-      
+
       // Optional: Automatically log in the user
       window.location.href = "/auth?registered=true";
     } catch (error) {
       console.error("Registration error:", error);
       toast({
         title: "Registration failed",
-        description: error instanceof Error ? error.message : "Please try again later",
+        description:
+          error instanceof Error ? error.message : "Please try again later",
         variant: "destructive",
       });
     } finally {
@@ -316,7 +338,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
     try {
       const guestUser = getGuestUser();
       if (!guestUser) return [];
-      
+
       const savedData = getGuestAssessmentData(defaultSurveyId);
       return savedData?.answers || [];
     } catch (error) {
@@ -354,7 +376,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   };
 
   const handleStartFresh = () => {
-    // Clear previous answers from localStorage 
+    // Clear previous answers from localStorage
     clearGuestAssessmentDataForSurvey(defaultSurveyId);
     setHasSavedAnswers(false);
     setShowResumeDialog(false);
@@ -419,17 +441,17 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
               assessment={{
                 title: surveyData?.title || "AI Readiness Assessment",
                 score: assessmentResult?.score || 0,
-                answers: assessmentResult?.answers || []
+                answers: assessmentResult?.answers || [],
               }}
               surveyQuestions={questionData?.questions || []}
             />
-            
+
             {/* Action buttons displayed below survey results */}
             <div className="flex flex-col sm:flex-row justify-center gap-4 pt-6">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button 
+                    <Button
                       onClick={() => setShowSignupModal(true)}
                       className="relative group"
                     >
@@ -440,11 +462,14 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent className="p-2 max-w-xs">
-                    <p>Create an account to track your progress, view assessment history, and get personalized recommendations</p>
+                    <p>
+                      Create an account to track your progress, view assessment
+                      history, and get personalized recommendations
+                    </p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              
+
               <Button
                 variant="outline"
                 onClick={() => {
@@ -479,30 +504,37 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Resume Previous Assessment?</AlertDialogTitle>
             <AlertDialogDescription>
-              We found a partially completed assessment. Would you like to resume where you left off or start a new assessment?
+              We found a partially completed assessment. Would you like to
+              resume where you left off or start a new assessment?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleStartFresh}>Start New</AlertDialogCancel>
+            <AlertDialogCancel onClick={handleStartFresh}>
+              Start New
+            </AlertDialogCancel>
             <AlertDialogAction onClick={handleLoadPreviousAnswers}>
               Resume
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      
+
       {/* Account creation modal */}
       <Dialog open={showSignupModal} onOpenChange={setShowSignupModal}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Create Your Account</DialogTitle>
             <DialogDescription>
-              Create an account to save your assessment history and track your progress over time.
+              Create an account to save your assessment history and track your
+              progress over time.
             </DialogDescription>
           </DialogHeader>
-          
+
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleRegistration)} className="space-y-4 py-2">
+            <form
+              onSubmit={form.handleSubmit(handleRegistration)}
+              className="space-y-4 py-2"
+            >
               <FormField
                 control={form.control}
                 name="name"
@@ -516,7 +548,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="email"
@@ -524,13 +556,17 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="your.email@example.com" {...field} />
+                      <Input
+                        type="email"
+                        placeholder="your.email@example.com"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="password"
@@ -538,13 +574,17 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Create a password" {...field} />
+                      <Input
+                        type="password"
+                        placeholder="Create a password"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="confirmPassword"
@@ -552,15 +592,23 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
                   <FormItem>
                     <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Confirm your password" {...field} />
+                      <Input
+                        type="password"
+                        placeholder="Confirm your password"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <DialogFooter className="pt-4">
-                <Button type="button" variant="outline" onClick={() => setShowSignupModal(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowSignupModal(false)}
+                >
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
