@@ -1480,12 +1480,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Map CSV data to questions with the correct column names
-      const questions = parsedData.data.map((row: any, index: number) => ({
-        id: index + 1,
-        question: row["Question Summary"] || row["question"] || '',
-        category: row["Category"] || row["category"] || '',
-        details: row["Question Details"] || ''
-      }));
+      const questions = parsedData.data
+        .filter(row => row["Question Summary"]?.trim()) // Only include rows with non-empty questions
+        .map((row: any, index: number) => {
+          return {
+            id: index + 1,
+            question: row["Question Summary"] || "",
+            category: row["Category"] || "",
+            details: row["Question Details"] || ""
+          };
+        });
 
       return res.status(200).json({
         success: true,
