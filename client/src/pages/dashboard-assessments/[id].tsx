@@ -549,19 +549,13 @@ export default function AssessmentDetailPage() {
           showSaveButton={true}
           onCancel={() => navigate("/dashboard/assessments")}
           onSave={handleSave}
-          onComplete={() => setCompleteDialogOpen(true)}
+          onComplete={confirmComplete}
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}
         />
       )}
 
-      {/* Confirmation Dialog for Completing Assessment */}
-      <AlertCompleted
-        completeDialogOpen={completeDialogOpen}
-        setCompleteDialogOpen={setCompleteDialogOpen}
-        isSubmitting={isSubmitting}
-        confirmComplete={confirmComplete}
-      />
+      {/* We're now using the confirmation dialog inside SurveyTemplate */}
     </DashboardLayout>
   );
 }
