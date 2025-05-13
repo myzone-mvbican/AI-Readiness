@@ -156,10 +156,13 @@ export const insertAssessmentSchema = createInsertSchema(assessments)
   .pick({
     title: true,
     userId: true,
+    email: true,
     surveyTemplateId: true,
     status: true,
   })
   .extend({
+    userId: z.number().nullable(), // Allow null for guest assessments
+    email: z.string().email().optional(), // Required for guest assessments
     status: assessmentStatusSchema,
     answers: z.array(assessmentAnswerSchema),
   });
@@ -169,9 +172,13 @@ export const updateAssessmentSchema = createInsertSchema(assessments)
     title: true,
     status: true,
     score: true,
+    email: true,
+    userId: true,
   })
   .partial()
   .extend({
+    userId: z.number().nullable().optional(), // Allow null for guest assessments
+    email: z.string().email().optional(), // For guest assessments
     status: assessmentStatusSchema.optional(),
     answers: z.array(assessmentAnswerSchema).optional(),
   });

@@ -55,6 +55,36 @@ export type InsertAssessment = z.infer<typeof insertAssessmentSchema>;
 export type UpdateAssessment = z.infer<typeof updateAssessmentSchema>;
 
 /**
+ * Guest Assessment Types
+ * Types for handling guest (anonymous) assessments
+ */
+export interface GuestAssessmentStartRequest {
+  name: string;
+  email: string;
+  company?: string;
+  surveyId: number;
+}
+
+export interface GuestAssessmentSubmitRequest {
+  title: string;
+  email: string;
+  name: string;
+  company?: string;
+  surveyTemplateId: number;
+  answers: Array<{
+    q: number;
+    a?: -2 | -1 | 0 | 1 | 2 | null;
+    r?: string;
+  }>;
+  status: "completed";
+}
+
+export interface LinkGuestAssessmentsRequest {
+  email: string;
+  userId: number;
+}
+
+/**
  * Legacy Authentication Types
  * Direct interface definitions for authentication endpoints
  * These complement the Zod-derived types above

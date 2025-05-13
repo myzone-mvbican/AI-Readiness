@@ -67,6 +67,20 @@ export interface AssessmentsResponse extends ApiResponse {
   assessments?: Assessment[];
 }
 
+/**
+ * Guest Assessment responses
+ * Specialized response types for guest assessment flows
+ */
+export interface GuestAssessmentResponse extends ApiResponse {
+  assessment?: Assessment;
+  upgradeToken?: string; // Optional token to link guest assessment after signup
+}
+
+export interface LinkGuestAssessmentsResponse extends ApiResponse {
+  linkedCount: number;
+  assessments?: Assessment[];
+}
+
 // Error responses
 export interface ErrorResponse extends ApiResponse {
   error?: string;
