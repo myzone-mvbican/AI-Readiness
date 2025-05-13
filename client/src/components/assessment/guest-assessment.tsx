@@ -51,7 +51,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   const { toast } = useToast();
 
   // Load guest user info from localStorage using our utility
-  const [guestUser, setGuestUser] = useState<GuestUser | null>(() => {
+  const [guestUser, setGuestUser] = useState<StorageGuestUser | null>(() => {
     return getGuestUser();
   });
 
@@ -65,7 +65,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   // Default survey template ID
   const defaultSurveyId = 19;
   
-  // Check for saved answers in localStorage
+  // Check for saved answers in localStorage using our utility
   const [hasSavedAnswers, setHasSavedAnswers] = useState<boolean>(() => {
     return hasSavedGuestAssessment(defaultSurveyId);
   });
@@ -140,10 +140,11 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
     }
   };
 
-  const handleInfoSubmit = (values: GuestUser) => {
-    setGuestUser(values);
-    // Store guest user info in localStorage for persistence
-    localStorage.setItem("guestUser", JSON.stringify(values));
+  const handleInfoSubmit = (values: Omit<StorageGuestUser, 'id'>) => {
+    // Store guest user info in localStorage using our utility
+    const savedUser = saveGuestUser(values);
+    setGuestUser(savedUser);
+    
     // Move to survey questions stage
     setStage(AssessmentStage.SURVEY_QUESTIONS);
   };
@@ -215,19 +216,15 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
       // Move to completed stage
       setStage(AssessmentStage.COMPLETED);
 
-      // Store result in localStorage
-      localStorage.setItem("guestAssessment", JSON.stringify(assessmentResult));
+      // Store result in localStorage using our utility
+      saveGuestAssessmentResult(assessmentResult);
 
       // Clear the answers from localStorage now that we've saved it
-      if (guestUserId) {
-        localStorage.removeItem(
-          `guest-assessment-${guestUserId}-${defaultSurveyId}`,
-        );
-      }
+      clearGuestAssessmentDataForSurvey(defaultSurveyId);
 
       toast({
         title: "Assessment Completed",
-        description: "Your assessment has been saved successfully.",
+        description: "Your assessment has been saved anonymously for benchmarking purposes.",
       });
     } catch (error) {
       console.error("Error submitting assessment:", error);
@@ -315,17 +312,16 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
             ) : (
               <GuestSurvey
                 surveyId={defaultSurveyId}
-                guestUserId={guestUserId}
-                guestUser={guestUser || { name: "", email: "" }}
+                guestUser={guestUser || { id: "", name: "", email: "" }}
                 hasSavedAnswers={hasSavedAnswers}
                 onSubmit={handleQuestionsSubmit}
                 onCancel={() => {
-                  // Go back to info collection stage
+                  // Go back to info collection stage and clear all guest data
+                  clearGuestAssessmentDataForSurvey(defaultSurveyId);
                   setStage(AssessmentStage.INFO_COLLECTION);
                 }}
                 onScoreChange={(score: number) => {
                   // Update the current score in real time as user selects answers
-                  console.log("Current score updated:", score);
                   setCurrentScore(score);
                 }}
               />
