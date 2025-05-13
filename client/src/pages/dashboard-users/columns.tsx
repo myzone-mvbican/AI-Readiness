@@ -1,6 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
-import { ArrowUpDown, MoreHorizontal } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -126,13 +126,15 @@ export function getColumns({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => onEditUser(user)}>
-                  Edit
+                  <Pencil className="mr-2 h-4 w-4" />
+                  <span>Edit</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className="text-red-600"
+                  className="text-destructive hover:text-destructive"
                   onClick={() => onDeleteUser(user)}
                 >
-                  Delete
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  <span>Delete</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
