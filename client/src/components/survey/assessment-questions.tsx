@@ -10,12 +10,33 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+// Helper function to calculate score from answers
+function calculateScore(answers: AssessmentAnswer[]): number {
+  // Get only answered questions
+  const answeredQuestions = answers.filter(q => q.a !== null);
+  
+  if (answeredQuestions.length === 0) return 0;
+  
+  // Calculate raw score (sum of all answer values)
+  const rawScore = answeredQuestions.reduce((sum, q) => sum + (q.a || 0), 0);
+  
+  // Calculate maximum possible score (2 * number of answered questions)
+  const maxScore = answeredQuestions.length * 2;
+  
+  // Calculate percentage score (normalized from -2 to 2 range to 0 to 100)
+  const normalizedScore = ((rawScore + (answeredQuestions.length * 2)) / (maxScore * 2)) * 100;
+  
+  // Round to nearest integer
+  return Math.round(normalizedScore);
+}
+
 interface AssessmentQuestionsProps {
   surveyData: any;
   initialAnswers: AssessmentAnswer[];
   onSubmit: (answers: AssessmentAnswer[]) => void;
   onCancel?: () => void;
   guestUserId?: string;
+  onScoreChange?: (score: number) => void;
 }
 
 interface Question {
@@ -30,6 +51,7 @@ export function AssessmentQuestions({
   onSubmit,
   onCancel,
   guestUserId,
+  onScoreChange,
 }: AssessmentQuestionsProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
@@ -160,31 +182,40 @@ export function AssessmentQuestions({
   };
 
   const handleAnswerChange = (answer: number | null) => {
-    const updatedAnswers = [...answers];
-    updatedAnswers[currentQuestionIndex] = {
-      ...updatedAnswers[currentQuestionIndex],
-      a: answer as -2 | -1 | 0 | 1 | 2 | null,
-    };
-    setAnswers(updatedAnswers);
-    
-    // Save to localStorage immediately with each answer
-    if (LOCAL_STORAGE_KEY) {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedAnswers));
-    }
-    
-    // Automatically proceed to next question after a delay
-    if (answer !== null && currentQuestionIndex < questions.length - 1) {
-      // Clear existing timeout if it exists
-      if (autoAdvanceTimeout) {
-        clearTimeout(autoAdvanceTimeout);
+    // Only proceed if user selected an answer (not null)
+    if (answer !== null) {
+      const updatedAnswers = [...answers];
+      updatedAnswers[currentQuestionIndex] = {
+        ...updatedAnswers[currentQuestionIndex],
+        a: answer as -2 | -1 | 0 | 1 | 2 | null,
+      };
+      setAnswers(updatedAnswers);
+      
+      // Calculate score immediately when answer is selected
+      if (onScoreChange && typeof onScoreChange === 'function') {
+        const calculatedScore = calculateScore(updatedAnswers);
+        onScoreChange(calculatedScore);
       }
       
-      // Set new timeout
-      const timeout = setTimeout(() => {
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
-      }, 500);
+      // Save to localStorage only when an answer is selected
+      if (LOCAL_STORAGE_KEY) {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedAnswers));
+      }
       
-      setAutoAdvanceTimeout(timeout);
+      // Automatically proceed to next question after a delay
+      if (currentQuestionIndex < questions.length - 1) {
+        // Clear existing timeout if it exists
+        if (autoAdvanceTimeout) {
+          clearTimeout(autoAdvanceTimeout);
+        }
+        
+        // Set new timeout
+        const timeout = setTimeout(() => {
+          setCurrentQuestionIndex(currentQuestionIndex + 1);
+        }, 500);
+        
+        setAutoAdvanceTimeout(timeout);
+      }
     }
   };
 
