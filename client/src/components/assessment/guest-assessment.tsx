@@ -59,6 +59,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   
   const [isLoading, setIsLoading] = useState(false);
   const [surveyData, setSurveyData] = useState<any | null>(null);
+  const [questionData, setQuestionData] = useState<any | null>(null);
   const [answers, setAnswers] = useState<AssessmentAnswer[]>([]);
   const [assessmentResult, setAssessmentResult] = useState<any | null>(null);
   
@@ -109,13 +110,27 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
     setIsLoading(true);
     try {
       // Use the public endpoint that doesn't require authentication
-      const response = await fetch(
+      const surveyResponse = await fetch(
         `/api/public/surveys/detail/${defaultSurveyId}`,
       );
-      const data = await response.json();
+      const surveyData = await surveyResponse.json();
 
-      if (data.success && data.survey) {
-        setSurveyData(data.survey);
+      if (surveyData.success && surveyData.survey) {
+        setSurveyData(surveyData.survey);
+
+        // Also fetch the questions for this survey
+        try {
+          const questionsResponse = await fetch(
+            `/api/public/surveys/${defaultSurveyId}/questions`
+          );
+          const questionsData = await questionsResponse.json();
+          
+          if (questionsData.success) {
+            setQuestionData(questionsData);
+          }
+        } catch (questionsError) {
+          console.error("Error fetching questions:", questionsError);
+        }
       } else {
         toast({
           title: "Error",
@@ -334,7 +349,10 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
           <div className="w-full max-w-4xl mx-auto">
             <AssessmentCompletion
               assessment={assessmentResult}
-              survey={surveyData}
+              survey={{
+                ...surveyData,
+                questions: questionData?.questions || []
+              }}
               guestMode={true}
               onSignUp={() => {
                 window.location.href = "/auth?mode=register";
@@ -345,6 +363,10 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
                 setAnswers([]);
                 setAssessmentResult(null);
                 setSurveyData(null);
+                // Clear localStorage
+                if (guestUserId) {
+                  localStorage.removeItem(`guest-assessment-${guestUserId}-${defaultSurveyId}`);
+                }
                 // Return to beginning
                 setStage(AssessmentStage.INFO_COLLECTION);
               }}

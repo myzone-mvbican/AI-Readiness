@@ -238,10 +238,10 @@ export function AssessmentCompletion({
         </Tabs>
       </CardContent>
 
-      <CardFooter className="flex flex-wrap gap-2">
+      <CardFooter className="flex flex-wrap justify-center gap-4 mt-4">
         {guestMode && onSignUp && (
           <Button
-            className="flex-1"
+            className="w-full sm:w-auto px-6"
             onClick={onSignUp}
           >
             <UserPlus className="mr-2 h-4 w-4" />
@@ -251,7 +251,7 @@ export function AssessmentCompletion({
         
         <Button
           variant="outline"
-          className="flex-1"
+          className="w-full sm:w-auto px-6"
           onClick={() => {
             // Download feature would be implemented here
             alert("Download functionality would be implemented here");
@@ -264,7 +264,7 @@ export function AssessmentCompletion({
         {onStartNew && (
           <Button
             variant="outline"
-            className="flex-1"
+            className="w-full sm:w-auto px-6"
             onClick={onStartNew}
           >
             <RefreshCw className="mr-2 h-4 w-4" />
