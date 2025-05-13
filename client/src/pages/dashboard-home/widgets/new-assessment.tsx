@@ -11,7 +11,7 @@ import { useAssessmentCreateModal } from "@/hooks/use-assessment-create-modal";
 
 export function NewAssessmentCard() {
   const assessmentCreateModal = useAssessmentCreateModal();
-  
+
   return (
     <Card className="col-span-1">
       <CardHeader className="pb-2">
@@ -31,10 +31,8 @@ export function NewAssessmentCard() {
             Complete the latest assessment to measure your organization's AI
             readiness (and compare with industry averages - soon).
           </p>
-          <Button 
-            className="w-full"
-            onClick={assessmentCreateModal.onOpen}
-          >
+          <Button className="w-full" onClick={assessmentCreateModal.onOpen}>
+            <PlusCircle />
             Start New Assessment
           </Button>
         </div>

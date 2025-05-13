@@ -46,6 +46,23 @@ export type SurveyWithAuthor = Survey & {
   }[];
 };
 
+/**
+ * Guest User type for anonymous assessment submissions
+ */
+export interface GuestUser {
+  name: string;
+  email: string;
+  company?: string;
+}
+
+/**
+ * Guest Assessment represents an assessment completed by a non-registered user
+ */
+export type GuestAssessment = Omit<Assessment, 'userId'> & {
+  userId: null;
+  email: string;
+};
+
 // Google OAuth decoded payload
 export interface GoogleUserPayload {
   iss: string;

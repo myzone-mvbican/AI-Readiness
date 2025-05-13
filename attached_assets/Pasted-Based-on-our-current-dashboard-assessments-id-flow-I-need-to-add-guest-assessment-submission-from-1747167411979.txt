@@ -1,0 +1,124 @@
+Based on our current /dashboard/assessments/:id flow, I need to add guest assessment submission from the homepage.
+
+🧩 1. New Homepage Section (for Guest Users)
+Create a new section on the public homepage for guest users.
+
+Ask for the following fields before starting the assessment:
+
+Name
+
+Email
+
+Company
+
+Validate using zod:
+
+Name: required, min 2
+
+Email: required, valid email
+
+Company: optional
+
+Show a button: Start Assessment
+
+🔁 2. Assessment Creation Flow (Guest Version)
+On “Start Assessment”:
+
+Automatically create an assessment using the global survey with ID = 19
+
+Use the same logic and layout from /dashboard/assessments/:id
+
+Do not require login
+
+Save the following data in the assessment object:
+
+title from survey
+
+email from guest form (new DB column)
+
+userId = null (guest)
+
+status = "in-progress"
+
+answers = [] with q keys prefilled from survey questions
+
+💾 3. Save Progress in localStorage
+On each answer, save the guest's assessment progress (answers and survey ID) to localStorage
+
+If the user returns or refreshes, and survey ID = 19 exists in localStorage:
+
+Ask:
+
+vbnet
+Copy
+Edit
+You have unsaved progress from a previous assessment. Would you like to continue?
+If accepted, restore from localStorage
+
+If rejected, clear the storage and start fresh
+
+📝 4. Submit Guest Assessment
+On completion, submit the guest’s assessment to backend:
+
+ts
+Copy
+Edit
+POST /api/assessments
+{
+  title: string,
+  status: "completed",
+  surveyTemplateId: "19",
+  email: guestEmail,
+  userId: null,
+  answers: [{ q: "q-id", a: 2 }]
+}
+Backend must accept anonymous submissions and store guest email for later use.
+
+✨ 5. Completion Screen: Encourage Signup
+After submission, show a success message:
+
+pgsql
+Copy
+Edit
+🎉 Assessment Complete!
+Want to save your results and track your progress over time?
+Add a call-to-action button: Create an Account
+
+Redirects to /signup
+
+🔗 6. Link Guest Submission to New Account (Post Signup)
+On signup:
+
+Check if the email matches a guest assessment
+
+If found, link those past assessments to the newly created userId
+
+Update userId field in the database where email = newUser.email AND userId IS NULL
+
+📦 Database Adjustments:
+Add email: string | null to Assessment table
+
+Allow userId to be nullable
+
+Add index on email to support matching/upgrade logic
+
+🔒 Do Not:
+Do not require login for guest submissions
+
+Do not store incomplete guest assessments in DB — use localStorage only until submission
+
+Do not allow guest access to dashboards or history unless signed up
+
+✅ Summary:
+
+ Add guest intake form on homepage
+
+ Use global survey (ID = 19)
+
+ Save progress in localStorage
+
+ Insert completed assessments into DB (with email, userId = null)
+
+ Encourage account creation on success screen
+
+ On signup, match email and link guest assessments to new user
