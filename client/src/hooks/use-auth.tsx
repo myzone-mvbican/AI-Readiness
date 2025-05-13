@@ -97,10 +97,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const handleUnauthorized = (event: CustomEvent) => {
       // Clear auth state
       setToken(null);
-      
+
       // Clear the entire query client cache to prevent stale data
       queryClient.clear();
-      
+
       // Update cached user state
       setCachedUser(null);
 
@@ -108,12 +108,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem("token");
       localStorage.removeItem("selectedTeam");
       localStorage.removeItem("userData");
-      localStorage.removeItem("teamSelectionToken"); // Remove any old references
-      
+
       // Clear any session storage items that might have stale state
       sessionStorage.clear();
-      
-      console.log("Clearing authentication data during unauthorized event");
 
       // Show toast message
       toast({
@@ -151,9 +148,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const cachedData = JSON.parse(cachedUserData);
         // Handle both formats: { user: User } and User directly
         const userData = cachedData?.user || cachedData;
-        
+
         // Validate that this is a user object by checking required fields
-        if (userData && typeof userData === 'object' && 'id' in userData && 'email' in userData) {
+        if (
+          userData &&
+          typeof userData === "object" &&
+          "id" in userData &&
+          "email" in userData
+        ) {
           return userData as User;
         }
       }
@@ -170,7 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Get the latest token before each query execution
   const getTokenForQuery = () => localStorage.getItem("token");
-  
+
   const {
     data: user,
     error,
@@ -179,7 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<User | null, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({
-      on401: "returnNull", 
+      on401: "returnNull",
       forcedToken: getTokenForQuery(),
       requiresAuth: true,
     }),
@@ -208,7 +210,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.success && data.token) {
         // Save token to state and localStorage
         setToken(data.token);
-        
+
         // Cache user data in query client and localStorage
         queryClient.setQueryData(["/api/user"], data.user);
         localStorage.setItem("userData", JSON.stringify(data.user));
@@ -218,7 +220,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Clear any previously selected team to force auto-selection
         localStorage.removeItem("selectedTeam");
-        
+
         // Update cached user state
         setCachedUser(data.user);
 
@@ -254,11 +256,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.success && data.token) {
         // Save token to state and localStorage
         setToken(data.token);
-        
+
         // Cache user data in query client and localStorage
         queryClient.setQueryData(["/api/user"], data.user);
         localStorage.setItem("userData", JSON.stringify(data.user));
-        
+
         // Update cached user state
         setCachedUser(data.user);
 
@@ -304,17 +306,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem("userData");
       localStorage.removeItem("selectedTeam");
       localStorage.removeItem("token");
-      localStorage.removeItem("teamSelectionToken"); // Remove any old references
-      
+
       // Clear any session storage items that might have stale state
       sessionStorage.clear();
-      
-      // Add a log to verify team data is cleared
-      console.log("Clearing authentication data and team context during logout");
 
       // Clear query cache completely to ensure no stale data remains
       queryClient.clear();
-      
+
       // Reset local cache state
       setCachedUser(null);
 
@@ -323,7 +321,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Logged out",
         description: "You have been logged out successfully.",
       });
-      
+
       // Redirect to auth page
       setLocation("/auth");
     },
@@ -346,11 +344,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.success && data.token) {
         // Save token to state and localStorage
         setToken(data.token);
-        
+
         // Cache user data in query client and localStorage
         queryClient.setQueryData(["/api/user"], data.user);
         localStorage.setItem("userData", JSON.stringify(data.user));
-        
+
         // Update cached user state
         setCachedUser(data.user);
 
@@ -384,11 +382,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Connect Google account to existing user
   const googleConnectMutation = useMutation({
     mutationFn: async (data: GoogleLoginData) => {
-      const res = await apiRequest("POST", "/api/auth/google/connect", data, false, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const res = await apiRequest(
+        "POST",
+        "/api/auth/google/connect",
+        data,
+        false,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
       return await res.json();
     },
     onSuccess: (data: LoginResponse) => {
@@ -396,7 +400,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Cache user data in query client and localStorage
         queryClient.setQueryData(["/api/user"], data.user);
         localStorage.setItem("userData", JSON.stringify(data.user));
-        
+
         // Update cached user state
         setCachedUser(data.user);
 
@@ -442,7 +446,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Cache user data in query client and localStorage
         queryClient.setQueryData(["/api/user"], data.user);
         localStorage.setItem("userData", JSON.stringify(data.user));
-        
+
         // Update cached user state
         setCachedUser(data.user);
 

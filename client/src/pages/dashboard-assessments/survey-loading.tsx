@@ -10,10 +10,10 @@ export default function SurveyError() {
         <div className="flex justify-center items-center p-10">
           <div className="text-center">
             <Loader2 className="h-12 w-12 animate-spin mb-4 mx-auto text-primary" />
-            <h3 className="text-lg font-medium mb-2">
-              Loading assessment data...
+            <h3 className="text-lg text-foreground font-medium mb-2">
+              Loading...
             </h3>
-            <p className="text-muted-foreground">Loading assessment...</p>
+            <p className="text-muted-foreground">Loading assessment data...</p>
           </div>
         </div>
         <Skeleton className="h-64 w-full" />
