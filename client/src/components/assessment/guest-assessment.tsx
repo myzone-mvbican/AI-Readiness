@@ -1,7 +1,14 @@
 import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { GuestAssessmentForm } from "./guest-assessment-form";
 import { useToast } from "@/hooks/use-toast";
 import { AssessmentQuestions } from "@/components/survey/assessment-questions";
@@ -25,7 +32,9 @@ interface GuestAssessmentProps {
 }
 
 export function GuestAssessment({ onClose }: GuestAssessmentProps) {
-  const [stage, setStage] = useState<AssessmentStage>(AssessmentStage.INFO_COLLECTION);
+  const [stage, setStage] = useState<AssessmentStage>(
+    AssessmentStage.INFO_COLLECTION,
+  );
   const [guestUser, setGuestUser] = useState<GuestUser | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [surveyData, setSurveyData] = useState<any | null>(null);
@@ -34,7 +43,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   const { toast } = useToast();
 
   // Default survey template ID (survey 17 for now)
-  const defaultSurveyId = 17;
+  const defaultSurveyId = 19;
 
   // Load survey data
   useEffect(() => {
@@ -47,9 +56,11 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
     setIsLoading(true);
     try {
       // Use the public endpoint that doesn't require authentication
-      const response = await fetch(`/api/public/surveys/detail/${defaultSurveyId}`);
+      const response = await fetch(
+        `/api/public/surveys/detail/${defaultSurveyId}`,
+      );
       const data = await response.json();
-      
+
       if (data.success && data.survey) {
         setSurveyData(data.survey);
       } else {
@@ -86,11 +97,11 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   const handleQuestionsSubmit = async (answers: AssessmentAnswer[]) => {
     setIsLoading(true);
     setAnswers(answers);
-    
+
     try {
       // Calculate a simple score based on answers
       const score = calculateScore(answers);
-      
+
       // Create assessment result data
       const assessmentResult = {
         title: `${guestUser?.name}'s AI Readiness Assessment`,
@@ -100,15 +111,15 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
         surveyTemplateId: defaultSurveyId,
         answers: answers,
         status: "completed",
-        score
+        score,
       };
-      
+
       // Set assessment result to be used in the completion stage
       setAssessmentResult(assessmentResult);
-      
+
       // Move to completed stage
       setStage(AssessmentStage.COMPLETED);
-      
+
       // Here you would normally submit to an API endpoint
       // But for now, just store in localStorage
       localStorage.setItem("guestAssessment", JSON.stringify(assessmentResult));
@@ -127,15 +138,17 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   // Helper function to calculate score
   const calculateScore = (answers: AssessmentAnswer[]): number => {
     // Simple scoring algorithm
-    const validAnswers = answers.filter(a => a.a !== undefined && a.a !== null);
+    const validAnswers = answers.filter(
+      (a) => a.a !== undefined && a.a !== null,
+    );
     if (validAnswers.length === 0) return 0;
-    
+
     const total = validAnswers.reduce((sum, answer) => {
       return sum + (answer.a || 0);
     }, 0);
-    
+
     // Convert to 0-100 scale (normalize from -2 to 2 range)
-    const normalized = ((total / (validAnswers.length * 2)) + 1) * 50;
+    const normalized = (total / (validAnswers.length * 2) + 1) * 50;
     return Math.round(normalized);
   };
 
@@ -154,7 +167,8 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
             <CardHeader>
               <CardTitle>Start Your AI Readiness Assessment</CardTitle>
               <CardDescription>
-                Complete this quick survey to evaluate your organization's AI readiness
+                Complete this quick survey to evaluate your organization's AI
+                readiness
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -166,7 +180,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
             </CardContent>
           </Card>
         );
-        
+
       case AssessmentStage.SURVEY_QUESTIONS:
         return (
           <div className="w-full max-w-4xl mx-auto">
@@ -186,8 +200,8 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <p>Failed to load survey. Please try again.</p>
-                  <Button 
-                    className="mt-4" 
+                  <Button
+                    className="mt-4"
                     onClick={() => setStage(AssessmentStage.INFO_COLLECTION)}
                   >
                     Go Back
@@ -197,11 +211,11 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
             )}
           </div>
         );
-        
+
       case AssessmentStage.COMPLETED:
         return (
           <div className="w-full max-w-4xl mx-auto">
-            <AssessmentCompletion 
+            <AssessmentCompletion
               assessment={assessmentResult}
               survey={surveyData}
               guestMode={true}
@@ -220,15 +234,11 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
             />
           </div>
         );
-        
+
       default:
         return null;
     }
   };
 
-  return (
-    <div className="w-full pt-4">
-      {renderContent()}
-    </div>
-  );
+  return <div className="w-full pt-4">{renderContent()}</div>;
 }
