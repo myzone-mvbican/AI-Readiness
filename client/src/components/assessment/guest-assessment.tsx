@@ -61,6 +61,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   const [surveyData, setSurveyData] = useState<any | null>(null);
   const [questionData, setQuestionData] = useState<any | null>(null);
   const [answers, setAnswers] = useState<AssessmentAnswer[]>([]);
+  const [currentScore, setCurrentScore] = useState<number>(0);
   const [assessmentResult, setAssessmentResult] = useState<any | null>(null);
   
   // Default survey template ID
@@ -167,8 +168,10 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
     setAnswers(answers);
 
     try {
-      // Calculate a simple score based on answers
-      const score = calculateScore(answers);
+      // Use the live-calculated score that's been tracked as the user answers questions
+      console.log("Using real-time score for final submission...");
+      const score = currentScore > 0 ? currentScore : calculateScore(answers);
+      console.log("Final score for submission:", score);
 
       // Create assessment result data for local storage and display
       const assessmentResult: {
@@ -327,15 +330,26 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
                 onSubmit={handleQuestionsSubmit}
                 onCancel={() => {
                   // Clear localStorage when canceling
-                  if (guestUserId) {
-                    localStorage.removeItem(`guest-assessment-${guestUserId}-${defaultSurveyId}`);
+                  try {
+                    const storageKey = `guest-assessment-${guestUserId}-${defaultSurveyId}`;
+                    console.log('GuestAssessment: Clearing localStorage key:', storageKey);
+                    localStorage.removeItem(storageKey);
+                    console.log('GuestAssessment: LocalStorage cleared successfully');
+                    
+                    // Also clear any other related storage
+                    localStorage.removeItem(`guest-assessment-progress-${guestUserId}`);
+                  } catch (error) {
+                    console.error('Error clearing localStorage:', error);
                   }
+                  
+                  // Go back to info collection stage
                   setStage(AssessmentStage.INFO_COLLECTION);
                 }}
                 guestUserId={guestUserId}
                 onScoreChange={(score) => {
                   // Update the current score in real time as user selects answers
                   console.log("Current score updated:", score);
+                  setCurrentScore(score);
                 }}
               />
             ) : (
