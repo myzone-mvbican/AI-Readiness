@@ -38,6 +38,7 @@ import SurveyLoading from "./loading";
 import SurveyQuestion from "@/components/survey/survey-question";
 import SurveyCompleted from "@/components/survey/survey-completed";
 import AlertCompleted from "@/components/survey/alert-completed";
+import SurveyTemplate from "@/components/survey/survey-template";
 
 interface AssessmentResponse {
   success: boolean;
