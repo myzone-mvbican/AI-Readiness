@@ -1,3 +1,10 @@
+/**
+ * API Response Types
+ * 
+ * This file defines standardized response types for all API endpoints.
+ * These types ensure consistent response structures throughout the application.
+ */
+
 import { 
   User, 
   Team, 
@@ -7,7 +14,10 @@ import {
   Assessment 
 } from './models';
 
-// Base response type
+/**
+ * Base response interface that all other responses extend
+ * @template T Type of data contained in the response
+ */
 export interface ApiResponse<T = any> {
   success: boolean;
   message?: string;

@@ -32,7 +32,9 @@ export type Assessment = Omit<AssessmentDB, 'answers'> & {
 // Combined types for frontend use
 export type TeamWithRole = Team & { role: string };
 
-// Extended model types
+/**
+ * Extended model types for domain-specific entities
+ */
 export type SurveyWithAuthor = Survey & { 
   author: { 
     name: string; 
