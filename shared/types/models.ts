@@ -1,3 +1,10 @@
+/**
+ * Core Data Models
+ * 
+ * This file contains the core data model types derived from database schema definitions.
+ * These types represent the fundamental data entities used throughout the application.
+ */
+
 // Import core types from the schema
 import { teams, users, userTeams, surveys, surveyTeams, assessments } from "../schema";
 import { z } from "zod";
