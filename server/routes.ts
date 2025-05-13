@@ -1533,10 +1533,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Parse surveyId to number if it's a string
+      const surveyTemplateId = parseInt(surveyId);
+      
+      if (isNaN(surveyTemplateId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid surveyId: must be a number"
+        });
+      }
+
       // Create a guest assessment
       const assessmentData = {
         title,
-        surveyTemplateId: surveyId,
+        surveyTemplateId,
         userId: null, // null userId for guest assessments
         email,
         answers,
