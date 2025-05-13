@@ -217,8 +217,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
       // Move to completed stage
       setStage(AssessmentStage.COMPLETED);
 
-      // Store result in localStorage using our utility
-      saveGuestAssessmentResult(assessmentResult);
+      // No need to save assessment result in localStorage
 
       // Clear the answers from localStorage now that we've saved it
       clearGuestAssessmentDataForSurvey(defaultSurveyId);

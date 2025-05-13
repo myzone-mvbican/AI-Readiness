@@ -1,4 +1,3 @@
-import { DashboardLayout } from "@/components/layout/dashboard";
 import { CheckCircle2, InfoIcon } from "lucide-react";
 import {
   RadarChart,
@@ -120,154 +119,152 @@ export default function SurveyCompleted({
   };
 
   return (
-    <DashboardLayout title={assessment.title}>
-      <div className="space-y-6">
-        <div className="flex items-center justify-center py-4">
-          <div className="bg-green-100 rounded-full p-5">
-            <CheckCircle2 className="h-12 w-12 text-green-600" />
-          </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-center py-4">
+        <div className="bg-green-100 rounded-full p-5">
+          <CheckCircle2 className="h-12 w-12 text-green-600" />
         </div>
+      </div>
 
-        <div className="text-center">
-          <h2 className="text-2xl font-bold">Assessment Completed</h2>
-          <p className="text-muted-foreground mt-2">
-            You scored {assessment.score} out of 100 on this AI readiness
-            assessment.
-          </p>
-        </div>
+      <div className="text-center">
+        <h2 className="text-2xl font-bold">Assessment Completed</h2>
+        <p className="text-muted-foreground mt-2">
+          You scored {assessment.score} out of 100 on this AI readiness
+          assessment.
+        </p>
+      </div>
 
-        <Tabs defaultValue="results" className="mt-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="results">Results</TabsTrigger>
-            <TabsTrigger value="responses">Your Responses</TabsTrigger>
-          </TabsList>
+      <Tabs defaultValue="results" className="mt-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="results">Results</TabsTrigger>
+          <TabsTrigger value="responses">Your Responses</TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="results">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-x-3">
-                  <span>AI Readiness Score: {assessment.score ?? 0}/100</span>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <InfoIcon className="h-4 w-4" />
-                    </TooltipTrigger>
-                    <TooltipContent className="p-2">
-                      This score represents your organization's current AI
-                      readiness level
-                    </TooltipContent>
-                  </Tooltip>
-                </CardTitle>
-                <CardDescription>
-                  Based on your responses, your organization is at the
-                  {(assessment.score ?? 0) >= 80
-                    ? " advanced "
-                    : (assessment.score ?? 0) >= 60
-                      ? " intermediate "
-                      : (assessment.score ?? 0) >= 40
-                        ? " developing "
-                        : " beginning "}
-                  stage of AI readiness.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="py-4">
-                  <ChartContainer
-                    config={{
-                      // Config for the score data point
-                      score: {
-                        color: "hsl(var(--primary))",
-                      },
-                    }}
-                    className="h-[350px] w-full"
-                  >
-                    <RadarChart outerRadius="80%" data={getRadarChartData()}>
-                      <PolarGrid strokeDasharray="3 3" />
-                      <PolarAngleAxis
-                        dataKey="subject"
-                        tick={{
-                          fill: "hsl(var(--foreground))",
-                          fontSize: 12,
-                        }}
-                      />
-                      <PolarRadiusAxis
-                        domain={[0, 10]}
-                        tick={{ fill: "hsl(var(--foreground))" }}
-                      />
-                      <Radar
-                        name="Organization Score"
-                        dataKey="score"
-                        stroke="hsl(var(--primary))"
-                        fill="hsl(var(--primary))"
-                        fillOpacity={0.5}
-                        dot={{
-                          r: 4,
-                          fillOpacity: 1,
-                        }}
-                      />
-                      <RechartsTooltip
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0];
-                            return (
-                              <div className="rounded-lg border bg-background p-2 shadow-sm">
-                                <div className="grid grid-cols-2 gap-2">
-                                  <div className="flex flex-col">
-                                    <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                      Category
-                                    </span>
-                                    <span className="font-bold">
-                                      {data.payload.subject}
-                                    </span>
-                                  </div>
-                                  <div className="flex flex-col">
-                                    <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                      Score
-                                    </span>
-                                    <span className="font-bold">
-                                      {data.value}/10
-                                    </span>
-                                  </div>
+        <TabsContent value="results">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-x-3">
+                <span>AI Readiness Score: {assessment.score ?? 0}/100</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <InfoIcon className="h-4 w-4" />
+                  </TooltipTrigger>
+                  <TooltipContent className="p-2">
+                    This score represents your organization's current AI
+                    readiness level
+                  </TooltipContent>
+                </Tooltip>
+              </CardTitle>
+              <CardDescription>
+                Based on your responses, your organization is at the
+                {(assessment.score ?? 0) >= 80
+                  ? " advanced "
+                  : (assessment.score ?? 0) >= 60
+                    ? " intermediate "
+                    : (assessment.score ?? 0) >= 40
+                      ? " developing "
+                      : " beginning "}
+                stage of AI readiness.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="py-4">
+                <ChartContainer
+                  config={{
+                    // Config for the score data point
+                    score: {
+                      color: "hsl(var(--primary))",
+                    },
+                  }}
+                  className="h-[350px] w-full"
+                >
+                  <RadarChart outerRadius="80%" data={getRadarChartData()}>
+                    <PolarGrid strokeDasharray="3 3" />
+                    <PolarAngleAxis
+                      dataKey="subject"
+                      tick={{
+                        fill: "hsl(var(--foreground))",
+                        fontSize: 12,
+                      }}
+                    />
+                    <PolarRadiusAxis
+                      domain={[0, 10]}
+                      tick={{ fill: "hsl(var(--foreground))" }}
+                    />
+                    <Radar
+                      name="Organization Score"
+                      dataKey="score"
+                      stroke="hsl(var(--primary))"
+                      fill="hsl(var(--primary))"
+                      fillOpacity={0.5}
+                      dot={{
+                        r: 4,
+                        fillOpacity: 1,
+                      }}
+                    />
+                    <RechartsTooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0];
+                          return (
+                            <div className="rounded-lg border bg-background p-2 shadow-sm">
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="flex flex-col">
+                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                    Category
+                                  </span>
+                                  <span className="font-bold">
+                                    {data.payload.subject}
+                                  </span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                    Score
+                                  </span>
+                                  <span className="font-bold">
+                                    {data.value}/10
+                                  </span>
                                 </div>
                               </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                    </RadarChart>
-                  </ChartContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="responses">
-            <ScrollArea className="h-[500px] rounded-md border p-4">
-              {answers.map((answer: any, index: number) => (
-                <div key={`answer-${index}`}>
-                  <h3 className="text-sm md:text-normal font-medium">
-                    Question {index + 1}: {getQuestionTextById(answer.q)}
-                  </h3>
-                  <p className="text-sm mt-2">
-                    Your answer:{" "}
-                    {answer.a === 2
-                      ? "Strongly Agree"
-                      : answer.a === 1
-                        ? "Agree"
-                        : answer.a === 0
-                          ? "Neutral"
-                          : answer.a === -1
-                            ? "Disagree"
-                            : answer.a === -2
-                              ? "Strongly Disagree"
-                              : "Not answered"}
-                  </p>
-                  <Separator className="my-4" />
-                </div>
-              ))}
-            </ScrollArea>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </DashboardLayout>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                  </RadarChart>
+                </ChartContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="responses">
+          <ScrollArea className="h-[500px] rounded-md border p-4">
+            {answers.map((answer: any, index: number) => (
+              <div key={`answer-${index}`}>
+                <h3 className="text-sm md:text-normal font-medium">
+                  Question {index + 1}: {getQuestionTextById(answer.q)}
+                </h3>
+                <p className="text-sm mt-2">
+                  Your answer:{" "}
+                  {answer.a === 2
+                    ? "Strongly Agree"
+                    : answer.a === 1
+                      ? "Agree"
+                      : answer.a === 0
+                        ? "Neutral"
+                        : answer.a === -1
+                          ? "Disagree"
+                          : answer.a === -2
+                            ? "Strongly Disagree"
+                            : "Not answered"}
+                </p>
+                <Separator className="my-4" />
+              </div>
+            ))}
+          </ScrollArea>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }
