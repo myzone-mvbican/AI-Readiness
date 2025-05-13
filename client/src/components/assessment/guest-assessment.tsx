@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { GuestAssessmentForm } from "./guest-assessment-form";
 import { useToast } from "@/hooks/use-toast";
-import { AssessmentQuestions } from "../survey/assessment-questions";
-import { AssessmentCompletion } from "../survey/assessment-completion";
+import { AssessmentQuestions } from "@/components/survey/assessment-questions";
+import { AssessmentCompletion } from "@/components/survey/assessment-completion";
 import { AssessmentAnswer } from "@shared/types";
 
 interface GuestUser {
@@ -46,7 +46,8 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   const fetchSurveyData = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/surveys/detail/${defaultSurveyId}`);
+      // Use the public endpoint that doesn't require authentication
+      const response = await fetch(`/api/public/surveys/detail/${defaultSurveyId}`);
       const data = await response.json();
       
       if (data.success && data.survey) {
