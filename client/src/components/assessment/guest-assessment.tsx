@@ -31,7 +31,8 @@ import {
   hasSavedGuestAssessment,
   saveGuestAssessmentResult,
   clearGuestAssessmentDataForSurvey,
-  clearGuestAssessmentData
+  clearGuestAssessmentData,
+  getGuestAssessmentData
 } from "@/lib/localStorage";
 
 enum AssessmentStage {
@@ -239,21 +240,17 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   };
 
   // Helper function to calculate score
-  // Load saved answers from localStorage
   const loadSavedAnswers = (): AssessmentAnswer[] => {
-    if (guestUserId) {
-      try {
-        const savedData = localStorage.getItem(
-          `guest-assessment-${guestUserId}-${defaultSurveyId}`,
-        );
-        if (savedData) {
-          return JSON.parse(savedData);
-        }
-      } catch (error) {
-        console.error("Error loading saved answers:", error);
-      }
+    try {
+      const guestUser = getGuestUser();
+      if (!guestUser) return [];
+      
+      const savedData = getGuestAssessmentData(defaultSurveyId);
+      return savedData?.answers || [];
+    } catch (error) {
+      console.error("Error loading saved answers:", error);
+      return [];
     }
-    return [];
   };
 
   const calculateScore = (answers: AssessmentAnswer[]): number => {
@@ -348,12 +345,8 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
                 setAnswers([]);
                 setAssessmentResult(null);
                 setSurveyData(null);
-                // Clear localStorage
-                if (guestUserId) {
-                  localStorage.removeItem(
-                    `guest-assessment-${guestUserId}-${defaultSurveyId}`,
-                  );
-                }
+                // Clear localStorage for this survey
+                clearGuestAssessmentDataForSurvey(defaultSurveyId);
                 // Return to beginning
                 setStage(AssessmentStage.INFO_COLLECTION);
               }}
