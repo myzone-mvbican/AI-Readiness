@@ -5,39 +5,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import Papa from "papaparse";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  Loader2,
-  Save,
-  InfoIcon,
-  AlertTriangle,
-  ArrowLeft,
-  ArrowRight,
-  CheckCircle2,
-} from "lucide-react";
 import { Assessment } from "@shared/types";
-import { format } from "date-fns";
 
 import SurveyError from "./error";
 import SurveyLoading from "./loading";
-import SurveyQuestion from "@/components/survey/survey-question";
 import SurveyCompleted from "@/components/survey/survey-completed";
-import AlertCompleted from "@/components/survey/alert-completed";
 import SurveyTemplate from "@/components/survey/survey-template";
 
 interface AssessmentResponse {
@@ -390,8 +362,10 @@ export default function AssessmentDetailPage() {
     });
   };
 
-  // This handleComplete function is not used anymore as we use onComplete in SurveyTemplate
-  // SurveyTemplate directly calls setCompleteDialogOpen(true)
+  // Handle canceling the assessment
+  const handleCancel = () => {
+    navigate("/dashboard/assessments");
+  };
 
   // Confirm assessment completion
   const confirmComplete = () => {
@@ -446,81 +420,6 @@ export default function AssessmentDetailPage() {
     setAnswers(newAnswers);
   };
 
-  // Calculate progress percentage based on the number of survey questions
-  const calculateProgress = () => {
-    if (!surveyQuestions.length || !answers.length) {
-      return 0;
-    }
-
-    // Count how many questions have been answered with a valid value (including 0 for neutral)
-    const answeredCount = answers.filter(
-      (a) => a.a !== null && a.a !== undefined,
-    ).length;
-
-    // Calculate percentage based on the total number of survey questions
-    return Math.round((answeredCount / surveyQuestions.length) * 100);
-  };
-
-  // Check if all questions are answered (for Complete button)
-  const allQuestionsAnswered = () => {
-    // If we don't have survey questions or answers, return false
-    if (!surveyQuestions.length || !answers.length) {
-      return false;
-    }
-
-    // Check if we have the same number of answers as questions
-    if (answers.length < surveyQuestions.length) {
-      return false;
-    }
-
-    // Check if all answers have a value that is not null or undefined or empty string
-    // This will properly handle 0 as a valid answer (neutral)
-    for (let i = 0; i < surveyQuestions.length; i++) {
-      const answerValue = answers[i]?.a;
-      // Using strict comparison to check for null/undefined/""
-      // Note that 0 as a value will pass this check (which is what we want)
-      if (answerValue === null || answerValue === undefined) {
-        return false;
-      }
-    }
-    return true;
-  };
-
-  // Get formatted date
-  const getFormattedDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), "MMM d, yyyy");
-    } catch (e) {
-      return "Invalid date";
-    }
-  };
-
-  // Get status badge
-  const getStatusBadge = () => {
-    const status = assessment?.status || "";
-
-    switch (status) {
-      case "completed":
-        return (
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-            Completed
-          </Badge>
-        );
-      case "in-progress":
-        return (
-          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
-            In Progress
-          </Badge>
-        );
-      default:
-        return (
-          <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">
-            Draft
-          </Badge>
-        );
-    }
-  };
-
   if (isFullyLoading) {
     return <SurveyLoading />;
   }
@@ -528,8 +427,6 @@ export default function AssessmentDetailPage() {
   if (error || !assessment) {
     return <SurveyError />;
   }
-
-  const currentProgress = calculateProgress();
 
   return (
     <DashboardLayout title={assessment.title}>
@@ -547,7 +444,7 @@ export default function AssessmentDetailPage() {
           onAnswerChange={updateAnswer}
           isSubmitting={isSubmitting}
           showSaveButton={true}
-          onCancel={() => navigate("/dashboard/assessments")}
+          onCancel={handleCancel}
           onSave={handleSave}
           onComplete={confirmComplete}
           currentStep={currentStep}
@@ -555,7 +452,6 @@ export default function AssessmentDetailPage() {
         />
       )}
 
-      {/* We're now using the confirmation dialog inside SurveyTemplate */}
     </DashboardLayout>
   );
 }

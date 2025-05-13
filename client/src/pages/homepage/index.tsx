@@ -4,8 +4,14 @@ import { Button } from "@/components/ui/button";
 import { ChevronRight, ArrowRight } from "lucide-react";
 import { useAssessmentCreateModal } from "@/hooks/use-assessment-create-modal";
 import { useAuth } from "@/hooks/use-auth";
-import { GuestAssessment } from "@/components/assessment/guest-assessment";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { GuestAssessment } from "./widgets/assessment";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function Home() {
   const assessmentCreateModal = useAssessmentCreateModal();
@@ -41,7 +47,7 @@ export default function Home() {
               Choose how you'd like to proceed with your AI Readiness Assessment
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid gap-4 py-4">
             <Button
               size="lg"
@@ -54,7 +60,7 @@ export default function Home() {
               Continue as Guest
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-            
+
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-gray-300" />
@@ -65,13 +71,13 @@ export default function Home() {
                 </span>
               </div>
             </div>
-            
+
             <Link href="/auth?mode=login">
               <Button variant="outline" size="lg" className="w-full">
                 Log in to your account
               </Button>
             </Link>
-            
+
             <Link href="/auth?mode=register">
               <Button variant="link" size="sm" className="w-full">
                 Don't have an account? Register here
@@ -130,8 +136,8 @@ export default function Home() {
                 Benefits of the Assessment
               </h2>
               <p className="mt-4 text-lg text-muted-foreground">
-                Understand your organization&apos;s AI readiness and get actionable
-                insights
+                Understand your organization&apos;s AI readiness and get
+                actionable insights
               </p>
             </div>
             <div className="mt-12 grid gap-8 md:grid-cols-3">
@@ -162,7 +168,8 @@ export default function Home() {
                   Get Insights
                 </div>
                 <p className="text-muted-foreground">
-                  Receive tailored recommendations to improve your AI capabilities
+                  Receive tailored recommendations to improve your AI
+                  capabilities
                 </p>
               </div>
             </div>

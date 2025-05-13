@@ -14,31 +14,28 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
-import { GuestAssessmentStartRequest } from "@shared/types";
+import { GuestUser } from "@/lib/localStorage";
 
 // Form validation schema
 const guestAssessmentFormSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email address"),
+  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+  email: z.string().email({ message: "Please enter a valid email address" }),
   company: z.string().optional(),
 });
 
 type GuestAssessmentFormValues = z.infer<typeof guestAssessmentFormSchema>;
 
 interface GuestAssessmentFormProps {
-  onSubmit: (data: GuestAssessmentFormValues) => void;
+  onSubmit: (values: Omit<GuestUser, "id">) => void;
   isLoading?: boolean;
   onCancel?: () => void;
 }
 
-export function GuestAssessmentForm({ 
-  onSubmit, 
+export function GuestAssessmentForm({
+  onSubmit,
   isLoading = false,
-  onCancel 
+  onCancel,
 }: GuestAssessmentFormProps) {
-  const { toast } = useToast();
-
   const form = useForm<GuestAssessmentFormValues>({
     resolver: zodResolver(guestAssessmentFormSchema),
     defaultValues: {
@@ -48,13 +45,13 @@ export function GuestAssessmentForm({
     },
   });
 
-  const handleSubmit = async (values: GuestAssessmentFormValues) => {
+  const handleSubmit = (values: GuestAssessmentFormValues) => {
     onSubmit(values);
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="name"
@@ -76,7 +73,7 @@ export function GuestAssessmentForm({
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="your.email@example.com" type="email" {...field} />
+                <Input type="email" placeholder="your.email@example.com" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -90,28 +87,32 @@ export function GuestAssessmentForm({
             <FormItem>
               <FormLabel>Company (Optional)</FormLabel>
               <FormControl>
-                <Input placeholder="Your company name" {...field} />
+                <Input placeholder="Your organization" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+        <div className="flex justify-between pt-4">
           {onCancel && (
-            <Button 
-              type="button" 
-              variant="outline" 
-              className="w-full" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={onCancel}
-              disabled={isLoading}
             >
               Cancel
             </Button>
           )}
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Start Assessment
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              "Start Assessment"
+            )}
           </Button>
         </div>
       </form>

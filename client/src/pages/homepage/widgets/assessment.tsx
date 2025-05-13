@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Loader2, UserPlus, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -11,8 +11,7 @@ import * as z from "zod";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
+  CardDescription, 
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -30,7 +29,7 @@ import { GuestAssessmentForm } from "./guest-assessment-form";
 import { useToast } from "@/hooks/use-toast";
 import SurveyCompleted from "@/components/survey/survey-completed";
 import { AssessmentAnswer } from "@shared/types";
-import GuestSurvey from "@/components/assessment/guest-survey";
+import GuestSurvey from "./guest-survey";
 import { 
   getGuestUser, 
   saveGuestUser, 

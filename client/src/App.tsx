@@ -12,7 +12,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { AdminProtectedRoute } from "./lib/admin-protected-route";
 import { AssessmentCreateModalProvider } from "@/components/assessment/assessment-create-modal-provider";
 import NotFound from "@/pages/not-found";
-import Home from "@/pages/home";
+import Home from "@/pages/homepage";
 import AuthPage from "@/pages/auth";
 import AboutPage from "@/pages/about";
 import DashboardHome from "@/pages/dashboard-home";
