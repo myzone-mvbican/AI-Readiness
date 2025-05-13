@@ -9,6 +9,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { GuestAssessmentForm } from "./guest-assessment-form";
 import { useToast } from "@/hooks/use-toast";
 import { AssessmentQuestions } from "@/components/survey/assessment-questions";
@@ -64,12 +74,29 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
     return newId;
   });
 
+  // Check for saved answers in localStorage
+  const [hasSavedAnswers, setHasSavedAnswers] = useState<boolean>(() => {
+    if (guestUserId) {
+      const savedAnswers = localStorage.getItem(`guest-assessment-${guestUserId}-${defaultSurveyId}`);
+      return !!savedAnswers;
+    }
+    return false;
+  });
+  
+  // State to track if we're showing the resume dialog
+  const [showResumeDialog, setShowResumeDialog] = useState<boolean>(false);
+  
   // Auto-advance to survey questions if user info already exists
   useEffect(() => {
     if (guestUser && stage === AssessmentStage.INFO_COLLECTION) {
-      setStage(AssessmentStage.SURVEY_QUESTIONS);
+      if (hasSavedAnswers) {
+        // Show resume dialog instead of auto-advancing
+        setShowResumeDialog(true);
+      } else {
+        setStage(AssessmentStage.SURVEY_QUESTIONS);
+      }
     }
-  }, [guestUser, stage]);
+  }, [guestUser, stage, hasSavedAnswers]);
 
   // Load survey data when entering the survey questions stage
   useEffect(() => {
@@ -210,6 +237,21 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   };
 
   // Helper function to calculate score
+  // Load saved answers from localStorage
+  const loadSavedAnswers = (): AssessmentAnswer[] => {
+    if (guestUserId) {
+      try {
+        const savedData = localStorage.getItem(`guest-assessment-${guestUserId}-${defaultSurveyId}`);
+        if (savedData) {
+          return JSON.parse(savedData);
+        }
+      } catch (error) {
+        console.error("Error loading saved answers:", error);
+      }
+    }
+    return [];
+  };
+
   const calculateScore = (answers: AssessmentAnswer[]): number => {
     // Simple scoring algorithm
     const validAnswers = answers.filter(
@@ -266,7 +308,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
             ) : surveyData ? (
               <AssessmentQuestions
                 surveyData={surveyData}
-                initialAnswers={[]}
+                initialAnswers={loadSavedAnswers()}
                 onSubmit={handleQuestionsSubmit}
                 onCancel={() => setStage(AssessmentStage.INFO_COLLECTION)}
                 guestUserId={guestUserId}
@@ -315,5 +357,41 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
     }
   };
 
-  return <div className="w-full pt-4">{renderContent()}</div>;
+  const handleLoadPreviousAnswers = () => {
+    if (guestUserId) {
+      setShowResumeDialog(false);
+      setStage(AssessmentStage.SURVEY_QUESTIONS);
+    }
+  };
+  
+  const handleStartFresh = () => {
+    if (guestUserId) {
+      // Clear previous answers from localStorage
+      localStorage.removeItem(`guest-assessment-${guestUserId}-${defaultSurveyId}`);
+      setHasSavedAnswers(false);
+      setShowResumeDialog(false);
+      setStage(AssessmentStage.SURVEY_QUESTIONS);
+    }
+  };
+
+  return (
+    <div className="w-full pt-4">
+      {renderContent()}
+      
+      <AlertDialog open={showResumeDialog} onOpenChange={setShowResumeDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Resume Assessment</AlertDialogTitle>
+            <AlertDialogDescription>
+              We found a previously saved assessment for you. Would you like to resume where you left off, or start a new assessment?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleStartFresh}>Start New</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLoadPreviousAnswers}>Resume Previous</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
 }
