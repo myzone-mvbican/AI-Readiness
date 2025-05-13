@@ -45,7 +45,10 @@ export const updateUserSchema = createInsertSchema(users)
   })
   .partial();
 
-// Google auth schemas
+/**
+ * Google OAuth Authentication Schemas
+ * Schemas for handling Google sign-in and account connection
+ */
 export const googleAuthSchema = z.object({
   credential: z.string(),
 });
@@ -54,7 +57,10 @@ export const googleConnectSchema = z.object({
   credential: z.string(),
 });
 
-// Team schemas
+/**
+ * Team Management Schemas
+ * Schemas for team creation and user-team relationships
+ */
 export const insertTeamSchema = createInsertSchema(teams).pick({
   name: true,
 });
@@ -65,15 +71,16 @@ export const userTeamSchema = createInsertSchema(userTeams).pick({
   role: true,
 });
 
-// Survey validation schemas
+/**
+ * Survey Management Schemas
+ * Schemas for creating, updating, and managing surveys
+ */
 export const surveyStatusSchema = z.enum(["draft", "public"]).default("draft");
 
 export const surveyVisibilitySchema = z.union([
   z.literal("global"),
   z.array(z.string()).min(1),
 ]);
-
-// Survey schemas
 export const insertSurveySchema = createInsertSchema(surveys)
   .pick({
     title: true,
@@ -106,13 +113,19 @@ export const updateSurveySchema = createInsertSchema(surveys)
     status: surveyStatusSchema.optional(),
   });
 
-// Survey-Teams schema
+/**
+ * Survey-Team Relationship Schema
+ * Schema for managing survey access by teams
+ */
 export const insertSurveyTeamSchema = createInsertSchema(surveyTeams).pick({
   surveyId: true,
   teamId: true,
 });
 
-// Assessment validation schemas
+/**
+ * Assessment Schemas
+ * Schemas for creating and updating user assessment submissions
+ */
 export const assessmentStatusSchema = z
   .enum(["draft", "in-progress", "completed"])
   .default("draft");
