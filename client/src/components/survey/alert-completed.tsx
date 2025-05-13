@@ -11,12 +11,19 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export default function SurveyAlertComplete({
+interface AlertCompletedProps {
+  completeDialogOpen: boolean;
+  setCompleteDialogOpen: (open: boolean) => void;
+  isSubmitting: boolean;
+  confirmComplete: () => void;
+}
+
+export default function AlertCompleted({
   completeDialogOpen,
   setCompleteDialogOpen,
   isSubmitting,
   confirmComplete,
-}) {
+}: AlertCompletedProps) {
   return (
     <AlertDialog open={completeDialogOpen} onOpenChange={setCompleteDialogOpen}>
       <AlertDialogContent>

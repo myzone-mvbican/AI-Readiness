@@ -33,11 +33,11 @@ import {
 import { Assessment } from "@shared/types";
 import { format } from "date-fns";
 
-import SurveyError from "./survey-error";
-import SurveyLoading from "./survey-loading";
-import SurveyQuestion from "./survey-question";
-import SurveyCompleted from "./survey-completed";
-import AlertCompleted from "./alert-completed";
+import SurveyError from "./error";
+import SurveyLoading from "./loading";
+import SurveyQuestion from "@/components/survey/survey-question";
+import SurveyCompleted from "@/components/survey/survey-completed";
+import AlertCompleted from "@/components/survey/alert-completed";
 
 interface AssessmentResponse {
   success: boolean;
