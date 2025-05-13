@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, ArrowRight, Check, Save } from "lucide-react";
+import { Loader2, ArrowLeft, ArrowRight, Check, Save, HelpCircle } from "lucide-react";
 import { AssessmentAnswer } from "@shared/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface AssessmentQuestionsProps {
   surveyData: any;
@@ -251,26 +252,37 @@ export function AssessmentQuestions({
           </h2>
         </div>
         
-        <div className="text-lg font-medium">{currentQuestion.question}</div>
+        <div className="flex items-center gap-2">
+          <div className="text-lg font-medium">{currentQuestion.question}</div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full p-0">
+                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                  <span className="sr-only">Question information</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">Respond based on your organization's current situation, not aspirations</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
 
-        <div className="py-2">
-          <RadioGroup
-            value={currentAnswer !== null ? currentAnswer.toString() : undefined}
-            onValueChange={(value) => handleAnswerChange(value ? parseInt(value) : null)}
-            className="flex flex-col space-y-2"
-          >
+        <div className="py-4">
+          <div className="grid grid-cols-5 gap-2">
             {Object.entries(answerLabels).map(([value, label]) => (
-              <div key={value} className="flex items-center space-x-2 border p-3 rounded-md hover:bg-muted/50 transition-colors">
-                <RadioGroupItem value={value} id={`answer-${value}`} />
-                <Label
-                  htmlFor={`answer-${value}`}
-                  className="cursor-pointer flex-grow py-1"
-                >
-                  {label}
-                </Label>
-              </div>
+              <Button
+                key={value}
+                type="button"
+                variant={currentAnswer?.toString() === value ? "default" : "outline"}
+                className="text-xs sm:text-sm flex flex-col h-auto py-3"
+                onClick={() => handleAnswerChange(parseInt(value))}
+              >
+                <span>{label}</span>
+              </Button>
             ))}
-          </RadioGroup>
+          </div>
         </div>
 
         <div className="flex justify-between pt-4">
