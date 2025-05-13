@@ -1,0 +1,53 @@
+// Import core types from the schema
+import { teams, users, userTeams, surveys, surveyTeams, assessments } from "../schema";
+import { z } from "zod";
+
+// Basic database model types
+export type Team = typeof teams.$inferSelect;
+export type User = typeof users.$inferSelect;
+export type UserTeam = typeof userTeams.$inferSelect;
+export type Survey = typeof surveys.$inferSelect;
+export type SurveyTeam = typeof surveyTeams.$inferSelect;
+
+// For assessment, we have two types: the DB type and the runtime type
+export type AssessmentDB = typeof assessments.$inferSelect;
+export type Assessment = Omit<AssessmentDB, 'answers'> & {
+  answers: Array<{
+    q: number;
+    a?: -2 | -1 | 0 | 1 | 2 | null;
+    r?: string;
+  }>;
+};
+
+// Combined types for frontend use
+export type TeamWithRole = Team & { role: string };
+
+// Extended model types
+export type SurveyWithAuthor = Survey & { 
+  author: { 
+    name: string; 
+    email: string; 
+  };
+  teams: { 
+    id: number; 
+    name: string; 
+  }[];
+};
+
+// Google OAuth decoded payload
+export interface GoogleUserPayload {
+  iss: string;
+  nbf: number;
+  aud: string;
+  sub: string;
+  email: string;
+  email_verified: boolean;
+  azp: string;
+  name: string;
+  picture: string;
+  given_name: string;
+  family_name: string;
+  iat: number;
+  exp: number;
+  jti: string;
+}

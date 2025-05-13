@@ -2,6 +2,12 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { 
+  teams,
+  users,
+  userTeams,
+  surveys 
+} from "@shared/schema";
+import {
   insertUserSchema, 
   updateUserSchema, 
   loginSchema,
@@ -10,13 +16,9 @@ import {
   googleAuthSchema,
   googleConnectSchema,
   insertSurveySchema,
-  updateSurveySchema,
-  teams,
-  users,
-  userTeams,
-  surveys,
-  type GoogleUserPayload
-} from "@shared/schema";
+  updateSurveySchema
+} from "@shared/validation/schemas";
+import { GoogleUserPayload } from "@shared/types";
 import { authenticate, requireAdmin } from "./middleware/auth";
 import { upload } from "./middleware/upload";
 import cors from "cors";
