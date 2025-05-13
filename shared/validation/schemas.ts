@@ -1,8 +1,24 @@
+/**
+ * Validation Schemas
+ * 
+ * This file contains Zod validation schemas used for data validation
+ * throughout the application. Many schemas are derived from database tables
+ * using drizzle-zod, while others are custom-defined for specific use cases.
+ * 
+ * These schemas should be used for:
+ * 1. Form validation on the client (with react-hook-form)
+ * 2. API input validation on the server
+ * 3. Type generation via z.infer<typeof schema>
+ */
+
 import { z } from "zod";
 import { createInsertSchema } from "drizzle-zod";
 import { teams, users, userTeams, surveys, surveyTeams, assessments } from "../schema";
 
-// User validation schemas
+/**
+ * User Validation Schemas
+ * Schemas for user registration, authentication, and profile updates
+ */
 export const insertUserSchema = createInsertSchema(users).pick({
   name: true,
   email: true,
