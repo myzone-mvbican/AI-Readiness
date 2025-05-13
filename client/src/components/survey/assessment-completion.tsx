@@ -1,9 +1,21 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserPlus, Download, BarChart, RefreshCw } from "lucide-react";
+import { UserPlus, Download, BarChart, RefreshCw, CheckCircle2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { AssessmentAnswer } from "@shared/types";
+import { 
+  RadarChart, 
+  PolarGrid, 
+  PolarAngleAxis, 
+  PolarRadiusAxis, 
+  Radar,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer 
+} from "recharts";
+import { ChartConfig, ChartContainer } from "@/components/ui/chart";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
 interface AssessmentCompletionProps {
   assessment: any;
@@ -44,113 +56,184 @@ export function AssessmentCompletion({
     return "Leading";
   };
 
+  // Prepare data for radar chart
+  const getRadarChartData = () => {
+    // Group answers by category
+    const categoryMap = new Map<string, AssessmentAnswer[]>();
+    
+    if (!assessment.answers || !Array.isArray(assessment.answers)) {
+      return [];
+    }
+
+    // Process answers and group by category
+    assessment.answers.forEach((answer: AssessmentAnswer, index: number) => {
+      // Get the question from survey data
+      const questionNumber = answer.q;
+      // Find the matching question
+      const question = survey?.questions?.find((q: any) => q.id === questionNumber);
+      
+      if (!question) return;
+      
+      const category = question.category;
+      if (!category) return;
+      
+      if (!categoryMap.has(category)) {
+        categoryMap.set(category, []);
+      }
+      
+      // Add this answer to the category
+      categoryMap.get(category)?.push(answer);
+    });
+    
+    // Calculate average score for each category
+    return Array.from(categoryMap.entries()).map(([category, answers]) => {
+      // Get valid answers with values
+      const validAnswers = answers.filter(a => a.a !== null && a.a !== undefined);
+      if (validAnswers.length === 0) return { subject: category, score: 0, fullMark: 10 };
+      
+      // Convert from -2 to +2 scale to 0 to 10 scale
+      const sum = validAnswers.reduce((acc, ans) => {
+        const value = ans.a || 0;
+        // Convert to 0-10 scale: (-2 → 0, -1 → 2.5, 0 → 5, 1 → 7.5, 2 → 10)
+        const normalizedValue = ((value + 2) * 2.5);
+        return acc + normalizedValue;
+      }, 0);
+      
+      const avg = validAnswers.length > 0 
+        ? Math.round((sum / validAnswers.length) * 10) / 10 
+        : 0;
+      
+      return {
+        subject: category,
+        score: avg,
+        fullMark: 10,
+      };
+    });
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Assessment Completed</CardTitle>
-        <CardDescription>
-          {guestMode
-            ? "Thanks for completing the AI Readiness Assessment"
-            : "Your AI readiness assessment has been saved"}
-        </CardDescription>
+        <div className="flex items-center justify-center py-4">
+          <div className="bg-green-100 rounded-full p-5">
+            <CheckCircle2 className="h-12 w-12 text-green-600" />
+          </div>
+        </div>
+        <div className="text-center">
+          <CardTitle className="text-2xl">Assessment Completed</CardTitle>
+          <CardDescription className="mt-2">
+            You scored {score} out of 100 on this AI readiness assessment.
+          </CardDescription>
+        </div>
       </CardHeader>
 
       <CardContent className="space-y-6">
-        <div className="flex flex-col items-center justify-center py-6 space-y-4">
-          <div className="relative flex items-center justify-center w-32 h-32 rounded-full">
-            <div className="absolute w-full h-full rounded-full border-8 border-opacity-30 border-primary"></div>
-            <div className="absolute w-full h-full rounded-full border-8 border-t-primary border-r-transparent border-b-transparent border-l-transparent transform -rotate-45"></div>
-            <div className={`text-4xl font-bold ${getScoreColor(score)}`}>
-              {score}
-            </div>
-          </div>
-          <div className="text-center">
-            <h3 className="text-2xl font-bold">
-              {getScoreDescription(score)}
-            </h3>
-            <p className="text-muted-foreground mt-1">
-              Your AI Readiness Score
-            </p>
-          </div>
-        </div>
-
-        <Tabs defaultValue="summary" className="w-full">
+        <Tabs defaultValue="results" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="summary">Summary</TabsTrigger>
-            <TabsTrigger value="categories">Categories</TabsTrigger>
+            <TabsTrigger value="results">Results</TabsTrigger>
+            <TabsTrigger value="responses">Your Responses</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="summary" className="p-4 space-y-6">
-            <div>
-              <h4 className="font-semibold mb-2">Overview</h4>
-              <p className="text-muted-foreground">
-                Your organization is at the {getScoreDescription(score).toLowerCase()} stage of AI readiness.
-                {score < 60
-                  ? " There are significant opportunities to enhance your AI capabilities."
-                  : " You have a solid foundation but can still improve in specific areas."}
-              </p>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-2">Key Strengths</h4>
-              <ul className="list-disc list-inside text-muted-foreground">
-                <li>Your organization has recognized the importance of AI</li>
-                <li>You have begun the process of AI adoption</li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-2">Improvement Areas</h4>
-              <ul className="list-disc list-inside text-muted-foreground">
-                <li>Consider developing a comprehensive AI strategy</li>
-                <li>Build stronger data infrastructure and governance</li>
-                <li>Invest in AI skills and knowledge across the organization</li>
-              </ul>
-            </div>
+          <TabsContent value="results" className="p-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex flex-col items-center">
+                  <ChartContainer
+                    config={{
+                      type: 'radar-chart',
+                      height: 350,
+                      data: getRadarChartData(),
+                      options: {},
+                    } as ChartConfig}
+                    className="h-[350px] w-full"
+                  >
+                    <RadarChart outerRadius="80%" data={getRadarChartData()}>
+                      <PolarGrid strokeDasharray="3 3" />
+                      <PolarAngleAxis
+                        dataKey="subject"
+                        tick={{
+                          fill: "hsl(var(--foreground))",
+                          fontSize: 12,
+                        }}
+                      />
+                      <PolarRadiusAxis
+                        domain={[0, 10]}
+                        tick={{ fill: "hsl(var(--foreground))" }}
+                      />
+                      <Radar
+                        name="Organization Score"
+                        dataKey="score"
+                        stroke="hsl(var(--primary))"
+                        fill="hsl(var(--primary))"
+                        fillOpacity={0.5}
+                        dot={{
+                          r: 4,
+                          fillOpacity: 1,
+                        }}
+                      />
+                      <RechartsTooltip 
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0];
+                            return (
+                              <div className="rounded-lg border bg-background p-2 shadow-sm">
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div className="flex flex-col">
+                                    <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                      Category
+                                    </span>
+                                    <span className="font-bold">
+                                      {data.payload.subject}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                      Score
+                                    </span>
+                                    <span className="font-bold">
+                                      {data.value}/10
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                    </RadarChart>
+                  </ChartContainer>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          <TabsContent value="categories" className="p-4 space-y-4">
-            <div className="space-y-3">
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>Strategy & Vision</span>
-                  <span className="font-medium">65%</span>
-                </div>
-                <Progress value={65} className="h-2" />
-              </div>
-
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>Data Readiness</span>
-                  <span className="font-medium">48%</span>
-                </div>
-                <Progress value={48} className="h-2" />
-              </div>
-
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>Technical Infrastructure</span>
-                  <span className="font-medium">72%</span>
-                </div>
-                <Progress value={72} className="h-2" />
-              </div>
-
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>Skills & Capabilities</span>
-                  <span className="font-medium">53%</span>
-                </div>
-                <Progress value={53} className="h-2" />
-              </div>
-
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>Implementation & Integration</span>
-                  <span className="font-medium">60%</span>
-                </div>
-                <Progress value={60} className="h-2" />
-              </div>
-            </div>
+          <TabsContent value="responses">
+            <ScrollArea className="h-[400px] rounded-md border p-4">
+              {assessment.answers && assessment.answers.map((answer: AssessmentAnswer, index: number) => {
+                // Get the question
+                const questionNumber = answer.q;
+                const question = survey?.questions?.find((q: any) => q.id === questionNumber);
+                if (!question) return null;
+                
+                // Calculate answer value text
+                const answerValue = answer.a;
+                let answerText = "Not answered";
+                if (answerValue === -2) answerText = "Strongly Disagree";
+                else if (answerValue === -1) answerText = "Disagree";
+                else if (answerValue === 0) answerText = "Neutral";
+                else if (answerValue === 1) answerText = "Agree";
+                else if (answerValue === 2) answerText = "Strongly Agree";
+                
+                return (
+                  <div key={index} className="mb-4">
+                    <p className="font-medium">{question.question}</p>
+                    <p className="text-sm text-muted-foreground mt-1">Your answer: {answerText}</p>
+                    <Separator className="my-2" />
+                  </div>
+                );
+              })}
+            </ScrollArea>
           </TabsContent>
         </Tabs>
       </CardContent>
