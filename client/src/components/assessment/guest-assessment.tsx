@@ -24,12 +24,15 @@ import { useToast } from "@/hooks/use-toast";
 import { AssessmentCompletion } from "@/components/survey/assessment-completion";
 import { AssessmentAnswer } from "@shared/types";
 import GuestSurvey from "@/components/assessment/guest-survey";
-
-interface GuestUser {
-  name: string;
-  email: string;
-  company?: string;
-}
+import { 
+  getGuestUser, 
+  saveGuestUser, 
+  GuestUser as StorageGuestUser, 
+  hasSavedGuestAssessment,
+  saveGuestAssessmentResult,
+  clearGuestAssessmentDataForSurvey,
+  clearGuestAssessmentData
+} from "@/lib/localStorage";
 
 enum AssessmentStage {
   INFO_COLLECTION,
@@ -47,14 +50,9 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   );
   const { toast } = useToast();
 
-  // Try to load guest user info from localStorage
+  // Load guest user info from localStorage using our utility
   const [guestUser, setGuestUser] = useState<GuestUser | null>(() => {
-    try {
-      const saved = localStorage.getItem("guestUser");
-      return saved ? JSON.parse(saved) : null;
-    } catch (e) {
-      return null;
-    }
+    return getGuestUser();
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -66,25 +64,10 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
 
   // Default survey template ID
   const defaultSurveyId = 19;
-  // Generate a unique guest user ID for localStorage
-  const [guestUserId] = useState<string>(() => {
-    const existingId = localStorage.getItem("guestUserId");
-    if (existingId) return existingId;
-
-    const newId = `guest-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
-    localStorage.setItem("guestUserId", newId);
-    return newId;
-  });
-
+  
   // Check for saved answers in localStorage
   const [hasSavedAnswers, setHasSavedAnswers] = useState<boolean>(() => {
-    if (guestUserId) {
-      const savedAnswers = localStorage.getItem(
-        `guest-assessment-${guestUserId}-${defaultSurveyId}`,
-      );
-      return !!savedAnswers;
-    }
-    return false;
+    return hasSavedGuestAssessment(defaultSurveyId);
   });
 
   // State to track if we're showing the resume dialog

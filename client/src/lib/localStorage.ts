@@ -19,8 +19,9 @@ export const STORAGE_KEYS = {
   GUEST_ASSESSMENT_RESULT: 'guestAssessmentResult',
 };
 
-// Guest user interface
+// Guest user interface with embedded ID
 export interface GuestUser {
+  id: string;
   name: string;
   email: string;
   company?: string;
@@ -42,22 +43,44 @@ export function generateGuestUserId(): string {
 }
 
 /**
- * Get the guest user ID from localStorage, or generate a new one if it doesn't exist
+ * Save guest user information to localStorage with embedded ID
+ * @returns The complete guest user object with ID
  */
-export function getGuestUserId(): string {
-  const existingId = localStorage.getItem(STORAGE_KEYS.GUEST_USER_ID);
-  if (existingId) return existingId;
+export function saveGuestUser(user: Omit<GuestUser, 'id'>): GuestUser {
+  // Get existing user or create new with ID
+  let guestUser: GuestUser;
   
-  const newId = generateGuestUserId();
-  localStorage.setItem(STORAGE_KEYS.GUEST_USER_ID, newId);
-  return newId;
-}
-
-/**
- * Save guest user information to localStorage
- */
-export function saveGuestUser(user: GuestUser): void {
-  localStorage.setItem(STORAGE_KEYS.GUEST_USER, JSON.stringify(user));
+  try {
+    const existingData = localStorage.getItem(STORAGE_KEYS.GUEST_USER);
+    
+    if (existingData) {
+      // Update existing user data
+      const existingUser = JSON.parse(existingData);
+      guestUser = { 
+        ...existingUser,
+        ...user
+      };
+    } else {
+      // Create new user with generated ID
+      guestUser = {
+        id: generateGuestUserId(),
+        ...user
+      };
+    }
+    
+    // Save to localStorage
+    localStorage.setItem(STORAGE_KEYS.GUEST_USER, JSON.stringify(guestUser));
+    return guestUser;
+  } catch (e) {
+    console.error('Error saving guest user data:', e);
+    // Create a new user if there was an error
+    guestUser = {
+      id: generateGuestUserId(),
+      ...user
+    };
+    localStorage.setItem(STORAGE_KEYS.GUEST_USER, JSON.stringify(guestUser));
+    return guestUser;
+  }
 }
 
 /**
@@ -71,6 +94,15 @@ export function getGuestUser(): GuestUser | null {
     console.error('Error loading guest user data:', e);
     return null;
   }
+}
+
+/**
+ * Get the guest user ID from localStorage
+ * @returns The ID if a guest user exists, null otherwise
+ */
+export function getGuestUserId(): string | null {
+  const guestUser = getGuestUser();
+  return guestUser?.id || null;
 }
 
 /**
@@ -156,7 +188,6 @@ export function getGuestAssessmentResult(): any | null {
  */
 export function clearGuestAssessmentData(): void {
   localStorage.removeItem(STORAGE_KEYS.GUEST_USER);
-  localStorage.removeItem(STORAGE_KEYS.GUEST_USER_ID);
   localStorage.removeItem(STORAGE_KEYS.GUEST_ASSESSMENT_DATA);
   localStorage.removeItem(STORAGE_KEYS.GUEST_ASSESSMENT_RESULT);
 }

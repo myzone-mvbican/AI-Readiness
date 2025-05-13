@@ -20,8 +20,7 @@ interface SurveyQuestion {
 
 interface GuestSurveyProps {
   surveyId: number;
-  guestUserId: string;
-  guestUser: { name: string; email: string; company?: string };
+  guestUser: { id: string; name: string; email: string; company?: string };
   onSubmit: (answers: AssessmentAnswer[]) => void;
   onCancel?: () => void;
   onScoreChange?: (score: number) => void;
@@ -30,7 +29,6 @@ interface GuestSurveyProps {
 
 export default function GuestSurvey({
   surveyId,
-  guestUserId,
   guestUser,
   onSubmit,
   onCancel,
