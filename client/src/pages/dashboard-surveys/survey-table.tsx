@@ -20,8 +20,10 @@ import { Pencil, Trash2, MoreHorizontal } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import SurveyEditDialog from "./survey-edit-dialog";
 import SurveyDeleteDialog from "./survey-delete-dialog";
+import { SurveyWithAuthor } from "@shared/types";
 
-export type SurveyWithAuthor = {
+// Kept for reference but using the shared type instead
+type LocalSurveyWithAuthor = {
   id: number;
   title: string;
   questionsCount: number;
