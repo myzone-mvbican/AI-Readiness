@@ -64,12 +64,19 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
     return newId;
   });
 
-  // Load survey data
+  // Auto-advance to survey questions if user info already exists
+  useEffect(() => {
+    if (guestUser && stage === AssessmentStage.INFO_COLLECTION) {
+      setStage(AssessmentStage.SURVEY_QUESTIONS);
+    }
+  }, [guestUser, stage]);
+
+  // Load survey data when entering the survey questions stage
   useEffect(() => {
     if (stage === AssessmentStage.SURVEY_QUESTIONS && !surveyData) {
       fetchSurveyData();
     }
-  }, [stage]);
+  }, [stage, surveyData]);
 
   const fetchSurveyData = async () => {
     setIsLoading(true);
@@ -121,8 +128,18 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
       // Calculate a simple score based on answers
       const score = calculateScore(answers);
 
-      // Create assessment result data
-      const assessmentResult = {
+      // Create assessment result data for local storage and display
+      const assessmentResult: {
+        id?: number;
+        title: string;
+        email?: string;
+        name?: string;
+        company?: string;
+        surveyTemplateId: number;
+        answers: AssessmentAnswer[];
+        status: string;
+        score: number;
+      } = {
         title: `${guestUser?.name}'s AI Readiness Assessment`,
         email: guestUser?.email,
         name: guestUser?.name,
@@ -133,15 +150,53 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
         score,
       };
 
+      // Save to server using the public API
+      const response = await fetch('/api/public/assessments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: `${guestUser?.name}'s AI Readiness Assessment`,
+          surveyId: defaultSurveyId,
+          email: guestUser?.email,
+          name: guestUser?.name,
+          company: guestUser?.company || '',
+          answers: answers,
+          status: "completed",
+          score,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to save assessment');
+      }
+
+      // Store both server ID and local copy
+      if (data.assessment?.id) {
+        assessmentResult.id = data.assessment.id;
+      }
+
       // Set assessment result to be used in the completion stage
       setAssessmentResult(assessmentResult);
 
       // Move to completed stage
       setStage(AssessmentStage.COMPLETED);
 
-      // Here you would normally submit to an API endpoint
-      // But for now, just store in localStorage
+      // Store result in localStorage
       localStorage.setItem("guestAssessment", JSON.stringify(assessmentResult));
+      
+      // Clear the answers from localStorage now that we've saved it
+      if (guestUserId) {
+        localStorage.removeItem(`guest-assessment-${guestUserId}-${defaultSurveyId}`);
+      }
+      
+      toast({
+        title: "Assessment Completed",
+        description: "Your assessment has been saved successfully.",
+      });
     } catch (error) {
       console.error("Error submitting assessment:", error);
       toast({
@@ -214,6 +269,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
                 initialAnswers={[]}
                 onSubmit={handleQuestionsSubmit}
                 onCancel={() => setStage(AssessmentStage.INFO_COLLECTION)}
+                guestUserId={guestUserId}
               />
             ) : (
               <Card>
