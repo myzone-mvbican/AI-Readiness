@@ -21,9 +21,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { GuestAssessmentForm } from "./guest-assessment-form";
 import { useToast } from "@/hooks/use-toast";
-import { AssessmentQuestions } from "@/components/survey/assessment-questions";
 import { AssessmentCompletion } from "@/components/survey/assessment-completion";
 import { AssessmentAnswer } from "@shared/types";
+import GuestSurvey from "@/components/assessment/guest-survey";
 
 interface GuestUser {
   name: string;
@@ -323,47 +323,23 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <span className="ml-2">Loading survey questions...</span>
               </div>
-            ) : surveyData ? (
-              <AssessmentQuestions
-                surveyData={surveyData}
-                initialAnswers={loadSavedAnswers()}
+            ) : (
+              <GuestSurvey
+                surveyId={defaultSurveyId}
+                guestUserId={guestUserId}
+                guestUser={guestUser || { name: '', email: '' }}
+                hasSavedAnswers={hasSavedAnswers}
                 onSubmit={handleQuestionsSubmit}
                 onCancel={() => {
-                  // Clear localStorage when canceling
-                  try {
-                    const storageKey = `guest-assessment-${guestUserId}-${defaultSurveyId}`;
-                    console.log('GuestAssessment: Clearing localStorage key:', storageKey);
-                    localStorage.removeItem(storageKey);
-                    console.log('GuestAssessment: LocalStorage cleared successfully');
-                    
-                    // Also clear any other related storage
-                    localStorage.removeItem(`guest-assessment-progress-${guestUserId}`);
-                  } catch (error) {
-                    console.error('Error clearing localStorage:', error);
-                  }
-                  
                   // Go back to info collection stage
                   setStage(AssessmentStage.INFO_COLLECTION);
                 }}
-                guestUserId={guestUserId}
-                onScoreChange={(score) => {
+                onScoreChange={(score: number) => {
                   // Update the current score in real time as user selects answers
                   console.log("Current score updated:", score);
                   setCurrentScore(score);
                 }}
               />
-            ) : (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <p>Failed to load survey. Please try again.</p>
-                  <Button
-                    className="mt-4"
-                    onClick={() => setStage(AssessmentStage.INFO_COLLECTION)}
-                  >
-                    Go Back
-                  </Button>
-                </CardContent>
-              </Card>
             )}
           </div>
         );
