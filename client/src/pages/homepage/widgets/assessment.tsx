@@ -196,13 +196,39 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
     }
   };
 
-  const handleInfoSubmit = (values: Omit<StorageGuestUser, "id">) => {
-    // Store guest user info in localStorage using our utility
-    const savedUser = saveGuestUser(values);
-    setGuestUser(savedUser);
+  // State for showing existing account modal
+  const [showExistingAccountModal, setShowExistingAccountModal] = useState(false);
+  const [pendingGuestInfo, setPendingGuestInfo] = useState<Omit<StorageGuestUser, "id"> | null>(null);
 
-    // Move to survey questions stage
-    setStage(AssessmentStage.SURVEY_QUESTIONS);
+  const handleInfoSubmit = async (values: Omit<StorageGuestUser, "id">) => {
+    setIsLoading(true);
+    
+    try {
+      // Check if user with this email already exists
+      const response = await fetch(`/api/users/check-email?email=${encodeURIComponent(values.email)}`);
+      const data = await response.json();
+      
+      if (data.exists) {
+        // User exists - store values temporarily and show login modal
+        setPendingGuestInfo(values);
+        setShowExistingAccountModal(true);
+      } else {
+        // Store guest user info in localStorage and proceed
+        const savedUser = saveGuestUser(values);
+        setGuestUser(savedUser);
+        
+        // Move to survey questions stage
+        setStage(AssessmentStage.SURVEY_QUESTIONS);
+      }
+    } catch (error) {
+      console.error("Error checking email:", error);
+      // If check fails, proceed as normal
+      const savedUser = saveGuestUser(values);
+      setGuestUser(savedUser);
+      setStage(AssessmentStage.SURVEY_QUESTIONS);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleQuestionsSubmit = async (answers: AssessmentAnswer[]) => {
@@ -514,6 +540,42 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleLoadPreviousAnswers}>
               Resume
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Existing account modal */}
+      <AlertDialog open={showExistingAccountModal} onOpenChange={setShowExistingAccountModal}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Account Already Exists</AlertDialogTitle>
+            <AlertDialogDescription>
+              An account with this email already exists. Would you like to log in with your existing account?
+              Your assessment data will be saved to your account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              if (pendingGuestInfo) {
+                // Store guest user info in localStorage and proceed without linking to account
+                const savedUser = saveGuestUser(pendingGuestInfo);
+                setGuestUser(savedUser);
+                setStage(AssessmentStage.SURVEY_QUESTIONS);
+              }
+              setShowExistingAccountModal(false);
+            }}>
+              Continue as Guest
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              // Redirect to login page with email prefilled
+              if (pendingGuestInfo?.email) {
+                window.location.href = `/auth?email=${encodeURIComponent(pendingGuestInfo.email)}`;
+              } else {
+                window.location.href = '/auth';
+              }
+            }}>
+              Log In
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
