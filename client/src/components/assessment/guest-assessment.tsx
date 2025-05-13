@@ -35,15 +35,34 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   const [stage, setStage] = useState<AssessmentStage>(
     AssessmentStage.INFO_COLLECTION,
   );
-  const [guestUser, setGuestUser] = useState<GuestUser | null>(null);
+  const { toast } = useToast();
+  
+  // Try to load guest user info from localStorage
+  const [guestUser, setGuestUser] = useState<GuestUser | null>(() => {
+    try {
+      const saved = localStorage.getItem("guestUser");
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  
   const [isLoading, setIsLoading] = useState(false);
   const [surveyData, setSurveyData] = useState<any | null>(null);
   const [answers, setAnswers] = useState<AssessmentAnswer[]>([]);
   const [assessmentResult, setAssessmentResult] = useState<any | null>(null);
-  const { toast } = useToast();
-
-  // Default survey template ID (survey 17 for now)
+  
+  // Default survey template ID
   const defaultSurveyId = 19;
+  // Generate a unique guest user ID for localStorage
+  const [guestUserId] = useState<string>(() => {
+    const existingId = localStorage.getItem("guestUserId");
+    if (existingId) return existingId;
+    
+    const newId = `guest-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+    localStorage.setItem("guestUserId", newId);
+    return newId;
+  });
 
   // Load survey data
   useEffect(() => {
