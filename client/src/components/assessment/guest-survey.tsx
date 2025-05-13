@@ -96,7 +96,7 @@ export default function GuestSurvey({
         .map((q: any, index: number) => ({
           number: q.id || index + 1,
           text: q.question,
-          description: q.description || "Respond based on your organization's current situation, not aspirations",
+          description: q.details || "Respond based on your organization's current situation, not aspirations",
           category: q.category || "AI Readiness Assessment"
         }));
       
@@ -113,9 +113,10 @@ export default function GuestSurvey({
     }
   }, [questionData, answers.length]);
 
-  // Load saved answers from localStorage
+  // Load saved answers from localStorage - only run once when questions are loaded
   useEffect(() => {
-    if (hasSavedAnswers && questions.length > 0) {
+    // Only run this once when questions are loaded
+    if (hasSavedAnswers && questions.length > 0 && answers.length === 0) {
       try {
         const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (savedData) {
@@ -128,7 +129,7 @@ export default function GuestSurvey({
         console.error("Error loading saved answers:", error);
       }
     }
-  }, [LOCAL_STORAGE_KEY, hasSavedAnswers, questions.length]);
+  }, [LOCAL_STORAGE_KEY, hasSavedAnswers, questions.length, answers.length]);
 
   // Clear auto-advance timeout on unmount
   useEffect(() => {
@@ -138,6 +139,15 @@ export default function GuestSurvey({
       }
     };
   }, [autoAdvanceTimeout]);
+  
+  // Control resume dialog only on mount
+  useEffect(() => {
+    // Only show the resume dialog once on initial mount if there are saved answers
+    if (hasSavedAnswers) {
+      setShowResumeDialog(true);
+    }
+    // This effect should only run once on mount
+  }, []);
 
   const handleAnswerChange = (index: number, value: number) => {
     // Create a copy of the answers array
@@ -212,6 +222,7 @@ export default function GuestSurvey({
   const handleStartFresh = () => {
     // Clear previous answers from localStorage
     localStorage.removeItem(LOCAL_STORAGE_KEY);
+    localStorage.removeItem(`guest-assessment-progress-${guestUserId}`);
     
     // Reset answers to empty
     const initialAnswers = questions.map((q: SurveyQuestion) => ({
@@ -221,6 +232,11 @@ export default function GuestSurvey({
     setAnswers(initialAnswers);
     setCurrentStep(0);
     setShowResumeDialog(false);
+    
+    // Signal parent component to go back to info collection
+    if (onCancel) {
+      onCancel();
+    }
   };
 
   if (isSurveyLoading || isQuestionsLoading) {

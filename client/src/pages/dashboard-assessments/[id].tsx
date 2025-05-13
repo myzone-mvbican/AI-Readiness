@@ -565,7 +565,7 @@ export default function AssessmentDetailPage() {
         showSaveButton={true}
         onCancel={() => navigate("/dashboard/assessments")}
         onSave={handleSave}
-        onComplete={handleComplete}
+        onComplete={() => setCompleteDialogOpen(true)}
         currentStep={currentStep}
         setCurrentStep={setCurrentStep}
       />
