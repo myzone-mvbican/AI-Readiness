@@ -7,6 +7,7 @@ import {
   userTeams,
   surveys 
 } from "@shared/schema";
+import Papa from 'papaparse';
 import {
   insertUserSchema, 
   updateUserSchema, 
@@ -1470,22 +1471,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Read and parse the CSV file
-      const fs = require('fs');
-      const { parse } = require('papaparse');
-      
       const fileContent = fs.readFileSync(survey.fileReference, 'utf8');
       
       // Parse CSV
-      const parsedData = parse(fileContent, {
+      const parsedData = Papa.parse(fileContent, {
         header: true,
         skipEmptyLines: true,
       });
       
-      // Map CSV data to questions
+      // Map CSV data to questions with the correct column names
       const questions = parsedData.data.map((row: any, index: number) => ({
         id: index + 1,
-        question: row.question || '',
-        category: row.category || '',
+        question: row["Question Summary"] || row["question"] || '',
+        category: row["Category"] || row["category"] || '',
+        details: row["Question Details"] || ''
       }));
 
       return res.status(200).json({
