@@ -19,6 +19,7 @@ import {
   UNAUTHORIZED_EVENT,
 } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { clearGuestAssessmentData, clearAuthData } from "@/lib/localStorage";
 
 type AuthContextType = {
   user: User | null;
