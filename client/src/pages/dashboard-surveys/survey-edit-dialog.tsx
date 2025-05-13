@@ -4,11 +4,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { SurveyWithAuthor } from "./survey-table";
-import { type Survey } from "@shared/schema";
+import { Survey } from "@shared/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { surveyStatusSchema } from "@shared/schema";
+import { surveyStatusSchema } from "@shared/validation/schemas";
 
 import {
   Dialog,
