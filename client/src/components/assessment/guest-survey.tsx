@@ -5,6 +5,11 @@ import { AssessmentAnswer } from "@shared/types";
 import SurveyTemplate from "@/components/survey/survey-template";
 import { Loader2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { 
+  getGuestAssessmentData, 
+  saveGuestAssessmentAnswers,
+  clearGuestAssessmentDataForSurvey
+} from "@/lib/localStorage";
 
 interface SurveyQuestion {
   number: number;
@@ -39,8 +44,6 @@ export default function GuestSurvey({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResumeDialog, setShowResumeDialog] = useState(hasSavedAnswers);
   const [autoAdvanceTimeout, setAutoAdvanceTimeout] = useState<NodeJS.Timeout | null>(null);
-
-  const LOCAL_STORAGE_KEY = `guest-assessment-${guestUserId}-${surveyId}`;
 
   // Calculate score from answers for reporting back to parent
   const calculateScore = (answers: AssessmentAnswer[]): number => {
@@ -117,19 +120,17 @@ export default function GuestSurvey({
   useEffect(() => {
     // Only run this once when questions are loaded
     if (hasSavedAnswers && questions.length > 0 && answers.length === 0) {
-      try {
-        const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (savedData) {
-          const savedAnswers = JSON.parse(savedData);
-          if (Array.isArray(savedAnswers) && savedAnswers.length > 0) {
-            setAnswers(savedAnswers);
-          }
+      const savedData = getGuestAssessmentData(surveyId);
+      if (savedData?.answers && savedData.answers.length > 0) {
+        setAnswers(savedData.answers);
+        
+        // Restore the current step if available
+        if (savedData.currentStep !== undefined) {
+          setCurrentStep(savedData.currentStep);
         }
-      } catch (error) {
-        console.error("Error loading saved answers:", error);
       }
     }
-  }, [LOCAL_STORAGE_KEY, hasSavedAnswers, questions.length, answers.length]);
+  }, [hasSavedAnswers, questions.length, answers.length, surveyId]);
 
   // Clear auto-advance timeout on unmount
   useEffect(() => {
@@ -176,8 +177,8 @@ export default function GuestSurvey({
       onScoreChange(score);
     }
     
-    // Save to localStorage
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedAnswers));
+    // Save to localStorage using our new utility
+    saveGuestAssessmentAnswers(surveyId, updatedAnswers, currentStep);
     
     // Automatically proceed to next question after a delay
     if (currentStep < questions.length - 1) {
@@ -188,7 +189,10 @@ export default function GuestSurvey({
       
       // Set new timeout
       const timeout = setTimeout(() => {
-        setCurrentStep(currentStep + 1);
+        const nextStep = currentStep + 1;
+        setCurrentStep(nextStep);
+        // Also save the updated step to localStorage
+        saveGuestAssessmentAnswers(surveyId, updatedAnswers, nextStep);
       }, 500);
       
       setAutoAdvanceTimeout(timeout);
@@ -196,14 +200,8 @@ export default function GuestSurvey({
   };
 
   const handleCancel = () => {
-    // Clear localStorage before canceling
-    try {
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
-      // Also clear any other related storage
-      localStorage.removeItem(`guest-assessment-progress-${guestUserId}`);
-    } catch (error) {
-      console.error('Error clearing localStorage:', error);
-    }
+    // Clear localStorage before canceling using our new utility
+    clearGuestAssessmentDataForSurvey(surveyId);
     
     if (onCancel) {
       onCancel();
@@ -220,9 +218,8 @@ export default function GuestSurvey({
   };
   
   const handleStartFresh = () => {
-    // Clear previous answers from localStorage
-    localStorage.removeItem(LOCAL_STORAGE_KEY);
-    localStorage.removeItem(`guest-assessment-progress-${guestUserId}`);
+    // Clear previous answers from localStorage using our new utility
+    clearGuestAssessmentDataForSurvey(surveyId);
     
     // Reset answers to empty
     const initialAnswers = questions.map((q: SurveyQuestion) => ({
