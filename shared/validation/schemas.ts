@@ -19,6 +19,13 @@ import { teams, users, userTeams, surveys, surveyTeams, assessments } from "../s
  * User Validation Schemas
  * Schemas for user registration, authentication, and profile updates
  */
+ 
+// Guest user schema for assessment submissions
+export const guestUserSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  company: z.string().optional(),
+});
 export const insertUserSchema = createInsertSchema(users).pick({
   name: true,
   email: true,

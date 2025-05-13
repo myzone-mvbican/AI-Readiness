@@ -158,7 +158,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ? {
         name: user.name,
         email: user.email,
-        avatar: profileImage, // Using default profile image
+        avatar: "https://avatar.iran.liara.run/public", // Using default profile image
       }
     : defaultUser;
 
