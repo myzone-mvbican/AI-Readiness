@@ -1536,15 +1536,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create a guest assessment
       const assessmentData = {
         title,
-        surveyId,
+        surveyTemplateId: surveyId,
         userId: null, // null userId for guest assessments
-        guestName: name,
-        guestEmail: email,
-        guestCompany: company || "",
+        email,
         answers,
         status: status || "completed",
-        score: score || 0,
-        isGuest: true
+        score: score || 0
       };
 
       const assessment = await storage.createAssessment(assessmentData);
