@@ -9,14 +9,17 @@ export type UserTeam = typeof userTeams.$inferSelect;
 export type Survey = typeof surveys.$inferSelect;
 export type SurveyTeam = typeof surveyTeams.$inferSelect;
 
+// Define the assessment answer type directly
+export type AssessmentAnswer = {
+  q: number;
+  a?: -2 | -1 | 0 | 1 | 2 | null;
+  r?: string;
+};
+
 // For assessment, we have two types: the DB type and the runtime type
 export type AssessmentDB = typeof assessments.$inferSelect;
 export type Assessment = Omit<AssessmentDB, 'answers'> & {
-  answers: Array<{
-    q: number;
-    a?: -2 | -1 | 0 | 1 | 2 | null;
-    r?: string;
-  }>;
+  answers: Array<AssessmentAnswer>;
 };
 
 // Combined types for frontend use
