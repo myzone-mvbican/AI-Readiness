@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { parse } from "papaparse";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowLeft, ArrowRight, Check } from "lucide-react";
@@ -34,44 +34,44 @@ export function AssessmentQuestions({
   const [answers, setAnswers] = useState<AssessmentAnswer[]>(initialAnswers);
   const [progress, setProgress] = useState(0);
 
-  useEffect(() => {
-    if (surveyData && surveyData.id) {
-      fetchQuestions(surveyData.id);
-    }
-  }, [surveyData]);
-
-  const fetchQuestions = async (surveyId: number) => {
-    setIsLoading(true);
-    try {
-      // Use the new API endpoint to get parsed questions
-      const response = await fetch(`/api/public/surveys/${surveyId}/questions`);
-      const data = await response.json();
-      
-      if (data.success && data.questions) {
-        const parsedQuestions = data.questions
-          .filter((q: any) => q.question && q.question.trim() !== "");
-        
-        setQuestions(parsedQuestions);
-        
-        // Initialize answers if needed
-        if (answers.length === 0) {
-          setAnswers(
-            parsedQuestions.map((q: any) => ({
-              q: q.id,
-              a: null,
-              r: "",
-            }))
-          );
-        }
-      } else {
-        console.error("Failed to fetch questions:", data.message);
+  // Use React Query to fetch questions
+  const { data: questionData, isLoading: isQuestionsLoading } = useQuery({
+    queryKey: [`/api/public/surveys/${surveyData?.id}/questions`],
+    queryFn: async () => {
+      const response = await fetch(`/api/public/surveys/${surveyData?.id}/questions`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch questions');
       }
-    } catch (error) {
-      console.error("Error fetching questions:", error);
-    } finally {
-      setIsLoading(false);
+      return response.json();
+    },
+    enabled: !!surveyData?.id
+  });
+  
+  // Process the data when it changes
+  useEffect(() => {
+    if (questionData?.success && questionData?.questions) {
+      const parsedQuestions = questionData.questions
+        .filter((q: any) => q.question && q.question.trim() !== "");
+      
+      setQuestions(parsedQuestions);
+      
+      // Initialize answers if needed
+      if (answers.length === 0) {
+        setAnswers(
+          parsedQuestions.map((q: any) => ({
+            q: q.id,
+            a: null,
+            r: "",
+          }))
+        );
+      }
     }
-  };
+  }, [questionData, answers.length]);
+  
+  // Update the isLoading state based on the query state
+  useEffect(() => {
+    setIsLoading(isQuestionsLoading);
+  }, [isQuestionsLoading]);
 
   useEffect(() => {
     if (questions.length > 0) {
