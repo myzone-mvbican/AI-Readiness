@@ -220,6 +220,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Clear any previously selected team to force auto-selection
         localStorage.removeItem("selectedTeam");
+        
+        // Clear all guest assessment data
+        const guestUserId = localStorage.getItem("guestUserId");
+        if (guestUserId) {
+          localStorage.removeItem(`guest-assessment-${guestUserId}-19`); // Default survey ID is 19
+          localStorage.removeItem(`guest-assessment-progress-${guestUserId}`);
+          localStorage.removeItem("guestUser");
+          localStorage.removeItem("guestUserId");
+          localStorage.removeItem("guestAssessment");
+        }
 
         // Update cached user state
         setCachedUser(data.user);

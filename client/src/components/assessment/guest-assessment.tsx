@@ -46,7 +46,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
     AssessmentStage.INFO_COLLECTION,
   );
   const { toast } = useToast();
-  
+
   // Try to load guest user info from localStorage
   const [guestUser, setGuestUser] = useState<GuestUser | null>(() => {
     try {
@@ -56,21 +56,21 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
       return null;
     }
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [surveyData, setSurveyData] = useState<any | null>(null);
   const [questionData, setQuestionData] = useState<any | null>(null);
   const [answers, setAnswers] = useState<AssessmentAnswer[]>([]);
   const [currentScore, setCurrentScore] = useState<number>(0);
   const [assessmentResult, setAssessmentResult] = useState<any | null>(null);
-  
+
   // Default survey template ID
   const defaultSurveyId = 19;
   // Generate a unique guest user ID for localStorage
   const [guestUserId] = useState<string>(() => {
     const existingId = localStorage.getItem("guestUserId");
     if (existingId) return existingId;
-    
+
     const newId = `guest-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
     localStorage.setItem("guestUserId", newId);
     return newId;
@@ -79,15 +79,17 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   // Check for saved answers in localStorage
   const [hasSavedAnswers, setHasSavedAnswers] = useState<boolean>(() => {
     if (guestUserId) {
-      const savedAnswers = localStorage.getItem(`guest-assessment-${guestUserId}-${defaultSurveyId}`);
+      const savedAnswers = localStorage.getItem(
+        `guest-assessment-${guestUserId}-${defaultSurveyId}`,
+      );
       return !!savedAnswers;
     }
     return false;
   });
-  
+
   // State to track if we're showing the resume dialog
   const [showResumeDialog, setShowResumeDialog] = useState<boolean>(false);
-  
+
   // Auto-advance to survey questions if user info already exists
   useEffect(() => {
     if (guestUser && stage === AssessmentStage.INFO_COLLECTION) {
@@ -122,10 +124,10 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
         // Also fetch the questions for this survey
         try {
           const questionsResponse = await fetch(
-            `/api/public/surveys/${defaultSurveyId}/questions`
+            `/api/public/surveys/${defaultSurveyId}/questions`,
           );
           const questionsData = await questionsResponse.json();
-          
+
           if (questionsData.success) {
             setQuestionData(questionsData);
           }
@@ -196,17 +198,17 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
       };
 
       // Save to server using the public API
-      const response = await fetch('/api/public/assessments', {
-        method: 'POST',
+      const response = await fetch("/api/public/assessments", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           title: `${guestUser?.name}'s AI Readiness Assessment`,
           surveyId: defaultSurveyId,
           email: guestUser?.email,
           name: guestUser?.name,
-          company: guestUser?.company || '',
+          company: guestUser?.company || "",
           answers: answers,
           status: "completed",
           score,
@@ -214,9 +216,9 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
       });
 
       const data = await response.json();
-      
+
       if (!data.success) {
-        throw new Error(data.message || 'Failed to save assessment');
+        throw new Error(data.message || "Failed to save assessment");
       }
 
       // Store both server ID and local copy
@@ -232,12 +234,14 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
 
       // Store result in localStorage
       localStorage.setItem("guestAssessment", JSON.stringify(assessmentResult));
-      
+
       // Clear the answers from localStorage now that we've saved it
       if (guestUserId) {
-        localStorage.removeItem(`guest-assessment-${guestUserId}-${defaultSurveyId}`);
+        localStorage.removeItem(
+          `guest-assessment-${guestUserId}-${defaultSurveyId}`,
+        );
       }
-      
+
       toast({
         title: "Assessment Completed",
         description: "Your assessment has been saved successfully.",
@@ -259,7 +263,9 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   const loadSavedAnswers = (): AssessmentAnswer[] => {
     if (guestUserId) {
       try {
-        const savedData = localStorage.getItem(`guest-assessment-${guestUserId}-${defaultSurveyId}`);
+        const savedData = localStorage.getItem(
+          `guest-assessment-${guestUserId}-${defaultSurveyId}`,
+        );
         if (savedData) {
           return JSON.parse(savedData);
         }
@@ -317,7 +323,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
 
       case AssessmentStage.SURVEY_QUESTIONS:
         return (
-          <div className="w-full max-w-4xl mx-auto">
+          <div className="w-full">
             {isLoading ? (
               <div className="flex justify-center items-center py-20">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -327,7 +333,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
               <GuestSurvey
                 surveyId={defaultSurveyId}
                 guestUserId={guestUserId}
-                guestUser={guestUser || { name: '', email: '' }}
+                guestUser={guestUser || { name: "", email: "" }}
                 hasSavedAnswers={hasSavedAnswers}
                 onSubmit={handleQuestionsSubmit}
                 onCancel={() => {
@@ -351,7 +357,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
               assessment={assessmentResult}
               survey={{
                 ...surveyData,
-                questions: questionData?.questions || []
+                questions: questionData?.questions || [],
               }}
               guestMode={true}
               onSignUp={() => {
@@ -365,7 +371,9 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
                 setSurveyData(null);
                 // Clear localStorage
                 if (guestUserId) {
-                  localStorage.removeItem(`guest-assessment-${guestUserId}-${defaultSurveyId}`);
+                  localStorage.removeItem(
+                    `guest-assessment-${guestUserId}-${defaultSurveyId}`,
+                  );
                 }
                 // Return to beginning
                 setStage(AssessmentStage.INFO_COLLECTION);
@@ -385,11 +393,13 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
       setStage(AssessmentStage.SURVEY_QUESTIONS);
     }
   };
-  
+
   const handleStartFresh = () => {
     if (guestUserId) {
       // Clear previous answers from localStorage
-      localStorage.removeItem(`guest-assessment-${guestUserId}-${defaultSurveyId}`);
+      localStorage.removeItem(
+        `guest-assessment-${guestUserId}-${defaultSurveyId}`,
+      );
       setHasSavedAnswers(false);
       setShowResumeDialog(false);
       setStage(AssessmentStage.SURVEY_QUESTIONS);
@@ -399,18 +409,23 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   return (
     <div className="w-full pt-4">
       {renderContent()}
-      
+
       <AlertDialog open={showResumeDialog} onOpenChange={setShowResumeDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Resume Assessment</AlertDialogTitle>
             <AlertDialogDescription>
-              We found a previously saved assessment for you. Would you like to resume where you left off, or start a new assessment?
+              We found a previously saved assessment for you. Would you like to
+              resume where you left off, or start a new assessment?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleStartFresh}>Start New</AlertDialogCancel>
-            <AlertDialogAction onClick={handleLoadPreviousAnswers}>Resume Previous</AlertDialogAction>
+            <AlertDialogCancel onClick={handleStartFresh}>
+              Start New
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleLoadPreviousAnswers}>
+              Resume Previous
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
