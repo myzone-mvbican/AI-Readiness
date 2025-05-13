@@ -167,6 +167,11 @@ export function AssessmentQuestions({
     };
     setAnswers(updatedAnswers);
     
+    // Save to localStorage immediately with each answer
+    if (LOCAL_STORAGE_KEY) {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedAnswers));
+    }
+    
     // Automatically proceed to next question after a delay
     if (answer !== null && currentQuestionIndex < questions.length - 1) {
       // Clear existing timeout if it exists
@@ -246,37 +251,44 @@ export function AssessmentQuestions({
       </CardHeader>
 
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3">
-          <h2 className="text-xl font-bold text-foreground text-center md:text-start">
+        <div>
+          <h2 className="text-xl font-semibold text-foreground mb-2">
             {currentQuestion.category}
           </h2>
         </div>
         
-        <div className="flex items-center gap-2">
-          <div className="text-lg font-medium">{currentQuestion.question}</div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full p-0">
-                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                  <span className="sr-only">Question information</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs">Respond based on your organization's current situation, not aspirations</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+        <div className="flex items-start gap-2">
+          <div className="text-lg">
+            <div className="flex items-start">
+              <span className="font-medium leading-tight">{currentQuestion.question}</span>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full p-0 ml-1 -mt-0.5">
+                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                      <span className="sr-only">Question information</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">Respond based on your organization's current situation, not aspirations</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <div className="text-sm text-muted-foreground mt-1">
+              What is your level of agreement with this statement?
+            </div>
+          </div>
         </div>
 
         <div className="py-4">
-          <div className="grid grid-cols-5 gap-2">
+          <div className="flex flex-row items-center justify-between gap-2 mt-2">
             {Object.entries(answerLabels).map(([value, label]) => (
               <Button
                 key={value}
                 type="button"
                 variant={currentAnswer?.toString() === value ? "default" : "outline"}
-                className="text-xs sm:text-sm flex flex-col h-auto py-3"
+                className={`flex-1 text-xs sm:text-sm py-3 px-2 h-auto ${currentAnswer?.toString() === value ? 'shadow-sm' : ''}`}
                 onClick={() => handleAnswerChange(parseInt(value))}
               >
                 <span>{label}</span>
@@ -287,6 +299,22 @@ export function AssessmentQuestions({
 
         <div className="flex justify-between pt-4">
           <div className="flex space-x-2">
+            {onCancel && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  // Clear localStorage before canceling
+                  if (LOCAL_STORAGE_KEY) {
+                    localStorage.removeItem(LOCAL_STORAGE_KEY);
+                  }
+                  onCancel();
+                }}
+              >
+                Cancel
+              </Button>
+            )}
+            
             {currentQuestionIndex > 0 && (
               <Button
                 type="button"
@@ -297,49 +325,23 @@ export function AssessmentQuestions({
                 Previous
               </Button>
             )}
-            
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleSave}
-              disabled={isSaving}
-            >
-              {isSaving ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="mr-2 h-4 w-4" />
-              )}
-              Save Progress
-            </Button>
           </div>
           
-          <div className="flex space-x-2">
-            {onCancel && (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={onCancel}
-              >
-                Cancel
-              </Button>
+          <Button
+            type="button"
+            onClick={handleNext}
+            disabled={currentAnswer === null || currentAnswer === undefined}
+          >
+            {isLastQuestion ? (
+              <>
+                Complete <Check className="ml-2 h-4 w-4" />
+              </>
+            ) : (
+              <>
+                Next <ArrowRight className="ml-2 h-4 w-4" />
+              </>
             )}
-            
-            <Button
-              type="button"
-              onClick={handleNext}
-              disabled={currentAnswer === null || currentAnswer === undefined}
-            >
-              {isLastQuestion ? (
-                <>
-                  Complete <Check className="ml-2 h-4 w-4" />
-                </>
-              ) : (
-                <>
-                  Next <ArrowRight className="ml-2 h-4 w-4" />
-                </>
-              )}
-            </Button>
-          </div>
+          </Button>
         </div>
       </CardContent>
     </Card>
