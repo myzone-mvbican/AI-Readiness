@@ -325,8 +325,18 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
                 surveyData={surveyData}
                 initialAnswers={loadSavedAnswers()}
                 onSubmit={handleQuestionsSubmit}
-                onCancel={() => setStage(AssessmentStage.INFO_COLLECTION)}
+                onCancel={() => {
+                  // Clear localStorage when canceling
+                  if (guestUserId) {
+                    localStorage.removeItem(`guest-assessment-${guestUserId}-${defaultSurveyId}`);
+                  }
+                  setStage(AssessmentStage.INFO_COLLECTION);
+                }}
                 guestUserId={guestUserId}
+                onScoreChange={(score) => {
+                  // Update the current score in real time as user selects answers
+                  console.log("Current score updated:", score);
+                }}
               />
             ) : (
               <Card>
