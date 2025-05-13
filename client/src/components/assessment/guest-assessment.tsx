@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { GuestAssessmentForm } from "./guest-assessment-form";
 import { useToast } from "@/hooks/use-toast";
-import { AssessmentCompletion } from "@/components/survey/assessment-completion";
+import SurveyCompleted from "@/components/survey/survey-completed";
 import { AssessmentAnswer } from "@shared/types";
 import GuestSurvey from "@/components/assessment/guest-survey";
 import { 
