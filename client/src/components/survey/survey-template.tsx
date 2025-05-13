@@ -28,6 +28,7 @@ import {
 import { Assessment, AssessmentAnswer } from "@shared/types";
 
 import SurveyQuestion from "@/components/survey/survey-question";
+import AlertCompleted from "@/components/survey/alert-completed";
 
 interface SurveyQuestion {
   number: number;
@@ -87,7 +88,8 @@ export default function SurveyTemplate({
   const currentStep = externalCurrentStep !== undefined ? externalCurrentStep : internalCurrentStep;
   const setCurrentStep = externalSetCurrentStep || setInternalCurrentStep;
   
-  // No local dialog state - we'll rely on parent component
+  // State for completion dialog
+  const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
   
   // Calculate progress - percentage of questions answered
   const answeredQuestions = answers.filter(a => a.a !== null && a.a !== undefined).length;
@@ -133,8 +135,14 @@ export default function SurveyTemplate({
     }
   };
   
-  // Handle open completion dialog directly through parent callback
+  // Handle open completion dialog 
   const handleComplete = () => {
+    setCompleteDialogOpen(true);
+  };
+  
+  // Handle confirm complete
+  const confirmComplete = () => {
+    setCompleteDialogOpen(false);
     if (onComplete) {
       onComplete();
     }
@@ -330,6 +338,14 @@ export default function SurveyTemplate({
           </Tooltip>
         </div>
       </div>
+
+      {/* Confirmation Dialog for Completing Assessment */}
+      <AlertCompleted
+        completeDialogOpen={completeDialogOpen}
+        setCompleteDialogOpen={setCompleteDialogOpen}
+        isSubmitting={isSubmitting}
+        confirmComplete={confirmComplete}
+      />
     </div>
   );
 }

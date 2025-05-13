@@ -529,34 +529,32 @@ export default function AssessmentDetailPage() {
     return <SurveyError />;
   }
 
-  if (isCompleted) {
-    return (
-      <SurveyCompleted
-        assessment={assessment}
-        surveyQuestions={surveyQuestions}
-      />
-    );
-  }
-
   const currentProgress = calculateProgress();
 
   return (
     <DashboardLayout title={assessment.title}>
       {/* Use our reusable SurveyTemplate component instead of repeating the UI */}
-      <SurveyTemplate
-        assessment={assessment}
-        questions={surveyQuestions}
-        answers={answers}
-        onAnswerChange={updateAnswer}
-        isSubmitting={isSubmitting}
-        showSaveButton={true}
-        onCancel={() => navigate("/dashboard/assessments")}
-        onSave={handleSave}
-        onComplete={() => setCompleteDialogOpen(true)}
-        currentStep={currentStep}
-        setCurrentStep={setCurrentStep}
-      />
-      
+      {isCompleted ? (
+        <SurveyCompleted
+          assessment={assessment}
+          surveyQuestions={surveyQuestions}
+        />
+      ) : (
+        <SurveyTemplate
+          assessment={assessment}
+          questions={surveyQuestions}
+          answers={answers}
+          onAnswerChange={updateAnswer}
+          isSubmitting={isSubmitting}
+          showSaveButton={true}
+          onCancel={() => navigate("/dashboard/assessments")}
+          onSave={handleSave}
+          onComplete={() => setCompleteDialogOpen(true)}
+          currentStep={currentStep}
+          setCurrentStep={setCurrentStep}
+        />
+      )}
+
       {/* Confirmation Dialog for Completing Assessment */}
       <AlertCompleted
         completeDialogOpen={completeDialogOpen}
