@@ -360,22 +360,17 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   };
 
   const handleLoadPreviousAnswers = () => {
-    if (guestUserId) {
-      setShowResumeDialog(false);
-      setStage(AssessmentStage.SURVEY_QUESTIONS);
-    }
+    // Just resume without clearing
+    setShowResumeDialog(false);
+    setStage(AssessmentStage.SURVEY_QUESTIONS);
   };
 
   const handleStartFresh = () => {
-    if (guestUserId) {
-      // Clear previous answers from localStorage
-      localStorage.removeItem(
-        `guest-assessment-${guestUserId}-${defaultSurveyId}`,
-      );
-      setHasSavedAnswers(false);
-      setShowResumeDialog(false);
-      setStage(AssessmentStage.SURVEY_QUESTIONS);
-    }
+    // Clear previous answers from localStorage 
+    clearGuestAssessmentDataForSurvey(defaultSurveyId);
+    setHasSavedAnswers(false);
+    setShowResumeDialog(false);
+    setStage(AssessmentStage.SURVEY_QUESTIONS);
   };
 
   return (

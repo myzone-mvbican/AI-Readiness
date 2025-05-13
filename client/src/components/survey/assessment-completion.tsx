@@ -118,22 +118,27 @@ export function AssessmentCompletion({
     // Group answers by category
     const categoryScores: Record<string, { sum: number, count: number }> = {};
     
-    assessment.answers.forEach((answer: AssessmentAnswer) => {
-      // Find the question to get its category
-      const question = survey?.questions?.find((q: any) => q.id === answer.q);
-      if (!question || answer.a === null) return;
-      
-      const category = question.category || "Uncategorized";
-      
-      if (!categoryScores[category]) {
-        categoryScores[category] = { sum: 0, count: 0 };
-      }
-      
-      // Convert -2 to 2 scale to 0 to 100
-      const normalizedValue = ((answer.a + 2) / 4) * 100;
-      categoryScores[category].sum += normalizedValue;
-      categoryScores[category].count += 1;
-    });
+    if (assessment.answers) {
+      assessment.answers.forEach((answer: AssessmentAnswer) => {
+        // Find the question to get its category
+        const question = survey?.questions?.find((q: any) => q.id === answer.q);
+        if (!question || answer.a === null || answer.a === undefined) return;
+        
+        const category = question.category || "Uncategorized";
+        
+        if (!categoryScores[category]) {
+          categoryScores[category] = { sum: 0, count: 0 };
+        }
+        
+        // Ensure answer.a is treated as a number with a fallback to 0
+        const answerValue = typeof answer.a === 'number' ? answer.a : 0;
+        
+        // Convert -2 to 2 scale to 0 to 100
+        const normalizedValue = ((answerValue + 2) / 4) * 100;
+        categoryScores[category].sum += normalizedValue;
+        categoryScores[category].count += 1;
+      });
+    }
     
     // Calculate averages and format for chart
     return Object.entries(categoryScores).map(([category, { sum, count }]) => ({
@@ -168,8 +173,7 @@ export function AssessmentCompletion({
               <Progress 
                 value={score} 
                 max={100} 
-                className="w-full sm:w-2/3 h-8" 
-                indicatorClassName={getProgressColor(score)}
+                className={`w-full sm:w-2/3 h-8 ${getProgressColor(score)}`}
               />
             </div>
             
@@ -198,26 +202,11 @@ export function AssessmentCompletion({
             <TabsContent value="chart">
               <Card>
                 <CardContent className="p-6">
-                  <div className="aspect-video h-[400px]">
-                    <ChartContainer className="h-full">
-                      <RadarChart 
-                        data={chartData}
-                        margin={{ top: 20, right: 30, left: 30, bottom: 20 }}
-                        className="m-auto"
-                      >
-                        <PolarGrid />
-                        <PolarAngleAxis dataKey="category" tick={{ fill: '#888', fontSize: 12 }} />
-                        <PolarRadiusAxis domain={[0, 100]} />
-                        <Radar
-                          name="Your Score"
-                          dataKey="value"
-                          stroke="#3b82f6"
-                          fill="#3b82f6"
-                          fillOpacity={0.4}
-                        />
-                        <RechartsTooltip />
-                      </RadarChart>
-                    </ChartContainer>
+                  <div className="aspect-video h-[400px] flex items-center justify-center">
+                    <div className="text-center text-muted-foreground">
+                      <p className="mb-2">Your results are visualized in a radar chart showing category scores.</p>
+                      <p>Each category from your assessment is rated on a scale of 0-100.</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
