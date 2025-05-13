@@ -38,7 +38,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
-import { TeamWithRole } from "@shared/schema";
+import { TeamWithRole } from "@shared/types";
 
 // Mock teams for initial development, will be replaced with real data
 const defaultTeams: TeamWithRole[] = [

@@ -30,7 +30,7 @@ import {
   ArrowRight,
   CheckCircle2,
 } from "lucide-react";
-import { Assessment } from "@shared/schema";
+import { Assessment } from "@shared/types";
 import { format } from "date-fns";
 
 import SurveyError from "./survey-error";

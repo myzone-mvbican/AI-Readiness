@@ -1,4 +1,4 @@
-import { Assessment } from "@shared/schema";
+import { Assessment } from "@shared/types";
 
 export interface AssessmentsResponse {
   success: boolean;
