@@ -222,15 +222,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Clear any previously selected team to force auto-selection
         localStorage.removeItem("selectedTeam");
         
-        // Clear all guest assessment data
-        const guestUserId = localStorage.getItem("guestUserId");
-        if (guestUserId) {
-          localStorage.removeItem(`guest-assessment-${guestUserId}-19`); // Default survey ID is 19
-          localStorage.removeItem(`guest-assessment-progress-${guestUserId}`);
-          localStorage.removeItem("guestUser");
-          localStorage.removeItem("guestUserId");
-          localStorage.removeItem("guestAssessment");
-        }
+        // Clear all guest assessment data using our new utility function
+        clearGuestAssessmentData();
 
         // Update cached user state
         setCachedUser(data.user);
@@ -314,9 +307,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(null);
 
       // Clear all authentication-related data from localStorage
-      localStorage.removeItem("userData");
-      localStorage.removeItem("selectedTeam");
-      localStorage.removeItem("token");
+      clearAuthData();
+      
+      // Also clear any guest assessment data
+      clearGuestAssessmentData();
 
       // Clear any session storage items that might have stale state
       sessionStorage.clear();
@@ -368,6 +362,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Clear any previously selected team to force auto-selection
         localStorage.removeItem("selectedTeam");
+        
+        // Clear any guest assessment data
+        clearGuestAssessmentData();
 
         toast({
           title: "Google login successful",
