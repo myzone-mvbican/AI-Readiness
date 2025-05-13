@@ -7,7 +7,6 @@ import {
   PolarRadiusAxis,
   Radar,
   Tooltip as RechartsTooltip,
-  ResponsiveContainer,
 } from "recharts";
 import {
   Card,
@@ -16,10 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  ChartConfig,
-  ChartContainer,
-} from "@/components/ui/chart";
+import { ChartContainer } from "@/components/ui/chart";
 import {
   Tooltip,
   TooltipContent,
@@ -179,8 +175,8 @@ export default function SurveyCompleted({
                     config={{
                       // Config for the score data point
                       score: {
-                        color: "hsl(var(--primary))"
-                      }
+                        color: "hsl(var(--primary))",
+                      },
                     }}
                     className="h-[350px] w-full"
                   >
@@ -208,7 +204,7 @@ export default function SurveyCompleted({
                           fillOpacity: 1,
                         }}
                       />
-                      <RechartsTooltip 
+                      <RechartsTooltip
                         content={({ active, payload }) => {
                           if (active && payload && payload.length) {
                             const data = payload[0];
