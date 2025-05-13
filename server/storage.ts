@@ -4,26 +4,31 @@ import {
   userTeams,
   surveys,
   surveyTeams,
-  assessments,
-  type User,
-  type InsertUser,
-  type UpdateUser,
-  type Team,
-  type InsertTeam,
-  type UserTeam,
-  type InsertUserTeam,
-  type TeamWithRole,
-  type GoogleUserPayload,
-  type Survey,
-  type InsertSurvey,
-  type UpdateSurvey,
-  type SurveyTeam,
-  type InsertSurveyTeam,
-  type Assessment,
-  type InsertAssessment,
-  type UpdateAssessment,
-  type AssessmentAnswer,
+  assessments
 } from "@shared/schema";
+
+import {
+  User,
+  Team,
+  UserTeam,
+  TeamWithRole,
+  Survey,
+  SurveyTeam,
+  Assessment,
+  GoogleUserPayload
+} from "@shared/types";
+
+import {
+  InsertUser,
+  UpdateUser,
+  InsertTeam,
+  InsertUserTeam,
+  InsertSurvey,
+  UpdateSurvey,
+  InsertSurveyTeam,
+  InsertAssessment,
+  UpdateAssessment
+} from "@shared/types/requests";
 import { db } from "./db";
 import { eq, and, inArray, isNull, desc, or, not } from "drizzle-orm";
 import bcrypt from "bcryptjs";
