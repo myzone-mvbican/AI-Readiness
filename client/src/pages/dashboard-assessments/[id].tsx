@@ -554,177 +554,21 @@ export default function AssessmentDetailPage() {
 
   return (
     <DashboardLayout title={assessment.title}>
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 space-y-3">
-          <div className="col-span-1">
-            <h2 className="text-2xl font-medium dark:text-white">
-              {assessment.title}
-            </h2>
-            <p className="mt-2 mb-0 text-muted-foreground">
-              Based on: {assessment.survey.title}
-            </p>
-          </div>
-          <div className="col-span-1 md:text-end">
-            {getStatusBadge()}
-            <p className="text-muted-foreground mt-2">
-              <span className="text-sm text-muted-foreground">
-                Last Updated: {getFormattedDate(assessment.updatedAt)}
-              </span>
-            </p>
-          </div>
-        </div>
-        <div className="mb-6">
-          <div className="flex justify-between mb-2">
-            <span className="text-sm text-foreground font-medium">
-              Completion Progress
-            </span>
-            <span className="text-sm font-medium text-foreground">
-              {currentProgress}%
-            </span>
-          </div>
-          <Progress value={currentProgress} className="h-2 text-foreground" />
-        </div>
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3">
-            <h2 className="text-xl font-bold text-foreground text-center md:text-start">
-              {surveyQuestions[currentStep]?.category || "Assessment questions"}
-            </h2>
-            <div className="flex justify-center md:justify-end items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
-                disabled={currentStep === 0}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Previous
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                {currentStep + 1} of {answers.length}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setCurrentStep(Math.min(answers.length - 1, currentStep + 1))
-                }
-                disabled={currentStep === answers.length - 1}
-              >
-                Next
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
-          </div>
-          <Card className="border-2 border-muted">
-            <CardHeader className="bg-muted">
-              <CardTitle className="flex items-center space-x-3">
-                <h3 className="text-xs md:text-sm text-muted-foreground">
-                  Question {currentStep + 1} of {surveyQuestions.length}
-                </h3>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <InfoIcon className="h-4 w-4" />
-                  </TooltipTrigger>
-                  <TooltipContent className="p-2 max-w-[400px]">
-                    {surveyQuestions[currentStep]?.description}
-                  </TooltipContent>
-                </Tooltip>
-              </CardTitle>
-              <CardDescription className="text-sm md:text-lg md:text-xl text-foreground font-bold">
-                {/* Display the question text with description from CSV */}
-                <p>
-                  "
-                  {surveyQuestions[currentStep]?.text ||
-                    `Question ${currentStep + 1}`}
-                  "
-                </p>
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <SurveyQuestion
-                question={surveyQuestions[currentStep]?.text}
-                value={answers[currentStep]?.a}
-                onChange={(value) => updateAnswer(currentStep, value)}
-                disabled={isSubmitting}
-              />
-            </CardContent>
-            <CardFooter className="flex justify-between mt-6 pt-4 border-t">
-              <Button
-                variant="outline"
-                onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
-                disabled={currentStep === 0}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Previous
-              </Button>
-              <Button
-                onClick={() =>
-                  setCurrentStep(Math.min(answers.length - 1, currentStep + 1))
-                }
-                disabled={currentStep === answers.length - 1}
-              >
-                Next
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </CardFooter>
-          </Card>
-          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 flex items-start">
-            <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5 mr-3 flex-shrink-0" />
-            <div>
-              <h4 className="font-medium text-yellow-800">Important Note</h4>
-              <p className="text-sm text-yellow-700 mt-1">
-                Your answers are saved when you click "Save Progress". To
-                finalize your assessment, answer all questions and click
-                "Complete Assessment". Completed assessments cannot be modified.
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="flex justify-between border-t py-4">
-          <Button
-            variant="outline"
-            onClick={() => navigate("/dashboard/assessments")}
-          >
-            Cancel
-          </Button>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={handleSave}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              <div className="hidden md:block ms-2">Save Progress</div>
-            </Button>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="inline-block">
-                  <Button
-                    onClick={handleComplete}
-                    disabled={isSubmitting || !allQuestionsAnswered()}
-                    className={!allQuestionsAnswered() ? "opacity-50" : ""}
-                  >
-                    <CheckCircle2 className="h-4 w-4" />
-                    <div className="hidden md:block ms-2">
-                      Complete Assessement
-                    </div>
-                  </Button>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent className="p-2">
-                {!allQuestionsAnswered()
-                  ? "Please answer all questions to complete"
-                  : "Complete assessment and view results"}
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        </div>
-      </div>
-
+      {/* Use our reusable SurveyTemplate component instead of repeating the UI */}
+      <SurveyTemplate
+        assessment={assessment}
+        questions={surveyQuestions}
+        answers={answers}
+        onAnswerChange={updateAnswer}
+        isSubmitting={isSubmitting}
+        showSaveButton={true}
+        onCancel={() => navigate("/dashboard/assessments")}
+        onSave={handleSave}
+        onComplete={handleComplete}
+        currentStep={currentStep}
+        setCurrentStep={setCurrentStep}
+      />
+      
       {/* Confirmation Dialog for Completing Assessment */}
       <AlertCompleted
         completeDialogOpen={completeDialogOpen}
