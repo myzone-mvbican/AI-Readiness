@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, UserPlus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
   Card,
   CardContent,
@@ -41,6 +48,20 @@ enum AssessmentStage {
   COMPLETED,
 }
 
+// Registration form schema
+const registrationSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  password: z.string().min(8, { message: "Password must be at least 8 characters" }),
+  confirmPassword: z.string().min(8, { message: "Please confirm your password" }),
+})
+.refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
+type RegistrationFormValues = z.infer<typeof registrationSchema>;
+
 interface GuestAssessmentProps {
   onClose?: () => void;
 }
@@ -62,6 +83,19 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   const [answers, setAnswers] = useState<AssessmentAnswer[]>([]);
   const [currentScore, setCurrentScore] = useState<number>(0);
   const [assessmentResult, setAssessmentResult] = useState<any | null>(null);
+  const [showSignupModal, setShowSignupModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Initialize react-hook-form with zod validation
+  const form = useForm<RegistrationFormValues>({
+    resolver: zodResolver(registrationSchema),
+    defaultValues: {
+      name: guestUser?.name || "",
+      email: guestUser?.email || "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
 
   // Default survey template ID
   const defaultSurveyId = 19;
@@ -327,29 +361,56 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
 
       case AssessmentStage.COMPLETED:
         return (
-          <div className="w-full max-w-4xl mx-auto">
-            <AssessmentCompletion
-              assessment={assessmentResult}
-              survey={{
-                ...surveyData,
-                questions: questionData?.questions || [],
+          <div className="w-full max-w-4xl mx-auto space-y-6">
+            <SurveyCompleted
+              assessment={{
+                title: surveyData?.title || "AI Readiness Assessment",
+                score: assessmentResult?.score || 0,
+                answers: assessmentResult?.answers || []
               }}
-              guestMode={true}
-              onSignUp={() => {
-                window.location.href = "/auth?mode=register";
-              }}
-              onStartNew={() => {
-                // Reset assessment state
-                setGuestUser(null);
-                setAnswers([]);
-                setAssessmentResult(null);
-                setSurveyData(null);
-                // Clear localStorage for this survey
-                clearGuestAssessmentDataForSurvey(defaultSurveyId);
-                // Return to beginning
-                setStage(AssessmentStage.INFO_COLLECTION);
-              }}
+              surveyQuestions={questionData?.questions || []}
             />
+            
+            {/* Action buttons displayed below survey results */}
+            <div className="flex flex-col sm:flex-row justify-center gap-4 pt-6">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      onClick={() => { 
+                        window.location.href = "/auth?mode=register";
+                      }}
+                      className="relative group"
+                    >
+                      <span className="absolute -inset-0.5 bg-gradient-to-r from-primary/50 to-primary opacity-75 rounded-lg blur group-hover:opacity-100 transition duration-200"></span>
+                      <span className="relative flex items-center justify-center px-6 py-2">
+                        Create Account
+                      </span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="p-2 max-w-xs">
+                    <p>Create an account to track your progress, view assessment history, and get personalized recommendations</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // Reset assessment state
+                  setGuestUser(null);
+                  setAnswers([]);
+                  setAssessmentResult(null);
+                  setSurveyData(null);
+                  // Clear localStorage for this survey
+                  clearGuestAssessmentDataForSurvey(defaultSurveyId);
+                  // Return to beginning
+                  setStage(AssessmentStage.INFO_COLLECTION);
+                }}
+              >
+                Start New Assessment
+              </Button>
+            </div>
           </div>
         );
 
