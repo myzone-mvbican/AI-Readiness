@@ -487,6 +487,30 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
         );
 
       case AssessmentStage.COMPLETED:
+        // Make sure we have the right survey question data
+        useEffect(() => {
+          // If we don't have question data, load it
+          const loadQuestionsIfNeeded = async () => {
+            if (!questionData?.questions || questionData.questions.length === 0) {
+              try {
+                const response = await fetch(`/api/public/surveys/${defaultSurveyId}/questions`);
+                const data = await response.json();
+                if (data.success && data.questions) {
+                  setQuestionData(data);
+                }
+              } catch (error) {
+                console.error("Error loading questions for completion screen:", error);
+              }
+            }
+          };
+          
+          loadQuestionsIfNeeded();
+        }, [questionData, defaultSurveyId]);
+        
+        console.log("Survey data:", surveyData);
+        console.log("Question data:", questionData);
+        console.log("Assessment result:", assessmentResult);
+        
         return (
           <div className="w-full max-w-4xl mx-auto space-y-6">
             <SurveyCompleted
