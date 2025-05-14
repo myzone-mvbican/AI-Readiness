@@ -56,6 +56,7 @@ import {
   hasSavedGuestAssessment,
   clearGuestAssessmentDataForSurvey,
   getGuestAssessmentData,
+  clearGuestAssessmentData,
 } from "@/lib/localStorage";
 
 enum AssessmentStage {
@@ -507,8 +508,12 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
                   setAnswers([]);
                   setAssessmentResult(null);
                   setSurveyData(null);
-                  // Clear localStorage for this survey
-                  clearGuestAssessmentDataForSurvey(defaultSurveyId);
+                  setHasSavedAnswers(false);
+                  setCurrentScore(0);
+                  
+                  // Clear ALL localStorage data for guest
+                  clearGuestAssessmentData();
+                  
                   // Return to beginning
                   setStage(AssessmentStage.INFO_COLLECTION);
                 }}
