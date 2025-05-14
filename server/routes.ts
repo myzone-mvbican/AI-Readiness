@@ -195,6 +195,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Continue with user creation even if team assignment fails
       }
       
+      // Check for guest assessments with this email and associate them with the new user
+      try {
+        // Get all assessments from the database where the email matches and the userId is null (guest assessments)
+        const db = await import('./db').then(m => m.db);
+        const assessments = await import('@shared/schema').then(m => m.assessments);
+        const { eq, and, isNull } = await import('drizzle-orm').then(m => ({ eq: m.eq, and: m.and, isNull: m.isNull }));
+        
+        const guestAssessments = await db.select()
+          .from(assessments)
+          .where(
+            and(
+              eq(assessments.email, user.email),
+              isNull(assessments.userId)
+            )
+          );
+        
+        // If we found any guest assessments, update them to associate with this user
+        if (guestAssessments.length > 0) {
+          console.log(`Found ${guestAssessments.length} guest assessments for ${user.email}, associating with new user ID ${user.id}`);
+          
+          // Update each assessment to set the userId
+          for (const assessment of guestAssessments) {
+            await db.update(assessments)
+              .set({ userId: user.id })
+              .where(eq(assessments.id, assessment.id));
+          }
+        }
+      } catch (err) {
+        // Just log the error but don't fail registration if this fails
+        console.error('Error associating guest assessments with new user:', err);
+      }
+      
       // Generate JWT token
       const token = storage.generateToken(user);
       
