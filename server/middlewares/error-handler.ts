@@ -1,55 +1,68 @@
 import { Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
 
 /**
- * Custom API error class with status code and message
+ * Custom API error class
  */
 export class ApiError extends Error {
   statusCode: number;
-
+  
   constructor(statusCode: number, message: string) {
     super(message);
     this.statusCode = statusCode;
     this.name = 'ApiError';
+    
+    // Maintains proper stack trace for where our error was thrown
+    Error.captureStackTrace(this, this.constructor);
   }
 }
 
 /**
- * Global error handler middleware
+ * Not found error handler middleware
+ * This should be placed after all routes to catch any undefined routes
  */
-export function errorHandler(err: any, req: Request, res: Response, next: NextFunction) {
-  console.error('Error:', err);
-  
-  // Default status code and message for internal server errors
-  let statusCode = 500;
-  let message = 'Internal Server Error';
-  
-  // Handle ApiError instances
-  if (err instanceof ApiError) {
-    statusCode = err.statusCode;
-    message = err.message;
-  } else if (err.name === 'ValidationError') {
-    // Handle validation errors (e.g., from Zod)
-    statusCode = 400;
-    message = err.message;
-  } else if (err.name === 'UnauthorizedError') {
-    // Handle auth errors
-    statusCode = 401;
-    message = 'Unauthorized';
-  }
-  
-  res.status(statusCode).json({
+export function notFoundHandler(req: Request, res: Response): void {
+  res.status(404).json({
     success: false,
-    status: 'error',
-    message,
-    // Include stack trace in development, but not in production
-    ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
+    message: `Route not found: ${req.method} ${req.originalUrl}`
   });
 }
 
 /**
- * Not found handler middleware for undefined routes
+ * Global error handler middleware
+ * This catches all errors thrown in route handlers
  */
-export function notFoundHandler(req: Request, res: Response, next: NextFunction) {
-  const error = new ApiError(404, `Not Found - ${req.originalUrl}`);
-  next(error);
+export function errorHandler(err: Error, req: Request, res: Response, _next: NextFunction): void {
+  console.error('Error:', err);
+  
+  // Handle Zod validation errors
+  if (err instanceof z.ZodError) {
+    const errors = err.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+    res.status(400).json({
+      success: false,
+      message: 'Validation error',
+      errors: errors
+    });
+    return;
+  }
+  
+  // Handle custom API errors
+  if (err instanceof ApiError) {
+    res.status(err.statusCode).json({
+      success: false,
+      message: err.message
+    });
+    return;
+  }
+  
+  // Handle unexpected errors
+  const statusCode = 500;
+  const message = process.env.NODE_ENV === 'development'
+    ? err.message || 'Internal server error'
+    : 'Internal server error';
+  
+  res.status(statusCode).json({
+    success: false,
+    message
+  });
 }
