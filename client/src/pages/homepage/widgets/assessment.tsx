@@ -198,17 +198,23 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   };
 
   // State for showing existing account modal
-  const [showExistingAccountModal, setShowExistingAccountModal] = useState(false);
-  const [pendingGuestInfo, setPendingGuestInfo] = useState<Omit<StorageGuestUser, "id"> | null>(null);
+  const [showExistingAccountModal, setShowExistingAccountModal] =
+    useState(false);
+  const [pendingGuestInfo, setPendingGuestInfo] = useState<Omit<
+    StorageGuestUser,
+    "id"
+  > | null>(null);
 
   const handleInfoSubmit = async (values: Omit<StorageGuestUser, "id">) => {
     setIsLoading(true);
-    
+
     try {
       // Check if user with this email already exists
-      const response = await fetch(`/api/users/check-email?email=${encodeURIComponent(values.email)}`);
+      const response = await fetch(
+        `/api/users/check-email?email=${encodeURIComponent(values.email)}`,
+      );
       const data = await response.json();
-      
+
       if (data.exists) {
         // User exists - store values temporarily and show login modal
         setPendingGuestInfo(values);
@@ -217,7 +223,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
         // Store guest user info in localStorage and proceed
         const savedUser = saveGuestUser(values);
         setGuestUser(savedUser);
-        
+
         // Move to survey questions stage
         setStage(AssessmentStage.SURVEY_QUESTIONS);
       }
@@ -342,10 +348,18 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
       // Registration successful
       toast({
         title: "Account created successfully",
-        description: "You can now log in with your credentials.",
+        description: "Your assessment has been linked to your new account. You can now log in with your credentials.",
       });
 
-      // Optional: Automatically log in the user
+      // If there was an assessment result, clear it since it's now linked to the account
+      if (assessmentResult) {
+        clearGuestAssessmentData();
+      }
+
+      // Clear the guest data from localStorage
+      clearGuestAssessmentData();
+      
+      // Automatically redirect to login page
       window.location.href = "/auth?registered=true";
     } catch (error) {
       console.error("Registration error:", error);
@@ -510,10 +524,10 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
                   setSurveyData(null);
                   setHasSavedAnswers(false);
                   setCurrentScore(0);
-                  
+
                   // Clear ALL localStorage data for guest
                   clearGuestAssessmentData();
-                  
+
                   // Return to beginning
                   setStage(AssessmentStage.INFO_COLLECTION);
                 }}
@@ -552,37 +566,45 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      
+
       {/* Existing account modal */}
-      <AlertDialog open={showExistingAccountModal} onOpenChange={setShowExistingAccountModal}>
+      <AlertDialog
+        open={showExistingAccountModal}
+        onOpenChange={setShowExistingAccountModal}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Account Already Exists</AlertDialogTitle>
             <AlertDialogDescription>
-              An account with this email already exists. Would you like to log in with your existing account?
-              Your assessment data will be saved to your account.
+              An account with this email already exists. Would you like to log
+              in with your existing account? Your assessment data will be saved
+              to your account.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              if (pendingGuestInfo) {
-                // Store guest user info in localStorage and proceed without linking to account
-                const savedUser = saveGuestUser(pendingGuestInfo);
-                setGuestUser(savedUser);
-                setStage(AssessmentStage.SURVEY_QUESTIONS);
-              }
-              setShowExistingAccountModal(false);
-            }}>
+            <AlertDialogCancel
+              onClick={() => {
+                if (pendingGuestInfo) {
+                  // Store guest user info in localStorage and proceed without linking to account
+                  const savedUser = saveGuestUser(pendingGuestInfo);
+                  setGuestUser(savedUser);
+                  setStage(AssessmentStage.SURVEY_QUESTIONS);
+                }
+                setShowExistingAccountModal(false);
+              }}
+            >
               Continue as Guest
             </AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              // Redirect to login page with email prefilled
-              if (pendingGuestInfo?.email) {
-                window.location.href = `/auth?email=${encodeURIComponent(pendingGuestInfo.email)}`;
-              } else {
-                window.location.href = '/auth';
-              }
-            }}>
+            <AlertDialogAction
+              onClick={() => {
+                // Redirect to login page with email prefilled
+                if (pendingGuestInfo?.email) {
+                  window.location.href = `/auth?email=${encodeURIComponent(pendingGuestInfo.email)}`;
+                } else {
+                  window.location.href = "/auth";
+                }
+              }}
+            >
               Log In
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -634,7 +656,9 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
                         {...field}
                       />
                     </FormControl>
-                    <p className="text-xs text-muted-foreground mt-1">Email used for assessment cannot be changed</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Email used for assessment cannot be changed
+                    </p>
                     <FormMessage />
                   </FormItem>
                 )}
