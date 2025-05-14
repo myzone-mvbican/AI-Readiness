@@ -118,6 +118,14 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
       confirmPassword: "",
     },
   });
+  
+  // Update form values when guest user changes or when signup modal opens
+  useEffect(() => {
+    if (guestUser) {
+      form.setValue("name", guestUser.name || "");
+      form.setValue("email", guestUser.email || "");
+    }
+  }, [guestUser, form, showSignupModal]);
 
   // Default survey template ID
   const defaultSurveyId = 19;
