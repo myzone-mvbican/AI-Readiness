@@ -34,6 +34,7 @@ interface SurveyQuestion {
   number: number;
   text: string;
   description: string;
+  detail?: string;
   category: string;
 }
 

@@ -24,6 +24,7 @@ interface SurveyQuestion {
   number: number;
   text: string;
   description: string;
+  detail?: string;
   category: string;
 }
 
@@ -99,7 +100,8 @@ export default function GuestSurvey({
       const formattedQuestions = questionsData.questions.map((q: any) => ({
         number: q.id || q.number,
         text: q.question || q.text,
-        description: q.description || "",
+        description: q.description || q.detail || "", // Support both description and detail fields
+        detail: q.detail || q.description || "",      // Handle either property name
         category: q.category || "General",
       }));
       setQuestions(formattedQuestions);
