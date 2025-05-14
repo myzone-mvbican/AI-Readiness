@@ -44,7 +44,7 @@ export default function SurveyPage() {
       </div>
 
       <div className="mt-16">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+        <h2 className="text-2xl font-bold text-foreground mb-6">
           What You'll Evaluate
         </h2>
 
