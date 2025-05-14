@@ -4,7 +4,7 @@ import {
   userTeams,
   surveys,
   surveyTeams,
-  assessments
+  assessments,
 } from "@shared/schema";
 
 import {
@@ -15,7 +15,7 @@ import {
   Survey,
   SurveyTeam,
   Assessment,
-  GoogleUserPayload
+  GoogleUserPayload,
 } from "@shared/types";
 
 import {
@@ -27,7 +27,7 @@ import {
   UpdateSurvey,
   InsertSurveyTeam,
   InsertAssessment,
-  UpdateAssessment
+  UpdateAssessment,
 } from "@shared/types/requests";
 import { db } from "./db";
 import { eq, and, inArray, isNull, desc, or, not } from "drizzle-orm";
@@ -46,7 +46,9 @@ if (!process.env.JWT_SECRET) {
 // List of admin emails (environment variable based for security, with defaults)
 const ADMIN_EMAILS = (
   process.env.ADMIN_EMAILS || "bican.valeriu@myzone.ai,mike@myzone.ai"
-).split(",").map(email => email.trim().toLowerCase());
+)
+  .split(",")
+  .map((email) => email.trim().toLowerCase());
 
 export interface IStorage {
   // User operations
@@ -74,11 +76,25 @@ export interface IStorage {
   getSurveys(teamId: number): Promise<Survey[]>;
   getSurveyById(id: number): Promise<Survey | undefined>;
   createSurvey(surveyData: InsertSurvey): Promise<Survey>;
-  updateSurvey(id: number, surveyData: UpdateSurvey): Promise<Survey | undefined>;
+  updateSurvey(
+    id: number,
+    surveyData: UpdateSurvey,
+  ): Promise<Survey | undefined>;
   deleteSurvey(id: number): Promise<boolean>;
-  getSurveyWithAuthor(id: number): Promise<(Survey & { author: { name: string, email: string }, teams?: { id: number, name: string }[] }) | undefined>;
-  getSurveysWithAuthors(teamId: number): Promise<(Survey & { author: { name: string, email: string }, teams: { id: number, name: string }[] })[]>;
-  
+  getSurveyWithAuthor(id: number): Promise<
+    | (Survey & {
+        author: { name: string; email: string };
+        teams?: { id: number; name: string }[];
+      })
+    | undefined
+  >;
+  getSurveysWithAuthors(teamId: number): Promise<
+    (Survey & {
+      author: { name: string; email: string };
+      teams: { id: number; name: string }[];
+    })[]
+  >;
+
   // Survey-Team operations
   getSurveyTeams(surveyId: number): Promise<number[]>;
   addSurveyTeam(surveyId: number, teamId: number): Promise<void>;
@@ -88,16 +104,24 @@ export interface IStorage {
   // Assessment operations
   getAssessmentsByUserId(userId: number): Promise<Assessment[]>;
   getAssessmentById(id: number): Promise<Assessment | undefined>;
-  createAssessment(assessmentData: InsertAssessment): Promise<Assessment>; 
-  updateAssessment(id: number, assessmentData: UpdateAssessment): Promise<Assessment | undefined>;
+  createAssessment(assessmentData: InsertAssessment): Promise<Assessment>;
+  updateAssessment(
+    id: number,
+    assessmentData: UpdateAssessment,
+  ): Promise<Assessment | undefined>;
   deleteAssessment(id: number): Promise<boolean>;
-  getAssessmentWithSurveyInfo(id: number): Promise<(Assessment & { survey: { title: string } }) | undefined>;
+  getAssessmentWithSurveyInfo(
+    id: number,
+  ): Promise<(Assessment & { survey: { title: string } }) | undefined>;
 
   // Authentication operations
   generateToken(user: User): string;
   verifyToken(token: string): { userId: number } | null;
   verifyGoogleToken(token: string): Promise<GoogleUserPayload | null>;
-  connectGoogleAccount(userId: number, googleId: string): Promise<User | undefined>;
+  connectGoogleAccount(
+    userId: number,
+    googleId: string,
+  ): Promise<User | undefined>;
   disconnectGoogleAccount(userId: number): Promise<User | undefined>;
   isAdmin(email: string): boolean;
 }
@@ -106,30 +130,34 @@ export class DatabaseStorage implements IStorage {
   // Assessment operations implementation
   async getAssessmentsByUserId(userId: number): Promise<Assessment[]> {
     try {
-      const result = await db.select().from(assessments)
+      const result = await db
+        .select()
+        .from(assessments)
         .where(eq(assessments.userId, userId))
         .orderBy(desc(assessments.updatedAt));
-      
-      return result.map(assessment => ({
+
+      return result.map((assessment) => ({
         ...assessment,
-        answers: JSON.parse(assessment.answers)
+        answers: JSON.parse(assessment.answers),
       }));
     } catch (error) {
-      console.error('Error getting assessments:', error);
+      console.error("Error getting assessments:", error);
       return [];
     }
   }
 
   async getAssessmentById(id: number): Promise<Assessment | undefined> {
     try {
-      const [result] = await db.select().from(assessments)
+      const [result] = await db
+        .select()
+        .from(assessments)
         .where(eq(assessments.id, id));
-      
+
       if (!result) return undefined;
-      
+
       return {
         ...result,
-        answers: JSON.parse(result.answers)
+        answers: JSON.parse(result.answers),
       };
     } catch (error) {
       console.error(`Error getting assessment ${id}:`, error);
@@ -137,55 +165,62 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async createAssessment(assessmentData: InsertAssessment): Promise<Assessment> {
+  async createAssessment(
+    assessmentData: InsertAssessment,
+  ): Promise<Assessment> {
     try {
       // Convert answers to JSON string for storage
       const dataToInsert = {
         ...assessmentData,
-        answers: JSON.stringify(assessmentData.answers)
+        answers: JSON.stringify(assessmentData.answers),
       };
-      
-      const [result] = await db.insert(assessments)
+
+      const [result] = await db
+        .insert(assessments)
         .values(dataToInsert)
         .returning();
-      
+
       return {
         ...result,
-        answers: assessmentData.answers // Use the original typed array
+        answers: assessmentData.answers, // Use the original typed array
       };
     } catch (error) {
-      console.error('Error creating assessment:', error);
+      console.error("Error creating assessment:", error);
       throw error;
     }
   }
 
-  async updateAssessment(id: number, assessmentData: UpdateAssessment): Promise<Assessment | undefined> {
+  async updateAssessment(
+    id: number,
+    assessmentData: UpdateAssessment,
+  ): Promise<Assessment | undefined> {
     try {
       // Check if assessment exists
       const existingAssessment = await this.getAssessmentById(id);
       if (!existingAssessment) return undefined;
-      
+
       // Prepare update data
       const updateData: any = { ...assessmentData };
-      
+
       // If answers are provided, convert to JSON string
       if (assessmentData.answers) {
         updateData.answers = JSON.stringify(assessmentData.answers);
       }
-      
+
       // Update the record
-      const [result] = await db.update(assessments)
+      const [result] = await db
+        .update(assessments)
         .set({
           ...updateData,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(eq(assessments.id, id))
         .returning();
-      
+
       // Return the updated assessment with parsed answers
       return {
         ...result,
-        answers: JSON.parse(result.answers)
+        answers: JSON.parse(result.answers),
       };
     } catch (error) {
       console.error(`Error updating assessment ${id}:`, error);
@@ -195,10 +230,11 @@ export class DatabaseStorage implements IStorage {
 
   async deleteAssessment(id: number): Promise<boolean> {
     try {
-      const result = await db.delete(assessments)
+      const result = await db
+        .delete(assessments)
         .where(eq(assessments.id, id))
         .returning({ id: assessments.id });
-      
+
       return result.length > 0;
     } catch (error) {
       console.error(`Error deleting assessment ${id}:`, error);
@@ -206,38 +242,41 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getAssessmentWithSurveyInfo(id: number): Promise<(Assessment & { survey: { title: string } }) | undefined> {
+  async getAssessmentWithSurveyInfo(
+    id: number,
+  ): Promise<(Assessment & { survey: { title: string } }) | undefined> {
     try {
       const [result] = await db
         .select({
           assessment: assessments,
-          surveyTitle: surveys.title
+          surveyTitle: surveys.title,
         })
         .from(assessments)
         .innerJoin(surveys, eq(assessments.surveyTemplateId, surveys.id))
         .where(eq(assessments.id, id));
-      
+
       if (!result) return undefined;
-      
+
       return {
         ...result.assessment,
         answers: JSON.parse(result.assessment.answers),
         survey: {
-          title: result.surveyTitle
-        }
+          title: result.surveyTitle,
+        },
       };
     } catch (error) {
       console.error(`Error getting assessment with survey info ${id}:`, error);
       return undefined;
     }
   }
-  
+
+  // Users
   async getUser(id: number): Promise<User | undefined> {
     try {
       const [user] = await db.select().from(users).where(eq(users.id, id));
       return user;
     } catch (error) {
-      console.error('Error getting user:', error);
+      console.error("Error getting user:", error);
       return undefined;
     }
   }
@@ -250,7 +289,7 @@ export class DatabaseStorage implements IStorage {
         .where(eq(users.email, email.toLowerCase()));
       return user;
     } catch (error) {
-      console.error('Error getting user by email:', error);
+      console.error("Error getting user by email:", error);
       return undefined;
     }
   }
@@ -263,7 +302,7 @@ export class DatabaseStorage implements IStorage {
         .where(eq(users.googleId, googleId));
       return user;
     } catch (error) {
-      console.error('Error getting user by Google ID:', error);
+      console.error("Error getting user by Google ID:", error);
       return undefined;
     }
   }
@@ -273,7 +312,9 @@ export class DatabaseStorage implements IStorage {
       // Hash the password if provided
       let userWithHashedPwd = { ...insertUser };
       if (insertUser.password) {
-        userWithHashedPwd.password = await this.hashPassword(insertUser.password);
+        userWithHashedPwd.password = await this.hashPassword(
+          insertUser.password,
+        );
       }
 
       // Lowercase the email to ensure consistency
@@ -282,10 +323,13 @@ export class DatabaseStorage implements IStorage {
       }
 
       // Insert user into database
-      const [user] = await db.insert(users).values(userWithHashedPwd).returning();
+      const [user] = await db
+        .insert(users)
+        .values(userWithHashedPwd)
+        .returning();
       return user;
     } catch (error) {
-      console.error('Error creating user:', error);
+      console.error("Error creating user:", error);
       throw error;
     }
   }
@@ -314,7 +358,7 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return user;
     } catch (error) {
-      console.error('Error updating user:', error);
+      console.error("Error updating user:", error);
       return undefined;
     }
   }
@@ -322,24 +366,18 @@ export class DatabaseStorage implements IStorage {
   async deleteUser(id: number): Promise<boolean> {
     try {
       // First, delete all team associations for this user
-      await db
-        .delete(userTeams)
-        .where(eq(userTeams.userId, id));
-      
+      await db.delete(userTeams).where(eq(userTeams.userId, id));
+
       // Then, delete any surveys created by this user (or set them to a default user)
       // This depends on your business logic - here we'll delete them
-      await db
-        .delete(surveys)
-        .where(eq(surveys.authorId, id));
-        
+      await db.delete(surveys).where(eq(surveys.authorId, id));
+
       // Finally, delete the user
-      const result = await db
-        .delete(users)
-        .where(eq(users.id, id));
-        
+      const result = await db.delete(users).where(eq(users.id, id));
+
       return !!result;
     } catch (error) {
-      console.error('Error deleting user:', error);
+      console.error("Error deleting user:", error);
       throw error; // Rethrow to handle at the route level
     }
   }
@@ -354,113 +392,6 @@ export class DatabaseStorage implements IStorage {
   async hashPassword(password: string): Promise<string> {
     const saltRounds = 10;
     return bcrypt.hash(password, saltRounds);
-  }
-
-  async createTeam(teamData: InsertTeam): Promise<Team> {
-    try {
-      const [team] = await db.insert(teams).values(teamData).returning();
-      return team;
-    } catch (error) {
-      console.error('Error creating team:', error);
-      throw error;
-    }
-  }
-
-  async getTeam(id: number): Promise<Team | undefined> {
-    try {
-      const [team] = await db.select().from(teams).where(eq(teams.id, id));
-      return team;
-    } catch (error) {
-      console.error('Error getting team:', error);
-      return undefined;
-    }
-  }
-
-  async getTeamByName(name: string): Promise<Team | undefined> {
-    try {
-      const [team] = await db.select().from(teams).where(eq(teams.name, name));
-      return team;
-    } catch (error) {
-      console.error('Error getting team by name:', error);
-      return undefined;
-    }
-  }
-
-  async getTeamsByUserId(userId: number): Promise<TeamWithRole[]> {
-    try {
-      const result = await db
-        .select({
-          id: teams.id,
-          name: teams.name,
-          role: userTeams.role,
-        })
-        .from(userTeams)
-        .innerJoin(teams, eq(userTeams.teamId, teams.id))
-        .where(eq(userTeams.userId, userId));
-
-      return result.map(row => ({
-        id: row.id,
-        name: row.name,
-        role: row.role,
-      }));
-    } catch (error) {
-      console.error('Error getting teams by user ID:', error);
-      return [];
-    }
-  }
-
-  async addUserToTeam(userTeamData: InsertUserTeam): Promise<UserTeam> {
-    try {
-      const [userTeam] = await db.insert(userTeams).values(userTeamData).returning();
-      return userTeam;
-    } catch (error) {
-      console.error('Error adding user to team:', error);
-      throw error;
-    }
-  }
-
-  async updateUserTeams(userId: number, teamIds: number[]): Promise<void> {
-    try {
-      // Get current teams for this user
-      const currentUserTeams = await db
-        .select()
-        .from(userTeams)
-        .where(eq(userTeams.userId, userId));
-      
-      const currentTeamIds = currentUserTeams.map(ut => ut.teamId);
-      
-      // Teams to remove (in current but not in new list)
-      const teamsToRemove = currentTeamIds.filter(id => !teamIds.includes(id));
-      
-      // Teams to add (in new list but not in current)
-      const teamsToAdd = teamIds.filter(id => !currentTeamIds.includes(id));
-      
-      // Delete teams that should be removed
-      if (teamsToRemove.length > 0) {
-        await db
-          .delete(userTeams)
-          .where(
-            and(
-              eq(userTeams.userId, userId),
-              inArray(userTeams.teamId, teamsToRemove)
-            )
-          );
-      }
-      
-      // Add new teams
-      if (teamsToAdd.length > 0) {
-        const newUserTeams = teamsToAdd.map(teamId => ({
-          userId,
-          teamId,
-          role: 'member', // Default role for newly added teams
-        }));
-        
-        await db.insert(userTeams).values(newUserTeams);
-      }
-    } catch (error) {
-      console.error('Error updating user teams:', error);
-      throw error;
-    }
   }
 
   generateToken(user: User): string {
@@ -489,50 +420,172 @@ export class DatabaseStorage implements IStorage {
   isAdmin(email: string): boolean {
     return ADMIN_EMAILS.includes(email.toLowerCase());
   }
-  
+
   async verifyGoogleToken(token: string): Promise<GoogleUserPayload | null> {
     try {
       // Verify the Google token by making a request to the tokeninfo endpoint
-      const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`);
-      
+      const response = await fetch(
+        `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`,
+      );
+
       if (!response.ok) {
-        throw new Error(`Google token verification failed: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Google token verification failed: ${response.status} ${response.statusText}`,
+        );
       }
-      
+
       const data = await response.json();
       return data as GoogleUserPayload;
     } catch (error) {
-      console.error('Error verifying Google token:', error);
+      console.error("Error verifying Google token:", error);
       return null;
     }
   }
-  
-  async connectGoogleAccount(userId: number, googleId: string): Promise<User | undefined> {
+
+  async connectGoogleAccount(
+    userId: number,
+    googleId: string,
+  ): Promise<User | undefined> {
     try {
       return this.updateUser(userId, { googleId });
     } catch (error) {
-      console.error('Error connecting Google account:', error);
+      console.error("Error connecting Google account:", error);
       throw error;
     }
   }
-  
+
   async disconnectGoogleAccount(userId: number): Promise<User | undefined> {
     try {
       // First get the current user
       const user = await this.getUser(userId);
       if (!user) {
-        throw new Error('User not found');
+        throw new Error("User not found");
       }
-      
+
       // Ensure the user has a password before disconnecting Google
       if (!user.password) {
-        throw new Error('Cannot disconnect Google account without a password set');
+        throw new Error(
+          "Cannot disconnect Google account without a password set",
+        );
       }
-      
+
       // Update the user to remove Google ID
       return this.updateUser(userId, { googleId: null });
     } catch (error) {
-      console.error('Error disconnecting Google account:', error);
+      console.error("Error disconnecting Google account:", error);
+      throw error;
+    }
+  }
+
+  // Teams
+  async createTeam(teamData: InsertTeam): Promise<Team> {
+    try {
+      const [team] = await db.insert(teams).values(teamData).returning();
+      return team;
+    } catch (error) {
+      console.error("Error creating team:", error);
+      throw error;
+    }
+  }
+
+  async getTeam(id: number): Promise<Team | undefined> {
+    try {
+      const [team] = await db.select().from(teams).where(eq(teams.id, id));
+      return team;
+    } catch (error) {
+      console.error("Error getting team:", error);
+      return undefined;
+    }
+  }
+
+  async getTeamByName(name: string): Promise<Team | undefined> {
+    try {
+      const [team] = await db.select().from(teams).where(eq(teams.name, name));
+      return team;
+    } catch (error) {
+      console.error("Error getting team by name:", error);
+      return undefined;
+    }
+  }
+
+  async getTeamsByUserId(userId: number): Promise<TeamWithRole[]> {
+    try {
+      const result = await db
+        .select({
+          id: teams.id,
+          name: teams.name,
+          role: userTeams.role,
+        })
+        .from(userTeams)
+        .innerJoin(teams, eq(userTeams.teamId, teams.id))
+        .where(eq(userTeams.userId, userId));
+
+      return result.map((row) => ({
+        id: row.id,
+        name: row.name,
+        role: row.role,
+      }));
+    } catch (error) {
+      console.error("Error getting teams by user ID:", error);
+      return [];
+    }
+  }
+
+  async addUserToTeam(userTeamData: InsertUserTeam): Promise<UserTeam> {
+    try {
+      const [userTeam] = await db
+        .insert(userTeams)
+        .values(userTeamData)
+        .returning();
+      return userTeam;
+    } catch (error) {
+      console.error("Error adding user to team:", error);
+      throw error;
+    }
+  }
+
+  async updateUserTeams(userId: number, teamIds: number[]): Promise<void> {
+    try {
+      // Get current teams for this user
+      const currentUserTeams = await db
+        .select()
+        .from(userTeams)
+        .where(eq(userTeams.userId, userId));
+
+      const currentTeamIds = currentUserTeams.map((ut) => ut.teamId);
+
+      // Teams to remove (in current but not in new list)
+      const teamsToRemove = currentTeamIds.filter(
+        (id) => !teamIds.includes(id),
+      );
+
+      // Teams to add (in new list but not in current)
+      const teamsToAdd = teamIds.filter((id) => !currentTeamIds.includes(id));
+
+      // Delete teams that should be removed
+      if (teamsToRemove.length > 0) {
+        await db
+          .delete(userTeams)
+          .where(
+            and(
+              eq(userTeams.userId, userId),
+              inArray(userTeams.teamId, teamsToRemove),
+            ),
+          );
+      }
+
+      // Add new teams
+      if (teamsToAdd.length > 0) {
+        const newUserTeams = teamsToAdd.map((teamId) => ({
+          userId,
+          teamId,
+          role: "member", // Default role for newly added teams
+        }));
+
+        await db.insert(userTeams).values(newUserTeams);
+      }
+    } catch (error) {
+      console.error("Error updating user teams:", error);
       throw error;
     }
   }
@@ -543,18 +596,18 @@ export class DatabaseStorage implements IStorage {
       // Two types of surveys to return:
       // 1. Global surveys = public surveys NOT assigned to any team
       // 2. Team-specific surveys = public surveys assigned to the requested team
-      
+
       // Get all team assignments to identify which surveys have team assignments
-      const allAssignedSurveys = await db
-        .select()
-        .from(surveyTeams);
-        
+      const allAssignedSurveys = await db.select().from(surveyTeams);
+
       // Get the unique survey IDs that have ANY team assignment
-      const assignedSurveyIds = [...new Set(allAssignedSurveys.map(s => s.surveyId))];
-      
+      const assignedSurveyIds = [
+        ...new Set(allAssignedSurveys.map((s) => s.surveyId)),
+      ];
+
       // STEP 1: Get global surveys (public surveys with no team assignments)
       let globalSurveys: Survey[] = [];
-      
+
       // First check if we have any assigned surveys at all in the system
       if (assignedSurveyIds.length > 0) {
         // Get public surveys that are NOT assigned to any team
@@ -564,8 +617,8 @@ export class DatabaseStorage implements IStorage {
           .where(
             and(
               eq(surveys.status, "public"),
-              not(inArray(surveys.id, assignedSurveyIds))
-            )
+              not(inArray(surveys.id, assignedSurveyIds)),
+            ),
           )
           .orderBy(desc(surveys.updatedAt));
       } else {
@@ -576,23 +629,23 @@ export class DatabaseStorage implements IStorage {
           .where(eq(surveys.status, "public"))
           .orderBy(desc(surveys.updatedAt));
       }
-      
+
       // If teamId is 0, we only want global surveys
       if (teamId === 0) {
         return globalSurveys;
       }
-      
+
       // STEP 2: Get team-specific surveys (assigned directly to the requested team)
       // Get survey IDs assigned to the requested team
       const teamSpecificSurveyIds = allAssignedSurveys
-        .filter(assignment => assignment.teamId === teamId)
-        .map(assignment => assignment.surveyId);
-      
+        .filter((assignment) => assignment.teamId === teamId)
+        .map((assignment) => assignment.surveyId);
+
       // If no surveys are assigned to this team, just return global surveys
       if (teamSpecificSurveyIds.length === 0) {
         return globalSurveys;
       }
-      
+
       // Otherwise, fetch the team-specific surveys
       const teamSurveys = await db
         .select()
@@ -600,31 +653,31 @@ export class DatabaseStorage implements IStorage {
         .where(
           and(
             eq(surveys.status, "public"),
-            inArray(surveys.id, teamSpecificSurveyIds)
-          )
+            inArray(surveys.id, teamSpecificSurveyIds),
+          ),
         )
         .orderBy(desc(surveys.updatedAt));
-      
+
       // Combine both result sets, ensuring no duplicates
       const allSurveyIds = new Set<number>();
       const uniqueSurveys: Survey[] = [];
-      
+
       // Process global surveys first
       for (const survey of globalSurveys) {
         allSurveyIds.add(survey.id);
         uniqueSurveys.push(survey);
       }
-      
+
       // Then add team-specific surveys (if not duplicates)
       for (const survey of teamSurveys) {
         if (!allSurveyIds.has(survey.id)) {
           uniqueSurveys.push(survey);
         }
       }
-      
+
       return uniqueSurveys;
     } catch (error) {
-      console.error('Error getting surveys:', error);
+      console.error("Error getting surveys:", error);
       return [];
     }
   }
@@ -635,7 +688,7 @@ export class DatabaseStorage implements IStorage {
         .select()
         .from(surveys)
         .where(eq(surveys.id, id));
-      
+
       return survey;
     } catch (error) {
       console.error(`Error getting survey with id ${id}:`, error);
@@ -651,18 +704,21 @@ export class DatabaseStorage implements IStorage {
           ...surveyData,
           createdAt: new Date(),
           updatedAt: new Date(),
-          status: surveyData.status || 'draft',
+          status: surveyData.status || "draft",
         })
         .returning();
-      
+
       return survey;
     } catch (error) {
-      console.error('Error creating survey:', error);
+      console.error("Error creating survey:", error);
       throw error;
     }
   }
 
-  async updateSurvey(id: number, surveyData: UpdateSurvey): Promise<Survey | undefined> {
+  async updateSurvey(
+    id: number,
+    surveyData: UpdateSurvey,
+  ): Promise<Survey | undefined> {
     try {
       const [updatedSurvey] = await db
         .update(surveys)
@@ -672,7 +728,7 @@ export class DatabaseStorage implements IStorage {
         })
         .where(eq(surveys.id, id))
         .returning();
-      
+
       return updatedSurvey;
     } catch (error) {
       console.error(`Error updating survey with id ${id}:`, error);
@@ -686,7 +742,7 @@ export class DatabaseStorage implements IStorage {
         .delete(surveys)
         .where(eq(surveys.id, id))
         .returning();
-      
+
       return result.length > 0;
     } catch (error) {
       console.error(`Error deleting survey with id ${id}:`, error);
@@ -694,39 +750,48 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getSurveyWithAuthor(id: number): Promise<(Survey & { author: { name: string, email: string }, teams?: { id: number, name: string }[] }) | undefined> {
+  async getSurveyWithAuthor(id: number): Promise<
+    | (Survey & {
+        author: { name: string; email: string };
+        teams?: { id: number; name: string }[];
+      })
+    | undefined
+  > {
     try {
       // First get the survey
       const survey = await this.getSurveyById(id);
       if (!survey) return undefined;
-      
+
       // Then get the author
       const author = await this.getUser(survey.authorId);
       if (!author) return undefined;
-      
+
       // Get teams for this survey
       const teamIds = await this.getSurveyTeams(survey.id);
-      let teams: { id: number, name: string }[] = [];
-      
+      let teams: { id: number; name: string }[] = [];
+
       if (teamIds.length > 0) {
         // Fetch team details for each teamId
         const teamPromises = teamIds.map(async (id) => {
           const team = await this.getTeam(id);
           return team ? { id: team.id, name: team.name } : null;
         });
-        
+
         // Filter out any null teams (those not found)
-        teams = (await Promise.all(teamPromises)).filter(Boolean) as { id: number, name: string }[];
+        teams = (await Promise.all(teamPromises)).filter(Boolean) as {
+          id: number;
+          name: string;
+        }[];
       }
-      
+
       // Combine survey with author and teams info
       return {
         ...survey,
         author: {
           name: author.name,
-          email: author.email
+          email: author.email,
         },
-        teams: teams
+        teams: teams,
       };
     } catch (error) {
       console.error(`Error getting survey with author for id ${id}:`, error);
@@ -734,10 +799,15 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getSurveysWithAuthors(teamId: number): Promise<(Survey & { author: { name: string, email: string }, teams: { id: number, name: string }[] })[]> {
+  async getSurveysWithAuthors(teamId: number): Promise<
+    (Survey & {
+      author: { name: string; email: string };
+      teams: { id: number; name: string }[];
+    })[]
+  > {
     try {
       let allSurveys: Survey[] = [];
-      
+
       if (teamId === 0) {
         // For admins, get ALL surveys regardless of team
         const results = await db
@@ -749,41 +819,47 @@ export class DatabaseStorage implements IStorage {
         // Otherwise, just get surveys for this team and global surveys
         allSurveys = await this.getSurveys(teamId);
       }
-      
+
       // Map through surveys and add author and team information
       const surveysWithAuthors = await Promise.all(
         allSurveys.map(async (survey) => {
           const author = await this.getUser(survey.authorId);
-          
+
           // Get teams for this survey
           const teamIds = await this.getSurveyTeams(survey.id);
-          let teams: { id: number, name: string }[] = [];
-          
+          let teams: { id: number; name: string }[] = [];
+
           if (teamIds.length > 0) {
             // Fetch team details for each teamId
             const teamPromises = teamIds.map(async (id) => {
               const team = await this.getTeam(id);
               return team ? { id: team.id, name: team.name } : null;
             });
-            
+
             // Filter out any null teams (those not found)
-            teams = (await Promise.all(teamPromises)).filter(Boolean) as { id: number, name: string }[];
+            teams = (await Promise.all(teamPromises)).filter(Boolean) as {
+              id: number;
+              name: string;
+            }[];
           }
-          
+
           return {
             ...survey,
             author: {
-              name: author?.name || 'Unknown',
-              email: author?.email || 'unknown@example.com'
+              name: author?.name || "Unknown",
+              email: author?.email || "unknown@example.com",
             },
-            teams: teams
+            teams: teams,
           };
-        })
+        }),
       );
-      
+
       return surveysWithAuthors;
     } catch (error) {
-      console.error(`Error getting surveys with authors for team ${teamId}:`, error);
+      console.error(
+        `Error getting surveys with authors for team ${teamId}:`,
+        error,
+      );
       return [];
     }
   }
@@ -794,10 +870,10 @@ export class DatabaseStorage implements IStorage {
         .select()
         .from(surveyTeams)
         .where(eq(surveyTeams.surveyId, surveyId));
-      
-      return result.map(st => st.teamId);
+
+      return result.map((st) => st.teamId);
     } catch (error) {
-      console.error('Error getting survey teams:', error);
+      console.error("Error getting survey teams:", error);
       return [];
     }
   }
@@ -809,19 +885,22 @@ export class DatabaseStorage implements IStorage {
         teamId,
       });
     } catch (error) {
-      console.error('Error adding survey team:', error);
+      console.error("Error adding survey team:", error);
     }
   }
 
   async removeSurveyTeam(surveyId: number, teamId: number): Promise<void> {
     try {
-      await db.delete(surveyTeams)
-        .where(and(
-          eq(surveyTeams.surveyId, surveyId),
-          eq(surveyTeams.teamId, teamId)
-        ));
+      await db
+        .delete(surveyTeams)
+        .where(
+          and(
+            eq(surveyTeams.surveyId, surveyId),
+            eq(surveyTeams.teamId, teamId),
+          ),
+        );
     } catch (error) {
-      console.error('Error removing survey team:', error);
+      console.error("Error removing survey team:", error);
     }
   }
 
@@ -830,21 +909,20 @@ export class DatabaseStorage implements IStorage {
       // Begin transaction
       await db.transaction(async (tx) => {
         // Delete all existing survey-team relationships
-        await tx.delete(surveyTeams)
-          .where(eq(surveyTeams.surveyId, surveyId));
-        
+        await tx.delete(surveyTeams).where(eq(surveyTeams.surveyId, surveyId));
+
         // If there are team IDs, insert the new relationships
         if (teamIds.length > 0) {
-          const values = teamIds.map(teamId => ({ 
-            surveyId, 
-            teamId 
+          const values = teamIds.map((teamId) => ({
+            surveyId,
+            teamId,
           }));
-          
+
           await tx.insert(surveyTeams).values(values);
         }
       });
     } catch (error) {
-      console.error('Error updating survey teams:', error);
+      console.error("Error updating survey teams:", error);
     }
   }
 }
@@ -854,7 +932,7 @@ export class MemStorage implements IStorage {
   private teams: Map<number, Team>;
   private userTeams: Map<number, UserTeam>;
   private surveys: Map<number, Survey>;
-  private surveyTeams: Map<string, { surveyId: number, teamId: number }>;
+  private surveyTeams: Map<string, { surveyId: number; teamId: number }>;
   private assessments: Map<number, Assessment>;
   currentId: number;
   currentTeamId: number;
@@ -902,12 +980,12 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentId++;
     let userToInsert = { ...insertUser };
-    
+
     // Lowercase email for consistency
     if (userToInsert.email) {
       userToInsert.email = userToInsert.email.toLowerCase();
     }
-    
+
     // Hash password if provided
     if (userToInsert.password) {
       userToInsert.password = await this.hashPassword(userToInsert.password);
@@ -933,15 +1011,17 @@ export class MemStorage implements IStorage {
     }
 
     let updatedUserData = { ...userData };
-    
+
     // Lowercase email if provided
     if (updatedUserData.email) {
       updatedUserData.email = updatedUserData.email.toLowerCase();
     }
-    
+
     // Hash password if provided
     if (updatedUserData.password) {
-      updatedUserData.password = await this.hashPassword(updatedUserData.password);
+      updatedUserData.password = await this.hashPassword(
+        updatedUserData.password,
+      );
     }
 
     const updatedUser: User = {
@@ -1030,22 +1110,25 @@ export class MemStorage implements IStorage {
         currentUserTeams.push(userTeam);
       }
     }
-    
-    const currentTeamIds = currentUserTeams.map(ut => ut.teamId);
-    
+
+    const currentTeamIds = currentUserTeams.map((ut) => ut.teamId);
+
     // Teams to remove (in current but not in new list)
-    const teamsToRemove = currentTeamIds.filter(id => !teamIds.includes(id));
-    
+    const teamsToRemove = currentTeamIds.filter((id) => !teamIds.includes(id));
+
     // Teams to add (in new list but not in current)
-    const teamsToAdd = teamIds.filter(id => !currentTeamIds.includes(id));
-    
+    const teamsToAdd = teamIds.filter((id) => !currentTeamIds.includes(id));
+
     // Remove teams
     for (const [key, userTeam] of this.userTeams.entries()) {
-      if (userTeam.userId === userId && teamsToRemove.includes(userTeam.teamId)) {
+      if (
+        userTeam.userId === userId &&
+        teamsToRemove.includes(userTeam.teamId)
+      ) {
         this.userTeams.delete(key);
       }
     }
-    
+
     // Add new teams
     for (const teamId of teamsToAdd) {
       const id = this.currentUserTeamId++;
@@ -1053,14 +1136,14 @@ export class MemStorage implements IStorage {
         id,
         userId,
         teamId,
-        role: 'member', // Default role
+        role: "member", // Default role
         createdAt: new Date(),
         updatedAt: new Date(),
       };
       this.userTeams.set(id, newUserTeam);
     }
   }
-  
+
   generateToken(user: User): string {
     return jwt.sign(
       {
@@ -1087,50 +1170,59 @@ export class MemStorage implements IStorage {
   isAdmin(email: string): boolean {
     return ADMIN_EMAILS.includes(email.toLowerCase());
   }
-  
+
   async verifyGoogleToken(token: string): Promise<GoogleUserPayload | null> {
     try {
       // Verify the Google token by making a request to the tokeninfo endpoint
-      const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`);
-      
+      const response = await fetch(
+        `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`,
+      );
+
       if (!response.ok) {
-        throw new Error(`Google token verification failed: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Google token verification failed: ${response.status} ${response.statusText}`,
+        );
       }
-      
+
       const data = await response.json();
       return data as GoogleUserPayload;
     } catch (error) {
-      console.error('Error verifying Google token:', error);
+      console.error("Error verifying Google token:", error);
       return null;
     }
   }
-  
-  async connectGoogleAccount(userId: number, googleId: string): Promise<User | undefined> {
+
+  async connectGoogleAccount(
+    userId: number,
+    googleId: string,
+  ): Promise<User | undefined> {
     try {
       return this.updateUser(userId, { googleId });
     } catch (error) {
-      console.error('Error connecting Google account:', error);
+      console.error("Error connecting Google account:", error);
       throw error;
     }
   }
-  
+
   async disconnectGoogleAccount(userId: number): Promise<User | undefined> {
     try {
       // First get the current user
       const user = await this.getUser(userId);
       if (!user) {
-        throw new Error('User not found');
+        throw new Error("User not found");
       }
-      
+
       // Ensure the user has a password before disconnecting Google
       if (!user.password) {
-        throw new Error('Cannot disconnect Google account without a password set');
+        throw new Error(
+          "Cannot disconnect Google account without a password set",
+        );
       }
-      
+
       // Update the user to remove Google ID
       return this.updateUser(userId, { googleId: null });
     } catch (error) {
-      console.error('Error disconnecting Google account:', error);
+      console.error("Error disconnecting Google account:", error);
       throw error;
     }
   }
@@ -1140,7 +1232,7 @@ export class MemStorage implements IStorage {
     try {
       const allSurveys = Array.from(this.surveys.values());
       const result: Survey[] = [];
-      
+
       // If teamId is 0, only return global surveys
       if (teamId === 0) {
         // Get surveys that are marked as global (null teamId) and have no teams assigned
@@ -1158,7 +1250,7 @@ export class MemStorage implements IStorage {
         // 1. Global surveys (teamId is null and no teams in junction table)
         // 2. Surveys that have the specified teamId
         // 3. Surveys that have an entry in the survey_teams junction table for this team
-        
+
         for (const survey of allSurveys) {
           // Add global surveys
           if (survey.teamId === null) {
@@ -1168,13 +1260,13 @@ export class MemStorage implements IStorage {
               continue;
             }
           }
-          
+
           // Add surveys matching this teamId
           if (survey.teamId === teamId) {
             result.push(survey);
             continue;
           }
-          
+
           // Check the junction table for surveys assigned to this team
           const surveyTeamIds = await this.getSurveyTeams(survey.id);
           if (surveyTeamIds.includes(teamId)) {
@@ -1182,11 +1274,13 @@ export class MemStorage implements IStorage {
           }
         }
       }
-      
+
       // Sort by updated date descending
-      return result.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+      return result.sort(
+        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
+      );
     } catch (error) {
-      console.error('Error getting surveys:', error);
+      console.error("Error getting surveys:", error);
       return [];
     }
   }
@@ -1203,36 +1297,39 @@ export class MemStorage implements IStorage {
   async createSurvey(surveyData: InsertSurvey): Promise<Survey> {
     try {
       const id = this.currentSurveyId++;
-      
+
       const survey: Survey = {
         id,
         ...surveyData,
         createdAt: new Date(),
         updatedAt: new Date(),
-        status: surveyData.status || 'draft',
+        status: surveyData.status || "draft",
       };
-      
+
       this.surveys.set(id, survey);
       return survey;
     } catch (error) {
-      console.error('Error creating survey:', error);
+      console.error("Error creating survey:", error);
       throw error;
     }
   }
 
-  async updateSurvey(id: number, surveyData: UpdateSurvey): Promise<Survey | undefined> {
+  async updateSurvey(
+    id: number,
+    surveyData: UpdateSurvey,
+  ): Promise<Survey | undefined> {
     try {
       const currentSurvey = this.surveys.get(id);
       if (!currentSurvey) {
         return undefined;
       }
-      
+
       const updatedSurvey: Survey = {
         ...currentSurvey,
         ...surveyData,
         updatedAt: new Date(),
       };
-      
+
       this.surveys.set(id, updatedSurvey);
       return updatedSurvey;
     } catch (error) {
@@ -1250,30 +1347,39 @@ export class MemStorage implements IStorage {
     }
   }
 
-  async getSurveyWithAuthor(id: number): Promise<(Survey & { author: { name: string, email: string }, teams?: { id: number, name: string }[] }) | undefined> {
+  async getSurveyWithAuthor(id: number): Promise<
+    | (Survey & {
+        author: { name: string; email: string };
+        teams?: { id: number; name: string }[];
+      })
+    | undefined
+  > {
     try {
       const survey = this.surveys.get(id);
       if (!survey) return undefined;
-      
+
       const author = this.users.get(survey.authorId);
       if (!author) return undefined;
-      
+
       // Get teams for this survey
       const teamIds = await this.getSurveyTeams(id);
-      const teams = teamIds.length > 0 
-        ? teamIds.map(teamId => {
-            const team = this.teams.get(teamId);
-            return team ? { id: team.id, name: team.name } : null;
-          }).filter(Boolean) as { id: number, name: string }[]
-        : [];
-      
+      const teams =
+        teamIds.length > 0
+          ? (teamIds
+              .map((teamId) => {
+                const team = this.teams.get(teamId);
+                return team ? { id: team.id, name: team.name } : null;
+              })
+              .filter(Boolean) as { id: number; name: string }[])
+          : [];
+
       return {
         ...survey,
         author: {
           name: author.name,
-          email: author.email
+          email: author.email,
         },
-        teams: teams.length > 0 ? teams : undefined
+        teams: teams.length > 0 ? teams : undefined,
       };
     } catch (error) {
       console.error(`Error getting survey with author for id ${id}:`, error);
@@ -1281,50 +1387,65 @@ export class MemStorage implements IStorage {
     }
   }
 
-  async getSurveysWithAuthors(teamId: number): Promise<(Survey & { author: { name: string, email: string }, teams?: { id: number, name: string }[] })[]> {
+  async getSurveysWithAuthors(teamId: number): Promise<
+    (Survey & {
+      author: { name: string; email: string };
+      teams?: { id: number; name: string }[];
+    })[]
+  > {
     try {
       let allSurveys: Survey[] = [];
-      
+
       if (teamId === 0) {
         // For admins, get ALL surveys regardless of team
         allSurveys = Array.from(this.surveys.values());
         // Sort by updated date descending
-        allSurveys.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+        allSurveys.sort(
+          (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
+        );
       } else {
         // Otherwise, just get surveys for this team and global surveys
         allSurveys = await this.getSurveys(teamId);
       }
-      
+
       // Get all surveys with their authors and teams
-      const surveysWithAuthorsAndTeams = await Promise.all(allSurveys.map(async survey => {
-        const author = this.users.get(survey.authorId);
-        
-        // Get teams for this survey
-        const teamIds = await this.getSurveyTeams(survey.id);
-        const teams = teamIds.length > 0 
-          ? teamIds.map(id => {
-              const team = this.teams.get(id);
-              return team ? { id: team.id, name: team.name } : null;
-            }).filter(Boolean) as { id: number, name: string }[]
-          : [];
-        
-        return {
-          ...survey,
-          author: {
-            name: author?.name || 'Unknown',
-            email: author?.email || 'unknown@example.com'
-          },
-          teams: teams
-        };
-      }));
-      
+      const surveysWithAuthorsAndTeams = await Promise.all(
+        allSurveys.map(async (survey) => {
+          const author = this.users.get(survey.authorId);
+
+          // Get teams for this survey
+          const teamIds = await this.getSurveyTeams(survey.id);
+          const teams =
+            teamIds.length > 0
+              ? (teamIds
+                  .map((id) => {
+                    const team = this.teams.get(id);
+                    return team ? { id: team.id, name: team.name } : null;
+                  })
+                  .filter(Boolean) as { id: number; name: string }[])
+              : [];
+
+          return {
+            ...survey,
+            author: {
+              name: author?.name || "Unknown",
+              email: author?.email || "unknown@example.com",
+            },
+            teams: teams,
+          };
+        }),
+      );
+
       return surveysWithAuthorsAndTeams;
     } catch (error) {
-      console.error(`Error getting surveys with authors for team ${teamId}:`, error);
+      console.error(
+        `Error getting surveys with authors for team ${teamId}:`,
+        error,
+      );
       return [];
     }
   }
-  
+
   // Survey-Team operations
   async getSurveyTeams(surveyId: number): Promise<number[]> {
     try {
@@ -1336,7 +1457,7 @@ export class MemStorage implements IStorage {
       }
       return teamIds;
     } catch (error) {
-      console.error('Error getting survey teams:', error);
+      console.error("Error getting survey teams:", error);
       return [];
     }
   }
@@ -1346,7 +1467,7 @@ export class MemStorage implements IStorage {
       const key = `${surveyId}-${teamId}`;
       this.surveyTeams.set(key, { surveyId, teamId });
     } catch (error) {
-      console.error('Error adding survey team:', error);
+      console.error("Error adding survey team:", error);
     }
   }
 
@@ -1355,7 +1476,7 @@ export class MemStorage implements IStorage {
       const key = `${surveyId}-${teamId}`;
       this.surveyTeams.delete(key);
     } catch (error) {
-      console.error('Error removing survey team:', error);
+      console.error("Error removing survey team:", error);
     }
   }
 
@@ -1373,7 +1494,7 @@ export class MemStorage implements IStorage {
         await this.addSurveyTeam(surveyId, teamId);
       }
     } catch (error) {
-      console.error('Error updating survey teams:', error);
+      console.error("Error updating survey teams:", error);
     }
   }
 
@@ -1387,11 +1508,13 @@ export class MemStorage implements IStorage {
           result.push(assessment);
         }
       }
-      
+
       // Sort by updated date descending
-      return result.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+      return result.sort(
+        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
+      );
     } catch (error) {
-      console.error('Error getting assessments:', error);
+      console.error("Error getting assessments:", error);
       return [];
     }
   }
@@ -1400,10 +1523,12 @@ export class MemStorage implements IStorage {
     return this.assessments.get(id);
   }
 
-  async createAssessment(assessmentData: InsertAssessment): Promise<Assessment> {
+  async createAssessment(
+    assessmentData: InsertAssessment,
+  ): Promise<Assessment> {
     try {
       const id = ++this.currentAssessmentId;
-      
+
       const assessment: Assessment = {
         id,
         title: assessmentData.title,
@@ -1413,33 +1538,36 @@ export class MemStorage implements IStorage {
         score: null,
         answers: assessmentData.answers,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
-      
+
       this.assessments.set(id, assessment);
       return assessment;
     } catch (error) {
-      console.error('Error creating assessment:', error);
+      console.error("Error creating assessment:", error);
       throw error;
     }
   }
 
-  async updateAssessment(id: number, assessmentData: UpdateAssessment): Promise<Assessment | undefined> {
+  async updateAssessment(
+    id: number,
+    assessmentData: UpdateAssessment,
+  ): Promise<Assessment | undefined> {
     try {
       const existingAssessment = this.assessments.get(id);
       if (!existingAssessment) return undefined;
-      
+
       const updatedAssessment: Assessment = {
         ...existingAssessment,
         ...assessmentData,
         updatedAt: new Date(),
       };
-      
+
       // Handle answers array separately to preserve existing answers if not provided
       if (assessmentData.answers) {
         updatedAssessment.answers = assessmentData.answers;
       }
-      
+
       this.assessments.set(id, updatedAssessment);
       return updatedAssessment;
     } catch (error) {
@@ -1452,19 +1580,21 @@ export class MemStorage implements IStorage {
     return this.assessments.delete(id);
   }
 
-  async getAssessmentWithSurveyInfo(id: number): Promise<(Assessment & { survey: { title: string } }) | undefined> {
+  async getAssessmentWithSurveyInfo(
+    id: number,
+  ): Promise<(Assessment & { survey: { title: string } }) | undefined> {
     try {
       const assessment = this.assessments.get(id);
       if (!assessment) return undefined;
-      
+
       const survey = this.surveys.get(assessment.surveyTemplateId);
       if (!survey) return undefined;
-      
+
       return {
         ...assessment,
         survey: {
-          title: survey.title
-        }
+          title: survey.title,
+        },
       };
     } catch (error) {
       console.error(`Error getting assessment with survey info ${id}:`, error);
