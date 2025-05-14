@@ -71,7 +71,11 @@ export function GuestAssessmentForm({
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="you@example.com" {...field} />
+                <Input
+                  type="email"
+                  placeholder="your.email@example.com"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

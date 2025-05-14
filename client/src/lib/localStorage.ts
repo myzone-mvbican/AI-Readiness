@@ -3,16 +3,10 @@
  * Helps prevent fragmentation and inconsistencies across storage keys
  */
 
-import { AssessmentAnswer, GuestUser } from "@shared/types";
-
-// Storage version for future-proofing schema changes
-const STORAGE_VERSION = "1.0";
+import { AssessmentAnswer } from "@shared/types";
 
 // Main storage keys
 export const STORAGE_KEYS = {
-  // Storage version
-  VERSION: "storageVersion",
-  
   // Auth related
   TOKEN: "token",
   USER_DATA: "userData",
@@ -20,9 +14,17 @@ export const STORAGE_KEYS = {
 
   // Guest assessment related
   GUEST_USER: "guestUser",
-  GUEST_ASSESSMENT_DATA: "guestAssessmentData",
+  GUEST_ASSESSMENT_DATA: "guestAssessmentData", // New consolidated key
   GUEST_ASSESSMENT_RESULT: "guestAssessmentResult",
 };
+
+// Guest user interface with embedded ID
+export interface GuestUser {
+  id: string;
+  name: string;
+  email: string;
+  company?: string;
+}
 
 // Guest assessment data interface
 export interface GuestAssessmentData {
@@ -235,31 +237,4 @@ export function clearAuthData(): void {
   localStorage.removeItem(STORAGE_KEYS.TOKEN);
   localStorage.removeItem(STORAGE_KEYS.USER_DATA);
   localStorage.removeItem(STORAGE_KEYS.SELECTED_TEAM);
-}
-
-/**
- * Initialize storage version for schema change management
- * Should be called when the application loads
- */
-export function initializeStorage(): void {
-  // Check if we need to set the version
-  const version = localStorage.getItem(STORAGE_KEYS.VERSION);
-  if (!version) {
-    localStorage.setItem(STORAGE_KEYS.VERSION, STORAGE_VERSION);
-    return;
-  }
-  
-  // Migration logic for future version upgrades
-  if (version !== STORAGE_VERSION) {
-    // Implement migration logic here when needed
-    console.log(`Storage version changed from ${version} to ${STORAGE_VERSION}`);
-    localStorage.setItem(STORAGE_KEYS.VERSION, STORAGE_VERSION);
-  }
-}
-
-/**
- * Get the storage schema version
- */
-export function getStorageVersion(): string {
-  return localStorage.getItem(STORAGE_KEYS.VERSION) || STORAGE_VERSION;
 }
