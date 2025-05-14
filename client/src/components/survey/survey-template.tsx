@@ -40,28 +40,28 @@ interface SurveyQuestion {
 
 interface SurveyTemplateProps {
   // Assessment data
-  assessment: Partial<Assessment> & { 
-    survey?: { title: string },
-    title?: string,
-    status?: string,
-    updatedAt?: string
+  assessment: Partial<Assessment> & {
+    survey?: { title: string };
+    title?: string;
+    status?: string;
+    updatedAt?: string;
   };
   surveyTitle?: string; // For guest mode where data might not have nested survey property
-  
+
   // Questions and answers
   questions: SurveyQuestion[];
   answers: AssessmentAnswer[];
   onAnswerChange: (index: number, value: number) => void;
-  
+
   // UI state
   isSubmitting?: boolean;
   showSaveButton?: boolean;
-  
+
   // Actions
   onCancel?: () => void;
   onSave?: () => void;
   onComplete?: () => void;
-  
+
   // For internal navigation
   isGuestMode?: boolean;
   currentStep?: number;
@@ -81,26 +81,35 @@ export default function SurveyTemplate({
   onComplete,
   isGuestMode = false,
   currentStep: externalCurrentStep,
-  setCurrentStep: externalSetCurrentStep
+  setCurrentStep: externalSetCurrentStep,
 }: SurveyTemplateProps) {
   // Use either externally controlled step state or internal state
   const [internalCurrentStep, setInternalCurrentStep] = useState(0);
-  
-  const currentStep = externalCurrentStep !== undefined ? externalCurrentStep : internalCurrentStep;
+
+  const currentStep =
+    externalCurrentStep !== undefined
+      ? externalCurrentStep
+      : internalCurrentStep;
   const setCurrentStep = externalSetCurrentStep || setInternalCurrentStep;
-  
+
   // State for completion dialog
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
-  
+
   // Calculate progress - percentage of questions answered
-  const answeredQuestions = answers.filter(a => a.a !== null && a.a !== undefined).length;
-  const currentProgress = Math.round((answeredQuestions / questions.length) * 100);
-  
+  const answeredQuestions = answers.filter(
+    (a) => a.a !== null && a.a !== undefined,
+  ).length;
+  const currentProgress = Math.round(
+    (answeredQuestions / questions.length) * 100,
+  );
+
   // Check if all questions have been answered
   const allQuestionsAnswered = () => {
-    return answers.every(answer => answer.a !== null && answer.a !== undefined);
+    return answers.every(
+      (answer) => answer.a !== null && answer.a !== undefined,
+    );
   };
-  
+
   // Format date for display
   const getFormattedDate = (dateString: string) => {
     try {
@@ -109,38 +118,48 @@ export default function SurveyTemplate({
       return "Unknown";
     }
   };
-  
+
   // Get the status badge - in progress or completed
   const getStatusBadge = () => {
-    const status = assessment.status || "in-progress";
-    
+    const status = assessment.status || "draft";
+
     if (status === "completed") {
       return (
-        <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">
+        <Badge
+          variant="outline"
+          className="bg-green-100 text-green-800 hover:bg-green-100"
+        >
           Completed
         </Badge>
       );
     }
-    
-    return (
-      <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
-        In Progress
-      </Badge>
-    );
+
+    if (status === "in-progress") {
+      return (
+        <Badge
+          variant="outline"
+          className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
+        >
+          In Progress
+        </Badge>
+      );
+    }
+
+    return <Badge variant="outline">Draft</Badge>;
   };
-  
+
   // Handle the answer change and update the answers array
   const updateAnswer = (index: number, value: number) => {
     if (onAnswerChange) {
       onAnswerChange(index, value);
     }
   };
-  
-  // Handle open completion dialog 
+
+  // Handle open completion dialog
   const handleComplete = () => {
     setCompleteDialogOpen(true);
   };
-  
+
   // Handle confirm complete
   const confirmComplete = () => {
     setCompleteDialogOpen(false);
@@ -148,7 +167,7 @@ export default function SurveyTemplate({
       onComplete();
     }
   };
-  
+
   // Handle save progress
   const handleSave = () => {
     if (onSave) {
@@ -158,8 +177,9 @@ export default function SurveyTemplate({
 
   // Get assessment title and survey title
   const assessmentTitle = assessment?.title || "Assessment";
-  const displaySurveyTitle = assessment?.survey?.title || surveyTitle || "Survey";
-  
+  const displaySurveyTitle =
+    assessment?.survey?.title || surveyTitle || "Survey";
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 space-y-3">
@@ -176,13 +196,14 @@ export default function SurveyTemplate({
           {assessment.updatedAt && (
             <p className="text-muted-foreground mt-2">
               <span className="text-sm text-muted-foreground">
-                Last Updated: {getFormattedDate(assessment.updatedAt?.toString() || '')}
+                Last Updated:{" "}
+                {getFormattedDate(assessment.updatedAt?.toString() || "")}
               </span>
             </p>
           )}
         </div>
       </div>
-      
+
       <div className="mb-6">
         <div className="flex justify-between mb-2">
           <span className="text-sm text-foreground font-medium">
@@ -194,7 +215,7 @@ export default function SurveyTemplate({
         </div>
         <Progress value={currentProgress} className="h-2 text-foreground" />
       </div>
-      
+
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3">
           <h2 className="text-xl font-bold text-foreground text-center md:text-start">
@@ -216,7 +237,9 @@ export default function SurveyTemplate({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentStep(Math.min(questions.length - 1, currentStep + 1))}
+              onClick={() =>
+                setCurrentStep(Math.min(questions.length - 1, currentStep + 1))
+              }
               disabled={currentStep === questions.length - 1}
             >
               Next
@@ -224,7 +247,7 @@ export default function SurveyTemplate({
             </Button>
           </div>
         </div>
-        
+
         <Card className="border-2 border-muted">
           <CardHeader className="bg-muted">
             <CardTitle className="flex items-center space-x-3">
@@ -244,11 +267,12 @@ export default function SurveyTemplate({
             </CardTitle>
             <CardDescription className="text-sm md:text-lg md:text-xl text-foreground font-bold">
               <p>
-                "{questions[currentStep]?.text || `Question ${currentStep + 1}`}"
+                "{questions[currentStep]?.text || `Question ${currentStep + 1}`}
+                "
               </p>
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent className="pt-6">
             <SurveyQuestion
               question={questions[currentStep]?.text || ""}
@@ -258,7 +282,7 @@ export default function SurveyTemplate({
               questionDescription={questions[currentStep]?.description}
             />
           </CardContent>
-          
+
           <CardFooter className="flex justify-between mt-6 pt-4 border-t">
             <Button
               variant="outline"
@@ -269,7 +293,9 @@ export default function SurveyTemplate({
               Previous
             </Button>
             <Button
-              onClick={() => setCurrentStep(Math.min(questions.length - 1, currentStep + 1))}
+              onClick={() =>
+                setCurrentStep(Math.min(questions.length - 1, currentStep + 1))
+              }
               disabled={currentStep === questions.length - 1}
             >
               Next
@@ -277,30 +303,25 @@ export default function SurveyTemplate({
             </Button>
           </CardFooter>
         </Card>
-        
+
         <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 flex items-start">
           <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5 mr-3 flex-shrink-0" />
           <div>
             <h4 className="font-medium text-yellow-800">Important Note</h4>
             <p className="text-sm text-yellow-700 mt-1">
-              {isGuestMode ? (
-                "Your answers are auto-saved as you go. To finalize your assessment, answer all questions and click 'Complete Assessment'. You can create an account after completion to track your progress over time."
-              ) : (
-                "Your answers are saved when you click 'Save Progress'. To finalize your assessment, answer all questions and click 'Complete Assessment'. Completed assessments cannot be modified."
-              )}
+              {isGuestMode
+                ? "Your answers are auto-saved as you go. To finalize your assessment, answer all questions and click 'Complete Assessment'. You can create an account after completion to track your progress over time."
+                : "Your answers are saved when you click 'Save Progress'. To finalize your assessment, answer all questions and click 'Complete Assessment'. Completed assessments cannot be modified."}
             </p>
           </div>
         </div>
       </div>
-      
+
       <div className="flex justify-between border-t py-4">
-        <Button
-          variant="outline"
-          onClick={onCancel}
-        >
+        <Button variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        
+
         <div className="flex gap-2">
           {showSaveButton && (
             <Button
@@ -316,7 +337,7 @@ export default function SurveyTemplate({
               <div className="hidden md:block ms-2">Save Progress</div>
             </Button>
           )}
-          
+
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="inline-block">

@@ -156,6 +156,27 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
       fetchSurveyData();
     }
   }, [stage, surveyData]);
+  
+  // Load questions data when entering the completion stage
+  useEffect(() => {
+    // If we're on the completed stage and don't have question data, load it
+    const loadQuestionsForCompletionScreen = async () => {
+      if (stage === AssessmentStage.COMPLETED && 
+          (!questionData?.questions || questionData.questions.length === 0)) {
+        try {
+          const response = await fetch(`/api/public/surveys/${defaultSurveyId}/questions`);
+          const data = await response.json();
+          if (data.success && data.questions) {
+            setQuestionData(data);
+          }
+        } catch (error) {
+          console.error("Error loading questions for completion screen:", error);
+        }
+      }
+    };
+    
+    loadQuestionsForCompletionScreen();
+  }, [stage, questionData, defaultSurveyId]);
 
   const fetchSurveyData = async () => {
     setIsLoading(true);
@@ -487,26 +508,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
         );
 
       case AssessmentStage.COMPLETED:
-        // Make sure we have the right survey question data
-        useEffect(() => {
-          // If we don't have question data, load it
-          const loadQuestionsIfNeeded = async () => {
-            if (!questionData?.questions || questionData.questions.length === 0) {
-              try {
-                const response = await fetch(`/api/public/surveys/${defaultSurveyId}/questions`);
-                const data = await response.json();
-                if (data.success && data.questions) {
-                  setQuestionData(data);
-                }
-              } catch (error) {
-                console.error("Error loading questions for completion screen:", error);
-              }
-            }
-          };
-          
-          loadQuestionsIfNeeded();
-        }, [questionData, defaultSurveyId]);
-        
+        // No hooks should be called inside render functions
         console.log("Survey data:", surveyData);
         console.log("Question data:", questionData);
         console.log("Assessment result:", assessmentResult);
