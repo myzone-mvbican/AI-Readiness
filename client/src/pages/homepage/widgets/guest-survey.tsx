@@ -33,7 +33,6 @@ interface GuestSurveyProps {
   guestUser: { id: string; name: string; email: string; company?: string };
   onSubmit: (answers: AssessmentAnswer[]) => void;
   onCancel?: () => void;
-  onScoreChange?: (score: number) => void;
   hasSavedAnswers: boolean;
 }
 
@@ -42,7 +41,6 @@ export default function GuestSurvey({
   guestUser,
   onSubmit,
   onCancel,
-  onScoreChange,
   hasSavedAnswers,
 }: GuestSurveyProps) {
   const { toast } = useToast();
@@ -82,16 +80,10 @@ export default function GuestSurvey({
           setCurrentStep(savedData.currentStep);
         }
 
-        // Calculate and report the score from saved answers
-        if (onScoreChange && savedData.answers.length > 0) {
-          const score = calculateScore(savedData.answers);
-          onScoreChange(score);
-        }
-
         resumeHandled.current = true;
       }
     }
-  }, [surveyId, hasSavedAnswers, onScoreChange]);
+  }, [surveyId, hasSavedAnswers]);
 
   // Format questions when data is loaded
   useEffect(() => {
@@ -144,12 +136,6 @@ export default function GuestSurvey({
     // Save to localStorage
     saveGuestAssessmentAnswers(surveyId, updatedAnswers, currentStep);
 
-    // Calculate and report score
-    if (onScoreChange) {
-      const score = calculateScore(updatedAnswers);
-      onScoreChange(score);
-    }
-
     // Clear any existing timeout
     if (autoAdvanceTimeout) {
       clearTimeout(autoAdvanceTimeout);
@@ -167,22 +153,6 @@ export default function GuestSurvey({
     setAutoAdvanceTimeout(timeout);
   };
 
-  // Calculate a simple score from the answers
-  const calculateScore = (answers: AssessmentAnswer[]): number => {
-    const validAnswers = answers.filter(
-      (a) => a.a !== null && a.a !== undefined,
-    );
-    if (validAnswers.length === 0) return 0;
-
-    const total = validAnswers.reduce(
-      (sum, answer) => sum + (answer.a || 0),
-      0,
-    );
-
-    // Convert to 0-100 scale (normalize from -2 to 2 range)
-    return Math.round((total / (validAnswers.length * 2) + 1) * 50);
-  };
-
   // Handle completion
   const handleComplete = () => {
     // First save current answers
@@ -190,12 +160,6 @@ export default function GuestSurvey({
 
     // Then submit
     setIsSubmitting(true);
-
-    // Calculate final score
-    const score = calculateScore(answers);
-    if (onScoreChange) {
-      onScoreChange(score);
-    }
 
     // Send answers to parent component
     onSubmit(answers);
@@ -233,11 +197,6 @@ export default function GuestSurvey({
     // Reset step
     setCurrentStep(0);
     setShowResumeDialog(false);
-
-    // Reset score if there's a callback
-    if (onScoreChange) {
-      onScoreChange(0);
-    }
   };
 
   // Show loading state
@@ -251,7 +210,7 @@ export default function GuestSurvey({
   }
 
   // Show error if data couldn't be loaded
-  if (!surveyData?.success || !questionsData?.success) {
+  if (!surveyData?.success || !questionsData?.success || !answers.length) {
     return (
       <div className="text-center py-12">
         <p className="text-red-500">

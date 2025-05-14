@@ -242,36 +242,22 @@ export default function SurveyCompleted({
           <ScrollArea className="h-[500px] rounded-md border p-4">
             {answers.map((answer: any, index: number) => (
               <div key={`answer-${index}`}>
-                <div className="flex items-start gap-2">
-                  <h3 className="text-sm md:text-base font-medium flex-1">
-                    Question {index + 1}: {getQuestionTextById(answer.q)}
-                  </h3>
-                  {surveyQuestions.find(q => q.number === answer.q)?.detail && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <InfoIcon className="h-4 w-4 flex-shrink-0 mt-1" />
-                      </TooltipTrigger>
-                      <TooltipContent className="p-2 max-w-[400px]">
-                        {surveyQuestions.find(q => q.number === answer.q)?.detail}
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                </div>
+                <h3 className="text-sm md:text-normal font-medium">
+                  Question {index + 1}: {getQuestionTextById(answer.q)}
+                </h3>
                 <p className="text-sm mt-2">
                   Your answer:{" "}
-                  <span className="font-medium">
-                    {answer.a === 2
-                      ? "Strongly Agree"
-                      : answer.a === 1
-                        ? "Agree"
-                        : answer.a === 0
-                          ? "Neutral"
-                          : answer.a === -1
-                            ? "Disagree"
-                            : answer.a === -2
-                              ? "Strongly Disagree"
-                              : "Not answered"}
-                  </span>
+                  {answer.a === 2
+                    ? "Strongly Agree"
+                    : answer.a === 1
+                      ? "Agree"
+                      : answer.a === 0
+                        ? "Neutral"
+                        : answer.a === -1
+                          ? "Disagree"
+                          : answer.a === -2
+                            ? "Strongly Disagree"
+                            : "Not answered"}
                 </p>
                 <Separator className="my-4" />
               </div>

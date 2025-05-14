@@ -1,13 +1,19 @@
 /**
  * Core Data Models
- * 
+ *
  * This file contains the core data model types derived from database schema definitions.
  * These types represent the fundamental data entities used throughout the application.
  */
 
 // Import core types from the schema
-import { teams, users, userTeams, surveys, surveyTeams, assessments } from "../schema";
-import { z } from "zod";
+import {
+  teams,
+  users,
+  userTeams,
+  surveys,
+  surveyTeams,
+  assessments,
+} from "../schema";
 
 // Basic database model types
 export type Team = typeof teams.$inferSelect;
@@ -25,7 +31,7 @@ export type AssessmentAnswer = {
 
 // For assessment, we have two types: the DB type and the runtime type
 export type AssessmentDB = typeof assessments.$inferSelect;
-export type Assessment = Omit<AssessmentDB, 'answers'> & {
+export type Assessment = Omit<AssessmentDB, "answers"> & {
   answers: Array<AssessmentAnswer>;
 };
 
@@ -35,14 +41,14 @@ export type TeamWithRole = Team & { role: string };
 /**
  * Extended model types for domain-specific entities
  */
-export type SurveyWithAuthor = Survey & { 
-  author: { 
-    name: string; 
-    email: string; 
+export type SurveyWithAuthor = Survey & {
+  author: {
+    name: string;
+    email: string;
   };
-  teams: { 
-    id: number; 
-    name: string; 
+  teams: {
+    id: number;
+    name: string;
   }[];
 };
 
@@ -58,7 +64,7 @@ export interface GuestUser {
 /**
  * Guest Assessment represents an assessment completed by a non-registered user
  */
-export type GuestAssessment = Omit<Assessment, 'userId'> & {
+export type GuestAssessment = Omit<Assessment, "userId"> & {
   userId: null;
   email: string;
 };
