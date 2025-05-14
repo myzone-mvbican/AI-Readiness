@@ -3,6 +3,9 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import authRoutes from "./routes/auth.routes";
 import { teams } from "@shared/schema";
+
+// Import middleware if needed for protected routes
+import { authenticate, requireAdmin } from "./middleware/auth";
 import {
   insertUserSchema,
   updateUserSchema,
@@ -22,6 +25,9 @@ import * as fs from "fs";
 export async function registerRoutes(app: Express): Promise<Server> {
   // Enable CORS
   app.use(cors());
+
+  // Register auth routes
+  app.use("/api/auth", authRoutes);
 
   // API routes - path prefixed with /api
   app.get("/api/health", (req, res) => {
