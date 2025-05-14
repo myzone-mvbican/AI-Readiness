@@ -13,6 +13,12 @@ import {
   googleConnectSchema,
   insertSurveySchema,
   updateSurveySchema,
+  createSurveySchema,
+  surveySchema,
+  insertAssessmentSchema,
+  updateAssessmentSchema,
+  assessmentSchema,
+  updateAssessmentAnswersSchema
 } from "@shared/validation/schemas";
 import { GoogleUserPayload } from "@shared/types";
 import { authenticate, requireAdmin } from "./middleware/auth";

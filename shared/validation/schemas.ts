@@ -1,6 +1,58 @@
 import { z } from 'zod';
 
 // ===================================
+// User Authentication Schemas
+// ===================================
+
+// User signup/registration schema
+export const insertUserSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Valid email is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  company: z.string().optional(),
+  employeeCount: z.number().int().positive().optional(),
+  industry: z.string().optional(),
+  role: z.string().optional(),
+  googleId: z.string().optional()
+});
+
+// User update schema
+export const updateUserSchema = insertUserSchema.partial();
+
+// Login schema
+export const loginSchema = z.object({
+  email: z.string().email("Valid email is required"),
+  password: z.string().min(1, "Password is required")
+});
+
+// Google auth schema
+export const googleAuthSchema = z.object({
+  credential: z.string().min(1, "Google credential is required")
+});
+
+// Google connect schema
+export const googleConnectSchema = z.object({
+  credential: z.string().min(1, "Google credential is required")
+});
+
+// ===================================
+// Team Schemas
+// ===================================
+
+// Team schema
+export const insertTeamSchema = z.object({
+  name: z.string().min(1, "Team name is required"),
+  description: z.string().optional()
+});
+
+// User-team relation schema
+export const userTeamSchema = z.object({
+  userId: z.number().int().positive(),
+  teamId: z.number().int().positive(),
+  role: z.string().min(1, "Role is required")
+});
+
+// ===================================
 // Survey Schemas
 // ===================================
 
@@ -29,6 +81,16 @@ export const createSurveySchema = z.object({
   description: z.string().min(1, "Survey description is required"),
   fileReference: z.string().optional(),
   teamId: z.number().int().nonnegative().optional().nullable()
+});
+
+// Alternative names for backward compatibility
+export const insertSurveySchema = createSurveySchema;
+export const updateSurveySchema = createSurveySchema.partial();
+
+// Survey team relation schema
+export const insertSurveyTeamSchema = z.object({
+  surveyId: z.number().int().positive(),
+  teamId: z.number().int().positive()
 });
 
 // ===================================
@@ -70,6 +132,10 @@ export const createAssessmentSchema = z.object({
     name: z.string().min(1, "Name is required")
   }).optional()
 });
+
+// Alternative names for backward compatibility
+export const insertAssessmentSchema = createAssessmentSchema;
+export const updateAssessmentSchema = createAssessmentSchema.partial();
 
 // Assessment answers update schema
 export const updateAssessmentAnswersSchema = z.object({
