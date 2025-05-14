@@ -891,6 +891,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Check if a user exists by email - this endpoint is public for guest assessment flow
+  app.get("/api/users/check-email", async (req, res) => {
+    try {
+      const { email } = req.query;
+      
+      if (!email || typeof email !== 'string') {
+        return res.status(400).json({
+          success: false,
+          message: "Email is required",
+        });
+      }
+      
+      // Check if a user with this email exists
+      const user = await storage.getUserByEmail(email);
+      
+      // Return whether the user exists, without exposing any user data
+      res.status(200).json({
+        success: true,
+        exists: !!user
+      });
+    } catch (error) {
+      console.error("Error checking user email:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error checking user email",
+      });
+    }
+  });
+  
   // Add user to team
   app.post("/api/teams/:teamId/users", authenticate, async (req, res) => {
     try {

@@ -447,8 +447,11 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
                 hasSavedAnswers={hasSavedAnswers}
                 onSubmit={handleQuestionsSubmit}
                 onCancel={() => {
-                  // Go back to info collection stage and clear all guest data
-                  clearGuestAssessmentDataForSurvey(defaultSurveyId);
+                  // Go back to info collection stage and clear ALL guest data (not just survey data)
+                  clearGuestAssessmentData(); // Clear all guest data including user info
+                  setGuestUser(null); // Reset guest user state
+                  setHasSavedAnswers(false); // Reset saved answers flag
+                  setAnswers([]); // Clear answers state
                   setStage(AssessmentStage.INFO_COLLECTION);
                 }}
                 onScoreChange={(score: number) => {
@@ -621,9 +624,12 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
                       <Input
                         type="email"
                         placeholder="your.email@example.com"
+                        readOnly
+                        className="bg-muted cursor-not-allowed"
                         {...field}
                       />
                     </FormControl>
+                    <p className="text-xs text-muted-foreground mt-1">Email used for assessment cannot be changed</p>
                     <FormMessage />
                   </FormItem>
                 )}
