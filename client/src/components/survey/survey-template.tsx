@@ -254,6 +254,7 @@ export default function SurveyTemplate({
               value={answers[currentStep]?.a}
               onChange={(value) => updateAnswer(currentStep, value)}
               disabled={isSubmitting}
+              questionDescription={questions[currentStep]?.description}
             />
           </CardContent>
           
