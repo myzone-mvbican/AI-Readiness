@@ -1,26 +1,33 @@
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
+// Provides
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { GoogleAuthProvider } from "@/lib/google-auth-provider";
+import { GoogleAuthProvider } from "@/components/google-auth-provider";
+import { AuthProvider } from "@/hooks/use-auth";
+import { ThemeProvider } from "@/components/theme-provider";
+import { AssessmentCreateModalProvider } from "@/components/assessment/assessment-create-modal-provider";
+// Protected routes
+import { ProtectedRoute } from "@/components/protected-route";
+import { AdminProtectedRoute } from "@/components/protected-admin-route";
+// Layout components
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
-import { AuthProvider } from "@/hooks/use-auth";
-import { ProtectedRoute } from "@/lib/protected-route";
-import { ThemeProvider } from "@/components/theme-provider";
-import { AdminProtectedRoute } from "./lib/admin-protected-route";
-import { AssessmentCreateModalProvider } from "@/components/assessment/assessment-create-modal-provider";
-import NotFound from "@/pages/not-found";
-import Home from "@/pages/homepage";
-import AuthPage from "@/pages/auth";
-import AboutPage from "@/pages/about";
+// Normal pages
+import NotFound from "@/pages/page-404";
+import PageHome from "@/pages/page-home";
+import PageAuth from "@/pages/page-auth";
+import PageAbout from "@/pages/page-about";
+// Dashboard pages
 import DashboardHome from "@/pages/dashboard-home";
 import AssessmentsPage from "@/pages/dashboard-assessments";
 import AssessmentDetailPage from "@/pages/dashboard-assessments/[id]";
+// Admin pages
 import AdminSurveysPage from "@/pages/dashboard-surveys";
 import AdminUsersPage from "@/pages/dashboard-users";
-import AccountSettingsPage from "./pages/dashboard-settings";
+// Account settings page
+import AccountSettingsPage from "./pages/account-settings";
 
 function Router() {
   const [location] = useLocation();
@@ -61,11 +68,11 @@ function Router() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="bg-white dark:bg-gray-900 flex-grow w-full mx-auto">
+      <main className="bg-white dark:bg-gray-900 flex flex-col flex-grow w-full mx-auto">
         <Switch>
-          <Route path="/" component={Home} />
-          <Route path="/auth" component={AuthPage} />
-          <Route path="/about" component={AboutPage} />
+          <Route path="/" component={PageHome} />
+          <Route path="/auth" component={PageAuth} />
+          <Route path="/about" component={PageAbout} />
           <Route component={NotFound} />
         </Switch>
       </main>

@@ -174,7 +174,11 @@ export function saveGuestAssessmentAnswers(
  */
 export function hasSavedGuestAssessment(surveyId: number): boolean {
   const data = getGuestAssessmentData(surveyId);
-  return !!(data && data.answers && data.answers.length > 0);
+  return !!(
+    data &&
+    data.answers &&
+    data.answers.some((answer) => answer.a !== null)
+  );
 }
 
 /**

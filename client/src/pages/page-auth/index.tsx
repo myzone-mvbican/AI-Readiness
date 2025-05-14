@@ -22,7 +22,8 @@ export default function AuthPage() {
   const [_, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
-  const { user, loginMutation, registerMutation, googleLoginMutation } = useAuth();
+  const { user, loginMutation, registerMutation, googleLoginMutation } =
+    useAuth();
 
   // Redirect if user is already authenticated
   useEffect(() => {
@@ -103,16 +104,16 @@ export default function AuthPage() {
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
       setIsSubmitting(true);
-      
+
       // Use the googleLoginMutation from our auth hook
       await googleLoginMutation.mutateAsync({
         credential: credentialResponse.credential,
       });
-      
+
       // Redirect happens automatically in useEffect when user is set
     } catch (error) {
       console.error("Error with Google login:", error);
-      
+
       // Error handling is done in the mutation, but we can add an additional message
       toast({
         title: "Google login failed",
@@ -135,9 +136,9 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="container">
+    <div className="container flex flex-col flex-grow">
       {/* Form section */}
-      <div className="w-full max-w-[600px] mx-auto p-8 flex flex-col justify-center">
+      <div className="w-full max-w-[600px] mx-auto p-8 flex flex-col flex-grow justify-center">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
             Welcome to MyZone AI

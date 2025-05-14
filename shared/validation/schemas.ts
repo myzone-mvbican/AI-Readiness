@@ -1,10 +1,10 @@
 /**
  * Validation Schemas
- * 
+ *
  * This file contains Zod validation schemas used for data validation
  * throughout the application. Many schemas are derived from database tables
  * using drizzle-zod, while others are custom-defined for specific use cases.
- * 
+ *
  * These schemas should be used for:
  * 1. Form validation on the client (with react-hook-form)
  * 2. API input validation on the server
@@ -13,19 +13,27 @@
 
 import { z } from "zod";
 import { createInsertSchema } from "drizzle-zod";
-import { teams, users, userTeams, surveys, surveyTeams, assessments } from "../schema";
+import {
+  teams,
+  users,
+  userTeams,
+  surveys,
+  surveyTeams,
+  assessments,
+} from "../schema";
 
 /**
  * User Validation Schemas
  * Schemas for user registration, authentication, and profile updates
  */
- 
+
 // Guest user schema for assessment submissions
 export const guestUserSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   company: z.string().optional(),
 });
+
 export const insertUserSchema = createInsertSchema(users).pick({
   name: true,
   email: true,
@@ -88,6 +96,7 @@ export const surveyVisibilitySchema = z.union([
   z.literal("global"),
   z.array(z.string()).min(1),
 ]);
+
 export const insertSurveySchema = createInsertSchema(surveys)
   .pick({
     title: true,

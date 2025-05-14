@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import { ThemeToggle } from "@/components/theme-toggle";
 import logoPath from "@/assets/logo-myzone-ai-black.svg";
 
 export default function Header() {
@@ -15,7 +16,8 @@ export default function Header() {
           </div>
         </Link>
         <div className="flex items-center">
-          <nav className="hidden md:flex space-x-8 mr-6">
+          <ThemeToggle />
+          <nav className="hidden md:flex space-x-8 mx-6">
             <Link href="/about">
               <span className="text-blue-800 hover:text-blue-600 dark:text-white font-medium cursor-pointer transition-colors">
                 About

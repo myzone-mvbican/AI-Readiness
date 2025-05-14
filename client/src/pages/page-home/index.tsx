@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronRight, ArrowRight } from "lucide-react";
 import { useAssessmentCreateModal } from "@/hooks/use-assessment-create-modal";
 import { useAuth } from "@/hooks/use-auth";
-import { GuestAssessment } from "./widgets/assessment";
+import { GuestAssessment } from "./assessment";
 import {
   Dialog,
   DialogContent,
@@ -14,8 +14,8 @@ import {
 } from "@/components/ui/dialog";
 
 export default function Home() {
-  const assessmentCreateModal = useAssessmentCreateModal();
   const { user } = useAuth();
+  const assessmentCreateModal = useAssessmentCreateModal();
   const [showGuestAssessment, setShowGuestAssessment] = useState(false);
   const [showGuestDialog, setShowGuestDialog] = useState(false);
 
@@ -30,21 +30,21 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col">
+    <>
       {/* Hero Section (Hidden when assessment is shown) */}
       {showGuestAssessment ? (
-        <div className="container py-8">
+        <div className="container flex flex-col flex-grow py-8">
           <GuestAssessment onClose={() => setShowGuestAssessment(false)} />
         </div>
       ) : (
         <>
-          <div className="bg-gradient-to-br from-blue-50 via-white to-blue-50 py-16 md:py-24">
+          <div className="bg-gradient-to-br from-blue-50 via-white to-blue-50 dark:from-gray-900 py-16 md:py-24">
             <div className="container">
               <div className="max-w-3xl mx-auto text-center">
                 <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-blue-700 mb-6">
                   MyZone AI Readiness Survey
                 </h1>
-                <p className="text-lg md:text-xl text-gray-600 mb-8">
+                <p className="text-lg md:text-xl text-muted-foreground mb-8">
                   Welcome! This AI Readiness Assessment should be completed
                   quarterly as one of your foundational AI KPIs (Key Performance
                   Indicators). It takes approximately 10 minutes to complete.
@@ -60,11 +60,11 @@ export default function Home() {
                     Start Assessment
                     <ChevronRight className="ml-2 h-5 w-5" />
                   </Button>
-                  <Link href="/about">
+                  <Link href="/about" asChild>
                     <Button
                       variant="outline"
                       size="lg"
-                      className="border-blue-600 text-blue-600 hover:bg-blue-50 rounded-md px-6"
+                      className="border-blue-600 text-blue-600 hover:bg-blue-50 dark:bg-transparent rounded-md px-6"
                     >
                       Learn More
                       <ChevronRight className="ml-2 h-5 w-5" />
@@ -128,8 +128,10 @@ export default function Home() {
       <Dialog open={showGuestDialog} onOpenChange={setShowGuestDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Start Your Assessment</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-foreground">
+              Start Your Assessment
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
               Choose how you'd like to proceed with your AI Readiness Assessment
             </DialogDescription>
           </DialogHeader>
@@ -159,13 +161,17 @@ export default function Home() {
             </div>
 
             <Link href="/auth">
-              <Button variant="outline" size="lg" className="w-full">
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full dark:text-white"
+              >
                 Log in to your account
               </Button>
             </Link>
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

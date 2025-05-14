@@ -11,13 +11,13 @@ import {
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
-import { User } from "@shared/types";
 import {
   getQueryFn,
   apiRequest,
   queryClient,
   UNAUTHORIZED_EVENT,
-} from "../lib/queryClient";
+} from "@/lib/queryClient";
+import { User } from "@shared/types";
 import { useToast } from "@/hooks/use-toast";
 import { clearGuestAssessmentData, clearAuthData } from "@/lib/localStorage";
 
@@ -221,7 +221,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Clear any previously selected team to force auto-selection
         localStorage.removeItem("selectedTeam");
-        
+
         // Clear all guest assessment data using our new utility function
         clearGuestAssessmentData();
 
@@ -308,7 +308,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Clear all authentication-related data from localStorage
       clearAuthData();
-      
+
       // Also clear any guest assessment data
       clearGuestAssessmentData();
 
@@ -362,7 +362,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Clear any previously selected team to force auto-selection
         localStorage.removeItem("selectedTeam");
-        
+
         // Clear any guest assessment data
         clearGuestAssessmentData();
 

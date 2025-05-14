@@ -66,7 +66,11 @@ export default function AdminSurveysPage() {
           <div className="flex items-center space-x-2">
             <Button
               variant="ghost"
-              className={!statusFilter ? "bg-muted dark:bg-gray-100" : ""}
+              className={
+                !statusFilter
+                  ? "bg-muted dark:bg-gray-100"
+                  : "text-muted-foreground"
+              }
               onClick={() => setStatusFilter(null)}
             >
               All
@@ -74,7 +78,9 @@ export default function AdminSurveysPage() {
             <Button
               variant="ghost"
               className={
-                statusFilter === "draft" ? "bg-muted dark:bg-gray-100" : ""
+                statusFilter === "draft"
+                  ? "bg-muted dark:bg-gray-100"
+                  : "text-muted-foreground"
               }
               onClick={() => setStatusFilter("draft")}
             >
@@ -83,7 +89,9 @@ export default function AdminSurveysPage() {
             <Button
               variant="ghost"
               className={
-                statusFilter === "public" ? "bg-muted dark:bg-gray-100" : ""
+                statusFilter === "public"
+                  ? "bg-muted dark:bg-gray-100"
+                  : "text-muted-foreground"
               }
               onClick={() => setStatusFilter("public")}
             >
