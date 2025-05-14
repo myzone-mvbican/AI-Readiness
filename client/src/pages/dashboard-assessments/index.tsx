@@ -184,6 +184,7 @@ export default function AssessmentsPage() {
               <Button
                 variant="outline"
                 size="sm"
+                className="text-muted-foreground"
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
               >
@@ -192,6 +193,7 @@ export default function AssessmentsPage() {
               <Button
                 variant="outline"
                 size="sm"
+                className="text-muted-foreground"
                 onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
               >

@@ -1,22 +1,14 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { AssessmentAnswer } from "@shared/types";
 import SurveyTemplate from "@/components/survey/survey-template";
 import { Loader2 } from "lucide-react";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
+  GuestUser,
   getGuestAssessmentData,
   saveGuestAssessmentAnswers,
+  hasSavedGuestAssessment,
   clearGuestAssessmentDataForSurvey,
 } from "@/lib/localStorage";
 
@@ -29,33 +21,43 @@ interface SurveyQuestion {
 }
 
 interface GuestSurveyProps {
+  guestUser: GuestUser | null;
   surveyId: number;
-  guestUser: { id: string; name: string; email: string; company?: string };
   onSubmit: (answers: AssessmentAnswer[]) => void;
   onCancel?: () => void;
   onScoreChange?: (score: number) => void;
-  hasSavedAnswers: boolean;
+  questions: SurveyQuestion[];
+  setQuestions: React.Dispatch<React.SetStateAction<SurveyQuestion[]>>;
 }
 
 export default function GuestSurvey({
-  surveyId,
   guestUser,
+  surveyId,
   onSubmit,
   onCancel,
   onScoreChange,
-  hasSavedAnswers,
+  questions,
+  setQuestions,
 }: GuestSurveyProps) {
+  // Default survey template ID
+  const defaultSurveyId = 19;
+
   const { toast } = useToast();
-  const [questions, setQuestions] = useState<SurveyQuestion[]>([]);
+
+  // const [questions, setQuestions] = useState<SurveyQuestion[]>([]);
   const [answers, setAnswers] = useState<AssessmentAnswer[]>([]);
+
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showResumeDialog, setShowResumeDialog] = useState(hasSavedAnswers);
-  const [autoAdvanceTimeout, setAutoAdvanceTimeout] =
-    useState<NodeJS.Timeout | null>(null);
 
-  // Use a ref to track if we've already handled resuming
-  const resumeHandled = useRef(false);
+  const [advanceTimeout, setAdvanceTimeout] = useState<NodeJS.Timeout | null>(
+    null,
+  );
+
+  // Check for saved answers in localStorage using our utility
+  const [hasSavedAnswers, setHasSavedAnswers] = useState<boolean>(() => {
+    return hasSavedGuestAssessment(defaultSurveyId);
+  });
 
   // Fetch survey data using public API endpoint
   const { data: surveyData, isLoading: isSurveyLoading } = useQuery({
@@ -74,7 +76,7 @@ export default function GuestSurvey({
 
   // Load saved answers from localStorage when available
   useEffect(() => {
-    if (hasSavedAnswers && !resumeHandled.current) {
+    if (hasSavedAnswers) {
       const savedData = getGuestAssessmentData(surveyId);
       if (savedData?.answers?.length) {
         setAnswers(savedData.answers);
@@ -87,11 +89,9 @@ export default function GuestSurvey({
           const score = calculateScore(savedData.answers);
           onScoreChange(score);
         }
-
-        resumeHandled.current = true;
       }
     }
-  }, [surveyId, hasSavedAnswers, onScoreChange]);
+  }, [hasSavedAnswers, onScoreChange]);
 
   // Format questions when data is loaded
   useEffect(() => {
@@ -100,10 +100,11 @@ export default function GuestSurvey({
       const formattedQuestions = questionsData.questions.map((q: any) => ({
         number: q.id || q.number,
         text: q.question || q.text,
-        description: q.description || q.detail || "", // Support both description and detail fields
-        detail: q.detail || q.description || "", // Handle either property name
+        details: q.details || "", // Handle either property name
+        description: q.details || "",
         category: q.category || "General",
       }));
+
       setQuestions(formattedQuestions);
 
       // Initialize answers if none exist
@@ -114,6 +115,7 @@ export default function GuestSurvey({
             a: null,
           }),
         );
+
         setAnswers(initialAnswers);
       }
     }
@@ -151,8 +153,8 @@ export default function GuestSurvey({
     }
 
     // Clear any existing timeout
-    if (autoAdvanceTimeout) {
-      clearTimeout(autoAdvanceTimeout);
+    if (advanceTimeout) {
+      clearTimeout(advanceTimeout);
     }
 
     // Auto-advance after 500ms
@@ -164,7 +166,7 @@ export default function GuestSurvey({
       }
     }, 500);
 
-    setAutoAdvanceTimeout(timeout);
+    setAdvanceTimeout(timeout);
   };
 
   // Calculate a simple score from the answers
@@ -210,36 +212,6 @@ export default function GuestSurvey({
     }
   };
 
-  // Handle resume dialog responses
-  const handleResumeSurvey = () => {
-    setShowResumeDialog(false);
-  };
-
-  const handleStartFresh = () => {
-    // Clear saved data
-    clearGuestAssessmentDataForSurvey(surveyId);
-
-    // Reset answers
-    if (questions.length > 0) {
-      const freshAnswers = questions.map((question) => ({
-        q: question.number,
-        a: null,
-      }));
-      setAnswers(freshAnswers);
-    } else {
-      setAnswers([]);
-    }
-
-    // Reset step
-    setCurrentStep(0);
-    setShowResumeDialog(false);
-
-    // Reset score if there's a callback
-    if (onScoreChange) {
-      onScoreChange(0);
-    }
-  };
-
   // Show loading state
   if (isSurveyLoading || isQuestionsLoading) {
     return (
@@ -261,13 +233,17 @@ export default function GuestSurvey({
     );
   }
 
+  console.log(guestUser);
+
   return (
-    <>
+    <div className="w-full space-y-6">
       <SurveyTemplate
         assessment={{
-          title: surveyData.survey.title,
+          title: `${guestUser?.company || guestUser?.name}'s AI Readiness Assessment`,
           updatedAt: new Date().toISOString(),
-          status: "in-progress",
+          status: hasSavedGuestAssessment(defaultSurveyId)
+            ? "in-progress"
+            : "draft",
         }}
         surveyTitle={surveyData.survey.title}
         questions={questions}
@@ -284,27 +260,6 @@ export default function GuestSurvey({
           saveGuestAssessmentAnswers(surveyId, answers, step);
         }}
       />
-
-      {/* Resume Dialog */}
-      <AlertDialog open={showResumeDialog} onOpenChange={setShowResumeDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Resume Your Assessment</AlertDialogTitle>
-            <AlertDialogDescription>
-              We found a previously started assessment. Would you like to resume
-              where you left off?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleStartFresh}>
-              Start Fresh
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleResumeSurvey}>
-              Resume
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+    </div>
   );
 }

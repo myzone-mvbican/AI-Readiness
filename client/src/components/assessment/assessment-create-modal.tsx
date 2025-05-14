@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAssessmentCreateModal } from "@/hooks/use-assessment-create-modal";
 import {
   Dialog,
   DialogContent,
@@ -14,8 +18,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
@@ -32,9 +34,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { useAssessmentCreateModal } from "@/hooks/use-assessment-create-modal";
 
 interface Survey {
   id: number;
@@ -54,13 +53,13 @@ interface TeamWithRole {
 }
 
 const createAssessmentFormSchema = z.object({
+  surveyTemplateId: z.string().refine((val) => !isNaN(parseInt(val)), {
+    message: "Please select a survey template",
+  }),
   title: z
     .string()
     .min(3, "Title must be at least 3 characters")
     .max(100, "Title must be less than 100 characters"),
-  surveyTemplateId: z.string().refine((val) => !isNaN(parseInt(val)), {
-    message: "Please select a survey template",
-  }),
 });
 
 type CreateAssessmentFormValues = z.infer<typeof createAssessmentFormSchema>;
@@ -269,8 +268,10 @@ export function AssessmentCreateModal() {
     >
       <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
-          <DialogTitle>Start New Assessment</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-foreground">
+            Start New Assessment
+          </DialogTitle>
+          <DialogDescription className="text-muted-foreground">
             Choose a survey template to begin your AI readiness assessment.
           </DialogDescription>
         </DialogHeader>
@@ -278,7 +279,9 @@ export function AssessmentCreateModal() {
         {isSurveysLoading ? (
           <div className="flex justify-center items-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="ml-2">Loading survey templates...</span>
+            <span className="ml-2 text-foreground">
+              Loading survey templates...
+            </span>
           </div>
         ) : !availableSurveys ? (
           <div className="py-6 text-center">
@@ -295,31 +298,12 @@ export function AssessmentCreateModal() {
             >
               <FormField
                 control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Assessment Title</FormLabel>
-                    <FormControl>
-                      <Input
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder="Enter assessment title"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Give your assessment a descriptive title
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
                 name="surveyTemplateId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Survey Template</FormLabel>
+                    <FormLabel className="text-foreground">
+                      Survey Template
+                    </FormLabel>
                     <Select
                       disabled={isLoading}
                       onValueChange={field.onChange}
@@ -349,10 +333,34 @@ export function AssessmentCreateModal() {
                 )}
               />
 
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-foreground">
+                      Assessment Title
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder="Enter assessment title"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Give your assessment a descriptive title
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <DialogFooter>
                 <Button
                   type="button"
                   variant="outline"
+                  className="text-foreground"
                   onClick={assessmentCreateModal.onClose}
                   disabled={isLoading}
                 >

@@ -481,8 +481,6 @@ export default function SettingsPage() {
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 24 24"
-                            width="24"
-                            height="24"
                           >
                             <path
                               fill="#4285F4"
@@ -505,19 +503,19 @@ export default function SettingsPage() {
                         <div>
                           {user?.googleId ? (
                             <div>
-                              <div className="text-sm font-medium text-gray-900">
+                              <div className="text-sm font-medium text-foreground">
                                 Google account connected
                               </div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-muted-foreground">
                                 You can use Google to sign in to your account
                               </div>
                             </div>
                           ) : (
                             <div>
-                              <div className="text-sm font-medium text-gray-900">
+                              <div className="text-sm font-medium text-foreground">
                                 Connect Google account
                               </div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-muted-foreground">
                                 Link your Google account for easier sign-in
                               </div>
                             </div>
@@ -532,7 +530,7 @@ export default function SettingsPage() {
                             size="sm"
                             disabled={isDisconnectingGoogle}
                             onClick={handleDisconnectGoogle}
-                            className="text-gray-700 border-gray-300"
+                            className="text-muted-foreground border-muted-foreground"
                           >
                             {isDisconnectingGoogle
                               ? "Disconnecting..."
