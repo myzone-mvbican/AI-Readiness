@@ -1,115 +1,88 @@
 import { Request, Response, NextFunction } from 'express';
 
 /**
- * Error response structure
- */
-interface ErrorResponse {
-  success: false;
-  message: string;
-  error: {
-    code: string;
-    message: string;
-    details?: any;
-  };
-}
-
-/**
- * Custom error class with status code
+ * Custom API Error class
  */
 export class ApiError extends Error {
   statusCode: number;
   code: string;
   details?: any;
 
-  constructor(message: string, statusCode: number, code: string, details?: any) {
+  constructor(statusCode: number, message: string, code: string, details?: any) {
     super(message);
     this.statusCode = statusCode;
     this.code = code;
     this.details = details;
-    this.name = 'ApiError';
+    Object.setPrototypeOf(this, ApiError.prototype);
   }
 
+  /**
+   * Bad request (400) error factory
+   */
   static badRequest(message: string, details?: any): ApiError {
-    return new ApiError(message, 400, 'BAD_REQUEST', details);
+    return new ApiError(400, message, 'BAD_REQUEST', details);
   }
 
-  static unauthorized(message: string, details?: any): ApiError {
-    return new ApiError(message, 401, 'UNAUTHORIZED', details);
+  /**
+   * Unauthorized (401) error factory
+   */
+  static unauthorized(message: string = 'Unauthorized', details?: any): ApiError {
+    return new ApiError(401, message, 'UNAUTHORIZED', details);
   }
 
-  static forbidden(message: string, details?: any): ApiError {
-    return new ApiError(message, 403, 'FORBIDDEN', details);
+  /**
+   * Forbidden (403) error factory
+   */
+  static forbidden(message: string = 'Forbidden', details?: any): ApiError {
+    return new ApiError(403, message, 'FORBIDDEN', details);
   }
 
-  static notFound(message: string, details?: any): ApiError {
-    return new ApiError(message, 404, 'NOT_FOUND', details);
+  /**
+   * Not found (404) error factory
+   */
+  static notFound(message: string = 'Resource not found', details?: any): ApiError {
+    return new ApiError(404, message, 'NOT_FOUND', details);
   }
 
-  static internal(message: string, details?: any): ApiError {
-    return new ApiError(message, 500, 'SERVER_ERROR', details);
+  /**
+   * Conflict (409) error factory
+   */
+  static conflict(message: string, details?: any): ApiError {
+    return new ApiError(409, message, 'CONFLICT', details);
+  }
+
+  /**
+   * Server error (500) factory
+   */
+  static serverError(message: string = 'Internal server error', details?: any): ApiError {
+    return new ApiError(500, message, 'SERVER_ERROR', details);
   }
 }
 
 /**
  * Global error handling middleware
  */
-export function errorHandler(
-  err: Error | ApiError, 
-  req: Request, 
-  res: Response, 
-  next: NextFunction
-) {
-  console.error('Error:', err);
+export function errorHandler(err: Error, req: Request, res: Response, next: NextFunction) {
+  if (err instanceof ApiError) {
+    return res.status(err.statusCode).json({
+      success: false,
+      message: err.message,
+      error: {
+        code: err.code,
+        message: err.message,
+        details: err.details
+      }
+    });
+  }
 
-  // Default error response
-  const errorResponse: ErrorResponse = {
+  // Default to 500 server error
+  console.error('[Server Error]', err);
+  return res.status(500).json({
     success: false,
-    message: 'An unexpected error occurred',
+    message: 'Internal server error',
     error: {
       code: 'SERVER_ERROR',
-      message: err.message || 'Unknown error',
+      message: process.env.NODE_ENV === 'development' ? err.message : 'An unexpected error occurred'
     }
-  };
-
-  // Handle specific API errors
-  if (err instanceof ApiError) {
-    errorResponse.message = err.message;
-    errorResponse.error = {
-      code: err.code,
-      message: err.message,
-    };
-
-    if (err.details) {
-      errorResponse.error.details = err.details;
-    }
-
-    return res.status(err.statusCode).json(errorResponse);
-  }
-
-  // Handle other types of errors
-  if (err instanceof SyntaxError && 'body' in err) {
-    // Handle JSON parsing errors
-    errorResponse.error.code = 'BAD_REQUEST';
-    errorResponse.message = 'Invalid JSON payload';
-    return res.status(400).json(errorResponse);
-  }
-
-  // Default to 500 internal server error
-  res.status(500).json(errorResponse);
-}
-
-/**
- * Not found middleware for handling undefined routes
- */
-export function notFoundHandler(req: Request, res: Response) {
-  const errorResponse: ErrorResponse = {
-    success: false,
-    message: `Route not found: ${req.method} ${req.originalUrl}`,
-    error: {
-      code: 'NOT_FOUND',
-      message: 'The requested resource does not exist'
-    }
-  };
-
-  res.status(404).json(errorResponse);
+  });
 }

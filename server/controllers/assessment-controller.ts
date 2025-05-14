@@ -1,6 +1,37 @@
 import { Request, Response } from 'express';
 import { AssessmentService } from '../services/assessment-service';
 import { AssessmentAnswer } from '../../shared/types';
+import { createAssessmentSchema, updateAssessmentAnswersSchema } from '../../shared/validation/schemas';
+import { ApiError } from '../middlewares/error-handler';
+
+/**
+ * Helper function to validate and convert assessment answers
+ */
+function validateAndConvertAnswers(answers: any[]): AssessmentAnswer[] {
+  if (!Array.isArray(answers)) {
+    throw ApiError.badRequest('Answers must be an array');
+  }
+  
+  return answers.map((a) => {
+    const questionId = a.q !== undefined ? Number(a.q) : null;
+    const answerValue = a.a !== undefined ? Number(a.a) : null;
+    
+    // Validate the answer value is one of the allowed values
+    if (answerValue !== null && 
+        answerValue !== -2 && 
+        answerValue !== -1 && 
+        answerValue !== 0 && 
+        answerValue !== 1 && 
+        answerValue !== 2) {
+      throw ApiError.badRequest(`Invalid answer value: ${answerValue}. Must be -2, -1, 0, 1, 2, or null.`);
+    }
+    
+    return {
+      q: questionId,
+      a: answerValue as -2 | -1 | 0 | 1 | 2 | null
+    };
+  });
+}
 
 /**
  * Controller for assessment-related routes
@@ -66,42 +97,53 @@ export class AssessmentController {
    * Save assessment answers
    */
   static async saveAnswers(req: Request, res: Response) {
-    const assessmentId = parseInt(req.params.id);
-    const { answers } = req.body;
-    
-    if (isNaN(assessmentId)) {
-      return res.status(400).json({
+    try {
+      const assessmentId = parseInt(req.params.id);
+      const { answers } = req.body;
+      
+      if (isNaN(assessmentId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid assessment ID',
+          error: {
+            code: 'BAD_REQUEST',
+            message: 'Assessment ID must be a number'
+          }
+        });
+      }
+      
+      // Validate and convert answers
+      const typedAnswers = validateAndConvertAnswers(answers);
+      
+      // Call service to save answers
+      const result = await AssessmentService.saveAnswers(assessmentId, typedAnswers);
+      
+      if (result.success) {
+        return res.status(200).json(result);
+      } else {
+        return res.status(result.error?.code === 'NOT_FOUND' ? 404 : 500).json(result);
+      }
+    } catch (error) {
+      if (error instanceof ApiError) {
+        return res.status(error.statusCode).json({
+          success: false,
+          message: error.message,
+          error: {
+            code: error.code,
+            message: error.message,
+            details: error.details
+          }
+        });
+      }
+      
+      return res.status(500).json({
         success: false,
-        message: 'Invalid assessment ID',
+        message: 'Failed to save assessment answers',
         error: {
-          code: 'BAD_REQUEST',
-          message: 'Assessment ID must be a number'
+          code: 'SERVER_ERROR',
+          message: error instanceof Error ? error.message : String(error)
         }
       });
-    }
-    
-    if (!Array.isArray(answers)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid answers format',
-        error: {
-          code: 'BAD_REQUEST',
-          message: 'Answers must be an array'
-        }
-      });
-    }
-    
-    const typedAnswers: AssessmentAnswer[] = answers.map((a: any) => ({
-      q: a.q !== undefined ? Number(a.q) : null,
-      a: a.a !== undefined ? Number(a.a) : null
-    }));
-    
-    const result = await AssessmentService.saveAnswers(assessmentId, typedAnswers);
-    
-    if (result.success) {
-      return res.status(200).json(result);
-    } else {
-      return res.status(500).json(result);
     }
   }
 
@@ -109,42 +151,53 @@ export class AssessmentController {
    * Complete an assessment
    */
   static async completeAssessment(req: Request, res: Response) {
-    const assessmentId = parseInt(req.params.id);
-    const { answers } = req.body;
-    
-    if (isNaN(assessmentId)) {
-      return res.status(400).json({
+    try {
+      const assessmentId = parseInt(req.params.id);
+      const { answers } = req.body;
+      
+      if (isNaN(assessmentId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid assessment ID',
+          error: {
+            code: 'BAD_REQUEST',
+            message: 'Assessment ID must be a number'
+          }
+        });
+      }
+      
+      // Validate and convert answers
+      const typedAnswers = validateAndConvertAnswers(answers);
+      
+      // Call service to complete assessment
+      const result = await AssessmentService.completeAssessment(assessmentId, typedAnswers);
+      
+      if (result.success) {
+        return res.status(200).json(result);
+      } else {
+        return res.status(result.error?.code === 'NOT_FOUND' ? 404 : 500).json(result);
+      }
+    } catch (error) {
+      if (error instanceof ApiError) {
+        return res.status(error.statusCode).json({
+          success: false,
+          message: error.message,
+          error: {
+            code: error.code,
+            message: error.message,
+            details: error.details
+          }
+        });
+      }
+      
+      return res.status(500).json({
         success: false,
-        message: 'Invalid assessment ID',
+        message: 'Failed to complete assessment',
         error: {
-          code: 'BAD_REQUEST',
-          message: 'Assessment ID must be a number'
+          code: 'SERVER_ERROR',
+          message: error instanceof Error ? error.message : String(error)
         }
       });
-    }
-    
-    if (!Array.isArray(answers)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid answers format',
-        error: {
-          code: 'BAD_REQUEST',
-          message: 'Answers must be an array'
-        }
-      });
-    }
-    
-    const typedAnswers: AssessmentAnswer[] = answers.map((a: any) => ({
-      q: a.q !== undefined ? Number(a.q) : null,
-      a: a.a !== undefined ? Number(a.a) : null
-    }));
-    
-    const result = await AssessmentService.completeAssessment(assessmentId, typedAnswers);
-    
-    if (result.success) {
-      return res.status(200).json(result);
-    } else {
-      return res.status(500).json(result);
     }
   }
 }
