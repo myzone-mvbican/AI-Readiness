@@ -1,6 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
 
 /**
+ * Not found middleware
+ * Handles routes that don't match any defined endpoints
+ */
+export function notFoundHandler(req: Request, res: Response, next: NextFunction) {
+  const error = new ApiError(
+    404,
+    `Resource not found - ${req.method} ${req.originalUrl}`,
+    'NOT_FOUND'
+  );
+  next(error);
+}
+
+/**
  * Custom API Error class
  */
 export class ApiError extends Error {

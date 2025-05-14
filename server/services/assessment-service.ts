@@ -1,274 +1,278 @@
-import { db } from '../db';
-import { Assessment, AssessmentAnswer, ApiResponse } from '../../shared/types';
-import { parseCsvQuestions } from '../utils/csv-parser';
+import { Assessment, AssessmentAnswer, ApiResponse, GuestUser } from '../../shared/types';
+import { ApiError } from '../middlewares/error-handler';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
- * Service layer for assessment-related operations
- * Centralizes business logic separate from routes
+ * Service handling assessment-related operations
  */
 export class AssessmentService {
   /**
-   * Get assessment by ID
+   * Create a new draft assessment
+   * @param data Assessment creation data
+   * @returns The created assessment with API response
    */
-  static async getAssessmentById(id: number): Promise<ApiResponse<Assessment>> {
+  static async createAssessment(data: {
+    title: string;
+    surveyId: number;
+    userId?: string | null;
+    guestData?: {
+      name: string;
+      email: string;
+    };
+  }): Promise<ApiResponse<Assessment>> {
     try {
-      // This would use Drizzle ORM in a real implementation
-      // const assessment = await db.query.assessments.findFirst({
-      //   where: eq(assessments.id, id)
-      // });
-      
-      // Placeholder logic until Drizzle schema is implemented
-      const assessment = await new Promise<Assessment | null>((resolve) => {
-        // Simulate database query
-        setTimeout(() => {
-          resolve({
-            id,
-            title: `Assessment #${id}`,
-            status: 'in-progress',
-            score: null,
-            userId: null,
-            guestEmail: null,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          });
-        }, 100);
-      });
-
-      if (!assessment) {
-        return {
-          success: false,
-          message: `Assessment with ID ${id} not found`,
-          error: {
-            code: 'NOT_FOUND',
-            message: 'Assessment not found'
-          }
-        };
-      }
-
-      return {
-        success: true,
-        data: assessment
-      };
-    } catch (error) {
-      console.error('Error fetching assessment:', error);
-      return {
-        success: false,
-        message: 'Failed to fetch assessment',
-        error: {
-          code: 'SERVER_ERROR',
-          message: 'An unexpected error occurred',
-          details: error instanceof Error ? error.message : String(error)
-        }
-      };
-    }
-  }
-
-  /**
-   * Get questions for an assessment
-   */
-  static async getQuestionsForSurvey(surveyId: number): Promise<ApiResponse<any>> {
-    try {
-      // The actual implementation would retrieve the survey file path from the database
-      const csvFilename = `survey_${surveyId}.csv`;
-      
-      try {
-        const questions = await parseCsvQuestions(csvFilename);
-        
-        return {
-          success: true,
-          data: { questions }
-        };
-      } catch (error) {
-        // If specific survey file not found, try the default one
-        try {
-          const questions = await parseCsvQuestions('default_survey.csv');
-          
-          return {
-            success: true,
-            data: { questions }
-          };
-        } catch (error) {
-          return {
-            success: false,
-            message: 'Survey questions not found',
-            error: {
-              code: 'NOT_FOUND',
-              message: 'Survey questions could not be loaded'
-            }
-          };
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching survey questions:', error);
-      return {
-        success: false,
-        message: 'Failed to fetch survey questions',
-        error: {
-          code: 'SERVER_ERROR',
-          message: 'An unexpected error occurred',
-          details: error instanceof Error ? error.message : String(error)
-        }
-      };
-    }
-  }
-
-  /**
-   * Create a new assessment (either for logged-in user or guest)
-   */
-  static async createAssessment(
-    surveyId: number, 
-    userId?: string | null,
-    guestData?: { email: string; name: string }
-  ): Promise<ApiResponse<Assessment>> {
-    try {
-      // Would use Drizzle ORM in actual implementation
-      // const [assessment] = await db.insert(assessments)
-      //   .values({
-      //     surveyId,
-      //     userId,
-      //     guestEmail: guestData?.email,
-      //     guestName: guestData?.name,
-      //     status: 'draft',
-      //     createdAt: new Date(),
-      //     updatedAt: new Date()
-      //   })
-      //   .returning();
-
-      // Placeholder implementation
+      // Simulate creating assessment in database
+      // In a real implementation, this would insert into the database
       const assessment: Assessment = {
         id: Math.floor(Math.random() * 10000),
-        title: `Assessment ${new Date().toLocaleDateString()}`,
+        title: data.title,
+        surveyId: data.surveyId,
         status: 'draft',
         score: null,
-        userId: userId || null,
-        guestEmail: guestData?.email || null,
+        userId: data.userId || null,
+        guestEmail: data.guestData?.email || null,
+        guestName: data.guestData?.name || null,
+        company: null,
+        teamId: null,
         createdAt: new Date(),
         updatedAt: new Date()
       };
-
+      
       return {
         success: true,
         data: assessment
       };
     } catch (error) {
-      console.error('Error creating assessment:', error);
-      return {
-        success: false,
-        message: 'Failed to create assessment',
-        error: {
-          code: 'SERVER_ERROR',
-          message: 'An unexpected error occurred',
-          details: error instanceof Error ? error.message : String(error)
-        }
-      };
-    }
-  }
-
-  /**
-   * Save assessment answers
-   */
-  static async saveAnswers(
-    assessmentId: number, 
-    answers: AssessmentAnswer[]
-  ): Promise<ApiResponse<{ updated: boolean }>> {
-    try {
-      // In a real implementation, use Drizzle ORM to save answers
-      // This would involve a transaction to ensure data consistency
-      /*
-      await db.transaction(async (tx) => {
-        // Delete existing answers
-        await tx.delete(assessmentAnswers)
-          .where(eq(assessmentAnswers.assessmentId, assessmentId));
-          
-        // Insert new answers
-        if (answers.length > 0) {
-          await tx.insert(assessmentAnswers)
-            .values(answers.map(a => ({
-              assessmentId,
-              questionId: a.q,
-              value: a.a
-            })));
-        }
-        
-        // Update assessment
-        await tx.update(assessments)
-          .set({ 
-            status: 'in-progress',
-            updatedAt: new Date()
-          })
-          .where(eq(assessments.id, assessmentId));
-      });
-      */
-
-      // Simulated success for now
-      return {
-        success: true,
-        data: { updated: true }
-      };
-    } catch (error) {
-      console.error('Error saving assessment answers:', error);
-      return {
-        success: false,
-        message: 'Failed to save assessment answers',
-        error: {
-          code: 'SERVER_ERROR',
-          message: 'An unexpected error occurred',
-          details: error instanceof Error ? error.message : String(error)
-        }
-      };
-    }
-  }
-
-  /**
-   * Complete an assessment and calculate score
-   */
-  static async completeAssessment(
-    assessmentId: number, 
-    answers: AssessmentAnswer[]
-  ): Promise<ApiResponse<{ score: number }>> {
-    try {
-      // Calculate score based on answers
-      const validAnswers = answers.filter(a => a.a !== null);
-      const totalPossible = validAnswers.length * 2; // Max score per question is 2
-      
-      let totalScore = 0;
-      for (const answer of validAnswers) {
-        // Convert from -2 to 2 scale to 0 to 4 scale for calculation
-        const convertedValue = answer.a !== null ? answer.a + 2 : 0;
-        totalScore += convertedValue;
+      if (error instanceof ApiError) {
+        throw error;
       }
       
-      const percentageScore = totalPossible > 0 
-        ? Math.round((totalScore / totalPossible) * 100) 
-        : 0;
-
-      // In real implementation, save score to database
-      /*
-      await db.update(assessments)
-        .set({ 
-          status: 'completed',
-          score: percentageScore,
-          completedAt: new Date(),
-          updatedAt: new Date()
-        })
-        .where(eq(assessments.id, assessmentId));
-      */
-
+      console.error('Error creating assessment:', error);
+      throw ApiError.serverError('Failed to create assessment');
+    }
+  }
+  
+  /**
+   * Get assessment by ID
+   * @param assessmentId Assessment ID
+   * @returns The assessment with API response
+   */
+  static async getAssessmentById(assessmentId: number): Promise<ApiResponse<Assessment>> {
+    try {
+      // Simulate getting assessment from database
+      // In a real implementation, this would query the database
+      const assessment: Assessment = {
+        id: assessmentId,
+        title: "My AI Readiness Assessment",
+        surveyId: 19, // Default survey ID for guest assessments
+        status: 'in-progress',
+        score: null,
+        userId: null,
+        guestEmail: null,
+        guestName: null,
+        company: null,
+        teamId: null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
       return {
         success: true,
-        data: { score: percentageScore }
+        data: assessment
       };
     } catch (error) {
-      console.error('Error completing assessment:', error);
-      return {
-        success: false,
-        message: 'Failed to complete assessment',
-        error: {
-          code: 'SERVER_ERROR',
-          message: 'An unexpected error occurred',
-          details: error instanceof Error ? error.message : String(error)
-        }
-      };
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      
+      console.error('Error getting assessment:', error);
+      throw ApiError.serverError('Failed to get assessment data');
     }
+  }
+  
+  /**
+   * Get assessment answers
+   * @param assessmentId Assessment ID
+   * @returns Array of assessment answers with API response
+   */
+  static async getAssessmentAnswers(assessmentId: number): Promise<ApiResponse<AssessmentAnswer[]>> {
+    try {
+      // Simulate getting answers from database
+      // In a real implementation, this would query the database
+      const answers: AssessmentAnswer[] = [];
+      
+      return {
+        success: true,
+        data: answers
+      };
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      
+      console.error('Error getting assessment answers:', error);
+      throw ApiError.serverError('Failed to get assessment answers');
+    }
+  }
+  
+  /**
+   * Save assessment answers
+   * @param assessmentId Assessment ID
+   * @param answers Array of assessment answers
+   * @returns Success response
+   */
+  static async saveAssessmentAnswers(
+    assessmentId: number,
+    answers: AssessmentAnswer[]
+  ): Promise<ApiResponse<void>> {
+    try {
+      // Validate answers format
+      if (!Array.isArray(answers)) {
+        throw ApiError.badRequest('Answers must be an array');
+      }
+      
+      for (const answer of answers) {
+        if (typeof answer.q !== 'number' && answer.q !== null) {
+          throw ApiError.badRequest('Question numbers must be numbers or null');
+        }
+        
+        if (
+          (answer.a !== -2 && answer.a !== -1 && answer.a !== 0 && answer.a !== 1 && answer.a !== 2 && answer.a !== null)
+        ) {
+          throw ApiError.badRequest('Answer values must be -2, -1, 0, 1, 2, or null');
+        }
+      }
+      
+      // Simulate saving answers to database
+      // In a real implementation, this would insert/update the database
+      
+      return {
+        success: true
+      };
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      
+      console.error('Error saving assessment answers:', error);
+      throw ApiError.serverError('Failed to save assessment answers');
+    }
+  }
+  
+  /**
+   * Create guest user
+   * @param data Guest user data
+   * @returns The created guest user with API response
+   */
+  static async createGuestUser(data: {
+    name: string;
+    email: string;
+    company?: string;
+  }): Promise<ApiResponse<GuestUser>> {
+    try {
+      if (!data.name) {
+        throw ApiError.badRequest('Name is required');
+      }
+      
+      if (!data.email) {
+        throw ApiError.badRequest('Email is required');
+      }
+      
+      // Simulate creating guest user
+      // In a real implementation, this might create a temporary user record
+      const guestUser: GuestUser = {
+        id: uuidv4(),
+        name: data.name,
+        email: data.email,
+        company: data.company || null
+      };
+      
+      return {
+        success: true,
+        data: guestUser
+      };
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      
+      console.error('Error creating guest user:', error);
+      throw ApiError.serverError('Failed to create guest user');
+    }
+  }
+  
+  /**
+   * Complete an assessment
+   * @param assessmentId Assessment ID
+   * @returns The completed assessment with API response
+   */
+  static async completeAssessment(
+    assessmentId: number,
+    answers: AssessmentAnswer[]
+  ): Promise<ApiResponse<Assessment>> {
+    try {
+      // Get assessment first
+      const assessmentResponse = await this.getAssessmentById(assessmentId);
+      
+      if (!assessmentResponse.success || !assessmentResponse.data) {
+        throw ApiError.notFound(`Assessment with ID ${assessmentId} not found`);
+      }
+      
+      const assessment = assessmentResponse.data;
+      
+      // Calculate score based on answers
+      const score = this.calculateScore(answers);
+      
+      // Update assessment status and score
+      const updatedAssessment: Assessment = {
+        ...assessment,
+        status: 'completed',
+        score,
+        updatedAt: new Date()
+      };
+      
+      // Simulate saving updated assessment
+      // In a real implementation, this would update the database
+      
+      return {
+        success: true,
+        data: updatedAssessment
+      };
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      
+      console.error('Error completing assessment:', error);
+      throw ApiError.serverError('Failed to complete assessment');
+    }
+  }
+  
+  /**
+   * Calculate assessment score from answers
+   * @param answers Array of assessment answers
+   * @returns The calculated score (0-100)
+   */
+  private static calculateScore(answers: AssessmentAnswer[]): number {
+    // Filter out unanswered questions
+    const answeredQuestions = answers.filter(a => a.a !== null);
+    
+    if (answeredQuestions.length === 0) {
+      return 0;
+    }
+    
+    // Transform answer values to a 0-4 scale
+    // -2 => 0, -1 => 1, 0 => 2, 1 => 3, 2 => 4
+    const transformedValues = answeredQuestions.map(a => {
+      if (a.a === null) return 0;
+      return a.a + 2;
+    });
+    
+    // Calculate total score
+    const maxPossibleScore = answeredQuestions.length * 4; // 4 is the max transformed value (from +2)
+    const actualScore = transformedValues.reduce((sum, val) => sum + val, 0);
+    
+    // Convert to percentage
+    return Math.round((actualScore / maxPossibleScore) * 100);
   }
 }
