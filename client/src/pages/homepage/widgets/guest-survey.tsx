@@ -81,13 +81,13 @@ export default function GuestSurvey({
         if (savedData.currentStep !== undefined) {
           setCurrentStep(savedData.currentStep);
         }
-        
+
         // Calculate and report the score from saved answers
         if (onScoreChange && savedData.answers.length > 0) {
           const score = calculateScore(savedData.answers);
           onScoreChange(score);
         }
-        
+
         resumeHandled.current = true;
       }
     }
@@ -101,7 +101,7 @@ export default function GuestSurvey({
         number: q.id || q.number,
         text: q.question || q.text,
         description: q.description || q.detail || "", // Support both description and detail fields
-        detail: q.detail || q.description || "",      // Handle either property name
+        detail: q.detail || q.description || "", // Handle either property name
         category: q.category || "General",
       }));
       setQuestions(formattedQuestions);
@@ -233,7 +233,7 @@ export default function GuestSurvey({
     // Reset step
     setCurrentStep(0);
     setShowResumeDialog(false);
-    
+
     // Reset score if there's a callback
     if (onScoreChange) {
       onScoreChange(0);
@@ -267,15 +267,15 @@ export default function GuestSurvey({
         assessment={{
           title: surveyData.survey.title,
           updatedAt: new Date().toISOString(),
-          status: "in_progress",
+          status: "in-progress",
         }}
         surveyTitle={surveyData.survey.title}
         questions={questions}
         answers={answers}
-        isGuestMode={true}
         onAnswerChange={handleAnswerChange}
-        isSubmitting={isSubmitting}
+        isGuestMode={true}
         showSaveButton={false}
+        isSubmitting={isSubmitting}
         onCancel={handleCancel}
         onComplete={handleComplete}
         currentStep={currentStep}

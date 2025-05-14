@@ -1,16 +1,16 @@
 import React from "react";
 
 export default function SurveyQuestion({
-  question,
   value,
   onChange,
   disabled,
+  question,
   questionDescription,
 }: {
-  question: string;
   value: number | null | undefined;
   onChange: (value: number) => void;
   disabled: boolean;
+  question: string;
   questionDescription?: string;
 }) {
   const options = [
@@ -34,11 +34,6 @@ export default function SurveyQuestion({
           <h3 className="text-xs md:text-lg text-muted-foreground font-medium">
             What is your level of agreement with this statement?
           </h3>
-          {questionDescription && (
-            <div className="mt-2 text-sm text-muted-foreground bg-muted/30 p-3 rounded-md border border-muted">
-              <p>{questionDescription}</p>
-            </div>
-          )}
         </div>
       </div>
       <div className="flex flex-wrap gap-2 mt-4">
