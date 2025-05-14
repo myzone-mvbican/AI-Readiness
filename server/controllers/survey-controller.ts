@@ -48,10 +48,10 @@ export class SurveyController {
    */
   static async createSurvey(req: Request, res: Response, next: NextFunction) {
     try {
-      // Validate request body against schema
+      // Validate request body
       const validatedData = createSurveySchema.parse(req.body);
       
-      // Pass to service
+      // Create survey
       const response = await SurveyService.createSurvey(validatedData);
       res.status(201).json(response);
     } catch (error) {
@@ -70,10 +70,10 @@ export class SurveyController {
         throw new ApiError(400, 'Invalid survey ID');
       }
       
-      // Validate request body against schema
+      // Validate request body
       const validatedData = createSurveySchema.parse(req.body);
       
-      // Pass to service
+      // Update survey
       const response = await SurveyService.updateSurvey(surveyId, validatedData);
       res.json(response);
     } catch (error) {
