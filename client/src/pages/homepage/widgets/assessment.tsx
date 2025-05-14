@@ -70,6 +70,7 @@ const registrationSchema = z
   .object({
     name: z.string().min(2, { message: "Name must be at least 2 characters" }),
     email: z.string().email({ message: "Please enter a valid email address" }),
+    company: z.string().optional(),
     password: z
       .string()
       .min(8, { message: "Password must be at least 8 characters" }),
@@ -89,10 +90,11 @@ interface GuestAssessmentProps {
 }
 
 export function GuestAssessment({ onClose }: GuestAssessmentProps) {
+  const { toast } = useToast();
+
   const [stage, setStage] = useState<AssessmentStage>(
     AssessmentStage.INFO_COLLECTION,
   );
-  const { toast } = useToast();
 
   // Load guest user info from localStorage using our utility
   const [guestUser, setGuestUser] = useState<StorageGuestUser | null>(() => {
@@ -103,8 +105,10 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   const [surveyData, setSurveyData] = useState<any | null>(null);
   const [questionData, setQuestionData] = useState<any | null>(null);
   const [answers, setAnswers] = useState<AssessmentAnswer[]>([]);
+
   const [currentScore, setCurrentScore] = useState<number>(0);
   const [assessmentResult, setAssessmentResult] = useState<any | null>(null);
+
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -118,12 +122,13 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
       confirmPassword: "",
     },
   });
-  
+
   // Update form values when guest user changes or when signup modal opens
   useEffect(() => {
     if (guestUser) {
       form.setValue("name", guestUser.name || "");
       form.setValue("email", guestUser.email || "");
+      form.setValue("company", guestUser.company || "");
     }
   }, [guestUser, form, showSignupModal]);
 
@@ -152,31 +157,38 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
 
   // Load survey data when entering the survey questions stage
   useEffect(() => {
-    if (stage === AssessmentStage.SURVEY_QUESTIONS && !surveyData) {
+    if (stage !== AssessmentStage.INFO_COLLECTION && !surveyData) {
       fetchSurveyData();
     }
   }, [stage, surveyData]);
-  
+
   // Load questions data when entering the completion stage
-  useEffect(() => {
-    // If we're on the completed stage and don't have question data, load it
-    const loadQuestionsForCompletionScreen = async () => {
-      if (stage === AssessmentStage.COMPLETED && 
-          (!questionData?.questions || questionData.questions.length === 0)) {
-        try {
-          const response = await fetch(`/api/public/surveys/${defaultSurveyId}/questions`);
-          const data = await response.json();
-          if (data.success && data.questions) {
-            setQuestionData(data);
-          }
-        } catch (error) {
-          console.error("Error loading questions for completion screen:", error);
-        }
-      }
-    };
-    
-    loadQuestionsForCompletionScreen();
-  }, [stage, questionData, defaultSurveyId]);
+  // useEffect(() => {
+  //   // If we're on the completed stage and don't have question data, load it
+  //   const loadQuestionsForCompletionScreen = async () => {
+  //     if (
+  //       stage === AssessmentStage.COMPLETED &&
+  //       (!questionData?.questions || questionData.questions.length === 0)
+  //     ) {
+  //       try {
+  //         const response = await fetch(
+  //           `/api/public/surveys/${defaultSurveyId}/questions`,
+  //         );
+  //         const data = await response.json();
+  //         if (data.success && data.questions) {
+  //           setQuestionData(data);
+  //         }
+  //       } catch (error) {
+  //         console.error(
+  //           "Error loading questions for completion screen:",
+  //           error,
+  //         );
+  //       }
+  //     }
+  //   };
+
+  //   loadQuestionsForCompletionScreen();
+  // }, [stage, questionData, defaultSurveyId]);
 
   const fetchSurveyData = async () => {
     setIsLoading(true);
@@ -229,6 +241,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   // State for showing existing account modal
   const [showExistingAccountModal, setShowExistingAccountModal] =
     useState(false);
+
   const [pendingGuestInfo, setPendingGuestInfo] = useState<Omit<
     StorageGuestUser,
     "id"
@@ -377,7 +390,8 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
       // Registration successful
       toast({
         title: "Account created successfully",
-        description: "Your assessment has been linked to your new account. You can now log in with your credentials.",
+        description:
+          "Your assessment has been linked to your new account. You can now log in with your credentials.",
       });
 
       // If there was an assessment result, clear it since it's now linked to the account
@@ -387,7 +401,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
 
       // Clear the guest data from localStorage
       clearGuestAssessmentData();
-      
+
       // Automatically redirect to login page
       window.location.href = "/auth?registered=true";
     } catch (error) {
@@ -400,20 +414,6 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
       });
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  // Helper function to calculate score
-  const loadSavedAnswers = (): AssessmentAnswer[] => {
-    try {
-      const guestUser = getGuestUser();
-      if (!guestUser) return [];
-
-      const savedData = getGuestAssessmentData(defaultSurveyId);
-      return savedData?.answers || [];
-    } catch (error) {
-      console.error("Error loading saved answers:", error);
-      return [];
     }
   };
 
@@ -431,12 +431,6 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
     // Convert to 0-100 scale (normalize from -2 to 2 range)
     const normalized = (total / (validAnswers.length * 2) + 1) * 50;
     return Math.round(normalized);
-  };
-
-  const handleClose = () => {
-    if (onClose) {
-      onClose();
-    }
   };
 
   const handleLoadPreviousAnswers = () => {
@@ -498,21 +492,12 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
                   setAnswers([]); // Clear answers state
                   setStage(AssessmentStage.INFO_COLLECTION);
                 }}
-                onScoreChange={(score: number) => {
-                  // Update the current score in real time as user selects answers
-                  setCurrentScore(score);
-                }}
               />
             )}
           </div>
         );
 
       case AssessmentStage.COMPLETED:
-        // No hooks should be called inside render functions
-        console.log("Survey data:", surveyData);
-        console.log("Question data:", questionData);
-        console.log("Assessment result:", assessmentResult);
-        
         return (
           <div className="w-full max-w-4xl mx-auto space-y-6">
             <SurveyCompleted
