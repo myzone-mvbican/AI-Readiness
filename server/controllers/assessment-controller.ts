@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AssessmentService } from '../services/assessment-service';
 import { ApiError } from '../middlewares/error-handler';
-import { AssessmentAnswer } from '../../shared/types';
+import { createAssessmentSchema, saveAnswersSchema } from '@shared/types';
 
 /**
  * Controller for assessment-related endpoints
@@ -12,23 +12,16 @@ export class AssessmentController {
    */
   static async createAssessment(req: Request, res: Response, next: NextFunction) {
     try {
-      const { title, surveyId, userId, guestData } = req.body;
+      // Validate request body against schema
+      const validatedData = createAssessmentSchema.parse(req.body);
       
-      if (!title) {
-        throw ApiError.badRequest('Title is required');
+      // For authenticated requests, add the user ID from session
+      if (req.user && !validatedData.userId) {
+        validatedData.userId = req.user.id;
       }
       
-      if (!surveyId || isNaN(parseInt(surveyId))) {
-        throw ApiError.badRequest('Valid survey ID is required');
-      }
-      
-      const response = await AssessmentService.createAssessment({
-        title,
-        surveyId: parseInt(surveyId),
-        userId,
-        guestData
-      });
-      
+      // Pass to service
+      const response = await AssessmentService.createAssessment(validatedData);
       res.status(201).json(response);
     } catch (error) {
       next(error);
@@ -43,7 +36,7 @@ export class AssessmentController {
       const assessmentId = parseInt(req.params.id);
       
       if (isNaN(assessmentId)) {
-        throw ApiError.badRequest('Invalid assessment ID');
+        throw new ApiError(400, 'Invalid assessment ID');
       }
       
       const response = await AssessmentService.getAssessmentById(assessmentId);
@@ -61,7 +54,7 @@ export class AssessmentController {
       const assessmentId = parseInt(req.params.id);
       
       if (isNaN(assessmentId)) {
-        throw ApiError.badRequest('Invalid assessment ID');
+        throw new ApiError(400, 'Invalid assessment ID');
       }
       
       const response = await AssessmentService.getAssessmentAnswers(assessmentId);
@@ -77,21 +70,16 @@ export class AssessmentController {
   static async saveAssessmentAnswers(req: Request, res: Response, next: NextFunction) {
     try {
       const assessmentId = parseInt(req.params.id);
-      const { answers } = req.body;
       
       if (isNaN(assessmentId)) {
-        throw ApiError.badRequest('Invalid assessment ID');
+        throw new ApiError(400, 'Invalid assessment ID');
       }
       
-      if (!Array.isArray(answers)) {
-        throw ApiError.badRequest('Answers must be an array');
-      }
+      // Validate request body against schema
+      const { answers } = saveAnswersSchema.parse(req.body);
       
-      const response = await AssessmentService.saveAssessmentAnswers(
-        assessmentId,
-        answers as AssessmentAnswer[]
-      );
-      
+      // Pass to service
+      const response = await AssessmentService.saveAssessmentAnswers(assessmentId, answers);
       res.json(response);
     } catch (error) {
       next(error);
@@ -105,14 +93,17 @@ export class AssessmentController {
     try {
       const { name, email, company } = req.body;
       
-      if (!name) {
-        throw ApiError.badRequest('Name is required');
+      if (!name || !email) {
+        throw new ApiError(400, 'Name and email are required');
       }
       
-      if (!email) {
-        throw ApiError.badRequest('Email is required');
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new ApiError(400, 'Invalid email format');
       }
       
+      // Pass to service
       const response = await AssessmentService.createGuestUser({
         name,
         email,
@@ -131,21 +122,12 @@ export class AssessmentController {
   static async completeAssessment(req: Request, res: Response, next: NextFunction) {
     try {
       const assessmentId = parseInt(req.params.id);
-      const { answers } = req.body;
       
       if (isNaN(assessmentId)) {
-        throw ApiError.badRequest('Invalid assessment ID');
+        throw new ApiError(400, 'Invalid assessment ID');
       }
       
-      if (!Array.isArray(answers)) {
-        throw ApiError.badRequest('Answers must be an array');
-      }
-      
-      const response = await AssessmentService.completeAssessment(
-        assessmentId,
-        answers as AssessmentAnswer[]
-      );
-      
+      const response = await AssessmentService.completeAssessment(assessmentId);
       res.json(response);
     } catch (error) {
       next(error);

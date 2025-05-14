@@ -1,149 +1,183 @@
-/**
- * This file contains shared type definitions used across the application.
- */
+import { z } from 'zod';
 
-// ===================================
+// =======================================
+// Shared type definitions for our API
+// =======================================
+
+// API Response wrapper
+export interface ApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data?: T;
+}
+
+// =======================================
 // User Types
-// ===================================
+// =======================================
 
 export interface User {
-  id: string;
+  id: number;
   name: string;
   email: string;
-  company: string | null;
-  employeeCount: number | null;
-  industry: string | null;
-  role: string | null;
-  googleId: string | null;
+  role: UserRole;
+  teamId: number | null;
+  avatarUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface GuestUser {
-  id: string;
+  id: string; // UUID for guest users
   name: string;
   email: string;
-  company: string | null;
+  company?: string;
+  createdAt: Date;
 }
 
-// ===================================
+export enum UserRole {
+  ADMIN = 'admin',
+  MANAGER = 'manager',
+  USER = 'user',
+  GUEST = 'guest'
+}
+
+// =======================================
 // Team Types
-// ===================================
+// =======================================
 
 export interface Team {
   id: number;
   name: string;
-  description: string | null;
+  description: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export interface UserTeam {
-  userId: string;
-  teamId: number;
-  role: string;
-  createdAt: Date;
-}
-
-// ===================================
+// =======================================
 // Survey Types
-// ===================================
+// =======================================
 
 export interface Survey {
   id: number;
   title: string;
   description: string;
-  fileReference: string | null;
-  questionCount: number | null;
+  fileReference: string;
+  teamId: number | null; // null means it's a global survey
   createdAt: Date;
   updatedAt: Date;
 }
 
+export const createSurveySchema = z.object({
+  title: z.string().min(3).max(100),
+  description: z.string().max(500),
+  teamId: z.number().nullable().optional(),
+  fileReference: z.string().optional()
+});
+
+export type CreateSurveyInput = z.infer<typeof createSurveySchema>;
+
 export interface SurveyQuestion {
-  number: number;
-  text: string;
-  description: string | null;
-  detail: string | null;
-  category: string;
-}
-
-export interface SurveyTeam {
+  id: number;
   surveyId: number;
-  teamId: number;
-  createdAt: Date;
+  questionNumber: number;
+  text: string;
+  category: string;
+  subCategory?: string;
+  weight: number;
 }
 
-// ===================================
+// =======================================
 // Assessment Types
-// ===================================
+// =======================================
 
-export type AssessmentStatus = 'draft' | 'in-progress' | 'completed';
-
-/**
- * Answer values:
- * -2 = Strongly Disagree
- * -1 = Disagree
- *  0 = Neutral
- *  1 = Agree
- *  2 = Strongly Agree
- *  null = Not Answered
- */
-export interface AssessmentAnswer {
-  q: number | null; // Question number
-  a: -2 | -1 | 0 | 1 | 2 | null; // Answer value
+export enum AssessmentStatus {
+  DRAFT = 'draft',
+  IN_PROGRESS = 'in_progress',
+  COMPLETED = 'completed'
 }
 
 export interface Assessment {
   id: number;
   title: string;
   surveyId: number;
+  userId: string | null; // null for guest assessments
+  guestData?: {
+    name: string;
+    email: string;
+  };
   status: AssessmentStatus;
-  score: number | null;
-  userId: string | null;
-  guestEmail: string | null;
-  guestName: string | null;
-  company: string | null;
-  teamId: number | null;
+  progress: number; // 0-100
+  score: number | null; // 0-100, null if not completed
   createdAt: Date;
   updatedAt: Date;
+  completedAt: Date | null;
 }
 
-// ===================================
-// API Response Types
-// ===================================
+export const createAssessmentSchema = z.object({
+  title: z.string().min(3).max(100),
+  surveyId: z.number(),
+  userId: z.string().nullable().optional(),
+  guestData: z.object({
+    name: z.string(),
+    email: z.string().email()
+  }).optional()
+});
 
-export interface ApiResponse<T = any> {
-  success: boolean;
-  message?: string;
-  data?: T;
-  meta?: Record<string, any>;
-  error?: {
-    code: string;
-    message: string;
-    details?: any;
-  };
+export type CreateAssessmentInput = z.infer<typeof createAssessmentSchema>;
+
+export interface AssessmentAnswer {
+  id?: number;
+  assessmentId: number;
+  q: number; // question number
+  a: -2 | -1 | 0 | 1 | 2 | null; // answer value
 }
 
-// ===================================
-// Authentication Types
-// ===================================
+export const assessmentAnswerSchema = z.object({
+  q: z.number(),
+  a: z.union([
+    z.literal(-2),
+    z.literal(-1),
+    z.literal(0),
+    z.literal(1),
+    z.literal(2),
+    z.literal(null)
+  ])
+});
 
-export interface GoogleUserPayload {
-  sub: string;
-  email: string;
-  email_verified: boolean;
-  name: string;
-  picture: string;
-  given_name?: string;
-  family_name?: string;
+export const saveAnswersSchema = z.object({
+  answers: z.array(assessmentAnswerSchema)
+});
+
+export type SaveAnswersInput = z.infer<typeof saveAnswersSchema>;
+
+// =======================================
+// Analytics Types
+// =======================================
+
+export interface CategoryScore {
+  category: string;
+  score: number;
+  maxScore: number;
+  percentage: number;
 }
 
-export interface AuthToken {
-  token: string;
-  expiresIn: number;
+export interface AssessmentResult {
+  id: number;
+  title: string;
+  overallScore: number;
+  completedAt: Date;
+  categoryScores: CategoryScore[];
 }
 
-export interface AuthResponse {
-  user: User;
-  token: AuthToken;
+// =======================================
+// Misc Types
+// =======================================
+
+export interface Notification {
+  id: number;
+  userId: number;
+  title: string;
+  message: string;
+  read: boolean;
+  createdAt: Date;
 }
