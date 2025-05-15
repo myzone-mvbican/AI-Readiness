@@ -64,7 +64,7 @@ export function UserEditForm({ editingUser, onClose }: UserEditFormProps) {
 
       const res = await apiRequest(
         "PUT",
-        `/api/users/${editingUser.id}`,
+        `/api/admin/users/${editingUser.id}`,
         updateData,
       );
       return res.json();
@@ -75,7 +75,7 @@ export function UserEditForm({ editingUser, onClose }: UserEditFormProps) {
         description: "User information has been updated successfully.",
       });
       onClose();
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     },
     onError: (error: Error) => {
       toast({

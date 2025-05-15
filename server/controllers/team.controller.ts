@@ -62,7 +62,7 @@ export class TeamController {
   }
 
   // Admin-only: Get all teams
-  static async getAllTeams(req: Request, res: Response) {
+  static async getAll(req: Request, res: Response) {
     try {
       const allTeams = await db.select().from(teams);
 

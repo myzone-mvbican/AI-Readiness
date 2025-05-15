@@ -20,7 +20,11 @@ interface UserDeleteDialogProps {
   deletingUser: User | null;
 }
 
-export function UserDeleteDialog({ isOpen, onOpenChange, deletingUser }: UserDeleteDialogProps) {
+export function UserDeleteDialog({
+  isOpen,
+  onOpenChange,
+  deletingUser,
+}: UserDeleteDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -28,7 +32,10 @@ export function UserDeleteDialog({ isOpen, onOpenChange, deletingUser }: UserDel
   const deleteUserMutation = useMutation({
     mutationFn: async () => {
       if (!deletingUser) return null;
-      const res = await apiRequest("DELETE", `/api/users/${deletingUser.id}`);
+      const res = await apiRequest(
+        "DELETE",
+        `/api/admin/users/${deletingUser.id}`,
+      );
       return res.json();
     },
     onSuccess: () => {
@@ -37,7 +44,7 @@ export function UserDeleteDialog({ isOpen, onOpenChange, deletingUser }: UserDel
         description: "User has been deleted successfully.",
       });
       onOpenChange(false);
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     },
     onError: (error: Error) => {
       toast({
@@ -58,7 +65,8 @@ export function UserDeleteDialog({ isOpen, onOpenChange, deletingUser }: UserDel
         <AlertDialogHeader>
           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete this user? This action cannot be undone.
+            Are you sure you want to delete this user? This action cannot be
+            undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
