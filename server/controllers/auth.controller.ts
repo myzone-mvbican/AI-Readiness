@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
+import { db } from "../db";
+import { eq, and, isNull } from "drizzle-orm";
 import { UserModel } from "../models/user.model";
-import { storage } from "../storage";
+import { TeamModel } from "../models/team.model";
+import { assessments } from "@shared/schema";
 import {
   loginSchema,
   insertUserSchema,
@@ -8,13 +11,6 @@ import {
   googleAuthSchema,
   googleConnectSchema,
 } from "@shared/validation/schemas";
-
-// List of admin emails (environment variable based for security, with defaults)
-const ADMIN_EMAILS = (
-  process.env.ADMIN_EMAILS || "bican.valeriu@myzone.ai,mike@myzone.ai"
-)
-  .split(",")
-  .map((email) => email.trim().toLowerCase());
 
 export class AuthController {
   static async profile(req: Request, res: Response) {
@@ -154,7 +150,7 @@ export class AuthController {
         });
       }
 
-      const isPasswordValid = await storage.validatePassword(
+      const isPasswordValid = await UserModel.validatePassword(
         password,
         user.password,
       );
@@ -165,7 +161,7 @@ export class AuthController {
         });
       }
 
-      const token = storage.generateToken(user);
+      const token = UserModel.generateToken(user);
       const { password: _, ...userWithoutPassword } = user;
 
       return res.status(200).json({
@@ -321,52 +317,33 @@ export class AuthController {
 
       const user = await UserModel.create(req.body);
 
-      // // Auto-assign user to the "Client" team
-      // try {
-      //   // Check if user's email is part of the myzone.ai domain (admin users)
-      //   const isMyZoneEmail = user.email.endsWith("@myzone.ai");
+      // Auto-assign user to the "Client" team
+      try {
+        // Check if user's email is part of the myzone.ai domain (admin users)
+        const isMyZoneEmail = user.email.endsWith("@myzone.ai");
 
-      //   // Determine which team to assign:
-      //   // - If it's a myzone.ai email, they already get admin role from isAdmin check
-      //   // - Otherwise, find or create the standard "Client" team and assign them
-      //   if (!isMyZoneEmail) {
-      //     // Look for the Client team
-      //     let clientTeam = await storage.getTeamByName("Client");
+        // Determine which team to assign:
+        // - If it's a myzone.ai email, MyZone team
+        // - Otherwise, Client team
+        let defaultTeam = await TeamModel.getTeamByName(
+          isMyZoneEmail ? "MyZone" : "Client",
+        );
 
-      //     // If Client team doesn't exist, create it
-      //     if (!clientTeam) {
-      //       clientTeam = await storage.createTeam({
-      //         name: "Client",
-      //       });
-      //     }
-
-      //     // Add user to the Client team
-      //     await storage.addUserToTeam({
-      //       userId: user.id,
-      //       teamId: clientTeam.id,
-      //       role: "client",
-      //     });
-
-      //     console.log(`Auto-assigned user ${user.email} to Client team`);
-      //   }
-      // } catch (teamError) {
-      //   console.error("Error assigning user to team:", teamError);
-      //   // Continue with user creation even if team assignment fails
-      // }
+        // Add user to the Default team
+        if (defaultTeam) {
+          await TeamModel.addUserToTeam({
+            userId: user.id,
+            teamId: defaultTeam.id,
+            role: "client",
+          });
+        }
+      } catch (teamError) {
+        console.error("Error assigning user to team:", teamError);
+        // Continue with user creation even if team assignment fails
+      }
 
       // Check for guest assessments with this email and associate them with the new user
       try {
-        // Get all assessments from the database where the email matches and the userId is null (guest assessments)
-        const db = await import("./../db").then((m) => m.db);
-        const assessments = await import("@shared/schema").then(
-          (m) => m.assessments,
-        );
-        const { eq, and, isNull } = await import("drizzle-orm").then((m) => ({
-          eq: m.eq,
-          and: m.and,
-          isNull: m.isNull,
-        }));
-
         const guestAssessments = await db
           .select()
           .from(assessments)
@@ -376,10 +353,6 @@ export class AuthController {
 
         // If we found any guest assessments, update them to associate with this user
         if (guestAssessments.length > 0) {
-          console.log(
-            `Found ${guestAssessments.length} guest assessments for ${user.email}, associating with new user ID ${user.id}`,
-          );
-
           // Update each assessment to set the userId
           for (const assessment of guestAssessments) {
             await db
@@ -396,7 +369,7 @@ export class AuthController {
         );
       }
 
-      const token = storage.generateToken(user);
+      const token = UserModel.generateToken(user);
       const { password, ...userWithoutPassword } = user;
 
       return res.status(201).json({

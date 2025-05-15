@@ -1,16 +1,12 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { teams } from "@shared/schema";
 import { AuthController } from "./controllers/auth.controller";
+import { TeamController } from "./controllers/team.controller";
 
 // Import middleware if needed for protected routes
 import { authenticate, requireAdmin } from "./middleware/auth";
-import {
-  updateUserSchema,
-  insertTeamSchema,
-  userTeamSchema,
-} from "@shared/validation/schemas";
+import { updateUserSchema } from "@shared/validation/schemas";
 import { upload } from "./middleware/upload";
 import Papa from "papaparse";
 import cors from "cors";
@@ -90,23 +86,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-
   // User signup endpoint (with support for both /signup and /register paths)
   app.post(["/api/signup", "/api/register"], AuthController.register);
-
   // User login endpoint
   app.post("/api/login", AuthController.login);
-
   // Google OAuth login/signup endpoint
   app.post("/api/auth/google/login", AuthController.loginGoogle);
-
   // Connect Google account to existing user (protected route)
   app.post(
     "/api/auth/google/connect",
     authenticate,
     AuthController.connectGoogle,
   );
-
   // Disconnect Google account from existing user (protected route)
   app.delete(
     "/api/auth/google/disconnect",
@@ -116,88 +107,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get current user profile endpoint (protected route)
   app.get("/api/user", authenticate, AuthController.profile);
-
   // Update user profile endpoint (protected route)
   app.put("/api/user", authenticate, AuthController.update);
 
   // Team endpoints (all protected routes)
 
   // Get teams for current user
-  app.get("/api/teams", authenticate, async (req, res) => {
-    try {
-      const userId = req.user!.id;
-      const teams = await storage.getTeamsByUserId(userId);
-
-      return res.status(200).json({
-        success: true,
-        teams,
-      });
-    } catch (error) {
-      console.error("Get teams error:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to retrieve teams",
-      });
-    }
-  });
-
+  app.get("/api/teams", authenticate, TeamController.getUserTeams);
   // Create a new team
-  app.post("/api/teams", authenticate, async (req, res) => {
-    try {
-      const userId = req.user!.id;
-
-      // Validate team data
-      const result = insertTeamSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid team data",
-          errors: result.error.format(),
-        });
-      }
-
-      // Create team
-      const team = await storage.createTeam(req.body);
-
-      // Add current user to team as admin
-      await storage.addUserToTeam({
-        userId,
-        teamId: team.id,
-        role: "admin",
-      });
-
-      return res.status(201).json({
-        success: true,
-        message: "Team created successfully",
-        team,
-      });
-    } catch (error) {
-      console.error("Create team error:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to create team",
-      });
-    }
-  });
+  app.post("/api/teams", authenticate, TeamController.createTeam);
 
   // Admin-only: Get all teams
-  app.get("/api/admin/teams", authenticate, requireAdmin, async (req, res) => {
-    try {
-      // Get all teams from database
-      const allTeams = await db.select().from(teams);
-
-      return res.status(200).json({
-        success: true,
-        teams: allTeams,
-      });
-    } catch (error) {
-      console.error("Admin get teams error:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to retrieve all teams",
-      });
-    }
-  });
+  app.get(
+    "/api/admin/teams",
+    authenticate,
+    requireAdmin,
+    TeamController.getAllTeams,
+  );
 
   // Admin-only: Get all users
   app.get("/api/users", authenticate, requireAdmin, async (req, res) => {
@@ -357,48 +283,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/users/:id/teams",
     authenticate,
     requireAdmin,
-    async (req, res) => {
-      try {
-        const userId = parseInt(req.params.id);
-        const loggedInUserId = req.user!.id;
-
-        // Prevent admins from modifying their own team assignments through this endpoint
-        if (userId === loggedInUserId) {
-          return res.status(403).json({
-            success: false,
-            message:
-              "You cannot modify your own team assignments through this endpoint",
-          });
-        }
-
-        const { teamIds } = req.body;
-
-        if (!Array.isArray(teamIds)) {
-          return res.status(400).json({
-            success: false,
-            message: "teamIds must be an array of team IDs",
-          });
-        }
-
-        // Update user team assignments
-        await storage.updateUserTeams(userId, teamIds);
-
-        // Get updated teams for this user
-        const updatedTeams = await storage.getTeamsByUserId(userId);
-
-        return res.status(200).json({
-          success: true,
-          message: "User team assignments updated successfully",
-          teams: updatedTeams,
-        });
-      } catch (error) {
-        console.error("Update user teams error:", error);
-        return res.status(500).json({
-          success: false,
-          message: "Failed to update user team assignments",
-        });
-      }
-    },
+    TeamController.updateUserTeams,
   );
 
   // Check if a user exists by email - this endpoint is public for guest assessment flow
@@ -431,57 +316,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add user to team
-  app.post("/api/teams/:teamId/users", authenticate, async (req, res) => {
-    try {
-      const userId = req.user!.id;
-      const teamId = parseInt(req.params.teamId);
-
-      // Validate user is admin of this team
-      const userTeams = await storage.getTeamsByUserId(userId);
-      const isAdmin = userTeams.some(
-        (team) => team.id === teamId && team.role === "admin",
-      );
-
-      if (!isAdmin) {
-        return res.status(403).json({
-          success: false,
-          message: "You don't have permission to add users to this team",
-        });
-      }
-
-      // Validate data
-      const result = userTeamSchema.safeParse({
-        ...req.body,
-        teamId,
-      });
-
-      if (!result.success) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid user team data",
-          errors: result.error.format(),
-        });
-      }
-
-      // Add user to team
-      const userTeam = await storage.addUserToTeam({
-        ...req.body,
-        teamId,
-      });
-
-      return res.status(201).json({
-        success: true,
-        message: "User added to team successfully",
-        userTeam,
-      });
-    } catch (error) {
-      console.error("Add user to team error:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to add user to team",
-      });
-    }
-  });
+  app.post(
+    "/api/teams/:teamId/users",
+    authenticate,
+    TeamController.addUserToTeam,
+  );
 
   // Survey Administration routes (admin only)
 
