@@ -120,7 +120,9 @@ export class UserModel {
     }
   }
 
-  static async disconnectGoogleAccount(userId: number): Promise<User | undefined> {
+  static async disconnectGoogleAccount(
+    userId: number,
+  ): Promise<User | undefined> {
     try {
       // First get the current user
       const user = await UserModel.findById(userId);

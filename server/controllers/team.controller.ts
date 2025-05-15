@@ -1,32 +1,15 @@
-
 import { Request, Response } from "express";
-import { storage } from "../storage";
+import { TeamModel } from "../models/team.model";
+import { db } from "../db";
+import { teams } from "@shared/schema";
 import { insertTeamSchema, userTeamSchema } from "@shared/validation/schemas";
 
 export class TeamController {
-  static async getUserTeams(req: Request, res: Response) {
-    try {
-      const userId = req.user!.id;
-      const teams = await storage.getTeamsByUserId(userId);
-
-      return res.status(200).json({
-        success: true,
-        teams,
-      });
-    } catch (error) {
-      console.error("Get teams error:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to retrieve teams",
-      });
-    }
-  }
-
   static async createTeam(req: Request, res: Response) {
     try {
       const userId = req.user!.id;
 
-      // Validate team data 
+      // Validate team data
       const result = insertTeamSchema.safeParse(req.body);
       if (!result.success) {
         return res.status(400).json({
@@ -37,10 +20,10 @@ export class TeamController {
       }
 
       // Create team
-      const team = await storage.createTeam(req.body);
+      const team = await TeamModel.createTeam(req.body);
 
       // Add current user to team as admin
-      await storage.addUserToTeam({
+      await TeamModel.addUserToTeam({
         userId,
         teamId: team.id,
         role: "admin",
@@ -60,11 +43,27 @@ export class TeamController {
     }
   }
 
+  static async getUserTeams(req: Request, res: Response) {
+    try {
+      const userId = req.user!.id;
+      const teams = await TeamModel.getTeamsByUserId(userId);
+
+      return res.status(200).json({
+        success: true,
+        teams,
+      });
+    } catch (error) {
+      console.error("Get teams error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to retrieve teams",
+      });
+    }
+  }
+
+  // Admin-only: Get all teams
   static async getAllTeams(req: Request, res: Response) {
     try {
-      const { teams } = await import("@shared/schema");
-      const { db } = await import("../db");
-      
       const allTeams = await db.select().from(teams);
 
       return res.status(200).json({
@@ -80,13 +79,14 @@ export class TeamController {
     }
   }
 
+  // Admin-only: Add user to team
   static async addUserToTeam(req: Request, res: Response) {
     try {
       const userId = req.user!.id;
       const teamId = parseInt(req.params.teamId);
 
       // Validate user is admin of this team
-      const userTeams = await storage.getTeamsByUserId(userId);
+      const userTeams = await TeamModel.getTeamsByUserId(userId);
       const isAdmin = userTeams.some(
         (team) => team.id === teamId && team.role === "admin",
       );
@@ -113,7 +113,7 @@ export class TeamController {
       }
 
       // Add user to team
-      const userTeam = await storage.addUserToTeam({
+      const userTeam = await TeamModel.addUserToTeam({
         ...req.body,
         teamId,
       });
@@ -128,6 +128,50 @@ export class TeamController {
       return res.status(500).json({
         success: false,
         message: "Failed to add user to team",
+      });
+    }
+  }
+
+  // Admin-only: Update a user's team assignments
+  static async updateUserTeams(req: Request, res: Response) {
+    try {
+      const userId = parseInt(req.params.id);
+      const loggedInUserId = req.user!.id;
+
+      // Prevent admins from modifying their own team assignments through this endpoint
+      if (userId === loggedInUserId) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "You cannot modify your own team assignments through this endpoint",
+        });
+      }
+
+      const { teamIds } = req.body;
+
+      if (!Array.isArray(teamIds)) {
+        return res.status(400).json({
+          success: false,
+          message: "teamIds must be an array of team IDs",
+        });
+      }
+
+      // Update user team assignments
+      await TeamModel.updateUserTeams(userId, teamIds);
+
+      // Get updated teams for this user
+      const updatedTeams = await TeamModel.getTeamsByUserId(userId);
+
+      return res.status(200).json({
+        success: true,
+        message: "User team assignments updated successfully",
+        teams: updatedTeams,
+      });
+    } catch (error) {
+      console.error("Update user teams error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to update user team assignments",
       });
     }
   }
