@@ -3,14 +3,13 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { AuthController } from "./controllers/auth.controller";
 import { TeamController } from "./controllers/team.controller";
+import { UsersController } from "./controllers/users.controller";
 
 // Import middleware if needed for protected routes
-import { authenticate, requireAdmin } from "./middleware/auth";
-import { updateUserSchema } from "@shared/validation/schemas";
+import { auth, requireAdmin } from "./middleware/auth";
 import { upload } from "./middleware/upload";
 import Papa from "papaparse";
 import cors from "cors";
-import { db } from "./db";
 import * as fs from "fs";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -86,240 +85,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Authentication routes
+
   // User signup endpoint (with support for both /signup and /register paths)
   app.post(["/api/signup", "/api/register"], AuthController.register);
   // User login endpoint
   app.post("/api/login", AuthController.login);
   // Google OAuth login/signup endpoint
   app.post("/api/auth/google/login", AuthController.loginGoogle);
-  // Connect Google account to existing user (protected route)
-  app.post(
-    "/api/auth/google/connect",
-    authenticate,
-    AuthController.connectGoogle,
-  );
-  // Disconnect Google account from existing user (protected route)
-  app.delete(
-    "/api/auth/google/disconnect",
-    authenticate,
-    AuthController.disconnectGoogle,
-  );
+
+  // User profile endpoints (protected routes)
 
   // Get current user profile endpoint (protected route)
-  app.get("/api/user", authenticate, AuthController.profile);
+  app.get("/api/user", auth, AuthController.profile);
   // Update user profile endpoint (protected route)
-  app.put("/api/user", authenticate, AuthController.update);
+  app.put("/api/user", auth, AuthController.update);
+  // Connect Google account to existing user (protected route)
+  app.post("/api/user/google/connect", auth, AuthController.connectGoogle);
+  // Disconnect Google account from existing user (protected route)
+  app.delete(
+    "/api/user/google/disconnect",
+    auth,
+    AuthController.disconnectGoogle,
+  );
 
   // Team endpoints (all protected routes)
 
   // Get teams for current user
-  app.get("/api/teams", authenticate, TeamController.getUserTeams);
+  // To do: move into AuthController.profile method
+  app.get("/api/teams", auth, TeamController.getUserTeams);
   // Create a new team
-  app.post("/api/teams", authenticate, TeamController.createTeam);
-
+  app.post("/api/teams", auth, TeamController.createTeam);
+  // Add user to team
+  app.post("/api/teams/:teamId/users", auth, TeamController.addUserToTeam);
   // Admin-only: Get all teams
-  app.get(
-    "/api/admin/teams",
-    authenticate,
-    requireAdmin,
-    TeamController.getAllTeams,
-  );
+  app.get("/api/admin/teams", auth, requireAdmin, TeamController.getAll);
+
+  // Users endpoints (all protected routes)
 
   // Admin-only: Get all users
-  app.get("/api/users", authenticate, requireAdmin, async (req, res) => {
-    try {
-      // Import necessary modules
-      const { users } = await import("@shared/schema");
-
-      // Get basic user information excluding passwords
-      const allUsers = await db
-        .select({
-          id: users.id,
-          name: users.name,
-          email: users.email,
-          company: users.company,
-          employeeCount: users.employeeCount,
-          industry: users.industry,
-          role: users.role,
-          createdAt: users.createdAt,
-          updatedAt: users.updatedAt,
-        })
-        .from(users);
-
-      // For each user, get their teams
-      const usersWithTeams = await Promise.all(
-        allUsers.map(async (user) => {
-          const teams = await storage.getTeamsByUserId(user.id);
-          return {
-            ...user,
-            teams: teams,
-          };
-        }),
-      );
-
-      return res.status(200).json({
-        success: true,
-        users: usersWithTeams,
-      });
-    } catch (error) {
-      console.error("Get all users error:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to retrieve user list",
-      });
-    }
-  });
-
+  app.get("/api/admin/users", auth, requireAdmin, UsersController.getAll);
   // Admin-only: Update a user
-  app.put("/api/users/:id", authenticate, requireAdmin, async (req, res) => {
-    try {
-      const userId = parseInt(req.params.id);
-      const loggedInUserId = req.user!.id;
-
-      // Prevent admins from modifying their own accounts through this endpoint
-      if (userId === loggedInUserId) {
-        return res.status(403).json({
-          success: false,
-          message:
-            "You cannot modify your own account through this endpoint. Please use /api/user instead.",
-        });
-      }
-
-      // Validate data
-      const result = updateUserSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid update data",
-          errors: result.error.format(),
-        });
-      }
-
-      // If updating password, hash it first
-      let updateData = { ...req.body };
-      if (updateData.password) {
-        updateData.password = await storage.hashPassword(updateData.password);
-      }
-
-      // Update user
-      const updatedUser = await storage.updateUser(userId, updateData);
-
-      if (!updatedUser) {
-        return res.status(404).json({
-          success: false,
-          message: "User not found",
-        });
-      }
-
-      // Return updated user without password
-      const { password, ...userWithoutPassword } = updatedUser;
-
-      return res.status(200).json({
-        success: true,
-        message: "User updated successfully",
-        user: userWithoutPassword,
-      });
-    } catch (error) {
-      console.error("Update user error:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to update user",
-      });
-    }
-  });
-
+  app.put("/api/admin/users/:id", auth, requireAdmin, UsersController.update);
   // Admin-only: Delete a user
-  app.delete("/api/users/:id", authenticate, requireAdmin, async (req, res) => {
-    try {
-      const userId = parseInt(req.params.id);
-      const loggedInUserId = req.user!.id;
-
-      // Prevent admins from deleting their own accounts
-      if (userId === loggedInUserId) {
-        return res.status(403).json({
-          success: false,
-          message: "You cannot delete your own account",
-        });
-      }
-
-      // Delete user
-      try {
-        const success = await storage.deleteUser(userId);
-
-        if (!success) {
-          return res.status(404).json({
-            success: false,
-            message: "User not found or could not be deleted",
-          });
-        }
-
-        return res.status(200).json({
-          success: true,
-          message: "User deleted successfully",
-        });
-      } catch (err) {
-        // Handle specific database errors
-        if (err.code === "23503") {
-          // Foreign key constraint violation
-          return res.status(400).json({
-            success: false,
-            message:
-              "User could not be deleted because they still have associated data. Please contact an administrator.",
-          });
-        }
-        throw err; // Re-throw for the outer catch block
-      }
-    } catch (error) {
-      console.error("Delete user error:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to delete user",
-      });
-    }
-  });
-
+  app.delete(
+    "/api/admin/users/:id",
+    auth,
+    requireAdmin,
+    UsersController.delete,
+  );
   // Admin-only: Update a user's team assignments
+  // To do: move into UsersController.update method
   app.patch(
     "/api/users/:id/teams",
-    authenticate,
+    auth,
     requireAdmin,
     TeamController.updateUserTeams,
-  );
-
-  // Check if a user exists by email - this endpoint is public for guest assessment flow
-  app.get("/api/users/check-email", async (req, res) => {
-    try {
-      const { email } = req.query;
-
-      if (!email || typeof email !== "string") {
-        return res.status(400).json({
-          success: false,
-          message: "Email is required",
-        });
-      }
-
-      // Check if a user with this email exists
-      const user = await storage.getUserByEmail(email);
-
-      // Return whether the user exists, without exposing any user data
-      res.status(200).json({
-        success: true,
-        exists: !!user,
-      });
-    } catch (error) {
-      console.error("Error checking user email:", error);
-      res.status(500).json({
-        success: false,
-        message: "Error checking user email",
-      });
-    }
-  });
-
-  // Add user to team
-  app.post(
-    "/api/teams/:teamId/users",
-    authenticate,
-    TeamController.addUserToTeam,
   );
 
   // Survey Administration routes (admin only)
@@ -327,7 +149,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all surveys for a team
   app.get(
     "/api/admin/surveys/:teamId",
-    authenticate,
+    auth,
     requireAdmin,
     async (req, res) => {
       try {
@@ -359,7 +181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get a specific survey with author details
   app.get(
     "/api/admin/surveys/detail/:id",
-    authenticate,
+    auth,
     requireAdmin,
     async (req, res) => {
       try {
@@ -397,7 +219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a new survey with file upload
   app.post(
     "/api/admin/surveys",
-    authenticate,
+    auth,
     requireAdmin,
     upload.single("file"),
     async (req, res) => {
@@ -527,7 +349,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update a survey with optional file upload
   app.put(
     "/api/admin/surveys/:id",
-    authenticate,
+    auth,
     requireAdmin,
     upload.single("file"),
     async (req, res) => {
@@ -683,7 +505,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get teams assigned to a survey
   app.get(
     "/api/admin/surveys/:id/teams",
-    authenticate,
+    auth,
     requireAdmin,
     async (req, res) => {
       try {
@@ -725,80 +547,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
   );
 
   // Delete a survey and its file
-  app.delete(
-    "/api/admin/surveys/:id",
-    authenticate,
-    requireAdmin,
-    async (req, res) => {
-      try {
-        const surveyId = parseInt(req.params.id);
-        if (isNaN(surveyId)) {
-          return res.status(400).json({
-            success: false,
-            message: "Invalid survey ID",
-          });
-        }
-
-        // Check if survey exists
-        const existingSurvey = await storage.getSurveyById(surveyId);
-        if (!existingSurvey) {
-          return res.status(404).json({
-            success: false,
-            message: "Survey not found",
-          });
-        }
-
-        // Ensure the user is the author of the survey
-        if (existingSurvey.authorId !== req.user!.id) {
-          return res.status(403).json({
-            success: false,
-            message: "Only the author can delete this survey",
-          });
-        }
-
-        // Delete the associated file if it exists
-        if (
-          existingSurvey.fileReference &&
-          fs.existsSync(existingSurvey.fileReference)
-        ) {
-          try {
-            fs.unlinkSync(existingSurvey.fileReference);
-          } catch (fileError) {
-            console.error(
-              `Error deleting file ${existingSurvey.fileReference}:`,
-              fileError,
-            );
-            // Continue with survey deletion even if file deletion fails
-          }
-        }
-
-        const deleted = await storage.deleteSurvey(surveyId);
-
-        if (!deleted) {
-          return res.status(500).json({
-            success: false,
-            message: "Failed to delete survey",
-          });
-        }
-
-        return res.status(200).json({
-          success: true,
-          message: "Survey deleted successfully",
+  app.delete("/api/admin/surveys/:id", auth, requireAdmin, async (req, res) => {
+    try {
+      const surveyId = parseInt(req.params.id);
+      if (isNaN(surveyId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid survey ID",
         });
-      } catch (error) {
-        console.error(`Error deleting survey ${req.params.id}:`, error);
+      }
+
+      // Check if survey exists
+      const existingSurvey = await storage.getSurveyById(surveyId);
+      if (!existingSurvey) {
+        return res.status(404).json({
+          success: false,
+          message: "Survey not found",
+        });
+      }
+
+      // Ensure the user is the author of the survey
+      if (existingSurvey.authorId !== req.user!.id) {
+        return res.status(403).json({
+          success: false,
+          message: "Only the author can delete this survey",
+        });
+      }
+
+      // Delete the associated file if it exists
+      if (
+        existingSurvey.fileReference &&
+        fs.existsSync(existingSurvey.fileReference)
+      ) {
+        try {
+          fs.unlinkSync(existingSurvey.fileReference);
+        } catch (fileError) {
+          console.error(
+            `Error deleting file ${existingSurvey.fileReference}:`,
+            fileError,
+          );
+          // Continue with survey deletion even if file deletion fails
+        }
+      }
+
+      const deleted = await storage.deleteSurvey(surveyId);
+
+      if (!deleted) {
         return res.status(500).json({
           success: false,
           message: "Failed to delete survey",
         });
       }
-    },
-  );
+
+      return res.status(200).json({
+        success: true,
+        message: "Survey deleted successfully",
+      });
+    } catch (error) {
+      console.error(`Error deleting survey ${req.params.id}:`, error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to delete survey",
+      });
+    }
+  });
 
   // User-facing survey routes
 
   // Get surveys for current user's selected team
-  app.get("/api/surveys/:teamId", authenticate, async (req, res) => {
+  app.get("/api/surveys/:teamId", auth, async (req, res) => {
     try {
       const teamId = parseInt(req.params.teamId);
       if (isNaN(teamId)) {
@@ -996,7 +813,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Original protected survey endpoint
-  app.get("/api/surveys/detail/:id", authenticate, async (req, res) => {
+  app.get("/api/surveys/detail/:id", auth, async (req, res) => {
     try {
       const surveyId = parseInt(req.params.id);
       if (isNaN(surveyId)) {
@@ -1054,7 +871,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Assessment routes
 
   // Get all assessments for the current user
-  app.get("/api/assessments", authenticate, async (req, res) => {
+  app.get("/api/assessments", auth, async (req, res) => {
     try {
       const assessments = await storage.getAssessmentsByUserId(req.user!.id);
 
@@ -1071,50 +888,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get a specific assessment by ID
-  app.get("/api/assessments/:id", authenticate, async (req, res) => {
-    try {
-      const assessmentId = parseInt(req.params.id);
-      if (isNaN(assessmentId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid assessment ID",
-        });
-      }
-
-      const assessment =
-        await storage.getAssessmentWithSurveyInfo(assessmentId);
-
-      if (!assessment) {
-        return res.status(404).json({
-          success: false,
-          message: "Assessment not found",
-        });
-      }
-
-      // Verify that the user owns this assessment
-      if (assessment.userId !== req.user!.id) {
-        return res.status(403).json({
-          success: false,
-          message: "You do not have permission to access this assessment",
-        });
-      }
-
-      return res.status(200).json({
-        success: true,
-        assessment,
-      });
-    } catch (error) {
-      console.error("Error fetching assessment:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to fetch assessment",
-      });
-    }
-  });
-
   // Create a new assessment
-  app.post("/api/assessments", authenticate, async (req, res) => {
+  app.post("/api/assessments", auth, async (req, res) => {
     try {
       const { surveyTemplateId, title } = req.body;
 
@@ -1165,9 +940,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // Get a specific assessment by ID
+  app.get("/api/assessments/:id", auth, async (req, res) => {
+    try {
+      const assessmentId = parseInt(req.params.id);
+      if (isNaN(assessmentId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid assessment ID",
+        });
+      }
+
+      const assessment =
+        await storage.getAssessmentWithSurveyInfo(assessmentId);
+
+      if (!assessment) {
+        return res.status(404).json({
+          success: false,
+          message: "Assessment not found",
+        });
+      }
+
+      // Verify that the user owns this assessment
+      if (assessment.userId !== req.user!.id) {
+        return res.status(403).json({
+          success: false,
+          message: "You do not have permission to access this assessment",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        assessment,
+      });
+    } catch (error) {
+      console.error("Error fetching assessment:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch assessment",
+      });
+    }
+  });
 
   // Update an assessment (for saving answers or changing status)
-  app.patch("/api/assessments/:id", authenticate, async (req, res) => {
+  app.patch("/api/assessments/:id", auth, async (req, res) => {
     try {
       const assessmentId = parseInt(req.params.id);
       if (isNaN(assessmentId)) {
@@ -1256,7 +1073,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete an assessment
-  app.delete("/api/assessments/:id", authenticate, async (req, res) => {
+  app.delete("/api/assessments/:id", auth, async (req, res) => {
     try {
       const assessmentId = parseInt(req.params.id);
       if (isNaN(assessmentId)) {

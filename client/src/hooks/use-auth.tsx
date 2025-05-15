@@ -392,7 +392,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     mutationFn: async (data: GoogleLoginData) => {
       const res = await apiRequest(
         "POST",
-        "/api/auth/google/connect",
+        "/api/user/google/connect",
         data,
         false,
         {
@@ -438,7 +438,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     mutationFn: async () => {
       const res = await apiRequest(
         "DELETE",
-        "/api/auth/google/disconnect",
+        "/api/user/google/disconnect",
         null,
         false,
         {

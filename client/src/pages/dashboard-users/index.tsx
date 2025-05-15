@@ -56,7 +56,7 @@ export default function UsersPage() {
   // Fetch users
   const { data: usersData, isLoading: isLoadingUsers } =
     useQuery<UsersResponse>({
-      queryKey: ["/api/users"],
+      queryKey: ["/api/admin/users"],
       retry: false,
     });
 
