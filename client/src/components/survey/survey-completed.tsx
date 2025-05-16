@@ -1,4 +1,4 @@
-import { CheckCircle2, InfoIcon, Download } from "lucide-react";
+import { CheckCircle2, InfoIcon } from "lucide-react";
 import {
   RadarChart,
   PolarGrid,
@@ -24,7 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { CsvQuestion, Assessment } from "@shared/types";
-import { useRef, useEffect, useState } from "react";
+import { useRef } from "react";
 import { AssessmentPDFDownloadButton } from "./assessment-pdf";
 
 interface SurveyCompletedProps {
@@ -132,7 +132,7 @@ export default function SurveyCompleted({
             assessment={assessment}
             questions={questions}
             chartData={getRadarChartData()}
-          />
+          /> 
         </div>
       </div>
 
