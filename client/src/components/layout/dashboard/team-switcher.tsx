@@ -200,10 +200,6 @@ export function TeamSwitcher({}: TeamSwitcherProps) {
 
     // If actually changing teams, clear all survey-related queries to prevent stale data
     if (isTeamChange) {
-      console.log(
-        `Switching teams from ${selectedTeam?.name || "none"} to ${team.name}`,
-      );
-
       // Invalidate all survey-related queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ["/api/surveys"] });
 
