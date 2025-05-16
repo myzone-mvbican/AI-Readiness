@@ -5,7 +5,7 @@ import { teams } from "@shared/schema";
 import { insertTeamSchema, userTeamSchema } from "@shared/validation/schemas";
 
 export class TeamController {
-  static async createTeam(req: Request, res: Response) {
+  static async create(req: Request, res: Response) {
     try {
       const userId = req.user!.id;
 
@@ -20,10 +20,10 @@ export class TeamController {
       }
 
       // Create team
-      const team = await TeamModel.createTeam(req.body);
+      const team = await TeamModel.create(req.body);
 
       // Add current user to team as admin
-      await TeamModel.addUserToTeam({
+      await TeamModel.addUser({
         userId,
         teamId: team.id,
         role: "admin",
@@ -43,10 +43,10 @@ export class TeamController {
     }
   }
 
-  static async getUserTeams(req: Request, res: Response) {
+  static async getTeams(req: Request, res: Response) {
     try {
       const userId = req.user!.id;
-      const teams = await TeamModel.getTeamsByUserId(userId);
+      const teams = await TeamModel.getByUserId(userId);
 
       return res.status(200).json({
         success: true,
@@ -80,13 +80,13 @@ export class TeamController {
   }
 
   // Admin-only: Add user to team
-  static async addUserToTeam(req: Request, res: Response) {
+  static async addUser(req: Request, res: Response) {
     try {
       const userId = req.user!.id;
       const teamId = parseInt(req.params.teamId);
 
       // Validate user is admin of this team
-      const userTeams = await TeamModel.getTeamsByUserId(userId);
+      const userTeams = await TeamModel.getByUserId(userId);
       const isAdmin = userTeams.some(
         (team) => team.id === teamId && team.role === "admin",
       );
@@ -113,7 +113,7 @@ export class TeamController {
       }
 
       // Add user to team
-      const userTeam = await TeamModel.addUserToTeam({
+      const userTeam = await TeamModel.addUser({
         ...req.body,
         teamId,
       });
@@ -157,10 +157,10 @@ export class TeamController {
       }
 
       // Update user team assignments
-      await TeamModel.updateUserTeams(userId, teamIds);
+      await TeamModel.updateUser(userId, teamIds);
 
       // Get updated teams for this user
-      const updatedTeams = await TeamModel.getTeamsByUserId(userId);
+      const updatedTeams = await TeamModel.getByUserId(userId);
 
       return res.status(200).json({
         success: true,

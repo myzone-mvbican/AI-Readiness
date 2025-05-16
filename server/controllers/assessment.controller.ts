@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { AssessmentModel } from "../models/assessment.model";
-import { storage } from "../storage";
+import { SurveyModel } from "../models/survey.model";
 
 export class AssessmentController {
   static async getAll(req: Request, res: Response) {
@@ -71,7 +71,7 @@ export class AssessmentController {
         });
       }
 
-      const survey = await storage.getSurveyById(parseInt(surveyTemplateId));
+      const survey = await SurveyModel.getById(parseInt(surveyTemplateId));
 
       if (!survey) {
         return res.status(404).json({

@@ -11,12 +11,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Team, User, TeamsResponse } from "./types";
 
 interface TeamManagementProps {
@@ -52,9 +46,13 @@ export function TeamManagement({
       userId: number;
       teamIds: number[];
     }) => {
-      const res = await apiRequest("PATCH", `/api/users/${userId}/teams`, {
-        teamIds,
-      });
+      const res = await apiRequest(
+        "PATCH",
+        `/api/admin/users/${userId}/teams`,
+        {
+          teamIds,
+        },
+      );
       return res.json();
     },
     onSuccess: () => {
@@ -62,7 +60,7 @@ export function TeamManagement({
         title: "Teams updated",
         description: "User team assignments have been updated successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     },
     onError: (error: Error) => {
       toast({

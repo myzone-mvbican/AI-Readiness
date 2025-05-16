@@ -5,7 +5,7 @@ import { TeamModel } from "../models/team.model";
 import { users } from "@shared/schema";
 import { updateUserSchema } from "@shared/validation/schemas";
 
-export class UsersController {
+export class UserController {
   static async getAll(req: Request, res: Response) {
     try {
       // Get basic user information excluding passwords
@@ -26,7 +26,7 @@ export class UsersController {
       // For each user, get their teams
       const usersWithTeams = await Promise.all(
         allUsers.map(async (user) => {
-          const teams = await TeamModel.getTeamsByUserId(user.id);
+          const teams = await TeamModel.getByUserId(user.id);
           return {
             ...user,
             teams: teams,
@@ -165,7 +165,7 @@ export class UsersController {
       }
 
       // Check if a user with this email exists
-      const user = await UserModel.findByEmail(email);
+      const user = await UserModel.getByEmail(email);
 
       // Return whether the user exists, without exposing any user data
       res.status(200).json({

@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { AssessmentAnswer } from "@shared/types";
-import SurveyTemplate from "@/components/survey/survey-template";
 import { Loader2 } from "lucide-react";
+import SurveyTemplate from "@/components/survey/survey-template";
 import {
   GuestUser,
   getGuestAssessmentData,

@@ -19,7 +19,7 @@ export class AuthController {
       const userId = req.user!.id;
 
       // Get user from database with a fresh query
-      const user = await UserModel.findById(userId);
+      const user = await UserModel.getById(userId);
 
       if (!user) {
         return res.status(404).json({
@@ -65,7 +65,7 @@ export class AuthController {
       }
 
       // Check if user exists
-      const existingUser = await UserModel.findById(userId);
+      const existingUser = await UserModel.getById(userId);
       if (!existingUser) {
         return res.status(404).json({
           success: false,
@@ -102,7 +102,7 @@ export class AuthController {
       }
 
       // Force a re-fetch to ensure we have the most current data
-      const refreshedUser = await UserModel.findById(userId);
+      const refreshedUser = await UserModel.getById(userId);
 
       if (!refreshedUser) {
         return res.status(500).json({
@@ -141,7 +141,7 @@ export class AuthController {
       }
 
       const { email, password } = req.body;
-      const user = await UserModel.findByEmail(email);
+      const user = await UserModel.getByEmail(email);
 
       if (!user) {
         return res.status(401).json({
@@ -203,11 +203,11 @@ export class AuthController {
       }
 
       // Check if a user with this Google ID already exists
-      let user = await UserModel.findByGoogleId(googleUserData.sub);
+      let user = await UserModel.getByGoogleId(googleUserData.sub);
 
       if (!user) {
         // Check if user exists with this email
-        user = await UserModel.findByEmail(googleUserData.email);
+        user = await UserModel.getByEmail(googleUserData.email);
 
         if (!user) {
           // Create a new user with data from Google
@@ -307,7 +307,7 @@ export class AuthController {
         });
       }
 
-      const existingUser = await UserModel.findByEmail(req.body.email);
+      const existingUser = await UserModel.getByEmail(req.body.email);
       if (existingUser) {
         return res.status(409).json({
           success: false,
@@ -412,7 +412,7 @@ export class AuthController {
       }
 
       // Check if another user has already connected this Google account
-      const existingUser = await UserModel.findByGoogleId(googleUserData.sub);
+      const existingUser = await UserModel.getByGoogleId(googleUserData.sub);
       if (existingUser && existingUser.id !== userId) {
         return res.status(409).json({
           success: false,
@@ -455,7 +455,7 @@ export class AuthController {
       const userId = req.user!.id;
 
       // Get current user
-      const user = await UserModel.findById(userId);
+      const user = await UserModel.getById(userId);
       if (!user) {
         return res.status(404).json({
           success: false,

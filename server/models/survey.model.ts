@@ -6,7 +6,7 @@ import { InsertSurvey, UpdateSurvey } from "@shared/types/requests";
 import { UserModel } from "./user.model";
 import { TeamModel } from "./team.model";
 
-export class SurveysModel {
+export class SurveyModel {
   // Getters
   static async getAll(teamId: number): Promise<Survey[]> {
     try {
@@ -18,9 +18,9 @@ export class SurveysModel {
       const allAssignedSurveys = await db.select().from(surveyTeams);
 
       // Get the unique survey IDs that have ANY team assignment
-      const assignedSurveyIds = [
-        ...new Set(allAssignedSurveys.map((s) => s.surveyId)),
-      ];
+      const assignedSurveyIds = Array.from(
+        new Set(allAssignedSurveys.map((s) => s.surveyId)),
+      );
 
       // STEP 1: Get global surveys (public surveys with no team assignments)
       let globalSurveys: Survey[] = [];
@@ -118,21 +118,21 @@ export class SurveysModel {
   ): Promise<SurveyWithAuthor | undefined> {
     try {
       // First get the survey
-      const survey = await SurveysModel.getById(id);
+      const survey = await SurveyModel.getById(id);
       if (!survey) return undefined;
 
       // Then get the author
-      const author = await this.getUser(survey.authorId);
+      const author = await UserModel.getById(survey.authorId);
       if (!author) return undefined;
 
       // Get teams for this survey
-      const teamIds = await SurveysModel.getSurveyTeams(survey.id);
+      const teamIds = await SurveyModel.getTeams(survey.id);
       let teams: { id: number; name: string }[] = [];
 
       if (teamIds.length > 0) {
         // Fetch team details for each teamId
         const teamPromises = teamIds.map(async (id) => {
-          const team = await this.getTeam(id);
+          const team = await TeamModel.getById(id);
           return team ? { id: team.id, name: team.name } : null;
         });
 
@@ -171,22 +171,22 @@ export class SurveysModel {
         allSurveys = results;
       } else {
         // Otherwise, just get surveys for this team and global surveys
-        allSurveys = await SurveysModel.getAll(teamId);
+        allSurveys = await SurveyModel.getAll(teamId);
       }
 
       // Map through surveys and add author and team information
       const surveysWithAuthors = await Promise.all(
         allSurveys.map(async (survey) => {
-          const author = await UserModel.findById(survey.authorId);
+          const author = await UserModel.getById(survey.authorId);
 
           // Get teams for this survey
-          const teamIds = await this.getSurveyTeams(survey.id);
+          const teamIds = await SurveyModel.getTeams(survey.id);
           let teams: { id: number; name: string }[] = [];
 
           if (teamIds.length > 0) {
             // Fetch team details for each teamId
             const teamPromises = teamIds.map(async (id) => {
-              const team = await TeamModel.getTeam(id);
+              const team = await TeamModel.getById(id);
               return team ? { id: team.id, name: team.name } : null;
             });
 
