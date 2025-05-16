@@ -8,8 +8,8 @@ import {
   StyleSheet,
   PDFDownloadLink,
 } from "@react-pdf/renderer";
-import { Assessment, CsvQuestion } from "@shared/types";
 import { Download } from "lucide-react";
+import { Assessment, CsvQuestion } from "@shared/types";
 
 // Create styles for PDF
 const styles = StyleSheet.create({
@@ -141,8 +141,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   chartImage: {
-    width: 300,
-    height: 300,
+    width: 220,
+    height: 100,
     marginVertical: 20,
     alignSelf: "center",
   },

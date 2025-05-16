@@ -26,7 +26,7 @@ import { Separator } from "@/components/ui/separator";
 import { CsvQuestion, Assessment } from "@shared/types";
 import { useRef, useEffect, useState } from "react";
 import html2canvas from "html2canvas";
-import { AssessmentPDFDownloadButton } from './assessment-pdf';
+import { AssessmentPDFDownloadButton } from "./assessment-pdf";
 
 interface SurveyCompletedProps {
   assessment: Assessment;
@@ -41,37 +41,31 @@ export default function SurveyCompleted({
   const chartRef = useRef<HTMLDivElement>(null);
   const responsesRef = useRef<HTMLDivElement>(null);
   const [chartImageUrl, setChartImageUrl] = useState("");
-  
+
   // Function to capture chart for PDF export
   const captureChart = async () => {
     if (!chartRef.current) return;
-    
+
     try {
-      // Wait for the chart animation to complete
       const canvas = await html2canvas(chartRef.current, {
         scale: 2,
-        backgroundColor: "#ffffff", // White background to ensure clean export
+        backgroundColor: null,
         logging: false,
-        useCORS: true,
-        allowTaint: true,
-        width: chartRef.current.offsetWidth,
-        height: chartRef.current.offsetHeight,
       });
-      
+
       const imageUrl = canvas.toDataURL("image/png");
       setChartImageUrl(imageUrl);
     } catch (error) {
       console.error("Error capturing chart:", error);
     }
   };
-  
+
   // Capture chart when component mounts and when assessment changes
   useEffect(() => {
-    // Give chart more time to properly render and complete animations
     const timer = setTimeout(() => {
       captureChart();
-    }, 1500); // Longer delay to ensure complete rendering
-    
+    }, 500); // Delay chart capture to ensure it's rendered
+
     return () => clearTimeout(timer);
   }, [assessment]);
 
@@ -147,26 +141,28 @@ export default function SurveyCompleted({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-start py-4">
-        <div className="flex items-center gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 space-y-6 md:space-y-0 py-4">
+        <div className="col-span-1 flex items-center gap-4">
           <div className="bg-green-100 rounded-full p-5">
             <CheckCircle2 className="h-12 w-12 text-green-600" />
           </div>
           <div className="text-start">
-            <h2 className="text-2xl text-foreground font-bold">
+            <h2 className="text-xl md:text-2xl text-foreground font-bold">
               Assessment Completed
             </h2>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-sm md:text-normal text-muted-foreground mt-2">
               You scored {assessment.score} out of 100 on this AI readiness
               assessment.
             </p>
           </div>
         </div>
-        <AssessmentPDFDownloadButton
-          assessment={assessment}
-          questions={questions}
-          chartImageUrl={chartImageUrl}
-        />
+        <div className="col-span-1 self-center md:flex md:justify-end">
+          <AssessmentPDFDownloadButton
+            assessment={assessment}
+            questions={questions}
+            chartImageUrl={chartImageUrl}
+          />
+        </div>
       </div>
 
       <Tabs defaultValue="results" className="mt-6">
@@ -203,7 +199,7 @@ export default function SurveyCompleted({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="py-4" ref={chartRef}>
+              <div className="py-4">
                 <ChartContainer
                   config={{
                     // Config for the score data point
@@ -211,7 +207,8 @@ export default function SurveyCompleted({
                       color: "hsl(var(--primary))",
                     },
                   }}
-                  className="h-[350px] w-full"
+                  className="h-[calc(100dvh-480px)] w-full"
+                  ref={chartRef}
                 >
                   <RadarChart outerRadius="80%" data={getRadarChartData()}>
                     <PolarGrid strokeDasharray="3 3" />
@@ -274,7 +271,7 @@ export default function SurveyCompleted({
           </Card>
         </TabsContent>
         <TabsContent value="responses">
-          <ScrollArea className="h-[500px] rounded-md border p-4">
+          <ScrollArea className="h-[calc(100dvh-330px)] rounded-md border p-4">
             <div ref={responsesRef}>
               {answers.map((answer: any, index: number) => (
                 <div key={`answer-${index}`}>
