@@ -1,4 +1,3 @@
-
 import { Request, Response } from "express";
 import { AssessmentModel } from "../models/assessment.model";
 import { storage } from "../storage";
@@ -17,6 +16,46 @@ export class AssessmentController {
       return res.status(500).json({
         success: false,
         message: "Failed to fetch assessments",
+      });
+    }
+  }
+
+  static async getById(req: Request, res: Response) {
+    try {
+      const assessmentId = parseInt(req.params.id);
+      if (isNaN(assessmentId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid assessment ID",
+        });
+      }
+
+      const assessment = await AssessmentModel.getWithSurveyInfo(assessmentId);
+
+      if (!assessment) {
+        return res.status(404).json({
+          success: false,
+          message: "Assessment not found",
+        });
+      }
+
+      // Verify ownership
+      if (assessment.userId !== req.user!.id) {
+        return res.status(403).json({
+          success: false,
+          message: "You do not have permission to access this assessment",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        assessment,
+      });
+    } catch (error) {
+      console.error("Error fetching assessment:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch assessment",
       });
     }
   }
@@ -70,46 +109,6 @@ export class AssessmentController {
     }
   }
 
-  static async getById(req: Request, res: Response) {
-    try {
-      const assessmentId = parseInt(req.params.id);
-      if (isNaN(assessmentId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid assessment ID",
-        });
-      }
-
-      const assessment = await AssessmentModel.getWithSurveyInfo(assessmentId);
-
-      if (!assessment) {
-        return res.status(404).json({
-          success: false,
-          message: "Assessment not found",
-        });
-      }
-
-      // Verify ownership
-      if (assessment.userId !== req.user!.id) {
-        return res.status(403).json({
-          success: false,
-          message: "You do not have permission to access this assessment",
-        });
-      }
-
-      return res.status(200).json({
-        success: true,
-        assessment,
-      });
-    } catch (error) {
-      console.error("Error fetching assessment:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to fetch assessment",
-      });
-    }
-  }
-
   static async update(req: Request, res: Response) {
     try {
       const assessmentId = parseInt(req.params.id);
@@ -153,7 +152,7 @@ export class AssessmentController {
       ) {
         const answers = req.body.answers || existingAssessment.answers;
         const answerValues = answers
-          .map((a) => typeof a.a === "number" ? a.a : null)
+          .map((a) => (typeof a.a === "number" ? a.a : null))
           .filter((value) => value !== null);
 
         if (answerValues.length > 0) {
@@ -193,6 +192,7 @@ export class AssessmentController {
         });
       }
 
+      // Get the assessment to verify ownership
       const assessment = await AssessmentModel.getById(assessmentId);
 
       if (!assessment) {
@@ -210,7 +210,8 @@ export class AssessmentController {
         });
       }
 
-      const deleted = await AssessmentModel.delete(assessmentId);
+      // Delete the assessment
+      const deleted = await AssessmentModel.getById(assessmentId);
 
       if (!deleted) {
         return res.status(500).json({
@@ -239,10 +240,12 @@ export class AssessmentController {
       if (!surveyId || !answers || !Array.isArray(answers)) {
         return res.status(400).json({
           success: false,
-          message: "Invalid assessment data. Required fields: surveyId, answers.",
+          message:
+            "Invalid assessment data. Required fields: surveyId, answers.",
         });
       }
 
+      // Validate required fields
       if (!title || !email) {
         return res.status(400).json({
           success: false,
@@ -250,7 +253,9 @@ export class AssessmentController {
         });
       }
 
+      // Parse surveyId to number if it's a string
       const surveyTemplateId = parseInt(surveyId);
+
       if (isNaN(surveyTemplateId)) {
         return res.status(400).json({
           success: false,
@@ -258,15 +263,18 @@ export class AssessmentController {
         });
       }
 
-      const assessment = await AssessmentModel.create({
+      // Create a guest assessment
+      const assessmentData = {
         title,
         surveyTemplateId,
-        userId: null,
+        userId: null, // null userId for guest assessments
         email,
         answers,
         status: status || "completed",
         score: score || 0,
-      });
+      };
+
+      const assessment = await AssessmentModel.create(assessmentData);
 
       return res.status(201).json({
         success: true,

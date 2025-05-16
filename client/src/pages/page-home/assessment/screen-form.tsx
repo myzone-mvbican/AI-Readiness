@@ -65,7 +65,7 @@ export default function GuestAssessmentForm({
     try {
       // Check if user with this email already exists
       const response = await fetch(
-        `/api/users/check-email?email=${encodeURIComponent(values.email)}`,
+        `/api/public/users/exists?email=${encodeURIComponent(values.email)}`,
       );
       const data = await response.json();
 
