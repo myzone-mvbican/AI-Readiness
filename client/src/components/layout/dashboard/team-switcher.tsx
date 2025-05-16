@@ -72,6 +72,12 @@ export function TeamSwitcher({}: TeamSwitcherProps) {
   }>({
     queryKey: ["/api/teams"],
     enabled: !!user, // Only fetch if user is logged in
+    staleTime: 1000 * 60 * 15, // Consider data fresh for 15 minutes
+    gcTime: 1000 * 60 * 60, // Keep in cache for 1 hour
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false, // Disable periodic refetching
+    refetchIntervalInBackground: false
   });
 
   // Enhanced team selection logic:
