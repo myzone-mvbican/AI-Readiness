@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import {
   Document,
   Page,
@@ -19,6 +19,7 @@ import {
 import { ChartContainer } from "@/components/ui/chart";
 import { Download } from "lucide-react";
 import { Assessment, CsvQuestion } from "@shared/types";
+import html2canvas from 'html2canvas';
 
 // Create styles for PDF
 const styles = StyleSheet.create({
@@ -307,74 +308,33 @@ const AssessmentPDF = ({
   // Readiness level
   const readinessLevel = getReadinessLevel(score);
   const recommendations = getRecommendations(readinessLevel);
+  const chartRef = useRef<HTMLDivElement>(null);
 
-  const getCharImage = () => {
-    <ChartContainer
-      config={{
-        // Config for the score data point
-        score: {
-          color: "hsl(var(--primary))",
-        },
-      }}
-      className="h-[calc(100dvh-480px)] w-full"
-    >
-      <RadarChart outerRadius="80%" data={chartData}>
-        <PolarGrid strokeDasharray="3 3" />
-        <PolarAngleAxis
-          dataKey="subject"
-          tick={{
-            fill: "hsl(var(--foreground))",
-            fontSize: 12,
-          }}
-        />
-        <PolarRadiusAxis
-          domain={[0, 10]}
-          tick={{ fill: "hsl(var(--foreground))" }}
-        />
-        <Radar
-          name="Organization Score"
-          dataKey="score"
-          stroke="hsl(var(--primary))"
-          fill="hsl(var(--primary))"
-          fillOpacity={0.5}
-          dot={{
-            r: 4,
-            fillOpacity: 1,
-          }}
-        />
-        <RechartsTooltip
-          content={({ active, payload }) => {
-            if (active && payload && payload.length) {
-              const data = payload[0];
-              return (
-                <div className="rounded-lg border bg-background p-2 shadow-sm">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="flex flex-col">
-                      <span className="text-[0.70rem] uppercase text-muted-foreground">
-                        Category
-                      </span>
-                      <span className="font-bold">
-                        {data.payload.subject}
-                      </span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[0.70rem] uppercase text-muted-foreground">
-                        Score
-                      </span>
-                      <span className="font-bold">
-                        {data.value}/10
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            }
-            return null;
-          }}
-        />
-      </RadarChart>
-    </ChartContainer>
-  }
+  const getChartImage = async () => {
+    if (!chartRef.current) return '';
+    const canvas = await html2canvas(chartRef.current);
+    return canvas.toDataURL();
+  };
+
+  const ChartComponent = () => (
+    <div ref={chartRef} style={{ width: 400, height: 300, background: 'white' }}>
+      <ChartContainer config={{ score: { color: "hsl(var(--primary))" }}}>
+        <RadarChart outerRadius="80%" data={chartData}>
+          <PolarGrid strokeDasharray="3 3" />
+          <PolarAngleAxis dataKey="subject" />
+          <PolarRadiusAxis domain={[0, 10]} />
+          <Radar
+            name="Organization Score"
+            dataKey="score"
+            stroke="hsl(var(--primary))"
+            fill="hsl(var(--primary))"
+            fillOpacity={0.5}
+            dot={{ r: 4, fillOpacity: 1 }}
+          />
+        </RadarChart>
+      </ChartContainer>
+    </div>
+  );
 
   return (
     <Document>
