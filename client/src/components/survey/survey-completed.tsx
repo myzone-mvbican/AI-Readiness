@@ -42,29 +42,26 @@ export default function SurveyCompleted({
   const responsesRef = useRef<HTMLDivElement>(null);
   const [chartImageUrl, setChartImageUrl] = useState("");
 
-  // Function to capture chart for PDF export
-  const captureChart = async () => {
-    if (!chartRef.current) return;
-
+  // Function to create a static radar chart data for PDF
+  // This avoids capturing DOM elements which can cause reloads
+  const prepareChartData = () => {
+    // Don't need to reference chartRef anymore
     try {
-      const canvas = await html2canvas(chartRef.current, {
-        scale: 2,
-        backgroundColor: null,
-        logging: false,
-      });
-
-      const imageUrl = canvas.toDataURL("image/png");
-      setChartImageUrl(imageUrl);
+      // We'll just pass the data directly - no DOM manipulation
+      const chartData = getRadarChartData();
+      // Convert the data to a stringified format
+      setChartImageUrl(JSON.stringify(chartData));
     } catch (error) {
-      console.error("Error capturing chart:", error);
+      console.error("Error preparing chart data:", error);
     }
   };
 
-  // Capture chart when component mounts and when assessment changes
+  // Generate chart data when component mounts
   useEffect(() => {
+    // Minimal delay to ensure data is available
     const timer = setTimeout(() => {
-      captureChart();
-    }, 500); // Delay chart capture to ensure it's rendered
+      prepareChartData();
+    }, 100);
 
     return () => clearTimeout(timer);
   }, [assessment]);
