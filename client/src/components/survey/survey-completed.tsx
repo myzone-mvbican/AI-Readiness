@@ -23,7 +23,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
 import { CsvQuestion, Assessment } from "@shared/types";
 import { useRef, useEffect, useState } from "react";
 import html2canvas from "html2canvas";
@@ -48,10 +47,15 @@ export default function SurveyCompleted({
     if (!chartRef.current) return;
     
     try {
+      // Wait for the chart animation to complete
       const canvas = await html2canvas(chartRef.current, {
         scale: 2,
-        backgroundColor: null,
+        backgroundColor: "#ffffff", // White background to ensure clean export
         logging: false,
+        useCORS: true,
+        allowTaint: true,
+        width: chartRef.current.offsetWidth,
+        height: chartRef.current.offsetHeight,
       });
       
       const imageUrl = canvas.toDataURL("image/png");
@@ -63,9 +67,10 @@ export default function SurveyCompleted({
   
   // Capture chart when component mounts and when assessment changes
   useEffect(() => {
+    // Give chart more time to properly render and complete animations
     const timer = setTimeout(() => {
       captureChart();
-    }, 500); // Delay chart capture to ensure it's rendered
+    }, 1500); // Longer delay to ensure complete rendering
     
     return () => clearTimeout(timer);
   }, [assessment]);
