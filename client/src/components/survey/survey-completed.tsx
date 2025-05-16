@@ -25,7 +25,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { CsvQuestion, Assessment } from "@shared/types";
 import { useRef, useEffect, useState } from "react";
-import html2canvas from "html2canvas";
 import { AssessmentPDFDownloadButton } from "./assessment-pdf";
 
 interface SurveyCompletedProps {
@@ -40,31 +39,6 @@ export default function SurveyCompleted({
   const { answers = [] } = assessment;
   const chartRef = useRef<HTMLDivElement>(null);
   const responsesRef = useRef<HTMLDivElement>(null);
-  const [chartImageUrl, setChartImageUrl] = useState("");
-
-  // Function to create a static radar chart data for PDF
-  // This avoids capturing DOM elements which can cause reloads
-  const prepareChartData = () => {
-    // Don't need to reference chartRef anymore
-    try {
-      // We'll just pass the data directly - no DOM manipulation
-      const chartData = getRadarChartData();
-      // Convert the data to a stringified format
-      setChartImageUrl(JSON.stringify(chartData));
-    } catch (error) {
-      console.error("Error preparing chart data:", error);
-    }
-  };
-
-  // Generate chart data when component mounts
-  useEffect(() => {
-    // Minimal delay to ensure data is available
-    const timer = setTimeout(() => {
-      prepareChartData();
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [assessment]);
 
   // Define radar chart data type
   interface RadarChartData {
@@ -157,7 +131,7 @@ export default function SurveyCompleted({
           <AssessmentPDFDownloadButton
             assessment={assessment}
             questions={questions}
-            chartImageUrl={chartImageUrl}
+            chartData={getRadarChartData()}
           />
         </div>
       </div>
