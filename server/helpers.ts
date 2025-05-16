@@ -74,6 +74,17 @@ export class CsvParser {
   static parse(filePath: string) {
     try {
       const fileContent = fs.readFileSync(filePath, "utf8");
+      
+      // First validate the CSV content
+      const validation = this.validate(fileContent);
+      
+      if (!validation.isValid) {
+        return {
+          isValid: false,
+          errors: validation.errors,
+          questions: []
+        };
+      }
 
       const parsedData = Papa.parse(fileContent, {
         header: true,
@@ -90,10 +101,18 @@ export class CsvParser {
           details: row["Question Details"] || "",
         }));
 
-      return questions;
+      return {
+        isValid: true,
+        errors: [],
+        questions
+      };
     } catch (error) {
       console.error("Error parsing CSV file:", error);
-      throw error;
+      return {
+        isValid: false,
+        errors: [`Error parsing CSV file: ${error}`],
+        questions: []
+      };
     }
   }
 }
