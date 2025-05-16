@@ -39,6 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import { TeamWithRole } from "@shared/types";
+import { getInitials } from "@/lib/utils";
 
 // Mock teams for initial development, will be replaced with real data
 const defaultTeams: TeamWithRole[] = [
@@ -189,24 +190,26 @@ export function TeamSwitcher({}: TeamSwitcherProps) {
   const handleSelectTeam = (team: TeamWithRole) => {
     // Check if we're switching to a different team
     const isTeamChange = selectedTeam?.id !== team.id;
-    
+
     // Update local state
     setSelectedTeam(team);
-    
+
     // Just store selected team in localStorage
     // The token check happens when teams are loaded in assessment-create-modal
     localStorage.setItem("selectedTeam", JSON.stringify(team));
-    
+
     // If actually changing teams, clear all survey-related queries to prevent stale data
     if (isTeamChange) {
-      console.log(`Switching teams from ${selectedTeam?.name || 'none'} to ${team.name}`);
-      
+      console.log(
+        `Switching teams from ${selectedTeam?.name || "none"} to ${team.name}`,
+      );
+
       // Invalidate all survey-related queries to ensure fresh data
-      queryClient.invalidateQueries({ queryKey: ['/api/surveys'] });
-      
+      queryClient.invalidateQueries({ queryKey: ["/api/surveys"] });
+
       // Clear assessments data too
-      queryClient.invalidateQueries({ queryKey: ['/api/assessments'] });
-      
+      queryClient.invalidateQueries({ queryKey: ["/api/assessments"] });
+
       // Show a toast to confirm team change
       toast({
         title: "Team changed",
@@ -236,7 +239,7 @@ export function TeamSwitcher({}: TeamSwitcherProps) {
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               >
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  L
+                  {getInitials(selectedTeam?.name || "T")}
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">

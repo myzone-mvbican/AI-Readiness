@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { AuthController } from "./controllers/auth.controller";
 import { TeamController } from "./controllers/team.controller";
 import { UsersController } from "./controllers/users.controller";
+import { AssessmentController } from "./controllers/assessment.controller";
 
 // Import middleware if needed for protected routes
 import { auth, requireAdmin } from "./middleware/auth";
@@ -144,6 +145,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     TeamController.updateUserTeams,
   );
 
+  // User-facing survey routes
+
+  // Get surveys for current user's selected team
+  app.get("/api/surveys/:teamId", auth, async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      if (isNaN(teamId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid team ID",
+        });
+      }
+
+      // If the team ID is 0, we only want to get global surveys
+      if (teamId === 0) {
+        // Special case for global surveys (team ID null)
+        const surveys = await storage.getSurveys(0);
+
+        return res.status(200).json({
+          success: true,
+          surveys,
+        });
+      }
+
+      // For non-zero team IDs, verify access first
+      const userTeams = await storage.getTeamsByUserId(req.user!.id);
+      const teamIds = userTeams.map((team) => team.id);
+
+      // Check if user has access to this team
+      if (!teamIds.includes(teamId)) {
+        return res.status(403).json({
+          success: false,
+          message: "You don't have access to this team's surveys",
+        });
+      }
+
+      // Get surveys for the team, including global surveys
+      const surveys = await storage.getSurveys(teamId);
+
+      return res.status(200).json({
+        success: true,
+        surveys,
+      });
+    } catch (error) {
+      console.error("Error getting surveys:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to retrieve surveys",
+      });
+    }
+  });
+  // Original protected survey endpoint
+  app.get("/api/surveys/detail/:id", auth, async (req, res) => {
+    try {
+      const surveyId = parseInt(req.params.id);
+      if (isNaN(surveyId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid survey ID",
+        });
+      }
+
+      const survey = await storage.getSurveyById(surveyId);
+
+      if (!survey) {
+        return res.status(404).json({
+          success: false,
+          message: "Survey not found",
+        });
+      }
+
+      // Get all teams for the user to verify access
+      const userTeams = await storage.getTeamsByUserId(req.user!.id);
+      const teamIds = userTeams.map((team) => team.id);
+
+      // Check if survey is global (null teamId) or if user has access to any of the survey's teams
+      const surveyTeamIds = await storage.getSurveyTeams(surveyId);
+
+      // Allow access if:
+      // 1. Survey is global (teamId is null and no teams assigned)
+      // 2. User is part of any team the survey is assigned to
+      const isGlobalSurvey =
+        survey.teamId === null && surveyTeamIds.length === 0;
+      const hasTeamAccess = surveyTeamIds.some((teamId) =>
+        teamIds.includes(teamId),
+      );
+
+      if (!isGlobalSurvey && !hasTeamAccess) {
+        return res.status(403).json({
+          success: false,
+          message: "You don't have access to this survey",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        survey,
+      });
+    } catch (error) {
+      console.error(`Error getting survey ${req.params.id}:`, error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to retrieve survey",
+      });
+    }
+  });
+  
   // Survey Administration routes (admin only)
 
   // Get all surveys for a team
@@ -363,7 +471,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           return res.status(400).json({
             success: false,
-            message: "Invalid survey ID",
+            message: "Invalid survey ID"
           });
         }
 
@@ -612,59 +720,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User-facing survey routes
+  // Assessment routes
 
-  // Get surveys for current user's selected team
-  app.get("/api/surveys/:teamId", auth, async (req, res) => {
-    try {
-      const teamId = parseInt(req.params.teamId);
-      if (isNaN(teamId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid team ID",
-        });
-      }
+  // Get all assessments for the current user
+  app.get("/api/assessments", auth, AssessmentController.getAll);
+  // Create a new assessment
+  app.post("/api/assessments", auth, AssessmentController.create);
+  // Get a specific assessment by ID
+  app.get("/api/assessments/:id", auth, AssessmentController.getById);
+  // Update an assessment (for saving answers or changing status)
+  app.patch("/api/assessments/:id", auth, AssessmentController.update);
+  // Delete an assessment
+  app.delete("/api/assessments/:id", auth, AssessmentController.delete);
 
-      // If the team ID is 0, we only want to get global surveys
-      if (teamId === 0) {
-        // Special case for global surveys (team ID null)
-        const surveys = await storage.getSurveys(0);
+  // Public routes
 
-        return res.status(200).json({
-          success: true,
-          surveys,
-        });
-      }
-
-      // For non-zero team IDs, verify access first
-      const userTeams = await storage.getTeamsByUserId(req.user!.id);
-      const teamIds = userTeams.map((team) => team.id);
-
-      // Check if user has access to this team
-      if (!teamIds.includes(teamId)) {
-        return res.status(403).json({
-          success: false,
-          message: "You don't have access to this team's surveys",
-        });
-      }
-
-      // Get surveys for the team, including global surveys
-      const surveys = await storage.getSurveys(teamId);
-
-      return res.status(200).json({
-        success: true,
-        surveys,
-      });
-    } catch (error) {
-      console.error("Error getting surveys:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to retrieve surveys",
-      });
-    }
-  });
-
-  // Get a specific survey
+  // Check if user email exists (public endpoint)
+  app.get("/api/public/users/exists", UsersController.exists);
+  // Create guest assessment (public endpoint)
+  app.post("/api/public/assessments", AssessmentController.createGuest);
   // Public endpoint for guest users to access survey details
   app.get("/api/public/surveys/detail/:id", async (req, res) => {
     try {
@@ -698,7 +772,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-
   // Get questions for a specific survey (public endpoint)
   app.get("/api/public/surveys/:id/questions", async (req, res) => {
     try {
@@ -750,376 +823,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({
         success: false,
         message: "Failed to fetch survey questions",
-      });
-    }
-  });
-
-  // Create guest assessment (public endpoint)
-  app.post("/api/public/assessments", async (req, res) => {
-    try {
-      const { title, surveyId, email, answers, status, score } = req.body;
-
-      if (!surveyId || !answers || !Array.isArray(answers)) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "Invalid assessment data. Required fields: surveyId, answers.",
-        });
-      }
-
-      // Validate required fields
-      if (!title || !email) {
-        return res.status(400).json({
-          success: false,
-          message: "Missing required fields: title & email.",
-        });
-      }
-
-      // Parse surveyId to number if it's a string
-      const surveyTemplateId = parseInt(surveyId);
-
-      if (isNaN(surveyTemplateId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid surveyId: must be a number.",
-        });
-      }
-
-      // Create a guest assessment
-      const assessmentData = {
-        title,
-        surveyTemplateId,
-        userId: null, // null userId for guest assessments
-        email,
-        answers,
-        status: status || "completed",
-        score: score || 0,
-      };
-
-      const assessment = await storage.createAssessment(assessmentData);
-
-      return res.status(201).json({
-        success: true,
-        message: "Guest assessment created successfully",
-        assessment,
-      });
-    } catch (error) {
-      console.error("Error creating guest assessment:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to create guest assessment",
-      });
-    }
-  });
-
-  // Original protected survey endpoint
-  app.get("/api/surveys/detail/:id", auth, async (req, res) => {
-    try {
-      const surveyId = parseInt(req.params.id);
-      if (isNaN(surveyId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid survey ID",
-        });
-      }
-
-      const survey = await storage.getSurveyById(surveyId);
-
-      if (!survey) {
-        return res.status(404).json({
-          success: false,
-          message: "Survey not found",
-        });
-      }
-
-      // Get all teams for the user to verify access
-      const userTeams = await storage.getTeamsByUserId(req.user!.id);
-      const teamIds = userTeams.map((team) => team.id);
-
-      // Check if survey is global (null teamId) or if user has access to any of the survey's teams
-      const surveyTeamIds = await storage.getSurveyTeams(surveyId);
-
-      // Allow access if:
-      // 1. Survey is global (teamId is null and no teams assigned)
-      // 2. User is part of any team the survey is assigned to
-      const isGlobalSurvey =
-        survey.teamId === null && surveyTeamIds.length === 0;
-      const hasTeamAccess = surveyTeamIds.some((teamId) =>
-        teamIds.includes(teamId),
-      );
-
-      if (!isGlobalSurvey && !hasTeamAccess) {
-        return res.status(403).json({
-          success: false,
-          message: "You don't have access to this survey",
-        });
-      }
-
-      return res.status(200).json({
-        success: true,
-        survey,
-      });
-    } catch (error) {
-      console.error(`Error getting survey ${req.params.id}:`, error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to retrieve survey",
-      });
-    }
-  });
-
-  // Assessment routes
-
-  // Get all assessments for the current user
-  app.get("/api/assessments", auth, async (req, res) => {
-    try {
-      const assessments = await storage.getAssessmentsByUserId(req.user!.id);
-
-      return res.status(200).json({
-        success: true,
-        assessments,
-      });
-    } catch (error) {
-      console.error("Error fetching assessments:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to fetch assessments",
-      });
-    }
-  });
-
-  // Create a new assessment
-  app.post("/api/assessments", auth, async (req, res) => {
-    try {
-      const { surveyTemplateId, title } = req.body;
-
-      if (!surveyTemplateId || !title) {
-        return res.status(400).json({
-          success: false,
-          message: "Survey template ID and title are required",
-        });
-      }
-
-      // Get the survey to prepare answers array
-      const survey = await storage.getSurveyById(parseInt(surveyTemplateId));
-
-      if (!survey) {
-        return res.status(404).json({
-          success: false,
-          message: "Survey template not found",
-        });
-      }
-
-      // Create a blank answers array with just question IDs
-      // We're using simple sequential numbering for question IDs: "q1", "q2", etc.
-      const blankAnswers = Array.from(
-        { length: survey.questionsCount },
-        (_, i) => ({
-          q: i + 1,
-        }),
-      );
-
-      // Create the assessment
-      const newAssessment = await storage.createAssessment({
-        title,
-        surveyTemplateId: parseInt(surveyTemplateId),
-        userId: req.user!.id,
-        status: "draft",
-        answers: blankAnswers,
-      });
-
-      return res.status(201).json({
-        success: true,
-        assessment: newAssessment,
-      });
-    } catch (error) {
-      console.error("Error creating assessment:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to create assessment",
-      });
-    }
-  });
-  
-  // Get a specific assessment by ID
-  app.get("/api/assessments/:id", auth, async (req, res) => {
-    try {
-      const assessmentId = parseInt(req.params.id);
-      if (isNaN(assessmentId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid assessment ID",
-        });
-      }
-
-      const assessment =
-        await storage.getAssessmentWithSurveyInfo(assessmentId);
-
-      if (!assessment) {
-        return res.status(404).json({
-          success: false,
-          message: "Assessment not found",
-        });
-      }
-
-      // Verify that the user owns this assessment
-      if (assessment.userId !== req.user!.id) {
-        return res.status(403).json({
-          success: false,
-          message: "You do not have permission to access this assessment",
-        });
-      }
-
-      return res.status(200).json({
-        success: true,
-        assessment,
-      });
-    } catch (error) {
-      console.error("Error fetching assessment:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to fetch assessment",
-      });
-    }
-  });
-
-  // Update an assessment (for saving answers or changing status)
-  app.patch("/api/assessments/:id", auth, async (req, res) => {
-    try {
-      const assessmentId = parseInt(req.params.id);
-      if (isNaN(assessmentId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid assessment ID",
-        });
-      }
-
-      // Get the existing assessment
-      const existingAssessment = await storage.getAssessmentById(assessmentId);
-
-      if (!existingAssessment) {
-        return res.status(404).json({
-          success: false,
-          message: "Assessment not found",
-        });
-      }
-
-      // Verify ownership
-      if (existingAssessment.userId !== req.user!.id) {
-        return res.status(403).json({
-          success: false,
-          message: "You do not have permission to update this assessment",
-        });
-      }
-
-      // Check if the assessment is already completed
-      if (existingAssessment.status === "completed") {
-        return res.status(400).json({
-          success: false,
-          message: "Cannot update a completed assessment",
-        });
-      }
-
-      // Calculate score if moving to completed
-      let score = null;
-      if (
-        req.body.status === "completed" &&
-        existingAssessment.status !== "completed"
-      ) {
-        // Calculate the score as sum of all answers
-        const answers = req.body.answers || existingAssessment.answers;
-        const answerValues = answers
-          .map((a) => {
-            // Explicitly check for number type, including 0
-            return typeof a.a === "number" ? a.a : null;
-          })
-          .filter((value) => value !== null); // Filter out null values
-
-        console.log("Answer values for score calculation:", answerValues);
-
-        // Only calculate score if there are answers
-        if (answerValues.length > 0) {
-          // Adjust score to be 0-100
-          // -2 to +2 per question, adjust to 0-4, convert to percentage
-          const rawScore = answerValues.reduce((sum, val) => sum + val, 0);
-          console.log("Raw score:", rawScore);
-
-          const maxPossible = answers.length * 2; // Max score is +2 per question
-          const adjustedScore =
-            ((rawScore + answers.length * 2) / (answers.length * 4)) * 100;
-          score = Math.round(adjustedScore);
-
-          console.log("Adjusted score:", score);
-        }
-      }
-
-      // Update the assessment
-      const updatedAssessment = await storage.updateAssessment(assessmentId, {
-        ...req.body,
-        score,
-      });
-
-      return res.status(200).json({
-        success: true,
-        assessment: updatedAssessment,
-      });
-    } catch (error) {
-      console.error("Error updating assessment:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to update assessment",
-      });
-    }
-  });
-
-  // Delete an assessment
-  app.delete("/api/assessments/:id", auth, async (req, res) => {
-    try {
-      const assessmentId = parseInt(req.params.id);
-      if (isNaN(assessmentId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid assessment ID",
-        });
-      }
-
-      // Get the assessment to verify ownership
-      const assessment = await storage.getAssessmentById(assessmentId);
-
-      if (!assessment) {
-        return res.status(404).json({
-          success: false,
-          message: "Assessment not found",
-        });
-      }
-
-      // Verify ownership
-      if (assessment.userId !== req.user!.id) {
-        return res.status(403).json({
-          success: false,
-          message: "You do not have permission to delete this assessment",
-        });
-      }
-
-      // Delete the assessment
-      const deleted = await storage.deleteAssessment(assessmentId);
-
-      if (!deleted) {
-        return res.status(500).json({
-          success: false,
-          message: "Failed to delete assessment",
-        });
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: "Assessment deleted successfully",
-      });
-    } catch (error) {
-      console.error("Error deleting assessment:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to delete assessment",
       });
     }
   });

@@ -27,6 +27,8 @@ export function ProfileCompletionCard() {
       }
 
       const fieldsToCheck = [
+        { name: "name", value: user.name, label: "Name" },
+        { name: "email", value: user.name, label: "Email" },
         { name: "company", value: user.company, label: "Company" },
         { name: "industry", value: user.industry, label: "Industry" },
         {
