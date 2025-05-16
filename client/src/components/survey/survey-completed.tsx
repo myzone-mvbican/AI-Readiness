@@ -25,9 +25,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { CsvQuestion, Assessment } from "@shared/types";
-import { useRef, useCallback } from "react";
-import jsPDF from "jspdf";
+import { useRef, useEffect, useState } from "react";
 import html2canvas from "html2canvas";
+import { PdfButton } from './pdf-export';
 
 interface SurveyCompletedProps {
   assessment: Assessment;
