@@ -160,7 +160,7 @@ export default function SurveyEditDialog({
     },
     onSuccess: () => {
       // Invalidate all survey-related queries
-      queryClient.invalidateQueries({ queryKey: ["/api/surveys"] });
+      // queryClient.invalidateQueries({ queryKey: ["/api/surveys"] });
       queryClient.invalidateQueries({
         queryKey: ["/api/admin/surveys"],
       });
