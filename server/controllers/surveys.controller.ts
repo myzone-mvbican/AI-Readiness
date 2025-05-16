@@ -106,16 +106,22 @@ export class SurveysController {
         }
       }
 
-      const questionsCountNum = parseInt(questionsCount);
-      if (isNaN(questionsCountNum)) {
-        if (req.file && req.file.path) {
-          fs.unlinkSync(req.file.path);
-        }
+      // Validate CSV content
+      const fileContent = fs.readFileSync(req.file.path, 'utf8');
+      const validation = CsvValidator.validate(fileContent);
+      
+      if (!validation.isValid) {
+        // Clean up uploaded file
+        fs.unlinkSync(req.file.path);
         return res.status(400).json({
           success: false,
-          message: "Invalid questions count format. Must be a valid number.",
+          message: "Invalid CSV format",
+          errors: validation.errors
         });
       }
+
+      // Use validated questions count
+      const questionsCountNum = validation.questionsCount;
 
       // Process multiple teams
       let selectedTeamIds: number[] = [];
