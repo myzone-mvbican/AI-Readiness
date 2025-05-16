@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
-import { SurveysModel } from "../models/survey.model";
+import { SurveyModel } from "../models/survey.model";
+import { TeamModel } from "../models/team.model";
 import Papa from "papaparse";
 import fs from "fs";
 
-export class SurveysController {
+export class SurveyController {
   static async getAll(req: Request, res: Response) {
     try {
       const teamId = parseInt(req.params.teamId);
@@ -14,7 +15,7 @@ export class SurveysController {
         });
       }
 
-      const surveysWithAuthors = await SurveysModel.getWithAuthors(teamId);
+      const surveysWithAuthors = await SurveyModel.getWithAuthors(teamId);
 
       return res.status(200).json({
         success: true,
@@ -39,7 +40,7 @@ export class SurveysController {
         });
       }
 
-      const survey = await SurveysModel.getWithAuthor(surveyId);
+      const survey = await SurveyModel.getById(surveyId);
 
       if (!survey) {
         return res.status(404).json({
@@ -57,6 +58,110 @@ export class SurveysController {
       return res.status(500).json({
         success: false,
         message: "Failed to retrieve survey",
+      });
+    }
+  }
+
+  static async getByIdForUser(req: Request, res: Response) {
+    try {
+      const surveyId = parseInt(req.params.id);
+      if (isNaN(surveyId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid survey ID",
+        });
+      }
+
+      const survey = await SurveyModel.getById(surveyId);
+
+      if (!survey) {
+        return res.status(404).json({
+          success: false,
+          message: "Survey not found",
+        });
+      }
+
+      // Get all teams for the user to verify access
+      const userTeams = await TeamModel.getByUserId(req.user!.id);
+      const teamIds = userTeams.map((team) => team.id);
+
+      // Check if survey is global (null teamId) or if user has access to any of the survey's teams
+      const surveyTeamIds = await SurveyModel.getTeams(surveyId);
+
+      // Allow access if:
+      // 1. Survey is global (teamId is null and no teams assigned)
+      // 2. User is part of any team the survey is assigned to
+      const isGlobalSurvey =
+        survey.teamId === null && surveyTeamIds.length === 0;
+      const hasTeamAccess = surveyTeamIds.some((teamId) =>
+        teamIds.includes(teamId),
+      );
+
+      if (!isGlobalSurvey && !hasTeamAccess) {
+        return res.status(403).json({
+          success: false,
+          message: "You don't have access to this survey",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        survey,
+      });
+    } catch (error) {
+      console.error(`Error getting survey ${req.params.id}:`, error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to retrieve survey",
+      });
+    }
+  }
+
+  static async getByTeamForUser(req: Request, res: Response) {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      if (isNaN(teamId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid team ID",
+        });
+      }
+
+      // If the team ID is 0, we only want to get global surveys
+      if (teamId === 0) {
+        // Special case for global surveys (team ID null)
+        const surveys = await SurveyModel.getAll(0);
+
+        return res.status(200).json({
+          success: true,
+          surveys,
+        });
+      }
+
+      // For non-zero team IDs, verify access first
+      const userTeams = await TeamModel.getByUserId(req.user!.id);
+      const teamIds = userTeams.map((team) => team.id);
+
+      // Check if user has access to this team
+      if (!teamIds.includes(teamId)) {
+        return res.status(403).json({
+          success: false,
+          message: "You don't have access to this team's surveys",
+        });
+      }
+
+      // Get surveys for the team, including global surveys
+      const surveys = await SurveyModel.getAll(teamId);
+
+      return res.status(200).json({
+        success: true,
+        surveys,
+      });
+    } catch (error) {
+      console.error("Error getting surveys:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to retrieve surveys",
       });
     }
   }
@@ -150,11 +255,11 @@ export class SurveysController {
         authorId: req.user!.id,
       };
 
-      const newSurvey = await SurveysModel.create(surveyData);
+      const newSurvey = await SurveyModel.create(surveyData);
 
       // Assign teams if provided
       if (selectedTeamIds.length > 0) {
-        await SurveysModel.updateTeams(newSurvey.id, selectedTeamIds);
+        await SurveyModel.updateTeams(newSurvey.id, selectedTeamIds);
       }
 
       return res.status(201).json({
@@ -185,7 +290,7 @@ export class SurveysController {
       }
 
       // Check if survey exists
-      const existingSurvey = await SurveysModel.getById(surveyId);
+      const existingSurvey = await SurveyModel.getById(surveyId);
       if (!existingSurvey) {
         if (req.file && req.file.path) {
           fs.unlinkSync(req.file.path);
@@ -283,11 +388,11 @@ export class SurveysController {
         }
       }
 
-      const updatedSurvey = await SurveysModel.update(surveyId, updateData);
+      const updatedSurvey = await SurveyModel.update(surveyId, updateData);
 
       // Update assigned teams if provided
       if (req.body.teamIds) {
-        await SurveysModel.updateTeams(surveyId, selectedTeamIds);
+        await SurveyModel.updateTeams(surveyId, selectedTeamIds);
       }
 
       return res.status(200).json({
@@ -315,7 +420,7 @@ export class SurveysController {
       }
 
       // Check if survey exists
-      const existingSurvey = await SurveysModel.getById(surveyId);
+      const existingSurvey = await SurveyModel.getById(surveyId);
       if (!existingSurvey) {
         return res.status(404).json({
           success: false,
@@ -346,7 +451,7 @@ export class SurveysController {
         }
       }
 
-      const deleted = await SurveysModel.delete(surveyId);
+      const deleted = await SurveyModel.delete(surveyId);
 
       if (!deleted) {
         return res.status(500).json({
@@ -379,7 +484,7 @@ export class SurveysController {
       }
 
       // Get survey details
-      const survey = await SurveysModel.getById(id);
+      const survey = await SurveyModel.getById(id);
 
       if (!survey) {
         return res.status(404).json({
@@ -433,7 +538,7 @@ export class SurveysController {
       }
 
       // Check if survey exists
-      const survey = await SurveysModel.getById(surveyId);
+      const survey = await SurveyModel.getById(surveyId);
       if (!survey) {
         return res.status(404).json({
           success: false,
@@ -442,7 +547,7 @@ export class SurveysController {
       }
 
       // Get teams associated with this survey
-      const teamIds = await SurveysModel.getTeams(surveyId);
+      const teamIds = await SurveyModel.getTeams(surveyId);
 
       return res.status(200).json({
         success: true,

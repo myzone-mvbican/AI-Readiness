@@ -5,7 +5,7 @@ import { Team, TeamWithRole, UserTeam } from "@shared/types";
 import { InsertTeam, InsertUserTeam } from "@shared/types/requests";
 
 export class TeamModel {
-  static async createTeam(teamData: InsertTeam): Promise<Team> {
+  static async create(teamData: InsertTeam): Promise<Team> {
     try {
       const [team] = await db.insert(teams).values(teamData).returning();
       return team;
@@ -15,7 +15,7 @@ export class TeamModel {
     }
   }
 
-  static async getTeam(id: number): Promise<Team | undefined> {
+  static async getById(id: number): Promise<Team | undefined> {
     try {
       const [team] = await db.select().from(teams).where(eq(teams.id, id));
       return team;
@@ -25,7 +25,7 @@ export class TeamModel {
     }
   }
 
-  static async getTeamByName(name: string): Promise<Team | undefined> {
+  static async getByName(name: string): Promise<Team | undefined> {
     try {
       const [team] = await db.select().from(teams).where(eq(teams.name, name));
       return team;
@@ -35,7 +35,7 @@ export class TeamModel {
     }
   }
 
-  static async getTeamsByUserId(userId: number): Promise<TeamWithRole[]> {
+  static async getByUserId(userId: number): Promise<TeamWithRole[]> {
     try {
       const result = await db
         .select({
@@ -58,7 +58,7 @@ export class TeamModel {
     }
   }
 
-  static async addUserToTeam(userTeamData: InsertUserTeam): Promise<UserTeam> {
+  static async addUser(userTeamData: InsertUserTeam): Promise<UserTeam> {
     try {
       const [userTeam] = await db
         .insert(userTeams)
@@ -71,10 +71,7 @@ export class TeamModel {
     }
   }
 
-  static async updateUserTeams(
-    userId: number,
-    teamIds: number[],
-  ): Promise<void> {
+  static async updateUser(userId: number, teamIds: number[]): Promise<void> {
     try {
       // Get current teams for this user
       const currentUserTeams = await db

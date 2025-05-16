@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { storage } from "../storage";
+import { UserModel } from "../models/user.model";
 
 // Extend the Express Request interface to include the user
 declare global {
@@ -48,7 +48,7 @@ export const auth = async (req: Request, res: Response, next: NextFunction) => {
     const token = authHeader.split(" ")[1];
 
     // Verify the token
-    const decoded = storage.verifyToken(token);
+    const decoded = UserModel.verifyToken(token);
 
     if (!decoded) {
       return res.status(401).json({
@@ -58,7 +58,7 @@ export const auth = async (req: Request, res: Response, next: NextFunction) => {
     }
 
     // Get user from database
-    const user = await storage.getUser(decoded.userId);
+    const user = await UserModel.getById(decoded.userId);
 
     if (!user) {
       return res.status(401).json({
@@ -73,7 +73,7 @@ export const auth = async (req: Request, res: Response, next: NextFunction) => {
       // @ts-ignore - Handle if role property doesn't exist on user
       if (user.role) {
         role = user.role;
-      } else if (storage.isAdmin(user.email)) {
+      } else if (UserModel.isAdmin(user.email)) {
         role = "admin";
       }
     } catch (e) {

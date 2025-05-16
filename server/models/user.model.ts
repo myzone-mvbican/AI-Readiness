@@ -7,6 +7,14 @@ import { User, GoogleUserPayload } from "@shared/types";
 import { users, userTeams, surveys } from "@shared/schema";
 import { InsertUser, UpdateUser } from "@shared/types/requests";
 
+// Create a JWT_SECRET if not already set
+if (!process.env.JWT_SECRET) {
+  console.warn(
+    "JWT_SECRET not set. Using a default secret for development. DO NOT USE THIS IN PRODUCTION!",
+  );
+  process.env.JWT_SECRET = "myzone-ai-dev-secret-2025";
+}
+
 // List of admin emails (environment variable based for security, with defaults)
 const ADMIN_EMAILS = (
   process.env.ADMIN_EMAILS || "bican.valeriu@myzone.ai,mike@myzone.ai"
@@ -15,17 +23,17 @@ const ADMIN_EMAILS = (
   .map((email) => email.trim().toLowerCase());
 
 export class UserModel {
-  static async findById(id: number): Promise<User | null> {
+  static async getById(id: number): Promise<User | null> {
     const result = await db.select().from(users).where(eq(users.id, id));
     return result[0] || null;
   }
 
-  static async findByEmail(email: string): Promise<User | undefined> {
+  static async getByEmail(email: string): Promise<User | undefined> {
     const result = await db.select().from(users).where(eq(users.email, email));
     return result[0] || null;
   }
 
-  static async findByGoogleId(googleId: string): Promise<User | undefined> {
+  static async getByGoogleId(googleId: string): Promise<User | undefined> {
     try {
       const [user] = await db
         .select()
@@ -125,7 +133,7 @@ export class UserModel {
   ): Promise<User | undefined> {
     try {
       // First get the current user
-      const user = await UserModel.findById(userId);
+      const user = await UserModel.getById(userId);
       if (!user) {
         throw new Error("User not found");
       }
