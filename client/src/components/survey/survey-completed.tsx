@@ -1,4 +1,4 @@
-import { CheckCircle2, InfoIcon } from "lucide-react";
+import { CheckCircle2, InfoIcon, Download } from "lucide-react";
 import {
   RadarChart,
   PolarGrid,
@@ -23,31 +23,24 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-
-interface SurveyQuestion {
-  number: number;
-  category: string;
-  text: string;
-  detail?: string;
-}
+import { Button } from "@/components/ui/button";
+import { CsvQuestion, Assessment } from "@shared/types";
+import { useRef, useCallback } from "react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 interface SurveyCompletedProps {
-  assessment: {
-    title: string;
-    score: number | null;
-    answers: Array<{
-      q: number | null | undefined;
-      a: 0 | 2 | 1 | -1 | -2 | null | undefined;
-    }>;
-  };
-  surveyQuestions: SurveyQuestion[];
+  assessment: Assessment;
+  questions?: CsvQuestion[];
 }
 
 export default function SurveyCompleted({
   assessment,
-  surveyQuestions,
+  questions = [],
 }: SurveyCompletedProps) {
   const { answers = [] } = assessment;
+  const chartRef = useRef<HTMLDivElement>(null);
+  const responsesRef = useRef<HTMLDivElement>(null);
 
   // Define radar chart data type
   interface RadarChartData {
@@ -61,7 +54,7 @@ export default function SurveyCompleted({
     // Group questions by category
     const categoryMap = new Map<string, number[]>();
 
-    surveyQuestions.forEach((question: SurveyQuestion, index: number) => {
+    questions.forEach((question: CsvQuestion, index: number) => {
       const category = question.category;
       if (!category) return;
 
@@ -112,26 +105,178 @@ export default function SurveyCompleted({
       return `Unknown Question`;
     }
     // Find the matching question by number
-    const question = surveyQuestions.find(
-      (q: SurveyQuestion) => q.number === questionId,
-    );
-    return question?.text || `Question ${questionId}`;
+    const question = questions.find((q: CsvQuestion) => q.id === questionId);
+    return question?.question || `Question ${questionId}`;
   };
+  
+  // Function to generate and download PDF report
+  const generatePdf = useCallback(async () => {
+    if (!chartRef.current) return;
+    
+    try {
+      // Create a new PDF document
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      // Add header content
+      pdf.setFontSize(20);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("AI Readiness Assessment Report", 20, 20);
+      
+      pdf.setFontSize(12);
+      pdf.setFont("helvetica", "normal");
+      
+      // Add date completed
+      const today = new Date();
+      const dateStr = today.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      pdf.text(`Date completed: ${dateStr}`, 20, 30);
+      
+      // Add score
+      pdf.text(`AI Readiness Score: ${assessment.score || 0} / 100`, 20, 40);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Assessment Results", 20, 60);
+      pdf.setFont("helvetica", "normal");
+      
+      // Add description text about readiness level
+      const readinessLevel = (assessment.score ?? 0) >= 80
+        ? "advanced"
+        : (assessment.score ?? 0) >= 60
+          ? "intermediate"
+          : (assessment.score ?? 0) >= 40
+            ? "developing"
+            : "beginning";
+      
+      pdf.text(`Based on your responses, your organization is at the ${readinessLevel}`, 20, 70);
+      pdf.text(`stage of AI readiness.`, 20, 75);
+      
+      // Capture the chart as an image
+      const chartCanvas = await html2canvas(chartRef.current, {
+        scale: 2,
+        backgroundColor: null,
+        logging: false
+      });
+      
+      const chartImageData = chartCanvas.toDataURL('image/png');
+      
+      // Calculate chart dimensions to fit the PDF
+      const imgWidth = 170;
+      const imgHeight = (chartCanvas.height * imgWidth) / chartCanvas.width;
+      
+      // Add chart to PDF
+      pdf.addImage(chartImageData, 'PNG', 20, 85, imgWidth, imgHeight);
+      
+      // Add answers section
+      pdf.addPage();
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Your Responses", 20, 20);
+      pdf.setFont("helvetica", "normal");
+      
+      let yPosition = 30;
+      
+      // Add each question and answer
+      answers.forEach((answer: any, index: number) => {
+        // If we're running out of space, add a new page
+        if (yPosition > 250) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        
+        const questionText = getQuestionTextById(answer.q);
+        
+        // Split long question text to fit on page
+        const questionLines = pdf.splitTextToSize(
+          `Question ${index + 1}: ${questionText}`, 
+          170
+        );
+        
+        pdf.setFont("helvetica", "bold");
+        pdf.text(questionLines, 20, yPosition);
+        yPosition += questionLines.length * 6;
+        
+        pdf.setFont("helvetica", "normal");
+        let answerText = "";
+        switch (answer.a) {
+          case 2:
+            answerText = "Strongly Agree";
+            break;
+          case 1:
+            answerText = "Agree";
+            break;
+          case 0:
+            answerText = "Neutral";
+            break;
+          case -1:
+            answerText = "Disagree";
+            break;
+          case -2:
+            answerText = "Strongly Disagree";
+            break;
+          default:
+            answerText = "Not answered";
+        }
+        
+        pdf.text(`Your answer: ${answerText}`, 20, yPosition);
+        yPosition += 12;
+      });
+      
+      // Add recommendations section
+      pdf.addPage();
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Recommendations", 20, 20);
+      pdf.setFont("helvetica", "normal");
+      pdf.text("This section will include tailored AI maturity recommendations based on your scores.", 20, 30);
+      
+      // Add footer
+      const totalPages = pdf.getNumberOfPages();
+      for(let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(10);
+        pdf.text(`MyZone AI Readiness Assessment - Page ${i} of ${totalPages}`, 20, 285);
+      }
+      
+      // Generate filename based on title and date
+      const quarter = Math.floor((today.getMonth() / 3) + 1);
+      const filename = `ai-readiness-report-Q${quarter}-${today.getFullYear()}.pdf`;
+      
+      // Save the PDF
+      pdf.save(filename);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("There was an error generating the PDF. Please try again.");
+    }
+  }, [assessment, answers, questions, chartRef]);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-center py-4">
-        <div className="bg-green-100 rounded-full p-5">
-          <CheckCircle2 className="h-12 w-12 text-green-600" />
+      <div className="flex justify-between items-start py-4">
+        <div className="flex items-start gap-4">
+          <div className="bg-green-100 rounded-full p-5">
+            <CheckCircle2 className="h-12 w-12 text-green-600" />
+          </div>
+          <div className="text-start">
+            <h2 className="text-2xl text-foreground font-bold">
+              Assessment Completed
+            </h2>
+            <p className="text-muted-foreground mt-2">
+              You scored {assessment.score} out of 100 on this AI readiness
+              assessment.
+            </p>
+          </div>
         </div>
-      </div>
-
-      <div className="text-center">
-        <h2 className="text-2xl font-bold">Assessment Completed</h2>
-        <p className="text-muted-foreground mt-2">
-          You scored {assessment.score} out of 100 on this AI readiness
-          assessment.
-        </p>
+        <Button 
+          className="flex items-center gap-2" 
+          onClick={generatePdf}
+        >
+          <Download className="h-4 w-4" />
+          Download PDF
+        </Button>
       </div>
 
       <Tabs defaultValue="results" className="mt-6">
@@ -168,7 +313,7 @@ export default function SurveyCompleted({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="py-4">
+              <div className="py-4" ref={chartRef}>
                 <ChartContainer
                   config={{
                     // Config for the score data point
@@ -240,24 +385,25 @@ export default function SurveyCompleted({
         </TabsContent>
         <TabsContent value="responses">
           <ScrollArea className="h-[500px] rounded-md border p-4">
-            {answers.map((answer: any, index: number) => (
+            <div ref={responsesRef}>
+              {answers.map((answer: any, index: number) => (
               <div key={`answer-${index}`}>
                 <div className="flex items-start gap-2">
-                  <h3 className="text-sm md:text-base font-medium flex-1">
+                  <h3 className="text-sm text-foreground md:text-base font-medium flex-1">
                     Question {index + 1}: {getQuestionTextById(answer.q)}
                   </h3>
-                  {surveyQuestions.find(q => q.number === answer.q)?.detail && (
+                  {questions.find((q) => q.id === answer.q)?.details && (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <InfoIcon className="h-4 w-4 flex-shrink-0 mt-1" />
+                        <InfoIcon className="h-4 w-4 dark:text-white flex-shrink-0 mt-1" />
                       </TooltipTrigger>
                       <TooltipContent className="p-2 max-w-[400px]">
-                        {surveyQuestions.find(q => q.number === answer.q)?.detail}
+                        {questions.find((q) => q.id === answer.q)?.details}
                       </TooltipContent>
                     </Tooltip>
                   )}
                 </div>
-                <p className="text-sm mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                   Your answer:{" "}
                   <span className="font-medium">
                     {answer.a === 2

@@ -10,7 +10,6 @@ import { AssessmentController } from "./controllers/assessment.controller";
 import { auth, requireAdmin } from "./middleware/auth";
 import { upload } from "./middleware/upload";
 import cors from "cors";
-import * as fs from "fs";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Enable CORS
@@ -19,71 +18,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API routes - path prefixed with /api
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", message: "Server is healthy" });
-  });
-
-  // Endpoint to serve CSV files directly - with fallback to default survey
-  app.get("/api/csv-file/:filename", async (req, res) => {
-    try {
-      const filename = req.params.filename;
-      console.log("CSV file requested:", filename);
-
-      if (!filename) {
-        return res.status(400).json({
-          success: false,
-          message: "Filename is required",
-        });
-      }
-
-      // List of possible places to look for the file
-      const possiblePaths = [
-        `${process.cwd()}/public/uploads/${filename}`,
-        `${process.cwd()}/public/uploads/surveys/${filename}`,
-      ];
-
-      console.log("Looking for CSV file in these locations:", possiblePaths);
-
-      // Check multiple file paths
-      let fileContent = null;
-      let foundPath = null;
-
-      for (const path of possiblePaths) {
-        if (fs.existsSync(path)) {
-          console.log("File found at:", path);
-          foundPath = path;
-          fileContent = fs.readFileSync(path, "utf8");
-          break;
-        }
-      }
-
-      // If we still don't have a file, give up
-      if (!fileContent) {
-        console.error("No survey file could be found");
-        return res.status(404).json({
-          success: false,
-          message: "No survey file could be found",
-        });
-      }
-
-      console.log(
-        `Serving CSV file from ${foundPath} (${fileContent.length} bytes)`,
-      );
-
-      // Set appropriate headers
-      res.setHeader("Content-Type", "text/csv");
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename="${filename}"`,
-      );
-
-      // Send the file content
-      return res.send(fileContent);
-    } catch (error) {
-      console.error("Error serving CSV file:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Error serving CSV file",
-      });
-    }
   });
 
   // Authentication routes
@@ -218,8 +152,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/public/assessments", AssessmentController.createGuest);
   // Public endpoint for guest users to access survey details
   app.get("/api/public/surveys/detail/:id", SurveyController.getById);
-  // Get questions for a specific survey (public endpoint)
-  app.get("/api/public/surveys/:id/questions", SurveyController.getQuestions);
 
   const httpServer = createServer(app);
 

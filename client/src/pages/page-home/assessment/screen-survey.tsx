@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { AssessmentAnswer } from "@shared/types";
+import { AssessmentAnswer, CsvQuestion, SurveyResponse } from "@shared/types";
 import { Loader2 } from "lucide-react";
 import SurveyTemplate from "@/components/survey/survey-template";
 import {
@@ -12,22 +12,14 @@ import {
   clearGuestAssessmentDataForSurvey,
 } from "@/lib/localStorage";
 
-interface SurveyQuestion {
-  number: number;
-  text: string;
-  description: string;
-  detail?: string;
-  category: string;
-}
-
 interface GuestSurveyProps {
   guestUser: GuestUser | null;
   surveyId: number;
   onSubmit: (answers: AssessmentAnswer[]) => void;
   onCancel?: () => void;
   onScoreChange?: (score: number) => void;
-  questions: SurveyQuestion[];
-  setQuestions: React.Dispatch<React.SetStateAction<SurveyQuestion[]>>;
+  questions: CsvQuestion[];
+  setQuestions: React.Dispatch<React.SetStateAction<CsvQuestion[]>>;
 }
 
 export default function GuestSurvey({
@@ -44,7 +36,6 @@ export default function GuestSurvey({
 
   const { toast } = useToast();
 
-  // const [questions, setQuestions] = useState<SurveyQuestion[]>([]);
   const [answers, setAnswers] = useState<AssessmentAnswer[]>([]);
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -60,19 +51,12 @@ export default function GuestSurvey({
   });
 
   // Fetch survey data using public API endpoint
-  const { data: surveyData, isLoading: isSurveyLoading } = useQuery({
-    queryKey: [`/api/public/surveys/detail/${surveyId}`],
-    retry: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-
-  // Fetch survey questions using public API endpoint
-  const { data: questionsData, isLoading: isQuestionsLoading } = useQuery({
-    queryKey: [`/api/public/surveys/${surveyId}/questions`],
-    retry: false,
-    enabled: !!surveyData?.success,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
+  const { data: surveyData, isLoading: isSurveyLoading } =
+    useQuery<SurveyResponse>({
+      queryKey: [`/api/public/surveys/detail/${surveyId}`],
+      retry: false,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    });
 
   // Load saved answers from localStorage when available
   useEffect(() => {
@@ -95,23 +79,15 @@ export default function GuestSurvey({
 
   // Format questions when data is loaded
   useEffect(() => {
-    if (questionsData?.success && questionsData.questions) {
-      // Map the questions to the format needed by SurveyTemplate
-      const formattedQuestions = questionsData.questions.map((q: any) => ({
-        number: q.id || q.number,
-        text: q.question || q.text,
-        details: q.details || "", // Handle either property name
-        description: q.details || "",
-        category: q.category || "General",
-      }));
-
-      setQuestions(formattedQuestions);
+    const { survey, success } = surveyData || {};
+    if (success && survey.questions) {
+      setQuestions(survey.questions);
 
       // Initialize answers if none exist
       if (answers.length === 0) {
-        const initialAnswers = formattedQuestions.map(
-          (question: SurveyQuestion) => ({
-            q: question.number,
+        const initialAnswers = survey.questions.map(
+          (question: CsvQuestion) => ({
+            q: question.id,
             a: null,
           }),
         );
@@ -119,14 +95,14 @@ export default function GuestSurvey({
         setAnswers(initialAnswers);
       }
     }
-  }, [questionsData, answers.length]);
+  }, [surveyData, answers.length]);
 
   // Handle answer changes
   const handleAnswerChange = (index: number, value: number) => {
     const updatedAnswers = [...answers];
 
     // Find the corresponding answer object using the question number from questions[index]
-    const questionNumber = questions[index]?.number;
+    const questionNumber = questions[index]?.id;
     const answerIndex = updatedAnswers.findIndex((a) => a.q === questionNumber);
 
     if (answerIndex !== -1) {
@@ -213,7 +189,7 @@ export default function GuestSurvey({
   };
 
   // Show loading state
-  if (isSurveyLoading || isQuestionsLoading) {
+  if (isSurveyLoading) {
     return (
       <div className="flex justify-center items-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -223,7 +199,7 @@ export default function GuestSurvey({
   }
 
   // Show error if data couldn't be loaded
-  if (!surveyData?.success || !questionsData?.success) {
+  if (!surveyData?.success) {
     return (
       <div className="text-center py-12">
         <p className="text-red-500">
@@ -232,8 +208,6 @@ export default function GuestSurvey({
       </div>
     );
   }
-
-  console.log(guestUser);
 
   return (
     <div className="w-full space-y-6">
@@ -245,7 +219,7 @@ export default function GuestSurvey({
             ? "in-progress"
             : "draft",
         }}
-        surveyTitle={surveyData.survey.title}
+        surveyTitle={surveyData.survey.title || "AI Readiness Assessment"}
         questions={questions}
         answers={answers}
         onAnswerChange={handleAnswerChange}

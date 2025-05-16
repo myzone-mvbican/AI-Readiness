@@ -160,6 +160,7 @@ export default function SurveyEditDialog({
     },
     onSuccess: () => {
       // Invalidate all survey-related queries
+      queryClient.invalidateQueries({ queryKey: ["/api/surveys"] });
       queryClient.invalidateQueries({
         queryKey: ["/api/admin/surveys"],
       });
@@ -257,6 +258,8 @@ export default function SurveyEditDialog({
       data.selectedTeams.length > 0
     ) {
       formData.append("teamIds", JSON.stringify(data.selectedTeams));
+    } else {
+      formData.append("teamIds", JSON.stringify([]));
     }
 
     // If a new file was uploaded, include it

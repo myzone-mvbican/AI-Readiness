@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { SurveyModel } from "../models/survey.model";
 import { TeamModel } from "../models/team.model";
-import Papa from "papaparse";
 import fs from "fs";
 
 export class SurveyController {
@@ -469,60 +468,6 @@ export class SurveyController {
       return res.status(500).json({
         success: false,
         message: "Failed to delete survey",
-      });
-    }
-  }
-
-  static async getQuestions(req: Request, res: Response) {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid survey ID",
-        });
-      }
-
-      // Get survey details
-      const survey = await SurveyModel.getById(id);
-
-      if (!survey) {
-        return res.status(404).json({
-          success: false,
-          message: "Survey not found",
-        });
-      }
-
-      // Read and parse the CSV file
-      const fileContent = fs.readFileSync(survey.fileReference, "utf8");
-
-      // Parse CSV
-      const parsedData = Papa.parse(fileContent, {
-        header: true,
-        skipEmptyLines: true,
-      });
-
-      // Map CSV data to questions with the correct column names
-      const questions = parsedData.data
-        .filter((row: any) => row["Question Summary"]?.trim())
-        .map((row: any, index: number) => {
-          return {
-            id: index + 1,
-            question: row["Question Summary"] || "",
-            category: row["Category"] || "",
-            details: row["Question Details"] || "",
-          };
-        });
-
-      return res.status(200).json({
-        success: true,
-        questions,
-      });
-    } catch (error) {
-      console.error("Error fetching survey questions:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to fetch survey questions",
       });
     }
   }
