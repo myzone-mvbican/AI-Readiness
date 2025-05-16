@@ -41,6 +41,30 @@ export default function SurveyCompleted({
   const { answers = [] } = assessment;
   const chartRef = useRef<HTMLDivElement>(null);
   const responsesRef = useRef<HTMLDivElement>(null);
+  const [chartImageUrl, setChartImageUrl] = useState("");
+  
+  // Function to capture chart for PDF export
+  const captureChart = async () => {
+    if (!chartRef.current) return;
+    
+    try {
+      const canvas = await html2canvas(chartRef.current, {
+        scale: 2,
+        backgroundColor: null,
+        logging: false,
+      });
+      
+      const imageUrl = canvas.toDataURL("image/png");
+      setChartImageUrl(imageUrl);
+    } catch (error) {
+      console.error("Error capturing chart:", error);
+    }
+  };
+  
+  // Capture chart when component mounts and when assessment changes
+  useEffect(() => {
+    captureChart();
+  }, [assessment, questions]);
 
   // Define radar chart data type
   interface RadarChartData {
