@@ -187,10 +187,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       requiresAuth: true,
     }),
     enabled: !!token || !!getCachedUser(), // Enable if token exists OR we have cached user data
-    staleTime: 1000 * 60 * 15, // Consider data fresh for 15 minutes (increased from 5)
+    staleTime: 1000 * 60 * 15, // Consider data fresh for 15 minutes
     gcTime: 1000 * 60 * 60, // Keep in cache for 1 hour
-    refetchOnWindowFocus: false, // Don't automatically refetch on window focus
-    refetchOnMount: false, // Only refetch if data is stale
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false, // Disable periodic refetching
+    refetchIntervalInBackground: false, // Disable background refetching
     initialData: cachedUser, // Use cached data as initial data
     retry: false, // Don't retry failed requests
   });
