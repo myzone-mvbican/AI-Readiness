@@ -22,7 +22,27 @@ export type UserTeam = typeof userTeams.$inferSelect;
 export type Survey = typeof surveys.$inferSelect;
 export type SurveyTeam = typeof surveyTeams.$inferSelect;
 
-// Define the assessment answer type directly
+// Define the assessment question type
+export type CsvQuestion = {
+  id: number;
+  question: string;
+  category: string;
+  details: string;
+};
+
+export type CsvValidationResult = {
+  isValid: boolean;
+  errors: string[];
+  questionsCount: number;
+};
+
+export type CsvParseResult = {
+  isValid: boolean;
+  errors: string[];
+  questions: CsvQuestion[];
+};
+
+// Define the assessment answer type
 export type AssessmentAnswer = {
   q: number;
   a?: -2 | -1 | 0 | 1 | 2 | null;

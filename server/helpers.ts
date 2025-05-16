@@ -1,25 +1,6 @@
-
-import Papa from "papaparse";
 import fs from "fs";
-
-export interface CsvQuestion {
-  id: number;
-  question: string;
-  category: string;
-  details: string;
-}
-
-export interface CsvValidationResult {
-  isValid: boolean;
-  errors: string[];
-  questionsCount: number;
-}
-
-export interface CsvParseResult {
-  isValid: boolean;
-  errors: string[];
-  questions: CsvQuestion[];
-}
+import Papa from "papaparse";
+import { CsvParseResult, CsvValidationResult } from "@shared/types";
 
 export class CsvParser {
   static readonly REQUIRED_COLUMNS = [
@@ -62,6 +43,8 @@ export class CsvParser {
       const parsedData = Papa.parse(csvContent, {
         header: true,
         skipEmptyLines: true,
+        dynamicTyping: false, // Keep everything as strings
+        transform: (value) => value?.trim(), // Trim whitespace
       });
 
       if (parsedData.errors.length > 0) {
@@ -76,7 +59,7 @@ export class CsvParser {
       });
 
       questionsCount = parsedData.data.filter((row: any) =>
-        row["Question Summary"]?.trim()
+        row["Question Summary"]?.trim(),
       ).length;
 
       if (questionsCount === 0) {
@@ -96,43 +79,44 @@ export class CsvParser {
   static parse(filePath: string): CsvParseResult {
     try {
       const fileContent = fs.readFileSync(filePath, "utf8");
-      
+
       const validation = this.validate(fileContent);
-      
+
       if (!validation.isValid) {
         return {
           isValid: false,
           errors: validation.errors,
-          questions: []
+          questions: [],
         };
       }
 
       const parsedData = Papa.parse(fileContent, {
         header: true,
         skipEmptyLines: true,
-        transform: (value) => value?.trim() || "",
+        dynamicTyping: false, // Keep everything as strings
+        transform: (value) => value?.trim(), // Trim whitespace
       });
 
       const questions = parsedData.data
         .filter((row: any) => row["Question Summary"]?.trim())
         .map((row: any, index: number) => ({
-          id: index + 1,
+          id: row["Question number"] || index + 1,
           question: row["Question Summary"],
           category: row["Category"],
-          details: row["Question Details"]
+          details: row["Question Details"],
         }));
 
       return {
         isValid: true,
         errors: [],
-        questions
+        questions,
       };
     } catch (error) {
       console.error("Error parsing CSV file:", error);
       return {
         isValid: false,
         errors: [`Error parsing CSV file: ${error}`],
-        questions: []
+        questions: [],
       };
     }
   }

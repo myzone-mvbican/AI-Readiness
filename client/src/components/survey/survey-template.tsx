@@ -25,18 +25,10 @@ import {
   ArrowRight,
   CheckCircle2,
 } from "lucide-react";
-import { Assessment, AssessmentAnswer } from "@shared/types";
+import { CsvQuestion, Assessment, AssessmentAnswer } from "@shared/types";
 
 import SurveyQuestion from "@/components/survey/survey-question";
 import AlertCompleted from "@/components/survey/alert-completed";
-
-interface SurveyQuestion {
-  number: number;
-  text: string;
-  description: string;
-  detail?: string;
-  category: string;
-}
 
 interface SurveyTemplateProps {
   // Assessment data
@@ -49,7 +41,7 @@ interface SurveyTemplateProps {
   surveyTitle?: string; // For guest mode where data might not have nested survey property
 
   // Questions and answers
-  questions: SurveyQuestion[];
+  questions: CsvQuestion[];
   answers: AssessmentAnswer[];
   onAnswerChange: (index: number, value: number) => void;
 
@@ -254,20 +246,22 @@ export default function SurveyTemplate({
               <h3 className="text-xs md:text-sm text-muted-foreground">
                 Question {currentStep + 1} of {questions.length}
               </h3>
-              {questions[currentStep]?.description && (
+              {questions[currentStep]?.details && (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <InfoIcon className="h-4 w-4" />
                   </TooltipTrigger>
                   <TooltipContent className="p-2 max-w-[400px]">
-                    {questions[currentStep]?.description}
+                    {questions[currentStep]?.details}
                   </TooltipContent>
                 </Tooltip>
               )}
             </CardTitle>
             <CardDescription className="text-sm md:text-lg md:text-xl text-foreground font-bold">
               <p>
-                "{questions[currentStep]?.text || `Question ${currentStep + 1}`}
+                "
+                {questions[currentStep]?.question ||
+                  `Question ${currentStep + 1}`}
                 "
               </p>
             </CardDescription>
@@ -275,11 +269,10 @@ export default function SurveyTemplate({
 
           <CardContent className="pt-6">
             <SurveyQuestion
-              question={questions[currentStep]?.text || ""}
+              question={questions[currentStep]?.question || ""}
               value={answers[currentStep]?.a}
               onChange={(value) => updateAnswer(currentStep, value)}
               disabled={isSubmitting}
-              questionDescription={questions[currentStep]?.description}
             />
           </CardContent>
 

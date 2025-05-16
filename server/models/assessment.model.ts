@@ -1,8 +1,9 @@
 import { db } from "../db";
 import { eq, desc } from "drizzle-orm";
-import { assessments, surveys } from "@shared/schema";
-import { Assessment } from "@shared/types";
+import { assessments } from "@shared/schema";
+import { Assessment, Survey } from "@shared/types";
 import { InsertAssessment, UpdateAssessment } from "@shared/types/requests";
+import { SurveyModel } from "./survey.model";
 
 export class AssessmentModel {
   static async getByUserId(userId: number): Promise<Assessment[]> {
@@ -42,27 +43,26 @@ export class AssessmentModel {
     }
   }
 
-  static async getWithSurveyInfo(
-    id: number,
-  ): Promise<(Assessment & { survey: { title: string } }) | undefined> {
+  static async getWithSurveyInfo(id: number): Promise<
+    | (Assessment & {
+        survey: Survey;
+      })
+    | undefined
+  > {
     try {
       const [result] = await db
-        .select({
-          assessment: assessments,
-          surveyTitle: surveys.title,
-        })
+        .select()
         .from(assessments)
-        .innerJoin(surveys, eq(assessments.surveyTemplateId, surveys.id))
         .where(eq(assessments.id, id));
 
       if (!result) return undefined;
 
+      const survey = await SurveyModel.getById(result.surveyTemplateId);
+
       return {
-        ...result.assessment,
-        answers: JSON.parse(result.assessment.answers),
-        survey: {
-          title: result.surveyTitle,
-        },
+        ...result,
+        answers: JSON.parse(result.answers),
+        survey,
       };
     } catch (error) {
       console.error(`Error getting assessment with survey info ${id}:`, error);

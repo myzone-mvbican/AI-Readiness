@@ -9,11 +9,12 @@ import SurveyCompleted from "@/components/survey/survey-completed";
 import { Button } from "@/components/ui/button";
 import { GuestUser, clearGuestAssessmentData } from "@/lib/localStorage";
 import { AssessmentStage } from ".";
+import { Assessment, CsvQuestion } from "@shared/types";
 import DialogUserCreate from "./dialog-user-create";
 
 interface GuestAssessmentCompletedProps {
-  assessment: any;
-  questions: any;
+  assessment: Assessment;
+  questions: CsvQuestion[];
   guestUser: GuestUser | null;
   setStage: (stage: AssessmentStage) => void;
 }
@@ -29,7 +30,7 @@ export default function GuestAssessmentCompleted({
   return (
     <>
       <div className="w-full max-w-4xl mx-auto space-y-6">
-        <SurveyCompleted assessment={assessment} surveyQuestions={questions} />
+        <SurveyCompleted assessment={assessment} questions={questions} />
 
         {/* Action buttons displayed below survey results */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 pt-6">

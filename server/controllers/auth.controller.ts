@@ -325,13 +325,13 @@ export class AuthController {
         // Determine which team to assign:
         // - If it's a myzone.ai email, MyZone team
         // - Otherwise, Client team
-        let defaultTeam = await TeamModel.getTeamByName(
+        let defaultTeam = await TeamModel.getByName(
           isMyZoneEmail ? "MyZone" : "Client",
         );
 
         // Add user to the Default team
         if (defaultTeam) {
-          await TeamModel.addUserToTeam({
+          await TeamModel.addUser({
             userId: user.id,
             teamId: defaultTeam.id,
             role: "client",

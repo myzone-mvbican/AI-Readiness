@@ -22,27 +22,6 @@ import SurveyEditDialog from "./survey-edit-dialog";
 import SurveyDeleteDialog from "./survey-delete-dialog";
 import { SurveyWithAuthor } from "@shared/types";
 
-// Kept for reference but using the shared type instead
-type LocalSurveyWithAuthor = {
-  id: number;
-  title: string;
-  questionsCount: number;
-  fileReference: string;
-  status: string;
-  teamId: number | null;
-  authorId: number;
-  createdAt: string;
-  updatedAt: string;
-  author: {
-    name: string;
-    email: string;
-  };
-  teams: {
-    id: number;
-    name: string;
-  }[];
-};
-
 export type Team = {
   id: number;
   name: string;

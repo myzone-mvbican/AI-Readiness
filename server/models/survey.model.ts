@@ -1,10 +1,11 @@
 import { db } from "../db";
 import { eq, and, inArray, desc, not } from "drizzle-orm";
-import { Survey, SurveyWithAuthor } from "@shared/types";
+import { Survey, SurveyWithAuthor, CsvQuestion } from "@shared/types";
 import { surveys, surveyTeams } from "@shared/schema";
 import { InsertSurvey, UpdateSurvey } from "@shared/types/requests";
 import { UserModel } from "./user.model";
 import { TeamModel } from "./team.model";
+import { CsvParser } from "../helpers";
 
 export class SurveyModel {
   // Getters
@@ -99,14 +100,21 @@ export class SurveyModel {
     }
   }
 
-  static async getById(id: number): Promise<Survey | undefined> {
+  static async getById(
+    id: number,
+  ): Promise<(Survey & { questions: Array<CsvQuestion> }) | undefined> {
     try {
       const [survey] = await db
         .select()
         .from(surveys)
         .where(eq(surveys.id, id));
 
-      return survey;
+      const { questions } = CsvParser.parse(survey.fileReference);
+
+      return {
+        ...survey,
+        questions,
+      };
     } catch (error) {
       console.error(`Error getting survey with id ${id}:`, error);
       return undefined;
