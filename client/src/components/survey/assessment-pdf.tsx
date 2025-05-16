@@ -323,7 +323,7 @@ const AssessmentPDF = ({
         
         {chartImageUrl ? (
           <View>
-            <View style={styles.chartImage} />
+            <Image src={chartImageUrl} style={styles.chartImage} />
             <Text style={styles.chartCaption}>
               This radar chart shows your organization's score across different dimensions of AI readiness.
               Higher scores indicate greater maturity in that category.
