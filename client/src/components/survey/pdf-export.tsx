@@ -170,19 +170,8 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: '#94a3b8',
   },
-  button: {
-    backgroundColor: 'hsl(var(--primary))',
-    color: 'white',
-    padding: '10px 16px',
-    borderRadius: '0.375rem',
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '8px',
-    fontSize: '0.875rem',
-    fontWeight: 500,
-    cursor: 'pointer',
-    textDecoration: 'none',
-  },
+  // Note: inline styles for the button are handled in the component directly
+  // since react-pdf doesn't support some CSS properties
 });
 
 // Helper functions
@@ -353,7 +342,10 @@ export const PdfButton = ({ assessment, questions, chartImageUrl }: PdfButtonPro
     <PDFDownloadLink 
       document={<AssessmentDocument assessment={assessment} questions={questions} chartImageUrl={chartImageUrl} />} 
       fileName={filename}
-      style={styles.button}
+      style={{
+        textDecoration: 'none',
+      }}
+      className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-md text-sm font-medium"
     >
       {({ loading }) => (
         <>
