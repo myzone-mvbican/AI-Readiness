@@ -27,7 +27,7 @@ import { Button } from "@/components/ui/button";
 import { CsvQuestion, Assessment } from "@shared/types";
 import { useRef, useEffect, useState } from "react";
 import html2canvas from "html2canvas";
-import { PdfButton } from './pdf-export';
+import { AssessmentPDFDownloadButton } from './assessment-pdf';
 
 interface SurveyCompletedProps {
   assessment: Assessment;
@@ -63,8 +63,12 @@ export default function SurveyCompleted({
   
   // Capture chart when component mounts and when assessment changes
   useEffect(() => {
-    captureChart();
-  }, [assessment, questions]);
+    const timer = setTimeout(() => {
+      captureChart();
+    }, 500); // Delay chart capture to ensure it's rendered
+    
+    return () => clearTimeout(timer);
+  }, [assessment]);
 
   // Define radar chart data type
   interface RadarChartData {
@@ -489,10 +493,11 @@ export default function SurveyCompleted({
             </p>
           </div>
         </div>
-        <Button className="flex items-center gap-2" onClick={generatePdf}>
-          <Download className="h-4 w-4" />
-          Download PDF
-        </Button>
+        <AssessmentPDFDownloadButton
+          assessment={assessment}
+          questions={questions}
+          chartImageUrl={chartImageUrl}
+        />
       </div>
 
       <Tabs defaultValue="results" className="mt-6">
