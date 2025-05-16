@@ -71,7 +71,7 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  const [_, setLocation] = useLocation();
+  const [_, navigate] = useLocation();
   const [token, setToken] = useState<string | null>(() =>
     localStorage.getItem("token"),
   );
@@ -123,7 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       // Redirect to login page
-      setLocation("/auth");
+      navigate("/auth");
     };
 
     // Add event listener for unauthorized events
@@ -139,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         handleUnauthorized as EventListener,
       );
     };
-  }, [toast, setLocation]);
+  }, [toast, navigate]);
 
   // Get cached user data from localStorage with improved error handling
   const getCachedUser = (): User | null => {
@@ -330,7 +330,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       // Redirect to auth page
-      setLocation("/auth");
+      navigate("/auth");
     },
     onError: (error: Error) => {
       toast({
