@@ -1,5 +1,6 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { CheckCircle2, InfoIcon } from "lucide-react";
+import AISuggestions from "./ai-suggestions";
 import {
   RadarChart,
   PolarGrid,
@@ -39,6 +40,7 @@ export default function SurveyCompleted({
   const { answers = [] } = assessment;
   const responsesRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState("results");
 
   // Define radar chart data type
   interface RadarChartData {
@@ -136,10 +138,15 @@ export default function SurveyCompleted({
         </div>
       </div>
 
-      <Tabs defaultValue="results" className="mt-6">
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs 
+        defaultValue="results" 
+        className="mt-6"
+        onValueChange={(value) => setActiveTab(value)}
+      >
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="results">Results</TabsTrigger>
           <TabsTrigger value="responses">Your Responses</TabsTrigger>
+          <TabsTrigger value="suggestions">AI Suggestions</TabsTrigger>
         </TabsList>
 
         <TabsContent value="results">
@@ -280,6 +287,14 @@ export default function SurveyCompleted({
               ))}
             </div>
           </ScrollArea>
+        </TabsContent>
+        
+        <TabsContent value="suggestions">
+          <AISuggestions
+            assessment={assessment}
+            questions={questions}
+            isActive={useState(false)[0]}
+          />
         </TabsContent>
       </Tabs>
     </div>

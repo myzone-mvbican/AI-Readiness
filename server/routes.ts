@@ -144,6 +144,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/assessments/:id", auth, AssessmentController.update);
   // Delete an assessment
   app.delete("/api/assessments/:id", auth, AssessmentController.delete);
+  
+  // AI Suggestions endpoint
+  app.post("/api/ai-suggestions", AIController.generateSuggestions);
 
   // Public routes
 
