@@ -149,3 +149,44 @@
     transform: translateX(5px);
   }
 }
+
+.markdown-text {
+  h1 {
+    @apply text-2xl font-bold text-red-500;
+  }
+
+  h2 {
+    @apply text-xl font-bold text-foreground;
+  }
+
+  p {
+    @apply text-gray-800;
+
+    + :is(ol, ul) {
+      margin-top: .5rem;
+    }
+  }
+
+  ol,
+  ul {
+    @apply text-gray-800;
+    padding-left: 1.1em;
+    line-height: 1.5;
+  }
+
+  ol {
+    list-style: decimal;
+  }
+
+  ul {
+    list-style: circle;
+  }
+
+  strong {
+    @apply text-foreground;
+  }
+
+  >*+* {
+    margin-top: 1rem;
+  }
+}
