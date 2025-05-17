@@ -363,109 +363,81 @@ const RecommendationsContent = ({ markdown }: { markdown: string }) => {
 
   // Parse markdown into sections
   const sections = parseMarkdown(markdown);
-
-  // Create pairs of sections for 2-column layout
-  const sectionPairs = [];
-  for (let i = 0; i < sections.length; i += 2) {
-    if (i + 1 < sections.length) {
-      sectionPairs.push([sections[i], sections[i + 1]]);
-    } else {
-      sectionPairs.push([sections[i]]);
-    }
-  }
   
+  // Return the vertical stacked layout - showing just the sections provided in this chunk
+  // Each page will contain max 2 recommendations (from parent component logic)
   return (
     <View style={{ marginTop: 0 }}>
-      {sectionPairs.map((pair, pairIdx) => (
-        <View key={`pair-${pairIdx}`} style={{ flexDirection: 'column', marginBottom: 12 }}>
-          {pair.map((section, idx) => (
-            <View
-              key={`section-${pairIdx}-${idx}`}
-              style={[
-                styles.recommendationBox, 
-                { 
-                  marginBottom: 15,
-                  width: '100%',
-                  borderLeftWidth: 4,
-                  borderLeftColor: '#3361FF',
-                  borderLeftStyle: 'solid'
-                }
-              ]}
+      {sections.map((section, index) => (
+        <View
+          key={`section-${index}`}
+          style={{
+            marginBottom: 20,
+            borderLeftWidth: 4,
+            borderLeftColor: "#3361FF",
+            borderLeftStyle: "solid",
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#F1F5F9",
+              padding: 8,
+              borderTopLeftRadius: 4,
+              borderTopRightRadius: 4,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: "bold",
+                color: "#0F172A",
+              }}
             >
-              <View
-                style={{
-                  backgroundColor: "#F1F5F9",
-                  padding: 8,
-                  borderTopLeftRadius: 4,
-                  borderTopRightRadius: 4,
-                  marginBottom: 10,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontWeight: "bold",
-                    color: "#0F172A",
-                  }}
-                >
-                  {section.category}
-                </Text>
-              </View>
+              {section.category}
+            </Text>
+          </View>
 
-              <View style={{ padding: 10 }}>
-                {section.content.map((item: any, contentIdx: number) => {
-                  if (item.type === "paragraph") {
-                    return (
-                      <Text
-                        key={`p-${contentIdx}`}
-                        style={{
-                          fontSize: 10,
-                          color: "#334155",
-                          marginBottom: 8,
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        {item.text}
-                      </Text>
-                    );
-                  } else if (item.type === "bullet") {
-                    return (
-                      <View
-                        key={`b-${contentIdx}`}
-                        style={[
-                          styles.recommendationItem,
-                          { marginLeft: 8, marginBottom: 6 },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.recommendationBullet,
-                            { color: "#3B82F6" },
-                          ]}
-                        >
-                          •
-                        </Text>
-                        <Text
-                          style={[
-                            styles.recommendationText,
-                            { flex: 1, marginLeft: 6, lineHeight: 1.5 },
-                          ]}
-                        >
-                          {item.text}
-                        </Text>
-                      </View>
-                    );
-                  }
-                  return null;
-                })}
-              </View>
-            </View>
-          ))}
-          
-          {/* Add an empty placeholder if there's only one section in the pair (for even spacing) */}
-          {pair.length === 1 && (
-            <View style={{ width: '47%' }}></View>
-          )}
+          <View style={{ padding: 10 }}>
+            {section.content.map((item: any, contentIdx: number) => {
+              if (item.type === "paragraph") {
+                return (
+                  <Text
+                    key={`p-${contentIdx}`}
+                    style={{
+                      fontSize: 10,
+                      color: "#334155",
+                      marginBottom: 8,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {item.text}
+                  </Text>
+                );
+              } else if (item.type === "bullet") {
+                return (
+                  <View
+                    key={`b-${contentIdx}`}
+                    style={{
+                      flexDirection: "row",
+                      marginBottom: 6,
+                      marginLeft: 8,
+                    }}
+                  >
+                    <Text style={{ color: "#3B82F6", marginRight: 6 }}>•</Text>
+                    <Text style={{
+                      flex: 1,
+                      fontSize: 10,
+                      color: "#334155",
+                      lineHeight: 1.5,
+                    }}>
+                      {item.text}
+                    </Text>
+                  </View>
+                );
+              }
+              return null;
+            })}
+          </View>
         </View>
       ))}
     </View>
@@ -769,53 +741,95 @@ const AssessmentPDF = ({
         </View>
       </Page>
 
-      {/* Recommendations Pages */}
-      {recommendationPages.map((pageRecommendations, pageIndex) => (
-        <Page key={`recommendations-${pageIndex}`} size="A4" style={styles.page}>
-          <View style={styles.header}>
-            <Image src={logoPath} style={styles.logoBoxSmall} />
-            <Text style={styles.headerTitle}>Recommendations</Text>
-          </View>
+      {/* Recommendation Pages */}
+      {(() => {
+        if (assessment.recommendations) {
+          // Parse markdown into sections (each section starts with ## heading)
+          const sections = assessment.recommendations.split(/##\s+/).filter(Boolean);
+          
+          // Group recommendations into pages (2 per page)
+          const recommendationPages = [];
+          for (let i = 0; i < sections.length; i += 2) {
+            const pageContent = [];
+            pageContent.push("## " + sections[i]);
+            
+            if (i + 1 < sections.length) {
+              pageContent.push("## " + sections[i + 1]);
+            }
+            
+            recommendationPages.push(pageContent.join("\n\n"));
+          }
+          
+          // Generate pages
+          return recommendationPages.map((pageContent, index) => (
+            <Page key={`recommendations-${index}`} size="A4" style={styles.page}>
+              <View style={styles.header}>
+                <Image src={logoPath} style={styles.logoBoxSmall} />
+                <Text style={styles.headerTitle}>Recommendations</Text>
+              </View>
+              
+              <Text style={styles.sectionTitle}>Personalized AI Recommendations</Text>
+              <Text style={styles.sectionSubtitle}>
+                Based on your assessment score of {score}/100 and insights from "The Lean Startup"
+              </Text>
+              
+              {/* Using the RecommendationsContent component for each page */}
+              <RecommendationsContent markdown={pageContent} />
+              
+              <View style={styles.footer}>
+                <Text style={styles.pageNumber}>© {year} MyZone AI</Text>
+                <Text style={styles.pageNumber}>
+                  Page {index + 3} of {2 + recommendationPages.length + Math.ceil(answers.length / 10)}
+                </Text>
+              </View>
+            </Page>
+          ));
+        } else {
+          // Static recommendations page
+          return (
+            <Page key="recommendations-static" size="A4" style={styles.page}>
+              <View style={styles.header}>
+                <Image src={logoPath} style={styles.logoBoxSmall} />
+                <Text style={styles.headerTitle}>Recommendations</Text>
+              </View>
 
-          <Text style={styles.sectionTitle}>Personalized AI Recommendations</Text>
-          <Text style={styles.sectionSubtitle}>
-            Based on your assessment score of {score}/100 and insights from "The
-            Lean Startup"
-          </Text>
-          {assessment.recommendations ? (
-            <RecommendationsContent markdown={assessment.recommendations} />
-          ) : (
-            <View style={styles.recommendationBox}>
-              {pageRecommendations.map((rec, index) => (
-                <View key={index} style={styles.recommendationItem}>
-                  <Text style={styles.recommendationBullet}>•</Text>
-                  <Text style={styles.recommendationText}>{rec}</Text>
-                </View>
-              ))}
-            </View>
-          )}
+              <Text style={styles.sectionTitle}>Recommendations</Text>
+              <Text style={styles.sectionSubtitle}>
+                Based on your assessment score of {score}/100
+              </Text>
+              
+              <View style={styles.recommendationBox}>
+                {recommendations.map((rec, idx) => (
+                  <View key={idx} style={styles.recommendationItem}>
+                    <Text style={styles.recommendationBullet}>•</Text>
+                    <Text style={styles.recommendationText}>{rec}</Text>
+                  </View>
+                ))}
+              </View>
 
-          <Text
-            style={{
-              fontSize: 9,
-              fontStyle: "italic",
-              color: "#64748B",
-              marginTop: 10,
-            }}
-          >
-            For a complete AI readiness strategy customized to your organization's
-            specific needs, please contact the MyZone AI team for a comprehensive
-            consultation.
-          </Text>
+              <Text
+                style={{
+                  fontSize: 9,
+                  fontStyle: "italic",
+                  color: "#64748B",
+                  marginTop: 10,
+                }}
+              >
+                For a complete AI readiness strategy customized to your organization's
+                specific needs, please contact the MyZone AI team for a comprehensive
+                consultation.
+              </Text>
 
-          <View style={styles.footer}>
-            <Text style={styles.pageNumber}>© {year} MyZone AI</Text>
-            <Text style={styles.pageNumber}>
-              Page {3 + pageIndex} of {totalPages}
-            </Text>
-          </View>
-        </Page>
-      ))}
+              <View style={styles.footer}>
+                <Text style={styles.pageNumber}>© {year} MyZone AI</Text>
+                <Text style={styles.pageNumber}>
+                  Page 3 of {totalPages}
+                </Text>
+              </View>
+            </Page>
+          );
+        }
+      })()}
 
       {/* Split responses into pages of 10 items each */}
       {Array.from({ length: Math.ceil(answers.length / 10) }).map(
