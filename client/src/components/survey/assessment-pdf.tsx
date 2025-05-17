@@ -452,7 +452,7 @@ const RadarChartPDF = ({
   width = 550,
   height = 300,
 }: {
-  data: Array<{ subject: string; score: number; fullMark: number }>;
+  data: Array<{ name: string; score: number; fullMark: number }>;
   width?: number;
   height?: number;
 }) => {
@@ -496,7 +496,7 @@ const RadarChartPDF = ({
     return {
       x,
       y,
-      label: item.subject,
+      label: item.name,
       align: x > centerX ? "left" : x < centerX ? "right" : "center",
       vAlign: y > centerY ? "top" : "bottom",
     };
@@ -630,7 +630,7 @@ const AssessmentPDF = ({
 }: {
   assessment: Assessment;
   questions: CsvQuestion[];
-  chartData: Array<{ subject: string; score: number; fullMark: number }>;
+  chartData: Array<{ name: string; score: number; fullMark: number }>;
 }) => {
   const { answers = [] } = assessment;
   const score = assessment.score || 0;
@@ -903,7 +903,7 @@ export const AssessmentPDFDownloadButton = ({
 }: {
   assessment: Assessment;
   questions: CsvQuestion[];
-  chartData: Array<{ subject: string; score: number; fullMark: number }>;
+  chartData: Array<{ name: string; score: number; fullMark: number }>;
 }) => {
   const today = new Date();
   const quarter = Math.floor(today.getMonth() / 3 + 1);

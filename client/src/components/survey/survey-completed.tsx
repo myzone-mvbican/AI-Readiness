@@ -1,6 +1,4 @@
 import { useRef, useState, useEffect } from "react";
-import { CheckCircle2, Loader2, InfoIcon } from "lucide-react";
-import ReactMarkdown from "react-markdown";
 import {
   RadarChart,
   PolarGrid,
@@ -16,13 +14,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ChartContainer } from "@/components/ui/chart";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ChartContainer } from "@/components/ui/chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CheckCircle2, Loader2, InfoIcon } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { CsvQuestion, Assessment } from "@shared/types";
@@ -39,7 +39,7 @@ interface SurveyCompletedProps {
 
 // Define radar chart data type
 interface RadarChartData {
-  subject: string;
+  name: string;
   score: number;
   fullMark: number;
 }
@@ -83,29 +83,36 @@ export default function SurveyCompleted({
   useEffect(() => {
     const fetchRecommendations = async () => {
       // Skip if we already have recommendations
-      if (assessment.recommendations || saveRecommendationsMutation.isPending) {
+      if (
+        !assessment ||
+        assessment.recommendations ||
+        saveRecommendationsMutation.isPending ||
+        isLoading
+      ) {
         return;
       }
 
-      setIsLoading(true);
       try {
         const categoryScores = getCategoryScores(assessment, questions);
         if (!categoryScores.length) {
           throw new Error("No category scores available");
         }
 
+        setIsLoading(true);
+
         const response = await apiRequest("POST", "/api/ai-suggestions", {
           book: "The Lean Startup",
           categories: categoryScores,
           userEmail: assessment.email,
         });
-        
+
         const result = await response.json();
         if (!result.success || !result.content) {
           throw new Error("Failed to generate recommendations");
         }
 
         await saveRecommendationsMutation.mutateAsync(result.content);
+
         toast({
           title: "Ready",
           description: "Personalized recommendations generated",
@@ -123,54 +130,15 @@ export default function SurveyCompleted({
     };
 
     fetchRecommendations();
-  }, [assessment.id]);
+  }, [assessment, questions]);
 
   // Function to prepare data for radar chart
   const getRadarChartData = (): RadarChartData[] => {
-    // Group questions by category
-    const categoryMap = new Map<string, number[]>();
-
-    questions.forEach((question: CsvQuestion, index: number) => {
-      const category = question.category;
-      if (!category) return;
-
-      if (!categoryMap.has(category)) {
-        categoryMap.set(category, []);
-      }
-
-      // Add this question's index to the category
-      categoryMap.get(category)?.push(index);
-    });
-
-    // Calculate average score for each category
-    const categoryScores = Array.from(categoryMap.entries()).map(
-      ([category, questionIndices]) => {
-        // Get answers for this category's questions
-        const categoryAnswers = questionIndices
-          .map((idx: number) => answers[idx])
-          .filter((a: any) => a && a.a !== null);
-
-        // Calculate average score
-        const sum = categoryAnswers.reduce((acc: number, ans: any) => {
-          // Convert from -2 to +2 scale to 0 to 10 scale
-          const score = ((ans.a || 0) + 2) * 2.5;
-          return acc + score;
-        }, 0);
-
-        const avg =
-          categoryAnswers.length > 0
-            ? Math.round((sum / categoryAnswers.length) * 10) / 10
-            : 0;
-
-        return {
-          subject: category,
-          score: avg,
-          fullMark: 10,
-        };
-      },
-    );
-
-    return categoryScores;
+    return getCategoryScores(assessment, questions).map((category) => ({
+      ...category,
+      subject: category.name,
+      fullMark: 10,
+    }));
   };
 
   // Helper function to find question text by ID
@@ -302,7 +270,7 @@ export default function SurveyCompleted({
                                   Category
                                 </span>
                                 <span className="font-bold">
-                                  {data.payload.subject}
+                                  {data.payload.name}
                                 </span>
                               </div>
                               <div className="flex flex-col">

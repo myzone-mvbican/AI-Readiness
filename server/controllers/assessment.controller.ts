@@ -309,4 +309,56 @@ export class AssessmentController {
       });
     }
   }
+  
+  static async updateGuest(req: Request, res: Response) {
+    try {
+      const { surveyId, recommendations, email } = req.body;
+
+      if (!surveyId || !recommendations || !email) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Invalid assessment data. Required fields: surveyId, answers.",
+        });
+      }
+
+      // Validate required fields
+      if (!surveyId || !email) {
+        return res.status(400).json({
+          success: false,
+          message: "Missing required fields: surveyId & email.",
+        });
+      }
+
+      // Parse surveyId to number if it's a string
+      const surveyTemplateId = parseInt(surveyId);
+
+      if (isNaN(surveyTemplateId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid surveyId: must be a number.",
+        });
+      }
+
+      // Create a guest assessment
+      const assessmentData = {
+        surveyTemplateId,
+        email,
+      };
+
+      const assessment = await AssessmentModel.create(assessmentData);
+
+      return res.status(201).json({
+        success: true,
+        message: "Guest assessment created successfully",
+        assessment,
+      });
+    } catch (error) {
+      console.error("Error creating guest assessment:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to create guest assessment",
+      });
+    }
+  }
 }
