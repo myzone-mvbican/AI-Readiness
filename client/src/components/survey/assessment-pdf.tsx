@@ -16,6 +16,87 @@ import { Download } from "lucide-react";
 import { Assessment, CsvQuestion } from "@shared/types";
 import logoPath from "@/assets/logo-myzone-ai.png";
 
+// Component to parse and render markdown content in PDF
+const RecommendationsContent = ({ markdown }: { markdown: string }) => {
+  // Parse markdown into structured content
+  const parseMarkdown = (markdown: string) => {
+    // Extract sections based on ## headers
+    const sections = markdown.split(/##\s+/g).filter(Boolean);
+    
+    // If no sections found (no ## headers), create a single section with all content
+    if (sections.length === 0) {
+      return [{ 
+        category: 'Strategic Recommendations',
+        content: markdown.trim()
+      }];
+    }
+    
+    // Process each section into category and content
+    return sections.map(section => {
+      const lines = section.split('\n').filter(line => line.trim().length > 0);
+      const category = lines[0]?.trim() || 'Recommendations';
+      const content = lines.slice(1).join('\n').trim();
+      
+      return { category, content };
+    });
+  };
+  
+  // Extract bullet points from text
+  const extractBulletPoints = (text: string) => {
+    return text.split('\n')
+      .filter(line => line.trim().startsWith('-') || line.trim().startsWith('*'))
+      .map(line => line.trim().substring(2).trim());
+  };
+  
+  // Parse markdown into sections
+  const sections = parseMarkdown(markdown);
+  
+  return (
+    <View style={{ marginTop: 10 }}>
+      {sections.map((section, idx) => (
+        <View key={idx} style={styles.recommendationBox}>
+          <Text style={{
+            fontSize: 14,
+            fontWeight: "bold",
+            color: "#1E293B",
+            marginBottom: 6,
+          }}>{section.category}</Text>
+          
+          {/* Regular paragraph text */}
+          {section.content.split('\n\n').map((paragraph, pidx) => {
+            // Skip if this is a list (bullets)
+            if (paragraph.trim().startsWith('-') || paragraph.trim().startsWith('*')) {
+              const bullets = extractBulletPoints(paragraph);
+              return (
+                <View key={`p-${pidx}`} style={{ marginTop: 6 }}>
+                  {bullets.map((bullet, bidx) => (
+                    <View key={`b-${bidx}`} style={styles.recommendationItem}>
+                      <Text style={styles.recommendationBullet}>•</Text>
+                      <Text style={styles.recommendationText}>{bullet}</Text>
+                    </View>
+                  ))}
+                </View>
+              );
+            }
+            
+            // Regular paragraph
+            return (
+              <Text key={`p-${pidx}`} style={{
+                fontSize: 10,
+                color: "#334155",
+                marginVertical: 4,
+                lineHeight: 1.4,
+              }}>
+                {paragraph.trim()}
+              </Text>
+            );
+          })}
+        </View>
+      ))}
+    </View>
+  );
+};
+
 // Create styles for PDF
 const styles = StyleSheet.create({
   page: {
@@ -209,6 +290,26 @@ const styles = StyleSheet.create({
     flex: 1,
     color: "#334155",
   },
+  // Styled cards for markdown recommendations
+  recommendationCard: {
+    marginBottom: 12,
+    padding: 10,
+    borderRadius: 4,
+    border: "1pt solid #E2E8F0",
+    backgroundColor: "#F8FAFC",
+  },
+  recommendationCardTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#1E293B",
+    marginBottom: 6,
+  },
+  recommendationCardText: {
+    fontSize: 10,
+    color: "#334155",
+    marginVertical: 4,
+    lineHeight: 1.4,
+  },
   pageNumber: {
     fontSize: 10,
     color: "#94A3B8",
@@ -393,20 +494,23 @@ const AssessmentPDF = ({
           <Text style={styles.headerTitle}>Recommendations</Text>
         </View>
 
-        <Text style={styles.sectionTitle}>AI Readiness Recommendations</Text>
+        <Text style={styles.sectionTitle}>Personalized AI Recommendations</Text>
         <Text style={styles.sectionSubtitle}>
-          Based on your assessment score of {score}/100, we recommend the
-          following actions to improve your organization's AI readiness:
+          Based on your assessment score of {score}/100 and insights from "The Lean Startup"
         </Text>
 
-        <View style={styles.recommendationBox}>
-          {recommendations.map((rec, index) => (
-            <View key={index} style={styles.recommendationItem}>
-              <Text style={styles.recommendationBullet}>•</Text>
-              <Text style={styles.recommendationText}>{rec}</Text>
-            </View>
-          ))}
-        </View>
+        {assessment.recommendations ? (
+          <RecommendationsContent markdown={assessment.recommendations} />
+        ) : (
+          <View style={styles.recommendationBox}>
+            {recommendations.map((rec, index) => (
+              <View key={index} style={styles.recommendationItem}>
+                <Text style={styles.recommendationBullet}>•</Text>
+                <Text style={styles.recommendationText}>{rec}</Text>
+              </View>
+            ))}
+          </View>
+        )}
 
         <Text
           style={{
