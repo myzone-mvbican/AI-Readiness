@@ -644,7 +644,16 @@ const AssessmentPDF = ({
   });
   const quarter = Math.floor(today.getMonth() / 3 + 1);
   const year = today.getFullYear();
-  const totalPages = 3 + Math.ceil(answers.length / 10);
+  // Calculate total pages:
+  // 1. Cover page
+  // 2. Results/chart page 
+  // 3. Recommendations pages based on content
+  // 4. Answer pages (10 answers per page)
+  const recommendationPages = assessment.recommendations 
+    ? Math.ceil(assessment.recommendations.split(/##\s+/).filter(Boolean).length / 2)
+    : 1;
+  const answerPages = Math.ceil(answers.length / 10);
+  const totalPages = 1 + 1 + recommendationPages + answerPages;
 
   // Readiness level
   const readinessLevel = getReadinessLevel(score);
