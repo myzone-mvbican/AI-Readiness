@@ -296,6 +296,15 @@ const getRecommendations = (readinessLevel: string) => {
   }
 };
 
+const removeFormatting = (str: string) => {
+  return str
+    .replace(/[\*_]/g, "")
+    .replace(
+      /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83D[\uDE00-\uDE4F])/g,
+      "",
+    );
+};
+
 // Component to parse and render markdown content in PDF
 const RecommendationsContent = ({ markdown }: { markdown: string }) => {
   // Parse markdown into structured content
@@ -305,33 +314,50 @@ const RecommendationsContent = ({ markdown }: { markdown: string }) => {
 
     // If no sections found (no ## headers), create a single section with all content
     if (sections.length === 0) {
-      return [{ 
-        category: 'Strategic Recommendations',
-        content: [{ type: 'paragraph', text: markdown.trim() }]
-      }];
+      return [
+        {
+          category: "Strategic Recommendations",
+          content: [{ type: "paragraph", text: markdown.trim() }],
+        },
+      ];
     }
 
     // Process each section into category and content
-    return sections.map(section => {
-      const lines = section.split('\n').filter(line => line.trim().length > 0);
-      const category = lines[0]?.trim() || 'Recommendations';
-      const content = lines.slice(1).join('\n').trim();
+    return sections.map((section) => {
+      const lines = section
+        .split("\n")
+        .filter((line) => line.trim().length > 0);
+      const category = lines[0]?.trim() || "Recommendations";
+      const content = lines.slice(1).join("\n").trim();
 
       // Split content into paragraphs and bullet points
-      const items = content.split('\n\n').map(paragraph => {
-        if (paragraph.trim().startsWith('-') || paragraph.trim().startsWith('*')) {
-          return paragraph.split('\n')
-            .filter(line => line.trim().startsWith('-') || line.trim().startsWith('*'))
-            .map(line => ({
-              type: 'bullet',
-              text: line.trim().substring(2).trim()
-            }));
-        } else {
-          return { type: 'paragraph', text: paragraph.trim() };
-        }
-      }).flat();
+      const items = content
+        .split("\n\n")
+        .map((paragraph) => {
+          if (
+            paragraph.trim().startsWith("-") ||
+            paragraph.trim().startsWith("*")
+          ) {
+            return paragraph
+              .split("\n")
+              .filter(
+                (line) =>
+                  line.trim().startsWith("-") || line.trim().startsWith("*"),
+              )
+              .map((line) => ({
+                type: "bullet",
+                text: removeFormatting(line.trim().substring(2).trim()),
+              }));
+          } else {
+            return {
+              type: "paragraph",
+              text: removeFormatting(paragraph.trim()),
+            };
+          }
+        })
+        .flat();
 
-      return { category, content: items };
+      return { category: removeFormatting(category), content: items };
     });
   };
 
@@ -339,26 +365,35 @@ const RecommendationsContent = ({ markdown }: { markdown: string }) => {
   const sections = parseMarkdown(markdown);
 
   return (
-    <View style={{ marginTop: 10 }}>
+    <View style={{ marginTop: 0 }}>
       {sections.map((section, idx) => (
-        <View key={idx} style={[styles.recommendationBox, { marginBottom: 15 }]}>
-          <View style={{
-            backgroundColor: "#F1F5F9",
-            padding: 8,
-            borderTopLeftRadius: 4,
-            borderTopRightRadius: 4,
-            marginBottom: 10,
-          }}>
-            <Text style={{
-              fontSize: 14,
-              fontWeight: "bold",
-              color: "#0F172A",
-            }}>{section.category}</Text>
+        <View
+          key={idx}
+          style={[styles.recommendationBox, { marginBottom: 15 }]}
+        >
+          <View
+            style={{
+              backgroundColor: "#F1F5F9",
+              padding: 8,
+              borderTopLeftRadius: 4,
+              borderTopRightRadius: 4,
+              marginBottom: 10,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: "bold",
+                color: "#0F172A",
+              }}
+            >
+              {section.category}
+            </Text>
           </View>
 
           <View style={{ padding: 10 }}>
             {section.content.map((item: any, contentIdx: number) => {
-              if (item.type === 'paragraph') {
+              if (item.type === "paragraph") {
                 return (
                   <Text
                     key={`p-${contentIdx}`}
@@ -372,22 +407,29 @@ const RecommendationsContent = ({ markdown }: { markdown: string }) => {
                     {item.text}
                   </Text>
                 );
-              } else if (item.type === 'bullet') {
+              } else if (item.type === "bullet") {
                 return (
                   <View
                     key={`b-${contentIdx}`}
                     style={[
                       styles.recommendationItem,
-                      { marginLeft: 8, marginBottom: 6 }
+                      { marginLeft: 8, marginBottom: 6 },
                     ]}
                   >
-                    <Text style={[styles.recommendationBullet, { color: "#3B82F6" }]}>
+                    <Text
+                      style={[
+                        styles.recommendationBullet,
+                        { color: "#3B82F6" },
+                      ]}
+                    >
                       •
                     </Text>
-                    <Text style={[
-                      styles.recommendationText,
-                      { flex: 1, marginLeft: 6, lineHeight: 1.5 }
-                    ]}>
+                    <Text
+                      style={[
+                        styles.recommendationText,
+                        { flex: 1, marginLeft: 6, lineHeight: 1.5 },
+                      ]}
+                    >
                       {item.text}
                     </Text>
                   </View>
@@ -613,10 +655,13 @@ const AssessmentPDF = ({
 
   if (assessment.recommendations) {
     // Extract bullet points from markdown content
-    const bulletPoints = assessment.recommendations.split('\n')
-      .filter(line => line.trim().startsWith('-') || line.trim().startsWith('*'))
-      .map(line => line.trim().substring(2).trim())
-      .filter(line => line.length > 0)
+    const bulletPoints = assessment.recommendations
+      .split("\n")
+      .filter(
+        (line) => line.trim().startsWith("-") || line.trim().startsWith("*"),
+      )
+      .map((line) => line.trim().substring(2).trim())
+      .filter((line) => line.length > 0)
       .slice(0, 5);
 
     // Use the extracted recommendations if we found any
@@ -697,7 +742,8 @@ const AssessmentPDF = ({
 
         <Text style={styles.sectionTitle}>Personalized AI Recommendations</Text>
         <Text style={styles.sectionSubtitle}>
-          Based on your assessment score of {score}/100 and insights from "The Lean Startup"
+          Based on your assessment score of {score}/100 and insights from "The
+          Lean Startup"
         </Text>
 
         {assessment.recommendations ? (
