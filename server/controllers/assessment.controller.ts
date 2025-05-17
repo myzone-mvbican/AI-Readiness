@@ -134,6 +134,11 @@ export class AssessmentController {
         Object.keys(req.body).length === 1 && 
         typeof req.body.recommendations === 'string';
       
+      // If only updating recommendations, preserve the existing score
+      if (isUpdatingOnlyRecommendations && existingAssessment.score) {
+        req.body.score = existingAssessment.score;
+      }
+      
       // Skip ownership check if only updating recommendations field
       // This allows our AI service to update recommendations
       if (!isUpdatingOnlyRecommendations && existingAssessment.userId !== req.user?.id) {
