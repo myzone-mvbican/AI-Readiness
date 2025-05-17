@@ -293,7 +293,7 @@ export default function SurveyCompleted({
           <AISuggestions
             assessment={assessment}
             questions={questions}
-            isActive={useState(false)[0]}
+            isActive={activeTab === "suggestions"}
           />
         </TabsContent>
       </Tabs>
