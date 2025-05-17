@@ -46,61 +46,91 @@ export default function SurveyCompleted({
   const [activeTab, setActiveTab] = useState("results");
   const queryClient = useQueryClient();
   
-  // Track if we have already generated AI suggestions
-  const [aiSuggestionsInitiated, setAiSuggestionsInitiated] = useState(false);
-  const hasStoredRecommendations = !!assessment.recommendations;
-
-  // Centralized AI suggestion query that will be shared with the tab
-  const {
-    data: aiSuggestions,
-    isLoading: isLoadingAiSuggestions,
-    error: aiSuggestionsError,
-    isSuccess: aiSuggestionsSuccess,
-  } = useQuery({
-    queryKey: ["/api/ai-suggestions", assessment.id],
-    queryFn: async () => {
-      // If recommendations exist, just return them
-      if (hasStoredRecommendations) {
-        return { success: true, content: assessment.recommendations };
-      }
-
-      // Calculate category scores for the API request
+  // State for managing AI suggestions
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [aiSuggestionsContent, setAiSuggestionsContent] = useState<string | null>(
+    assessment.recommendations || null
+  );
+  const [isLoadingAiSuggestions, setIsLoadingAiSuggestions] = useState(false);
+  const [aiSuggestionsError, setAiSuggestionsError] = useState<Error | null>(null);
+  
+  // Save recommendations to the assessment
+  const saveRecommendationsMutation = useMutation({
+    mutationFn: async (content: string) => {
+      const response = await apiRequest(
+        "PATCH",
+        `/api/assessments/${assessment.id}`,
+        {
+          recommendations: content,
+        }
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [`/api/assessments/${assessment.id}`],
+      });
+      setAiSuggestionsContent(assessment.recommendations);
+    }
+  });
+  
+  // Generate AI suggestions when needed
+  const generateAiSuggestions = async () => {
+    if (assessment.recommendations || isLoadingAiSuggestions) {
+      return; // Skip if already loaded or loading
+    }
+    
+    try {
+      setIsLoadingAiSuggestions(true);
+      setAiSuggestionsError(null);
+      
+      // Calculate category scores
       const categoryScores = getCategoryScores(assessment, questions);
-
+      
       if (!categoryScores.length) {
         throw new Error("No category data available");
       }
-
+      
       const payload = {
-        assessmentTitle: assessment.title,
+        assessmentTitle: assessment.title || "AI Readiness Assessment",
         book: "The Lean Startup",
         categories: categoryScores,
         userEmail: assessment.email || undefined,
       };
-
-      // Generate recommendations from OpenAI
+      
+      // Single API call to generate recommendations
       const response = await apiRequest("POST", "/api/ai-suggestions", payload);
       const result = await response.json();
-
-      // Save recommendations if successful
+      
       if (result.success && result.content) {
+        // Set content locally first
+        setAiSuggestionsContent(result.content);
+        // Then save to backend
         saveRecommendationsMutation.mutate(result.content);
+      } else {
+        throw new Error("Failed to generate recommendations");
       }
-
-      return result;
-    },
-    // Only enable when explicitly toggled by the component
-    enabled: hasStoredRecommendations || aiSuggestionsInitiated,
-    // Prevent refetching once we have data
-    staleTime: Infinity,
-  });
-  
-  // Effect to initiate AI suggestions once when the assessment is completed
-  useEffect(() => {
-    if (assessment.status === "completed" && !aiSuggestionsInitiated && !hasStoredRecommendations) {
-      setAiSuggestionsInitiated(true);
+    } catch (error) {
+      console.error("Error generating AI suggestions:", error);
+      setAiSuggestionsError(error instanceof Error ? error : new Error("Unknown error"));
+    } finally {
+      setIsLoadingAiSuggestions(false);
     }
-  }, [assessment.status, aiSuggestionsInitiated, hasStoredRecommendations]);
+  };
+  
+  // Generate suggestions once when the component mounts and assessment is completed
+  useEffect(() => {
+    if (assessment.status === "completed" && !assessment.recommendations && !isLoadingAiSuggestions) {
+      generateAiSuggestions();
+    }
+  }, [assessment.id, assessment.status, assessment.recommendations]);
+  
+  // Update content when assessment updates
+  useEffect(() => {
+    if (assessment.recommendations) {
+      setAiSuggestionsContent(assessment.recommendations);
+    }
+  }, [assessment.recommendations]);
 
   // Mutation for saving recommendations to the assessment
   const saveRecommendationsMutation = useMutation({
