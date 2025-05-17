@@ -312,52 +312,65 @@ export class AssessmentController {
   
   static async updateGuest(req: Request, res: Response) {
     try {
+      const assessmentId = parseInt(req.params.id);
       const { surveyId, recommendations, email } = req.body;
 
-      if (!surveyId || !recommendations || !email) {
+      if (!assessmentId || !surveyId || !recommendations || !email) {
         return res.status(400).json({
           success: false,
-          message:
-            "Invalid assessment data. Required fields: surveyId, answers.",
+          message: "Missing required fields: surveyId, recommendations, email"
         });
       }
 
-      // Validate required fields
-      if (!surveyId || !email) {
-        return res.status(400).json({
+      // Get existing assessment
+      const existingAssessment = await AssessmentModel.getById(assessmentId);
+      
+      if (!existingAssessment) {
+        return res.status(404).json({
           success: false,
-          message: "Missing required fields: surveyId & email.",
+          message: "Assessment not found"
         });
       }
 
-      // Parse surveyId to number if it's a string
-      const surveyTemplateId = parseInt(surveyId);
-
-      if (isNaN(surveyTemplateId)) {
-        return res.status(400).json({
+      // Validate email matches
+      if (existingAssessment.email !== email) {
+        return res.status(403).json({
           success: false,
-          message: "Invalid surveyId: must be a number.",
+          message: "Email does not match assessment"
         });
       }
 
-      // Create a guest assessment
-      const assessmentData = {
-        surveyTemplateId,
-        email,
-      };
+      // Validate survey ID matches
+      if (existingAssessment.surveyTemplateId !== parseInt(surveyId)) {
+        return res.status(403).json({
+          success: false,
+          message: "Survey ID does not match assessment" 
+        });
+      }
 
-      const assessment = await AssessmentModel.create(assessmentData);
-
-      return res.status(201).json({
-        success: true,
-        message: "Guest assessment created successfully",
-        assessment,
+      // Update the assessment with recommendations
+      const updatedAssessment = await AssessmentModel.update(assessmentId, {
+        recommendations
       });
+
+      if (!updatedAssessment) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to update assessment"
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Assessment updated successfully",
+        assessment: updatedAssessment
+      });
+
     } catch (error) {
-      console.error("Error creating guest assessment:", error);
+      console.error("Error updating guest assessment:", error);
       return res.status(500).json({
         success: false,
-        message: "Failed to create guest assessment",
+        message: "Failed to update guest assessment"
       });
     }
   }
