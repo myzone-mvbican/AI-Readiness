@@ -79,58 +79,42 @@ export default function SurveyCompleted({
     },
   });
 
-  // Effect to get or generate recommendations only once
+  // Effect to handle recommendations
   useEffect(() => {
-    // Skip if we already have content or the API call was already initiated
-    if (
-      assessment.recommendations ||
-      isLoading ||
-      saveRecommendationsMutation.isPending
-    ) {
-      return;
-    }
+    const fetchRecommendations = async () => {
+      // Skip if we already have recommendations
+      if (assessment.recommendations || saveRecommendationsMutation.isPending) {
+        return;
+      }
 
-    // Mark that we've initiated the API call to prevent duplicates
-    setIsLoading(true);
-
-    // Function to generate recommendations
-    const generateRecommendations = async () => {
+      setIsLoading(true);
       try {
-        // Calculate category scores
         const categoryScores = getCategoryScores(assessment, questions);
-
         if (!categoryScores.length) {
-          throw new Error("No category data available");
+          throw new Error("No category scores available");
         }
 
-        const payload = {
+        const response = await apiRequest("POST", "/api/ai-suggestions", {
           book: "The Lean Startup",
           categories: categoryScores,
-          userEmail: assessment.email || undefined,
-        };
-
-        // Only make a single API call
-        const response = await apiRequest(
-          "POST",
-          "/api/ai-suggestions",
-          payload,
-        );
+          userEmail: assessment.email,
+        });
+        
         const result = await response.json();
-
-        if (result.success && result.content) {
-          saveRecommendationsMutation.mutate(result.content);
-          toast({
-            title: "Ready ",
-            description: "Personalized recommendations are ready.",
-          });
-        } else {
+        if (!result.success || !result.content) {
           throw new Error("Failed to generate recommendations");
         }
-      } catch (err) {
-        console.error("Error generating AI suggestions:", err);
+
+        await saveRecommendationsMutation.mutateAsync(result.content);
+        toast({
+          title: "Ready",
+          description: "Personalized recommendations generated",
+        });
+      } catch (error) {
+        console.error("Recommendations error:", error);
         toast({
           title: "Error",
-          description: "generating AI suggestions",
+          description: "Failed to generate recommendations",
           variant: "destructive",
         });
       } finally {
@@ -138,8 +122,8 @@ export default function SurveyCompleted({
       }
     };
 
-    generateRecommendations();
-  }, [isLoading, assessment.recommendations, saveRecommendationsMutation]);
+    fetchRecommendations();
+  }, [assessment.id]);
 
   // Function to prepare data for radar chart
   const getRadarChartData = (): RadarChartData[] => {
