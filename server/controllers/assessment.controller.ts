@@ -128,20 +128,23 @@ export class AssessmentController {
         });
       }
 
-      // Verify ownership - but allow certain fields to be updated 
+      // Verify ownership - but allow certain fields to be updated
       // without strict ownership checks (like recommendations for AI-generated content)
-      const isUpdatingOnlyRecommendations = 
-        Object.keys(req.body).length === 1 && 
-        typeof req.body.recommendations === 'string';
-      
+      const isUpdatingOnlyRecommendations =
+        Object.keys(req.body).length === 1 &&
+        typeof req.body.recommendations === "string";
+
       // If only updating recommendations, preserve the existing score
       if (isUpdatingOnlyRecommendations && existingAssessment.score) {
         req.body.score = existingAssessment.score;
       }
-      
+
       // Skip ownership check if only updating recommendations field
       // This allows our AI service to update recommendations
-      if (!isUpdatingOnlyRecommendations && existingAssessment.userId !== req.user?.id) {
+      if (
+        !isUpdatingOnlyRecommendations &&
+        existingAssessment.userId !== req.user?.id
+      ) {
         return res.status(403).json({
           success: false,
           message: "You do not have permission to update this assessment",
@@ -149,18 +152,21 @@ export class AssessmentController {
       }
 
       // Check if already completed
-      // if (existingAssessment.status === "completed") {
-      //   return res.status(400).json({
-      //     success: false,
-      //     message: "Cannot update a completed assessment",
-      //   });
-      // }
+      if (
+        !isUpdatingOnlyRecommendations &&
+        existingAssessment.status === "completed"
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot update a completed assessment",
+        });
+      }
 
       // Calculate score if completing
       let score = null;
       if (
-        req.body.status === "completed" &&
-        existingAssessment.status !== "completed"
+        req.body.status === "completed" ||
+        existingAssessment.status === "completed"
       ) {
         const answers = req.body.answers || existingAssessment.answers;
         const answerValues = answers
@@ -168,8 +174,10 @@ export class AssessmentController {
           .filter((value: any) => value !== null);
 
         if (answerValues.length > 0) {
-          const maxPossible = answers.length * 2;
-          const rawScore = answerValues.reduce((sum: number, val: number) => sum + val, 0);
+          const rawScore = answerValues.reduce(
+            (sum: number, val: number) => sum + val,
+            0,
+          );
           const adjustedScore =
             ((rawScore + answers.length * 2) / (answers.length * 4)) * 100;
           score = Math.round(adjustedScore);

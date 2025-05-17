@@ -11,7 +11,6 @@ interface Category {
 
 // Define interface for request body
 interface AIRequestBody {
-  assessmentTitle: string;
   book: string;
   categories: Category[];
   userEmail?: string;
@@ -20,11 +19,10 @@ interface AIRequestBody {
 export class AIController {
   static async generateSuggestions(req: Request, res: Response) {
     try {
-      const { assessmentTitle, book, categories, userEmail } =
-        req.body as AIRequestBody;
+      const { book, categories, userEmail } = req.body as AIRequestBody;
 
       // Validate request
-      if (!assessmentTitle || !book || !categories || !categories.length) {
+      if (!book || !categories || !categories.length) {
         return res.status(400).json({
           success: false,
           error: "Invalid request. Missing required fields.",
@@ -100,7 +98,6 @@ Ensure:
 
       // Create user payload as JSON string
       const userPayload = JSON.stringify({
-        assessmentTitle,
         categories,
         ...(userEmail && { userEmail }),
       });
