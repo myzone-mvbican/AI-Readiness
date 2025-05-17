@@ -1,6 +1,6 @@
-import { useRef, useState } from "react";
-import { CheckCircle2, InfoIcon } from "lucide-react";
-import AISuggestions from "./ai-suggestions";
+import { useRef, useState, useEffect } from "react";
+import { CheckCircle2, Loader2, InfoIcon } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import {
   RadarChart,
   PolarGrid,
@@ -27,30 +27,119 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { CsvQuestion, Assessment } from "@shared/types";
 import { AssessmentPDFDownloadButton } from "./assessment-pdf";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { getCategoryScores } from "@/lib/generateRecommendations";
+import { useToast } from "@/hooks/use-toast";
 
 interface SurveyCompletedProps {
   assessment: Assessment;
   questions?: CsvQuestion[];
 }
 
+// Define radar chart data type
+interface RadarChartData {
+  subject: string;
+  score: number;
+  fullMark: number;
+}
+
 export default function SurveyCompleted({
   assessment,
   questions = [],
 }: SurveyCompletedProps) {
+  const { toast } = useToast();
   const { answers = [] } = assessment;
   const responsesRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<HTMLDivElement>(null);
-  const [activeTab, setActiveTab] = useState("results");
-  
-  // State for PDF generation only
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
-  // Define radar chart data type
-  interface RadarChartData {
-    subject: string;
-    score: number;
-    fullMark: number;
-  }
+  // State for PDF generation only
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Access query client for mutations
+  const queryClient = useQueryClient();
+
+  // Mutation for saving recommendations to the assessment
+  const saveRecommendationsMutation = useMutation({
+    mutationFn: async (recommendationText: string) => {
+      const response = await apiRequest(
+        "PATCH",
+        `/api/assessments/${assessment.id}`,
+        {
+          recommendations: recommendationText,
+        },
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({
+        queryKey: [`/api/assessments/${assessment.id}`],
+      });
+    },
+  });
+
+  // Effect to get or generate recommendations only once
+  useEffect(() => {
+    // Skip if we already have content or the API call was already initiated
+    if (
+      assessment.recommendations ||
+      isLoading ||
+      saveRecommendationsMutation.isPending
+    ) {
+      return;
+    }
+
+    // Mark that we've initiated the API call to prevent duplicates
+    setIsLoading(true);
+
+    // Function to generate recommendations
+    const generateRecommendations = async () => {
+      try {
+        // Calculate category scores
+        const categoryScores = getCategoryScores(assessment, questions);
+
+        if (!categoryScores.length) {
+          throw new Error("No category data available");
+        }
+
+        const payload = {
+          book: "The Lean Startup",
+          categories: categoryScores,
+          userEmail: assessment.email || undefined,
+        };
+
+        // Only make a single API call
+        const response = await apiRequest(
+          "POST",
+          "/api/ai-suggestions",
+          payload,
+        );
+        const result = await response.json();
+
+        if (result.success && result.content) {
+          saveRecommendationsMutation.mutate(result.content);
+          toast({
+            title: "Ready ",
+            description: "Personalized recommendations are ready.",
+          });
+        } else {
+          throw new Error("Failed to generate recommendations");
+        }
+      } catch (err) {
+        console.error("Error generating AI suggestions:", err);
+        toast({
+          title: "Error",
+          description: "generating AI suggestions",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    generateRecommendations();
+  }, [isLoading, assessment.recommendations, saveRecommendationsMutation]);
 
   // Function to prepare data for radar chart
   const getRadarChartData = (): RadarChartData[] => {
@@ -130,8 +219,7 @@ export default function SurveyCompleted({
           </div>
         </div>
         <div className="col-span-1 self-center md:flex md:justify-end">
-          {isGeneratingRecommendations ||
-          saveRecommendationsMutation.isPending ? (
+          {isLoading || saveRecommendationsMutation.isPending ? (
             <button
               disabled
               className="flex items-center gap-2 bg-gray-300 text-gray-600 px-4 py-2 rounded-md text-sm font-medium cursor-not-allowed"
@@ -149,11 +237,7 @@ export default function SurveyCompleted({
         </div>
       </div>
 
-      <Tabs
-        defaultValue="results"
-        className="mt-6"
-        onValueChange={(value) => setActiveTab(value)}
-      >
+      <Tabs defaultValue="results" className="mt-6">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="results">Results</TabsTrigger>
           <TabsTrigger value="responses">Your Responses</TabsTrigger>
@@ -302,11 +386,28 @@ export default function SurveyCompleted({
         </TabsContent>
 
         <TabsContent value="suggestions">
-          <AISuggestions
-            assessment={assessment}
-            questions={questions}
-            isActive={activeTab === "suggestions"}
-          />
+          {isLoading || saveRecommendationsMutation.isPending ? (
+            <div className="h-[calc(100dvh-330px)] flex items-center justify-center">
+              <div className="flex flex-col items-center gap-2">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-muted-foreground">
+                  Our AI agent is working to create actionable recommendations
+                  based on your assessment results. It will be ready in a
+                  moment.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <ScrollArea className="h-[calc(100dvh-330px)] rounded-md border p-4">
+              <div className="space-y-6">
+                <div className="markdown-text">
+                  <ReactMarkdown>
+                    {assessment.recommendations || "No recommendations found."}
+                  </ReactMarkdown>
+                </div>
+              </div>
+            </ScrollArea>
+          )}
         </TabsContent>
       </Tabs>
     </div>
