@@ -103,7 +103,6 @@ export default function AISuggestions({
     enabled: (hasStoredRecommendations || shouldGenerate) && !!assessment.id,
     // Prevent refetching once we have data
     staleTime: Infinity,
-    cacheTime: Infinity,
   });
 
   // If recommendations are being generated in the background
@@ -155,7 +154,7 @@ export default function AISuggestions({
     <ScrollArea className="h-[calc(100dvh-330px)] rounded-md border p-4">
       <div className="space-y-6">
         <div className="markdown-text">
-          <ReactMarkdown>{suggestions.content}</ReactMarkdown>
+          <ReactMarkdown>{suggestions?.content || 'No recommendations found.'}</ReactMarkdown>
         </div>
       </div>
     </ScrollArea>
