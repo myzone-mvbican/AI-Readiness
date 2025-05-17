@@ -203,7 +203,6 @@ export default function SurveyCompleted({
                       r: 4,
                       fillOpacity: 1,
                     }}
-                    isAnimationActive={false}
                   />
                   <RechartsTooltip
                     content={({ active, payload }) => {

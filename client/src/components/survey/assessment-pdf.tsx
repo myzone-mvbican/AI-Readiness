@@ -608,26 +608,22 @@ const RadarChartPDF = ({
           stroke="#94A3B8"
           strokeWidth={0.5}
         />
-        {[0, 2, 4, 6, 8, 10].map((value) => {
+        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => {
           const x = centerX + (radius * value) / 10;
           return (
             <Text
               key={`scale-${value}`}
               x={x}
               y={centerY + 10}
-              fontSize={6}
               textAnchor="middle"
               fill="#64748B"
+              style={{ fontSize: 8 }}
             >
               {value}
             </Text>
           );
         })}
       </Svg>
-
-      {/* left: point.x - (point.align === 'right' ? 40 : point.align === 'left' ? 0 : 20),
-        top: point.y - (point.vAlign === 'bottom' ? 0 : 10),
-        width: 40, */}
       {/* Category labels */}
       {labelPoints.map((point, i) => (
         <Text

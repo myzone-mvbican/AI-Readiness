@@ -1,0 +1,96 @@
+I'm using React + Tailwind + shadcn/ui and have a SurveyCompleted page with two existing tabs: Results and Your Responses. Please add a third tab labeled “AI Suggestions”, which will fetch category-based recommendations from OpenAI and display them as styled cards.
+
+🧭 1. Tab UI Integration
+Add a third tab to the component:
+
+ts
+Copy
+Edit
+Tabs: ["Results", "Your Responses", "AI Suggestions"]
+When the user selects AI Suggestions:
+
+Call the OpenAI API (only on first open)
+
+Show loading and error states
+
+On success, display returned content as markdown
+
+📊 2. OpenAI Prompt Structure
+Do not include individual questions or answers
+
+Include only:
+
+assessmentTitle
+
+userEmail (optional, for identity awareness)
+
+Category names and numerical scores on a 1–10 scale
+
+Name of the reference ebook (e.g., The Lean Startup)
+
+System Prompt:
+txt
+Copy
+Edit
+You are a business transformation advisor trained on the book "The Lean Startup".
+Provide one actionable recommendation per category based on a numerical score (1–10).
+Assume the lower the score, the more improvement is needed.
+Output markdown-formatted content only — one section per category.
+Be direct and strategic.
+Example User Payload:
+json
+Copy
+Edit
+{
+  "assessmentTitle": "Q1 2025 AI Assessment",
+  "book": "The Lean Startup",
+  "categories": [
+    { "name": "Strategy & Vision", "score": 4 },
+    { "name": "Technology & Integration", "score": 6 },
+    { "name": "Governance & Risk", "score": 2 }
+  ]
+}
+🎨 3. Render as Styled Cards
+Parse the markdown response using react-markdown
+
+Wrap each category recommendation inside a styled Card:
+
+Use shadcn/ui Card component
+
+Style with contextual or alternate background colors (e.g. light neutral or subtle category color)
+
+Include the category name as the card title
+
+Example:
+tsx
+Copy
+Edit
+<Card className="bg-slate-50 p-4">
+  <h3 className="text-lg font-semibold">Strategy & Vision</h3>
+  <ReactMarkdown>{markdownText}</ReactMarkdown>
+</Card>
+📤 4. API Integration (GPT-4)
+Use OpenAI Chat API:
+
+ts
+Copy
+Edit
+model: "gpt-4"
+messages: [
+  { role: "system", content: SYSTEM_PROMPT },
+  { role: "user", content: JSON.stringify(payload) }
+]
+Trigger call only when the tab is activated
+
+Store result in local state or query cache (but no DB persistence yet)
+
+✅ Checklist
+ Add "AI Suggestions" tab
+
+ Only call OpenAI API when tab is opened
+
+ Use only category scores (1–10) — no question/answer text
+
+ Parse markdown to styled cards per category
+
+ Handle loading + error state gracefully

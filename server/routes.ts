@@ -5,6 +5,7 @@ import { TeamController } from "./controllers/team.controller";
 import { UserController } from "./controllers/user.controller";
 import { SurveyController } from "./controllers/survey.controller";
 import { AssessmentController } from "./controllers/assessment.controller";
+import { AIController } from "./controllers/ai.controller";
 
 // Import middleware if needed for protected routes
 import { auth, requireAdmin } from "./middleware/auth";
