@@ -523,33 +523,36 @@ const RadarChartPDF = ({
     })
     .join(" ");
 
-  // Category labels positioning with increased spacing
+  // Category labels positioning with significantly increased spacing
   const labelPoints = data.map((item, index) => {
     const angle = ((Math.PI * 2) / data.length) * index;
     // Position labels much further outside the chart area
-    const labelOffset = 50; // Increased from 15 to 50
+    const labelOffset = 100; // Greatly increased for better spacing
     const x = centerX + (radius + labelOffset) * Math.sin(angle);
     const y = centerY - (radius + labelOffset) * Math.cos(angle);
     
-    // Adjust label position based on which quadrant it's in
+    // Format labels to break long text into multiple lines
+    // This improves readability in the PDF
+    const formattedLabel = item.subject.includes(' ') 
+      ? item.subject.split(' ').join('\n') 
+      : item.subject;
+    
+    // Determine alignment and positioning based on location around the circle
     let textAlign = "center";
-    let xOffset = 0;
     
     // Right side - align left
     if (x > centerX + 10) {
       textAlign = "left";
-      xOffset = 5;
     } 
     // Left side - align right
     else if (x < centerX - 10) {
       textAlign = "right";
-      xOffset = -5;
     }
     
     return {
-      x: x + xOffset,
+      x,
       y,
-      label: item.subject,
+      label: formattedLabel, // Use formatted label with line breaks
       align: textAlign,
       vAlign: y > centerY ? "top" : "bottom",
     };
