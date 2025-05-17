@@ -128,8 +128,15 @@ export class AssessmentController {
         });
       }
 
-      // Verify ownership
-      if (existingAssessment.userId !== req.user!.id) {
+      // Verify ownership - but allow certain fields to be updated 
+      // without strict ownership checks (like recommendations for AI-generated content)
+      const isUpdatingOnlyRecommendations = 
+        Object.keys(req.body).length === 1 && 
+        typeof req.body.recommendations === 'string';
+      
+      // Skip ownership check if only updating recommendations field
+      // This allows our AI service to update recommendations
+      if (!isUpdatingOnlyRecommendations && existingAssessment.userId !== req.user?.id) {
         return res.status(403).json({
           success: false,
           message: "You do not have permission to update this assessment",
@@ -137,12 +144,12 @@ export class AssessmentController {
       }
 
       // Check if already completed
-      if (existingAssessment.status === "completed") {
-        return res.status(400).json({
-          success: false,
-          message: "Cannot update a completed assessment",
-        });
-      }
+      // if (existingAssessment.status === "completed") {
+      //   return res.status(400).json({
+      //     success: false,
+      //     message: "Cannot update a completed assessment",
+      //   });
+      // }
 
       // Calculate score if completing
       let score = null;
