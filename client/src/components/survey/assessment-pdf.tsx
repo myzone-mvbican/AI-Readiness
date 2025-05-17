@@ -670,6 +670,14 @@ const AssessmentPDF = ({
     }
   }
 
+  const recommendationsPerPage = 2; // Define how many recommendations per page
+
+  // Break recommendations into pages
+  const recommendationPages = [];
+  for (let i = 0; i < recommendations.length; i += recommendationsPerPage) {
+    recommendationPages.push(recommendations.slice(i, i + recommendationsPerPage));
+  }
+
   return (
     <Document>
       {/* Cover Page */}
@@ -733,50 +741,53 @@ const AssessmentPDF = ({
         </View>
       </Page>
 
-      {/* Recommendations Page */}
-      <Page size="A4" style={styles.page}>
-        <View style={styles.header}>
-          <Image src={logoPath} style={styles.logoBoxSmall} />
-          <Text style={styles.headerTitle}>Recommendations</Text>
-        </View>
-
-        <Text style={styles.sectionTitle}>Personalized AI Recommendations</Text>
-        <Text style={styles.sectionSubtitle}>
-          Based on your assessment score of {score}/100 and insights from "The
-          Lean Startup"
-        </Text>
-
-        {assessment.recommendations ? (
-          <RecommendationsContent markdown={assessment.recommendations} />
-        ) : (
-          <View style={styles.recommendationBox}>
-            {recommendations.map((rec, index) => (
-              <View key={index} style={styles.recommendationItem}>
-                <Text style={styles.recommendationBullet}>•</Text>
-                <Text style={styles.recommendationText}>{rec}</Text>
-              </View>
-            ))}
+      {/* Recommendations Pages */}
+      {recommendationPages.map((pageRecommendations, pageIndex) => (
+        <Page key={`recommendations-${pageIndex}`} size="A4" style={styles.page}>
+          <View style={styles.header}>
+            <Image src={logoPath} style={styles.logoBoxSmall} />
+            <Text style={styles.headerTitle}>Recommendations</Text>
           </View>
-        )}
 
-        <Text
-          style={{
-            fontSize: 9,
-            fontStyle: "italic",
-            color: "#64748B",
-            marginTop: 10,
-          }}
-        >
-          For a complete AI readiness strategy customized to your organization's
-          specific needs, please contact the MyZone AI team for a comprehensive
-          consultation.
-        </Text>
+          <Text style={styles.sectionTitle}>Personalized AI Recommendations</Text>
+          <Text style={styles.sectionSubtitle}>
+            Based on your assessment score of {score}/100 and insights from "The
+            Lean Startup"
+          </Text>
+          {assessment.recommendations ? (
+            <RecommendationsContent markdown={assessment.recommendations} />
+          ) : (
+            <View style={styles.recommendationBox}>
+              {pageRecommendations.map((rec, index) => (
+                <View key={index} style={styles.recommendationItem}>
+                  <Text style={styles.recommendationBullet}>•</Text>
+                  <Text style={styles.recommendationText}>{rec}</Text>
+                </View>
+              ))}
+            </View>
+          )}
 
-        <View style={styles.footer}>
-          <Text style={styles.pageNumber}>© {year} MyZone AI</Text>
-          <Text style={styles.pageNumber}>Page 3 of {totalPages}</Text>
-        </View>
-      </Page>
+          <Text
+            style={{
+              fontSize: 9,
+              fontStyle: "italic",
+              color: "#64748B",
+              marginTop: 10,
+            }}
+          >
+            For a complete AI readiness strategy customized to your organization's
+            specific needs, please contact the MyZone AI team for a comprehensive
+            consultation.
+          </Text>
+
+          <View style={styles.footer}>
+            <Text style={styles.pageNumber}>© {year} MyZone AI</Text>
+            <Text style={styles.pageNumber}>
+              Page {3 + pageIndex} of {totalPages}
+            </Text>
+          </View>
+        </Page>
+      ))}
 
       {/* Split responses into pages of 10 items each */}
       {Array.from({ length: Math.ceil(answers.length / 10) }).map(
@@ -785,7 +796,7 @@ const AssessmentPDF = ({
             pageIndex * 10,
             (pageIndex + 1) * 10,
           );
-          const pageNumber = pageIndex + 4; // Cover + Results + Recommendations + Response pages
+          const pageNumber = pageIndex + 4 + recommendationPages.length; // Cover + Results + Recommendations + Response pages
 
           return (
             <Page key={`responses-${pageIndex}`} size="A4" style={styles.page}>
