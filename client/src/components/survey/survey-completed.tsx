@@ -246,6 +246,7 @@ export default function SurveyCompleted({
             </CardContent>
           </Card>
         </TabsContent>
+ 
         <TabsContent value="responses">
           <ScrollArea className="h-[calc(100dvh-330px)] rounded-md border p-4">
             <div ref={responsesRef}>
