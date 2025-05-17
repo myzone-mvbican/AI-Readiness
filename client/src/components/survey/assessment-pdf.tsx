@@ -377,15 +377,16 @@ const RecommendationsContent = ({ markdown }: { markdown: string }) => {
   return (
     <View style={{ marginTop: 0 }}>
       {sectionPairs.map((pair, pairIdx) => (
-        <View key={`pair-${pairIdx}`} style={{ flexDirection: 'column', marginBottom: 12 }}>
+        <View key={`pair-${pairIdx}`} style={{ flexDirection: 'row', marginBottom: 12 }}>
           {pair.map((section, idx) => (
             <View
               key={`section-${pairIdx}-${idx}`}
               style={[
                 styles.recommendationBox, 
                 { 
-                  marginBottom: 15,
-                  width: '100%',
+                  marginBottom: 5,
+                  marginHorizontal: 5,
+                  width: '47%',
                   borderLeftWidth: 4,
                   borderLeftColor: '#3361FF',
                   borderLeftStyle: 'solid'
