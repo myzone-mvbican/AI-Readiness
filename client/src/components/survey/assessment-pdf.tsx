@@ -305,11 +305,23 @@ const AssessmentPDF = ({
   
   // Use AI-generated recommendations if available, otherwise use default recommendations
   const staticRecommendations = getRecommendations(readinessLevel);
-  const recommendations = assessment.recommendations 
-    ? assessment.recommendations.split('\n').filter(line => 
-        line.trim().startsWith('-') || line.trim().startsWith('*')
-      ).map(line => line.trim().substring(2).trim()).slice(0, 5)
-    : staticRecommendations;
+  
+  // Parse AI-generated recommendations if available, or use static ones
+  let recommendations = staticRecommendations;
+  
+  if (assessment.recommendations) {
+    // Extract bullet points from markdown content
+    const bulletPoints = assessment.recommendations.split('\n')
+      .filter(line => line.trim().startsWith('-') || line.trim().startsWith('*'))
+      .map(line => line.trim().substring(2).trim())
+      .filter(line => line.length > 0)
+      .slice(0, 5);
+      
+    // Use the extracted recommendations if we found any
+    if (bulletPoints.length > 0) {
+      recommendations = bulletPoints;
+    }
+  }
 
   return (
     <Document>
@@ -673,77 +685,6 @@ export const AssessmentPDFDownloadButton = ({
   const quarter = Math.floor(today.getMonth() / 3 + 1);
   const year = today.getFullYear();
   const filename = `ai-readiness-report-Q${quarter}-${year}.pdf`;
-  
-  // Check if recommendations are being generated
-  const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false);
-  
-  // Hook for making API requests
-  const { mutateAsync, isLoading: isSaving } = useMutation({
-    mutationFn: async (data: { recommendations: string }) => {
-      const response = await apiRequest('PATCH', `/api/assessments/${assessment.id}`, data);
-      return response.json();
-    }
-  });
-  
-  // Generate recommendations if needed
-  useEffect(() => {
-    // Only generate recommendations if they don't already exist
-    const generateRecommendationsIfNeeded = async () => {
-      if (!assessment.recommendations && !isGeneratingRecommendations) {
-        try {
-          setIsGeneratingRecommendations(true);
-          
-          // Calculate category scores for AI suggestions
-          const categoryScores = chartData.map(item => ({
-            name: item.subject,
-            score: item.score
-          }));
-          
-          // Only proceed if we have category data
-          if (categoryScores.length === 0) {
-            setIsGeneratingRecommendations(false);
-            return;
-          }
-          
-          // Call OpenAI API to generate suggestions
-          const payload = {
-            assessmentTitle: `AI Readiness Assessment Q${quarter} ${year}`,
-            book: "The Lean Startup",
-            categories: categoryScores,
-            userEmail: assessment.email || undefined,
-          };
-          
-          // Call the API
-          const response = await apiRequest('POST', '/api/ai-suggestions', payload);
-          const result = await response.json();
-          
-          // Save recommendations to the assessment if successful
-          if (result.success && result.content) {
-            await mutateAsync({ recommendations: result.content });
-          }
-        } catch (error) {
-          console.error("Error generating recommendations:", error);
-        } finally {
-          setIsGeneratingRecommendations(false);
-        }
-      }
-    };
-    
-    generateRecommendationsIfNeeded();
-  }, [assessment.id, assessment.recommendations]);
-  
-  // If recommendations aren't ready yet, show loading button
-  if (!assessment.recommendations || isGeneratingRecommendations || isSaving) {
-    return (
-      <button 
-        disabled
-        className="flex items-center gap-2 bg-gray-300 text-gray-600 px-4 py-2 rounded-md text-sm font-medium cursor-not-allowed"
-      >
-        <Loader2 className="h-4 w-4 animate-spin" />
-        Preparing PDF...
-      </button>
-    );
-  }
 
   return (
     <PDFDownloadLink

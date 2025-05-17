@@ -44,6 +44,48 @@ export default function SurveyCompleted({
   const responsesRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState("results");
+  const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false);
+  const queryClient = useQueryClient();
+  
+  // Mutation for saving recommendations to the assessment
+  const saveRecommendationsMutation = useMutation({
+    mutationFn: async (recommendationText: string) => {
+      const response = await apiRequest('PATCH', `/api/assessments/${assessment.id}`, {
+        recommendations: recommendationText
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: [`/api/assessments/${assessment.id}`] });
+    }
+  });
+  
+  // Generate AI recommendations if they don't exist
+  useEffect(() => {
+    const generateRecommendationsIfNeeded = async () => {
+      // Only generate if we don't already have recommendations and we're not already generating
+      if (!assessment.recommendations && !isGeneratingRecommendations && assessment.id) {
+        try {
+          setIsGeneratingRecommendations(true);
+          
+          // Generate recommendations using our utility function
+          const recommendations = await generateRecommendations(assessment, questions);
+          
+          // Save the recommendations if generated successfully
+          if (recommendations) {
+            await saveRecommendationsMutation.mutateAsync(recommendations);
+          }
+        } catch (error) {
+          console.error("Error generating recommendations:", error);
+        } finally {
+          setIsGeneratingRecommendations(false);
+        }
+      }
+    };
+    
+    generateRecommendationsIfNeeded();
+  }, [assessment.id, assessment.recommendations]);
 
   // Define radar chart data type
   interface RadarChartData {
@@ -133,11 +175,21 @@ export default function SurveyCompleted({
           </div>
         </div>
         <div className="col-span-1 self-center md:flex md:justify-end">
-          <AssessmentPDFDownloadButton
-            assessment={assessment}
-            questions={questions}
-            chartData={getRadarChartData()}
-          />
+          {isGeneratingRecommendations || saveRecommendationsMutation.isPending ? (
+            <button 
+              disabled
+              className="flex items-center gap-2 bg-gray-300 text-gray-600 px-4 py-2 rounded-md text-sm font-medium cursor-not-allowed"
+            >
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Preparing PDF...
+            </button>
+          ) : (
+            <AssessmentPDFDownloadButton
+              assessment={assessment}
+              questions={questions}
+              chartData={getRadarChartData()}
+            />
+          )}
         </div>
       </div>
 
