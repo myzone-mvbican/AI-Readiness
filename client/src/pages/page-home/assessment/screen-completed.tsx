@@ -29,7 +29,7 @@ export default function GuestAssessmentCompleted({
 
   return (
     <>
-      <div className="w-full max-w-4xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         <SurveyCompleted assessment={assessment} questions={questions} />
 
         {/* Action buttons displayed below survey results */}
