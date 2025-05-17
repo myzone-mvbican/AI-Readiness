@@ -36,7 +36,27 @@ export default function AISuggestions({
     }
   }, [isActive]);
 
-  // Only fetch data if tab has been activated
+  // Access query client for mutations
+  const queryClient = useQueryClient();
+  
+  // Check if recommendations already exist in the assessment
+  const hasStoredRecommendations = !!assessment.recommendations;
+  
+  // Mutation for saving recommendations to the assessment
+  const saveRecommendationsMutation = useMutation({
+    mutationFn: async (recommendationText: string) => {
+      const response = await apiRequest('PATCH', `/api/assessments/${assessment.id}`, {
+        recommendations: recommendationText
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: [`/api/assessments/${assessment.id}`] });
+    }
+  });
+  
+  // Either use stored recommendations or fetch new ones
   const {
     data: suggestions,
     isLoading,
@@ -44,6 +64,11 @@ export default function AISuggestions({
   } = useQuery({
     queryKey: ["/api/ai-suggestions", assessment.id],
     queryFn: async () => {
+      // If we already have recommendations stored in the assessment, use those
+      if (hasStoredRecommendations) {
+        return { success: true, content: assessment.recommendations };
+      }
+      
       // Calculate category scores like in the chart
       const categoryScores = getCategoryScores();
 
@@ -59,10 +84,19 @@ export default function AISuggestions({
         userEmail: assessment.email || undefined,
       };
 
+      // Call the OpenAI API to generate recommendations
       const response = await apiRequest("POST", "/api/ai-suggestions", payload);
-      return await response.json();
+      const result = await response.json();
+      
+      // If successful, save the recommendations to the assessment record
+      if (result.success && result.content) {
+        saveRecommendationsMutation.mutate(result.content);
+      }
+      
+      return result;
     },
-    enabled: hasActivated && !!assessment.id, // Only run if tab has been activated
+    // Enable if tab is active OR if we already have recommendations
+    enabled: (hasActivated || hasStoredRecommendations) && !!assessment.id,
   });
 
   // Function to calculate category scores based on assessment answers
