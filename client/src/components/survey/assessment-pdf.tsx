@@ -302,7 +302,14 @@ const AssessmentPDF = ({
 
   // Readiness level
   const readinessLevel = getReadinessLevel(score);
-  const recommendations = getRecommendations(readinessLevel);
+  
+  // Use AI-generated recommendations if available, otherwise use default recommendations
+  const staticRecommendations = getRecommendations(readinessLevel);
+  const recommendations = assessment.recommendations 
+    ? assessment.recommendations.split('\n').filter(line => 
+        line.trim().startsWith('-') || line.trim().startsWith('*')
+      ).map(line => line.trim().substring(2).trim()).slice(0, 5)
+    : staticRecommendations;
 
   return (
     <Document>
