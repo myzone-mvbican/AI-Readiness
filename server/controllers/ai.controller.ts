@@ -60,7 +60,7 @@ Be direct and strategic with specific actionable recommendations.`;
 
       // Make API request to OpenAI
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-3.5-turbo",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPayload },
