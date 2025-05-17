@@ -46,91 +46,9 @@ export default function SurveyCompleted({
   const [activeTab, setActiveTab] = useState("results");
   const queryClient = useQueryClient();
   
-  // State for managing AI suggestions
+  // State for managing the PDF generation only
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  const [aiSuggestionsContent, setAiSuggestionsContent] = useState<string | null>(
-    assessment.recommendations || null
-  );
-  const [isLoadingAiSuggestions, setIsLoadingAiSuggestions] = useState(false);
-  const [aiSuggestionsError, setAiSuggestionsError] = useState<Error | null>(null);
-  
-  // Save recommendations to the assessment
-  const saveRecommendationsMutation = useMutation({
-    mutationFn: async (content: string) => {
-      const response = await apiRequest(
-        "PATCH",
-        `/api/assessments/${assessment.id}`,
-        {
-          recommendations: content,
-        }
-      );
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [`/api/assessments/${assessment.id}`],
-      });
-      setAiSuggestionsContent(assessment.recommendations);
-    }
-  });
-  
-  // Generate AI suggestions when needed
-  const generateAiSuggestions = async () => {
-    if (assessment.recommendations || isLoadingAiSuggestions) {
-      return; // Skip if already loaded or loading
-    }
-    
-    try {
-      setIsLoadingAiSuggestions(true);
-      setAiSuggestionsError(null);
-      
-      // Calculate category scores
-      const categoryScores = getCategoryScores(assessment, questions);
-      
-      if (!categoryScores.length) {
-        throw new Error("No category data available");
-      }
-      
-      const payload = {
-        assessmentTitle: assessment.title || "AI Readiness Assessment",
-        book: "The Lean Startup",
-        categories: categoryScores,
-        userEmail: assessment.email || undefined,
-      };
-      
-      // Single API call to generate recommendations
-      const response = await apiRequest("POST", "/api/ai-suggestions", payload);
-      const result = await response.json();
-      
-      if (result.success && result.content) {
-        // Set content locally first
-        setAiSuggestionsContent(result.content);
-        // Then save to backend
-        saveRecommendationsMutation.mutate(result.content);
-      } else {
-        throw new Error("Failed to generate recommendations");
-      }
-    } catch (error) {
-      console.error("Error generating AI suggestions:", error);
-      setAiSuggestionsError(error instanceof Error ? error : new Error("Unknown error"));
-    } finally {
-      setIsLoadingAiSuggestions(false);
-    }
-  };
-  
-  // Generate suggestions once when the component mounts and assessment is completed
-  useEffect(() => {
-    if (assessment.status === "completed" && !assessment.recommendations && !isLoadingAiSuggestions) {
-      generateAiSuggestions();
-    }
-  }, [assessment.id, assessment.status, assessment.recommendations]);
-  
-  // Update content when assessment updates
-  useEffect(() => {
-    if (assessment.recommendations) {
-      setAiSuggestionsContent(assessment.recommendations);
-    }
-  }, [assessment.recommendations]);
+  const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false);
 
   // Mutation for saving recommendations to the assessment
   const saveRecommendationsMutation = useMutation({
