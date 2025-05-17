@@ -598,6 +598,31 @@ const RadarChartPDF = ({
             <Circle key={`point-${i}`} cx={x} cy={y} r={3} fill="#4361EE" />
           );
         })}
+
+        {/* Scale line with numbers */}
+        <Line
+          x1={centerX}
+          y1={centerY}
+          x2={centerX + radius}
+          y2={centerY}
+          stroke="#94A3B8"
+          strokeWidth={0.5}
+        />
+        {[0, 2, 4, 6, 8, 10].map((value) => {
+          const x = centerX + (radius * value) / 10;
+          return (
+            <Text
+              key={`scale-${value}`}
+              x={x}
+              y={centerY + 10}
+              fontSize={6}
+              textAnchor="middle"
+              fill="#64748B"
+            >
+              {value}
+            </Text>
+          );
+        })}
       </Svg>
 
       {/* left: point.x - (point.align === 'right' ? 40 : point.align === 'left' ? 0 : 20),
