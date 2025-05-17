@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { parse } from "papaparse";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Survey, SurveyWithAuthor } from "@shared/types";
+import { SurveyWithAuthor } from "@shared/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { surveyStatusSchema } from "@shared/validation/schemas";
 
 import {
   Dialog,
@@ -160,7 +159,7 @@ export default function SurveyEditDialog({
     },
     onSuccess: () => {
       // Invalidate all survey-related queries
-      // queryClient.invalidateQueries({ queryKey: ["/api/surveys"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/surveys"] });
       queryClient.invalidateQueries({
         queryKey: ["/api/admin/surveys"],
       });
@@ -435,9 +434,11 @@ export default function SurveyEditDialog({
                             <X
                               className="ml-1 h-3 w-3 cursor-pointer"
                               onClick={() => {
-                                const newValue = field.value.filter(
-                                  (id: number) => id !== teamId,
-                                );
+                                const newValue =
+                                  field.value &&
+                                  field.value.filter(
+                                    (id: number) => id !== teamId,
+                                  );
                                 // Use setTimeout to avoid maximum update depth exceeded error
                                 setTimeout(() => {
                                   form.setValue("selectedTeams", newValue);

@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { CheckCircle2, InfoIcon } from "lucide-react";
 import {
   RadarChart,
@@ -24,7 +25,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { CsvQuestion, Assessment } from "@shared/types";
-import { useRef } from "react";
 import { AssessmentPDFDownloadButton } from "./assessment-pdf";
 
 interface SurveyCompletedProps {
@@ -37,8 +37,8 @@ export default function SurveyCompleted({
   questions = [],
 }: SurveyCompletedProps) {
   const { answers = [] } = assessment;
-  const chartRef = useRef<HTMLDivElement>(null);
   const responsesRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<HTMLDivElement>(null);
 
   // Define radar chart data type
   interface RadarChartData {
@@ -107,8 +107,8 @@ export default function SurveyCompleted({
     return question?.question || `Question ${questionId}`;
   };
 
-  // We're using React PDF instead of jsPDF for better layout control
-  // See assessment-pdf.tsx for the implementation
+  // We no longer need to capture the chart image
+  // Instead, we'll just pass the chart data directly to the PDF component
 
   return (
     <div className="space-y-6">
@@ -132,7 +132,7 @@ export default function SurveyCompleted({
             assessment={assessment}
             questions={questions}
             chartData={getRadarChartData()}
-          /> 
+          />
         </div>
       </div>
 
@@ -170,74 +170,73 @@ export default function SurveyCompleted({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="py-4">
-                <ChartContainer
-                  config={{
-                    // Config for the score data point
-                    score: {
-                      color: "hsl(var(--primary))",
-                    },
-                  }}
-                  className="h-[calc(100dvh-480px)] w-full"
-                  ref={chartRef}
-                >
-                  <RadarChart outerRadius="80%" data={getRadarChartData()}>
-                    <PolarGrid strokeDasharray="3 3" />
-                    <PolarAngleAxis
-                      dataKey="subject"
-                      tick={{
-                        fill: "hsl(var(--foreground))",
-                        fontSize: 12,
-                      }}
-                    />
-                    <PolarRadiusAxis
-                      domain={[0, 10]}
-                      tick={{ fill: "hsl(var(--foreground))" }}
-                    />
-                    <Radar
-                      name="Organization Score"
-                      dataKey="score"
-                      stroke="hsl(var(--primary))"
-                      fill="hsl(var(--primary))"
-                      fillOpacity={0.5}
-                      dot={{
-                        r: 4,
-                        fillOpacity: 1,
-                      }}
-                    />
-                    <RechartsTooltip
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          const data = payload[0];
-                          return (
-                            <div className="rounded-lg border bg-background p-2 shadow-sm">
-                              <div className="grid grid-cols-2 gap-2">
-                                <div className="flex flex-col">
-                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                    Category
-                                  </span>
-                                  <span className="font-bold">
-                                    {data.payload.subject}
-                                  </span>
-                                </div>
-                                <div className="flex flex-col">
-                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                    Score
-                                  </span>
-                                  <span className="font-bold">
-                                    {data.value}/10
-                                  </span>
-                                </div>
+              <ChartContainer
+                config={{
+                  // Config for the score data point
+                  score: {
+                    color: "hsl(var(--primary))",
+                  },
+                }}
+                className="h-[calc(100dvh-480px)] w-full"
+                ref={chartRef}
+              >
+                <RadarChart outerRadius="80%" data={getRadarChartData()}>
+                  <PolarGrid strokeDasharray="3 3" />
+                  <PolarAngleAxis
+                    dataKey="subject"
+                    tick={{
+                      fill: "hsl(var(--foreground))",
+                      fontSize: 12,
+                    }}
+                  />
+                  <PolarRadiusAxis
+                    domain={[0, 10]}
+                    tick={{ fill: "hsl(var(--foreground))" }}
+                  />
+                  <Radar
+                    name="Organization Score"
+                    dataKey="score"
+                    stroke="hsl(var(--primary))"
+                    fill="hsl(var(--primary))"
+                    fillOpacity={0.5}
+                    dot={{
+                      r: 4,
+                      fillOpacity: 1,
+                    }}
+                    isAnimationActive={false}
+                  />
+                  <RechartsTooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0];
+                        return (
+                          <div className="rounded-lg border bg-background p-2 shadow-sm">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="flex flex-col">
+                                <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                  Category
+                                </span>
+                                <span className="font-bold">
+                                  {data.payload.subject}
+                                </span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                  Score
+                                </span>
+                                <span className="font-bold">
+                                  {data.value}/10
+                                </span>
                               </div>
                             </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                  </RadarChart>
-                </ChartContainer>
-              </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                </RadarChart>
+              </ChartContainer>
             </CardContent>
           </Card>
         </TabsContent>

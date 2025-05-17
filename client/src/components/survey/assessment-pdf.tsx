@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import {
   Document,
   Page,
@@ -7,19 +7,14 @@ import {
   View,
   StyleSheet,
   PDFDownloadLink,
+  Svg,
+  Circle,
+  Line,
+  Polygon,
 } from "@react-pdf/renderer";
-import {
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-  Tooltip as RechartsTooltip,
-} from "recharts";
-import { ChartContainer } from "@/components/ui/chart";
 import { Download } from "lucide-react";
 import { Assessment, CsvQuestion } from "@shared/types";
-import html2canvas from 'html2canvas';
+import logoPath from "@/assets/logo-myzone-ai.png";
 
 // Create styles for PDF
 const styles = StyleSheet.create({
@@ -35,19 +30,20 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   logoContainer: {
+    backgroundColor: "white",
+    borderRadius: 8,
     alignItems: "center",
-    marginTop: 40,
+    marginTop: 20,
     marginBottom: 20,
   },
   logoBox: {
-    width: 140,
-    height: 40,
-    backgroundColor: "#4361EE",
-    color: "white",
-    borderRadius: 4,
+    width: 180,
+    height: 50,
     padding: 10,
-    textAlign: "center",
-    fontWeight: "bold",
+  },
+  logoBoxSmall: {
+    width: 145,
+    height: 30,
   },
   title: {
     fontSize: 24,
@@ -55,13 +51,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 10,
     marginTop: 30,
-    color: "#1E293B",
+    color: "#fff",
   },
   subtitle: {
     fontSize: 16,
     textAlign: "center",
     marginBottom: 5,
-    color: "#475569",
+    color: "#fff",
   },
   contentBox: {
     border: "1px solid #CBD5E1",
@@ -100,7 +96,7 @@ const styles = StyleSheet.create({
   coverFooter: {
     textAlign: "center",
     fontSize: 10,
-    color: "#94A3B8",
+    color: "#fff",
     marginTop: "auto",
     marginBottom: 30,
   },
@@ -138,8 +134,8 @@ const styles = StyleSheet.create({
     color: "#475569",
   },
   chartPlaceholder: {
-    width: 350,
-    height: 200,
+    width: 400,
+    height: 300,
     backgroundColor: "#F1F5F9",
     marginVertical: 20,
     alignSelf: "center",
@@ -151,8 +147,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   chartImage: {
-    width: 220,
-    height: 100,
+    height: 150,
     marginVertical: 20,
     alignSelf: "center",
   },
@@ -285,11 +280,11 @@ const getRecommendations = (readinessLevel: string) => {
 const AssessmentPDF = ({
   assessment,
   questions,
-  chartData,
+  chartImage,
 }: {
   assessment: Assessment;
   questions: CsvQuestion[];
-  chartData: any;
+  chartImage: string | null;
 }) => {
   const { answers = [] } = assessment;
   const score = assessment.score || 0;
@@ -308,40 +303,13 @@ const AssessmentPDF = ({
   // Readiness level
   const readinessLevel = getReadinessLevel(score);
   const recommendations = getRecommendations(readinessLevel);
-  const chartRef = useRef<HTMLDivElement>(null);
-
-  const getChartImage = async () => {
-    if (!chartRef.current) return '';
-    const canvas = await html2canvas(chartRef.current);
-    return canvas.toDataURL();
-  };
-
-  const ChartComponent = () => (
-    <div ref={chartRef} style={{ width: 400, height: 300, background: 'white' }}>
-      <ChartContainer config={{ score: { color: "hsl(var(--primary))" }}}>
-        <RadarChart outerRadius="80%" data={chartData}>
-          <PolarGrid strokeDasharray="3 3" />
-          <PolarAngleAxis dataKey="subject" />
-          <PolarRadiusAxis domain={[0, 10]} />
-          <Radar
-            name="Organization Score"
-            dataKey="score"
-            stroke="hsl(var(--primary))"
-            fill="hsl(var(--primary))"
-            fillOpacity={0.5}
-            dot={{ r: 4, fillOpacity: 1 }}
-          />
-        </RadarChart>
-      </ChartContainer>
-    </div>
-  );
 
   return (
     <Document>
       {/* Cover Page */}
       <Page size="A4" style={styles.coverPage}>
         <View style={styles.logoContainer}>
-          <Text style={styles.logoBox}>MyZone AI</Text>
+          <Image src={logoPath} style={styles.logoBox} />
         </View>
 
         <View style={{ flex: 1, justifyContent: "center" }}>
@@ -365,7 +333,7 @@ const AssessmentPDF = ({
       {/* Results Page */}
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
-          <Text style={styles.headerLogo}>MyZone AI</Text>
+          <Image src={logoPath} style={styles.logoBoxSmall} />
           <Text style={styles.headerTitle}>Assessment Results</Text>
         </View>
 
@@ -375,13 +343,15 @@ const AssessmentPDF = ({
           stage of AI readiness.
         </Text>
 
-        {chartImageUrl ? (
+        {chartImage ? (
           <View>
-            <Image src={chartImageUrl} style={styles.chartImage} />
+            <Image src={chartImage} style={styles.chartImage} />
             <Text style={styles.chartCaption}>
               This radar chart shows your organization's score across different
-              dimensions of AI readiness. Higher scores indicate greater
-              maturity in that category.
+              dimensions of AI readiness.
+            </Text>
+            <Text style={styles.chartCaption}>
+              Higher scores indicate greater maturity in that category.
             </Text>
           </View>
         ) : (
@@ -399,7 +369,7 @@ const AssessmentPDF = ({
       {/* Recommendations Page */}
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
-          <Text style={styles.headerLogo}>MyZone AI</Text>
+          <Image src={logoPath} style={styles.logoBoxSmall} />
           <Text style={styles.headerTitle}>Recommendations</Text>
         </View>
 
@@ -449,7 +419,7 @@ const AssessmentPDF = ({
           return (
             <Page key={`responses-${pageIndex}`} size="A4" style={styles.page}>
               <View style={styles.header}>
-                <Text style={styles.headerLogo}>MyZone AI</Text>
+                <Image src={logoPath} style={styles.logoBoxSmall} />
                 <Text style={styles.headerTitle}>
                   {pageIndex === 0
                     ? "Your Responses"
@@ -509,11 +479,11 @@ const AssessmentPDF = ({
 export const AssessmentPDFDownloadButton = ({
   assessment,
   questions,
-  chartImageUrl,
+  chartImage,
 }: {
   assessment: Assessment;
   questions: CsvQuestion[];
-  chartImageUrl: string;
+  chartImage: string | null;
 }) => {
   const today = new Date();
   const quarter = Math.floor(today.getMonth() / 3 + 1);
@@ -526,7 +496,7 @@ export const AssessmentPDFDownloadButton = ({
         <AssessmentPDF
           assessment={assessment}
           questions={questions}
-          chartImageUrl={chartImageUrl}
+          chartImage={chartImage}
         />
       }
       fileName={filename}
