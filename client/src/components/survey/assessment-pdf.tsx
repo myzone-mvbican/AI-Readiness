@@ -307,7 +307,7 @@ const RecommendationsContent = ({ markdown }: { markdown: string }) => {
     if (sections.length === 0) {
       return [{ 
         category: 'Strategic Recommendations',
-        content: markdown.trim()
+        content: [{ type: 'paragraph', text: markdown.trim() }]
       }];
     }
 
@@ -317,15 +317,22 @@ const RecommendationsContent = ({ markdown }: { markdown: string }) => {
       const category = lines[0]?.trim() || 'Recommendations';
       const content = lines.slice(1).join('\n').trim();
 
-      return { category, content };
-    });
-  };
+      // Split content into paragraphs and bullet points
+      const items = content.split('\n\n').map(paragraph => {
+        if (paragraph.trim().startsWith('-') || paragraph.trim().startsWith('*')) {
+          return paragraph.split('\n')
+            .filter(line => line.trim().startsWith('-') || line.trim().startsWith('*'))
+            .map(line => ({
+              type: 'bullet',
+              text: line.trim().substring(2).trim()
+            }));
+        } else {
+          return { type: 'paragraph', text: paragraph.trim() };
+        }
+      }).flat();
 
-  // Extract bullet points from text
-  const extractBulletPoints = (text: string) => {
-    return text.split('\n')
-      .filter(line => line.trim().startsWith('-') || line.trim().startsWith('*'))
-      .map(line => line.trim().substring(2).trim());
+      return { category, content: items };
+    });
   };
 
   // Parse markdown into sections
@@ -334,43 +341,61 @@ const RecommendationsContent = ({ markdown }: { markdown: string }) => {
   return (
     <View style={{ marginTop: 10 }}>
       {sections.map((section, idx) => (
-        <View key={idx} style={styles.recommendationBox}>
-          <Text style={{
-            fontSize: 14,
-            fontWeight: "bold",
-            color: "#1E293B",
-            marginBottom: 6,
-          }}>{section.category}</Text>
+        <View key={idx} style={[styles.recommendationBox, { marginBottom: 15 }]}>
+          <View style={{
+            backgroundColor: "#F1F5F9",
+            padding: 8,
+            borderTopLeftRadius: 4,
+            borderTopRightRadius: 4,
+            marginBottom: 10,
+          }}>
+            <Text style={{
+              fontSize: 14,
+              fontWeight: "bold",
+              color: "#0F172A",
+            }}>{section.category}</Text>
+          </View>
 
-          {/* Regular paragraph text */}
-          {section.content.split('\n\n').map((paragraph, pidx) => {
-            // Skip if this is a list (bullets)
-            if (paragraph.trim().startsWith('-') || paragraph.trim().startsWith('*')) {
-              const bullets = extractBulletPoints(paragraph);
-              return (
-                <View key={`p-${pidx}`} style={{ marginTop: 6 }}>
-                  {bullets.map((bullet, bidx) => (
-                    <View key={`b-${bidx}`} style={styles.recommendationItem}>
-                      <Text style={styles.recommendationBullet}>•</Text>
-                      <Text style={styles.recommendationText}>{bullet}</Text>
-                    </View>
-                  ))}
-                </View>
-              );
-            }
-
-            // Regular paragraph
-            return (
-              <Text key={`p-${pidx}`} style={{
-                fontSize: 10,
-                color: "#334155",
-                marginVertical: 4,
-                lineHeight: 1.4,
-              }}>
-                {paragraph.trim()}
-              </Text>
-            );
-          })}
+          <View style={{ padding: 10 }}>
+            {section.content.map((item: any, contentIdx: number) => {
+              if (item.type === 'paragraph') {
+                return (
+                  <Text
+                    key={`p-${contentIdx}`}
+                    style={{
+                      fontSize: 10,
+                      color: "#334155",
+                      marginBottom: 8,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {item.text}
+                  </Text>
+                );
+              } else if (item.type === 'bullet') {
+                return (
+                  <View
+                    key={`b-${contentIdx}`}
+                    style={[
+                      styles.recommendationItem,
+                      { marginLeft: 8, marginBottom: 6 }
+                    ]}
+                  >
+                    <Text style={[styles.recommendationBullet, { color: "#3B82F6" }]}>
+                      •
+                    </Text>
+                    <Text style={[
+                      styles.recommendationText,
+                      { flex: 1, marginLeft: 6, lineHeight: 1.5 }
+                    ]}>
+                      {item.text}
+                    </Text>
+                  </View>
+                );
+              }
+              return null;
+            })}
+          </View>
         </View>
       ))}
     </View>
@@ -579,13 +604,13 @@ const AssessmentPDF = ({
 
   // Readiness level
   const readinessLevel = getReadinessLevel(score);
-  
+
   // Use AI-generated recommendations if available, otherwise use default recommendations
   const staticRecommendations = getRecommendations(readinessLevel);
-  
+
   // Parse AI-generated recommendations if available, or use static ones
   let recommendations = staticRecommendations;
-  
+
   if (assessment.recommendations) {
     // Extract bullet points from markdown content
     const bulletPoints = assessment.recommendations.split('\n')
@@ -593,7 +618,7 @@ const AssessmentPDF = ({
       .map(line => line.trim().substring(2).trim())
       .filter(line => line.length > 0)
       .slice(0, 5);
-      
+
     // Use the extracted recommendations if we found any
     if (bulletPoints.length > 0) {
       recommendations = bulletPoints;
