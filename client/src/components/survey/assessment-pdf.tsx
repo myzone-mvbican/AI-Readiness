@@ -363,16 +363,16 @@ const RecommendationsContent = ({ markdown }: { markdown: string }) => {
 
   // Parse markdown into sections
   const sections = parseMarkdown(markdown);
-  
+
   // Return the vertical stacked layout - showing just the sections provided in this chunk
   // Each page will contain max 2 recommendations (from parent component logic)
   return (
-    <View style={{ marginTop: 0 }}>
+    <View style={{ marginTop: 30 }}>
       {sections.map((section, index) => (
         <View
           key={`section-${index}`}
           style={{
-            marginBottom: 20,
+            marginBottom: 50,
             borderLeftWidth: 4,
             borderLeftColor: "#3361FF",
             borderLeftStyle: "solid",
@@ -410,7 +410,7 @@ const RecommendationsContent = ({ markdown }: { markdown: string }) => {
                       lineHeight: 1.5,
                     }}
                   >
-                    {item.text}
+                    {item.text.trim()}
                   </Text>
                 );
               } else if (item.type === "bullet") {
@@ -420,17 +420,19 @@ const RecommendationsContent = ({ markdown }: { markdown: string }) => {
                     style={{
                       flexDirection: "row",
                       marginBottom: 6,
-                      marginLeft: 8,
+                      marginLeft: 0,
                     }}
                   >
-                    <Text style={{ color: "#3B82F6", marginRight: 6 }}>•</Text>
-                    <Text style={{
-                      flex: 1,
-                      fontSize: 10,
-                      color: "#334155",
-                      lineHeight: 1.5,
-                    }}>
-                      {item.text}
+                    <Text style={{ color: "#3B82F6", marginRight: 0 }}>•</Text>
+                    <Text
+                      style={{
+                        flex: 1,
+                        fontSize: 10,
+                        color: "#334155",
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {item.text.trim()}
                     </Text>
                   </View>
                 );
@@ -675,7 +677,9 @@ const AssessmentPDF = ({
   // Break recommendations into pages
   const recommendationPages = [];
   for (let i = 0; i < recommendations.length; i += recommendationsPerPage) {
-    recommendationPages.push(recommendations.slice(i, i + recommendationsPerPage));
+    recommendationPages.push(
+      recommendations.slice(i, i + recommendationsPerPage),
+    );
   }
 
   return (
@@ -745,41 +749,53 @@ const AssessmentPDF = ({
       {(() => {
         if (assessment.recommendations) {
           // Parse markdown into sections (each section starts with ## heading)
-          const sections = assessment.recommendations.split(/##\s+/).filter(Boolean);
-          
+          const sections = assessment.recommendations
+            .split(/##\s+/)
+            .filter(Boolean);
+
           // Group recommendations into pages (2 per page)
           const recommendationPages = [];
           for (let i = 0; i < sections.length; i += 2) {
             const pageContent = [];
             pageContent.push("## " + sections[i]);
-            
+
             if (i + 1 < sections.length) {
               pageContent.push("## " + sections[i + 1]);
             }
-            
+
             recommendationPages.push(pageContent.join("\n\n"));
           }
-          
+
           // Generate pages
           return recommendationPages.map((pageContent, index) => (
-            <Page key={`recommendations-${index}`} size="A4" style={styles.page}>
+            <Page
+              key={`recommendations-${index}`}
+              size="A4"
+              style={styles.page}
+            >
               <View style={styles.header}>
                 <Image src={logoPath} style={styles.logoBoxSmall} />
                 <Text style={styles.headerTitle}>Recommendations</Text>
               </View>
-              
-              <Text style={styles.sectionTitle}>Personalized AI Recommendations</Text>
-              <Text style={styles.sectionSubtitle}>
-                Based on your assessment score of {score}/100 and insights from "The Lean Startup"
+
+              <Text style={styles.sectionTitle}>
+                Personalized AI Recommendations
               </Text>
-              
+              <Text style={styles.sectionSubtitle}>
+                Based on your assessment score of {score}/100 and insights from
+                "The Lean Startup"
+              </Text>
+
               {/* Using the RecommendationsContent component for each page */}
               <RecommendationsContent markdown={pageContent} />
-              
+
               <View style={styles.footer}>
                 <Text style={styles.pageNumber}>© {year} MyZone AI</Text>
                 <Text style={styles.pageNumber}>
-                  Page {index + 3} of {2 + recommendationPages.length + Math.ceil(answers.length / 10)}
+                  Page {index + 3} of{" "}
+                  {2 +
+                    recommendationPages.length +
+                    Math.ceil(answers.length / 10)}
                 </Text>
               </View>
             </Page>
@@ -797,7 +813,7 @@ const AssessmentPDF = ({
               <Text style={styles.sectionSubtitle}>
                 Based on your assessment score of {score}/100
               </Text>
-              
+
               <View style={styles.recommendationBox}>
                 {recommendations.map((rec, idx) => (
                   <View key={idx} style={styles.recommendationItem}>
@@ -815,16 +831,14 @@ const AssessmentPDF = ({
                   marginTop: 10,
                 }}
               >
-                For a complete AI readiness strategy customized to your organization's
-                specific needs, please contact the MyZone AI team for a comprehensive
-                consultation.
+                For a complete AI readiness strategy customized to your
+                organization's specific needs, please contact the MyZone AI team
+                for a comprehensive consultation.
               </Text>
 
               <View style={styles.footer}>
                 <Text style={styles.pageNumber}>© {year} MyZone AI</Text>
-                <Text style={styles.pageNumber}>
-                  Page 3 of {totalPages}
-                </Text>
+                <Text style={styles.pageNumber}>Page 3 of {totalPages}</Text>
               </View>
             </Page>
           );
