@@ -51,7 +51,7 @@ export async function generateRecommendations(
 /**
  * Calculate category scores based on assessment answers
  */
-function getCategoryScores(
+export function getCategoryScores(
   assessment: Assessment,
   questions: CsvQuestion[],
 ): CategoryScore[] {

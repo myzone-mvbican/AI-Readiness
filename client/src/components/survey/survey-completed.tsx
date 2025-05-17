@@ -44,34 +44,48 @@ export default function SurveyCompleted({
   const responsesRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState("results");
-  const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false);
+  const [isGeneratingRecommendations, setIsGeneratingRecommendations] =
+    useState(false);
   const queryClient = useQueryClient();
-  
+
   // Mutation for saving recommendations to the assessment
   const saveRecommendationsMutation = useMutation({
     mutationFn: async (recommendationText: string) => {
-      const response = await apiRequest('PATCH', `/api/assessments/${assessment.id}`, {
-        recommendations: recommendationText
-      });
+      const response = await apiRequest(
+        "PATCH",
+        `/api/assessments/${assessment.id}`,
+        {
+          recommendations: recommendationText,
+        },
+      );
       return response.json();
     },
     onSuccess: () => {
       // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: [`/api/assessments/${assessment.id}`] });
-    }
+      queryClient.invalidateQueries({
+        queryKey: [`/api/assessments/${assessment.id}`],
+      });
+    },
   });
-  
+
   // Generate AI recommendations if they don't exist
   useEffect(() => {
     const generateRecommendationsIfNeeded = async () => {
       // Only generate if we don't already have recommendations and we're not already generating
-      if (!assessment.recommendations && !isGeneratingRecommendations && assessment.id) {
+      if (
+        !assessment.recommendations &&
+        !isGeneratingRecommendations &&
+        assessment.id
+      ) {
         try {
           setIsGeneratingRecommendations(true);
-          
+
           // Generate recommendations using our utility function
-          const recommendations = await generateRecommendations(assessment, questions);
-          
+          const recommendations = await generateRecommendations(
+            assessment,
+            questions,
+          );
+
           // Save the recommendations if generated successfully
           if (recommendations) {
             await saveRecommendationsMutation.mutateAsync(recommendations);
@@ -83,7 +97,7 @@ export default function SurveyCompleted({
         }
       }
     };
-    
+
     generateRecommendationsIfNeeded();
   }, [assessment.id, assessment.recommendations]);
 
@@ -154,9 +168,6 @@ export default function SurveyCompleted({
     return question?.question || `Question ${questionId}`;
   };
 
-  // We no longer need to capture the chart image
-  // Instead, we'll just pass the chart data directly to the PDF component
-
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 space-y-6 md:space-y-0 py-4">
@@ -175,8 +186,9 @@ export default function SurveyCompleted({
           </div>
         </div>
         <div className="col-span-1 self-center md:flex md:justify-end">
-          {isGeneratingRecommendations || saveRecommendationsMutation.isPending ? (
-            <button 
+          {isGeneratingRecommendations ||
+          saveRecommendationsMutation.isPending ? (
+            <button
               disabled
               className="flex items-center gap-2 bg-gray-300 text-gray-600 px-4 py-2 rounded-md text-sm font-medium cursor-not-allowed"
             >
@@ -193,8 +205,8 @@ export default function SurveyCompleted({
         </div>
       </div>
 
-      <Tabs 
-        defaultValue="results" 
+      <Tabs
+        defaultValue="results"
         className="mt-6"
         onValueChange={(value) => setActiveTab(value)}
       >
@@ -301,7 +313,7 @@ export default function SurveyCompleted({
             </CardContent>
           </Card>
         </TabsContent>
- 
+
         <TabsContent value="responses">
           <ScrollArea className="h-[calc(100dvh-330px)] rounded-md border p-4">
             <div ref={responsesRef}>
@@ -344,7 +356,7 @@ export default function SurveyCompleted({
             </div>
           </ScrollArea>
         </TabsContent>
-        
+
         <TabsContent value="suggestions">
           <AISuggestions
             assessment={assessment}

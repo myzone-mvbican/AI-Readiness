@@ -58,19 +58,19 @@ Produce a Markdown report structured as follows:
 
 **How You Performed**
 
-* Current Score: **${category.score} / 10 (${((category.score / 10) * 100).toFixed(0)}%)**
+* **Current Score:** ${category.score} / 10 (${((category.score / 10) * 100).toFixed(0)}%)
 
 `;
 
         if (category.benchmark != null) {
-          systemPrompt += `* Benchmark: **${category.benchmark ? `${((category.benchmark / 10) * 100).toFixed(0)}%` : "N/A"}**`;
+          systemPrompt += `* **Benchmark:** ${category.benchmark ? `${((category.benchmark / 10) * 100).toFixed(0)}%` : "N/A"}`;
         }
 
         if (category.previousScore != null) {
           const delta = category.score - category.previousScore;
-          systemPrompt += `* Trend vs. Previous: **${delta > 0 ? "⬆ Up by" : delta < 0 ? "⬇ Down by" : "→ No change"} ${Math.abs(delta)}** points  \n`;
+          systemPrompt += `* **Trend vs. Previous:** ${delta > 0 ? "⬆ Up by" : delta < 0 ? "⬇ Down by" : "→ No change"} ${Math.abs(delta)} points  \n`;
         } else {
-          systemPrompt += `* Trend vs. Previous: **First-time assessment**`;
+          systemPrompt += `* **Trend vs. Previous:** First-time assessment`;
         }
 
         systemPrompt += `** {{emoji.keys}} Key Best Practices** _(top 3)_`;
