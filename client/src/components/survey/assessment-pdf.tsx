@@ -432,7 +432,7 @@ const RecommendationsContent = ({ markdown }: { markdown: string }) => {
                         lineHeight: 1.5,
                       }}
                     >
-                      {item.text.trim()}
+                      {item.text}
                     </Text>
                   </View>
                 );
@@ -644,16 +644,6 @@ const AssessmentPDF = ({
   });
   const quarter = Math.floor(today.getMonth() / 3 + 1);
   const year = today.getFullYear();
-  // Calculate total pages:
-  // 1. Cover page
-  // 2. Results/chart page 
-  // 3. Recommendations pages based on content
-  // 4. Answer pages (10 answers per page)
-  const recommendationPages = assessment.recommendations 
-    ? Math.ceil(assessment.recommendations.split(/##\s+/).filter(Boolean).length / 2)
-    : 1;
-  const answerPages = Math.ceil(answers.length / 10);
-  const totalPages = 1 + 1 + recommendationPages + answerPages;
 
   // Readiness level
   const readinessLevel = getReadinessLevel(score);
@@ -681,15 +671,8 @@ const AssessmentPDF = ({
     }
   }
 
-  const recommendationsPerPage = 2; // Define how many recommendations per page
-
-  // Break recommendations into pages
-  const recommendationPages = [];
-  for (let i = 0; i < recommendations.length; i += recommendationsPerPage) {
-    recommendationPages.push(
-      recommendations.slice(i, i + recommendationsPerPage),
-    );
-  }
+  const answerPages = Math.ceil(answers.length / 10);
+  const totalPages = 2 + (assessment.recommendations ? 5 : 1) + answerPages;
 
   return (
     <Document>
@@ -801,10 +784,7 @@ const AssessmentPDF = ({
               <View style={styles.footer}>
                 <Text style={styles.pageNumber}>© {year} MyZone AI</Text>
                 <Text style={styles.pageNumber}>
-                  Page {index + 3} of{" "}
-                  {2 +
-                    recommendationPages.length +
-                    Math.ceil(answers.length / 10)}
+                  Page {index + 3} of {totalPages}
                 </Text>
               </View>
             </Page>
@@ -855,69 +835,62 @@ const AssessmentPDF = ({
       })()}
 
       {/* Split responses into pages of 10 items each */}
-      {Array.from({ length: Math.ceil(answers.length / 10) }).map(
-        (_, pageIndex) => {
-          const pageAnswers = answers.slice(
-            pageIndex * 10,
-            (pageIndex + 1) * 10,
-          );
-          const pageNumber = pageIndex + 4 + recommendationPages.length; // Cover + Results + Recommendations + Response pages
+      {Array.from({ length: answerPages }).map((_, pageIndex) => {
+        const pageAnswers = answers.slice(pageIndex * 10, (pageIndex + 1) * 10);
 
-          return (
-            <Page key={`responses-${pageIndex}`} size="A4" style={styles.page}>
-              <View style={styles.header}>
-                <Image src={logoPath} style={styles.logoBoxSmall} />
-                <Text style={styles.headerTitle}>
-                  {pageIndex === 0
-                    ? "Your Responses"
-                    : "Your Responses (continued)"}
-                </Text>
-              </View>
+        const currentIndex = totalPages - answerPages + pageIndex + 1;
 
-              <Text style={styles.sectionTitle}>
+        return (
+          <Page key={`responses-${pageIndex}`} size="A4" style={styles.page}>
+            <View style={styles.header}>
+              <Image src={logoPath} style={styles.logoBoxSmall} />
+              <Text style={styles.headerTitle}>
                 {pageIndex === 0
-                  ? "Assessment Answers"
-                  : "Assessment Answers (continued)"}
+                  ? "Your Responses"
+                  : "Your Responses (continued)"}
               </Text>
+            </View>
 
-              {pageAnswers.map((answer, index) => {
-                const actualIndex = pageIndex * 10 + index;
-                const question = questions.find((q) => q.id === answer.q);
-                const { text: answerText, style: answerStyle } = getAnswerText(
-                  answer.a,
-                );
+            <Text style={styles.sectionTitle}>
+              {pageIndex === 0
+                ? "Assessment Answers"
+                : "Assessment Answers (continued)"}
+            </Text>
 
-                return (
-                  <View
-                    key={`answer-${actualIndex}`}
-                    style={styles.questionItem}
-                  >
-                    <Text style={styles.questionNumber}>
-                      Question {actualIndex + 1}
-                    </Text>
-                    <Text style={styles.questionText}>
-                      {question?.question || `Unknown Question`}
-                    </Text>
-                    <Text style={styles.answerLabel}>
-                      Your answer:{" "}
-                      <Text style={[styles.answerValue, answerStyle]}>
-                        {answerText}
-                      </Text>
-                    </Text>
-                  </View>
-                );
-              })}
+            {pageAnswers.map((answer, index) => {
+              const actualIndex = pageIndex * 10 + index;
+              const question = questions.find((q) => q.id === answer.q);
+              const { text: answerText, style: answerStyle } = getAnswerText(
+                answer.a,
+              );
 
-              <View style={styles.footer}>
-                <Text style={styles.pageNumber}>© {year} MyZone AI</Text>
-                <Text style={styles.pageNumber}>
-                  Page {pageNumber} of {totalPages}
-                </Text>
-              </View>
-            </Page>
-          );
-        },
-      )}
+              return (
+                <View key={`answer-${actualIndex}`} style={styles.questionItem}>
+                  <Text style={styles.questionNumber}>
+                    Question {actualIndex + 1}
+                  </Text>
+                  <Text style={styles.questionText}>
+                    {question?.question || `Unknown Question`}
+                  </Text>
+                  <Text style={styles.answerLabel}>
+                    Your answer:{" "}
+                    <Text style={[styles.answerValue, answerStyle]}>
+                      {answerText}
+                    </Text>
+                  </Text>
+                </View>
+              );
+            })}
+
+            <View style={styles.footer}>
+              <Text style={styles.pageNumber}>© {year} MyZone AI</Text>
+              <Text style={styles.pageNumber}>
+                Page {currentIndex} of {totalPages}
+              </Text>
+            </View>
+          </Page>
+        );
+      })}
     </Document>
   );
 };
