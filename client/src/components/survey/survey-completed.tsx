@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { CheckCircle2, InfoIcon } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
+import { CheckCircle2, InfoIcon, Loader2 } from "lucide-react";
 import AISuggestions from "./ai-suggestions";
 import {
   RadarChart,
@@ -27,6 +27,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { CsvQuestion, Assessment } from "@shared/types";
 import { AssessmentPDFDownloadButton } from "./assessment-pdf";
+import { generateRecommendations } from "@/lib/generateRecommendations";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface SurveyCompletedProps {
   assessment: Assessment;
