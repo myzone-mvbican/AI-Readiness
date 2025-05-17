@@ -183,6 +183,7 @@ export const updateAssessmentSchema = createInsertSchema(assessments)
     score: true,
     email: true,
     userId: true,
+    recommendations: true,
   })
   .partial()
   .extend({
@@ -190,4 +191,5 @@ export const updateAssessmentSchema = createInsertSchema(assessments)
     email: z.string().email().optional(), // For guest assessments
     status: assessmentStatusSchema.optional(),
     answers: z.array(assessmentAnswerSchema).optional(),
+    recommendations: z.string().optional(), // Allow storing AI-generated recommendations
   });

@@ -1,0 +1,87 @@
+I’m using @react-pdf/renderer to generate assessment reports. I’ve already saved OpenAI-generated markdown recommendations in assessment.recommendations (a markdown string). Please render this markdown content as a styled final page in the PDF.
+
+📄 1. New Page: “Recommendations”
+Add a new page to the PDF:
+
+Title: Personalized AI Recommendations
+
+Subtitle: Based on your responses and insights from "The Lean Startup"
+
+Content: parsed markdown from assessment.recommendations
+
+🔍 2. Markdown Rendering in PDF
+Use a markdown-to-React-PDF renderer or manually map elements:
+
+Headers (## → Text with larger font)
+
+Paragraphs → Text
+
+Bullet lists → map manually if needed (•)
+
+If using @react-pdf/renderer, you’ll need to parse the markdown manually or with a lightweight parser like marked or remark-parse in preprocessing.
+
+Example:
+
+tsx
+Copy
+Edit
+<Page style={styles.page}>
+  <Text style={styles.title}>Personalized AI Recommendations</Text>
+  {recommendations.map(({ category, text }) => (
+    <View style={styles.card} key={category}>
+      <Text style={styles.cardTitle}>{category}</Text>
+      <Text style={styles.cardText}>{text}</Text>
+    </View>
+  ))}
+</Page>
+If markdown is already grouped by category headers (## Category Name), you can split on ## and build the cards dynamically
+
+🎨 3. Styling Recommendations
+Style each category as a card block:
+
+Border or shaded background
+
+Title (e.g., Governance) bold and larger
+
+Paragraph text left-aligned with readable line height
+
+ts
+Copy
+Edit
+const styles = StyleSheet.create({
+  card: {
+    marginBottom: 12,
+    padding: 10,
+    border: '1pt solid #e5e7eb',
+    borderRadius: 6,
+    backgroundColor: '#f9fafb',
+  },
+  cardTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 6,
+  },
+  cardText: {
+    fontSize: 11,
+    lineHeight: 1.4,
+  },
+});
+📥 4. Source
+Use assessment.recommendations (markdown string)
+
+Pre-process markdown into an array of:
+
+ts
+Copy
+Edit
+{ category: string; text: string }
+This is simple if using ## Category markdown structure — split and clean
+
+✅ Summary Checklist
+ Add final page titled Personalized AI Recommendations
+
+ Parse markdown from assessment.recommendations
+
+ Render each category’s content inside a styled block
+
+ Page appears after charts and answers in the PDF

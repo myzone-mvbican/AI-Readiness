@@ -5,6 +5,8 @@ import OpenAI from "openai";
 interface Category {
   name: string;
   score: number;
+  previousScore: number | null;
+  benchmark: number | null;
 }
 
 // Define interface for request body
@@ -44,29 +46,74 @@ export class AIController {
       });
 
       // Prepare system prompt
-      const systemPrompt = `You are a business transformation advisor trained on the book "${book}".
-Provide one actionable recommendation per category based on a numerical score (1–10).
-Assume the lower the score, the more improvement is needed.
-Output markdown-formatted content with ## headings for each category.
-Be direct and strategic with specific actionable recommendations.`;
+      let systemPrompt = `You are an expert AI Readiness Analyst.  
+Given the user input, generate a concise, engaging, and actionable report.
+Produce a Markdown report structured as follows:
+
+`;
+
+      // Append each category to systemPrompt as comment
+      categories.forEach((category) => {
+        systemPrompt += `## {{emoji}} ${category.name}
+
+*Generate a 3–5-sentence summary by synthesizing the relevant section from the ${book}.*
+
+**How You Performed**
+
+* Current Score: **${category.score} / 10 (${((category.score / 10) * 100).toFixed(0)}%)**
+
+`;
+
+        if (category.benchmark != null) {
+          systemPrompt += `* Benchmark: **${category.benchmark ? `${((category.benchmark / 10) * 100).toFixed(0)}%` : "N/A"}**`;
+        }
+
+        if (category.previousScore != null) {
+          const delta = category.score - category.previousScore;
+          systemPrompt += `* Trend vs. Previous: **${delta > 0 ? "⬆ Up by" : delta < 0 ? "⬇ Down by" : "→ No change"} ${Math.abs(delta)}** points  \n`;
+        } else {
+          systemPrompt += `* Trend vs. Previous: **First-time assessment**`;
+        }
+
+        systemPrompt += `** {{emoji.keys}} Key Best Practices** _(top 3)_`;
+        for (let i = 1; i <= 3; i++) {
+          systemPrompt += `1. …`;
+        }
+      });
+
+      systemPrompt += `
+## 🪨 Top 5 AI Rocks for Next Quarter
+
+Here are your **highest-impact, easiest-to-implement AI rocks** for the next 90 days
+
+_From the list of all Category Best Practices, choose the 5 highest-impact, easiest to implement "rocks." For each:_
+1. **{{rock.title}}**  
+   _Rationale:_ {{rock.rationale}}
+
+…until you list five.
+
+Ensure:  
+- EOS-style language for each rock ("Your #1 priority this quarter is…").  
+- Bulleted Markdown, ready for PDF conversion.  
+- If any 'benchmark' or 'previousScore' is null, omit that line.  
+- Keep each Best Practice bullet ≤ 20 words, and rationales ≤ 30 words.`;
 
       // Create user payload as JSON string
       const userPayload = JSON.stringify({
         assessmentTitle,
-        book,
         categories,
         ...(userEmail && { userEmail }),
       });
 
       // Make API request to OpenAI
       const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+        model: "gpt-4",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPayload },
         ],
         temperature: 0.7,
-        max_tokens: 1000,
+        max_tokens: 4096,
       });
 
       // Get the response content
