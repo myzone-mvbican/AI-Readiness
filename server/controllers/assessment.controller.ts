@@ -159,12 +159,12 @@ export class AssessmentController {
       ) {
         const answers = req.body.answers || existingAssessment.answers;
         const answerValues = answers
-          .map((a) => (typeof a.a === "number" ? a.a : null))
-          .filter((value) => value !== null);
+          .map((a: any) => (typeof a.a === "number" ? a.a : null))
+          .filter((value: any) => value !== null);
 
         if (answerValues.length > 0) {
           const maxPossible = answers.length * 2;
-          const rawScore = answerValues.reduce((sum, val) => sum + val, 0);
+          const rawScore = answerValues.reduce((sum: number, val: number) => sum + val, 0);
           const adjustedScore =
             ((rawScore + answers.length * 2) / (answers.length * 4)) * 100;
           score = Math.round(adjustedScore);
