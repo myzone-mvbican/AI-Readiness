@@ -1,6 +1,28 @@
 import { Request, Response } from "express";
 import { AssessmentModel } from "../models/assessment.model";
 import { SurveyModel } from "../models/survey.model";
+import { AssessmentAnswer } from "@shared/types/models";
+
+const getScore = (answers: AssessmentAnswer[]) => {
+  let score = null;
+
+  const answerValues = answers
+    .map((a: any) => (typeof a.a === "number" ? a.a : null))
+    .filter((value: any) => value !== null);
+
+  if (answerValues.length > 0) {
+    const rawScore = answerValues.reduce(
+      (sum: number, val: number) => sum + val,
+      0,
+    );
+
+    const adjustedScore =
+      ((rawScore + answers.length * 2) / (answers.length * 4)) * 100;
+    score = Math.round(adjustedScore);
+  }
+
+  return score;
+};
 
 export class AssessmentController {
   static async getAll(req: Request, res: Response) {
@@ -162,26 +184,13 @@ export class AssessmentController {
         });
       }
 
-      // Calculate score if completing
+      // Calculate score if completing only
       let score = null;
       if (
         req.body.status === "completed" ||
         existingAssessment.status === "completed"
       ) {
-        const answers = req.body.answers || existingAssessment.answers;
-        const answerValues = answers
-          .map((a: any) => (typeof a.a === "number" ? a.a : null))
-          .filter((value: any) => value !== null);
-
-        if (answerValues.length > 0) {
-          const rawScore = answerValues.reduce(
-            (sum: number, val: number) => sum + val,
-            0,
-          );
-          const adjustedScore =
-            ((rawScore + answers.length * 2) / (answers.length * 4)) * 100;
-          score = Math.round(adjustedScore);
-        }
+        score = getScore(req.body.answers || existingAssessment.answers);
       }
 
       const updatedAssessment = await AssessmentModel.update(assessmentId, {
@@ -255,7 +264,7 @@ export class AssessmentController {
 
   static async createGuest(req: Request, res: Response) {
     try {
-      const { title, surveyId, email, answers, status, score } = req.body;
+      const { title, surveyId, email, answers, status } = req.body;
 
       if (!surveyId || !answers || !Array.isArray(answers)) {
         return res.status(400).json({
@@ -291,7 +300,7 @@ export class AssessmentController {
         email,
         answers,
         status: status || "completed",
-        score: score || 0,
+        score: getScore(answers),
       };
 
       const assessment = await AssessmentModel.create(assessmentData);
@@ -322,16 +331,18 @@ export class AssessmentController {
           message: "Missing required fields: recommendations, email",
         });
       }
-      
+
       // 2. Field-level validation - Ensure only recommendations field is being updated
-      const allowedFields = ['recommendations', 'email'];
+      const allowedFields = ["recommendations", "email"];
       const requestFields = Object.keys(req.body);
-      
-      const unauthorizedFields = requestFields.filter(field => !allowedFields.includes(field));
+
+      const unauthorizedFields = requestFields.filter(
+        (field) => !allowedFields.includes(field),
+      );
       if (unauthorizedFields.length > 0) {
         return res.status(403).json({
           success: false,
-          message: `Unauthorized fields in request: ${unauthorizedFields.join(', ')}. Only 'recommendations' field can be updated.`,
+          message: `Unauthorized fields in request: ${unauthorizedFields.join(", ")}. Only 'recommendations' field can be updated.`,
         });
       }
 
@@ -360,7 +371,7 @@ export class AssessmentController {
         });
       }
 
-      // 6. Update the assessment with recommendations only
+      // Update the assessment with recommendations
       const updatedAssessment = await AssessmentModel.update(assessmentId, {
         recommendations,
       });

@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Document,
   Page,
@@ -503,7 +502,7 @@ const RadarChartPDF = ({
   });
 
   // Generate concentric circles for scale
-  const circles = [0.25, 0.5, 0.75, 1].map((scale) => {
+  const circles = [0.33, 0.66, 1].map((scale) => {
     return {
       r: radius * scale,
       stroke: "#E2E8F0",
@@ -578,7 +577,7 @@ const RadarChartPDF = ({
           stroke="#94A3B8"
           strokeWidth={0.5}
         />
-        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => {
+        {[0, 3, 6, 10].map((value) => {
           const x = centerX + (radius * value) / 10;
           return (
             <Text
@@ -594,6 +593,7 @@ const RadarChartPDF = ({
           );
         })}
       </Svg>
+
       {/* Category labels */}
       {labelPoints.map((point, i) => (
         <Text
@@ -632,18 +632,17 @@ const AssessmentPDF = ({
   questions: CsvQuestion[];
   chartData: Array<{ name: string; score: number; fullMark: number }>;
 }) => {
-  const { answers = [] } = assessment;
+  const { answers = [], survey: { title: surveyTitle } = {} } = assessment;
   const score = assessment.score || 0;
 
   // Calculate date and quarter
   const today = new Date();
+  const year = today.getFullYear();
   const dateStr = today.toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
-  const quarter = Math.floor(today.getMonth() / 3 + 1);
-  const year = today.getFullYear();
 
   // Readiness level
   const readinessLevel = getReadinessLevel(score);
@@ -671,6 +670,7 @@ const AssessmentPDF = ({
     }
   }
 
+  // Calculate total pages: Cover + Results + Recommendations + Responses
   const answerPages = Math.ceil(answers.length / 10);
   const totalPages = 2 + (assessment.recommendations ? 5 : 1) + answerPages;
 
@@ -683,15 +683,15 @@ const AssessmentPDF = ({
         </View>
 
         <View style={{ flex: 1, justifyContent: "center" }}>
-          <Text style={styles.title}>AI Readiness Assessment</Text>
-          <Text style={styles.subtitle}>
-            Q{quarter} {year}
-          </Text>
+          <Text style={styles.title}>AI Readiness Assessment Results</Text>
+          {surveyTitle && (
+            <Text style={styles.subtitle}>Based on: {surveyTitle}</Text>
+          )}
 
           <View style={styles.contentBox}>
             <Text style={styles.scoreText}>Score: {score} / 100</Text>
             <View style={styles.divider} />
-            <Text style={styles.dateText}>Generated on: {dateStr}</Text>
+            <Text style={styles.dateText}>Report generated on: {dateStr}</Text>
           </View>
         </View>
 
@@ -906,9 +906,8 @@ export const AssessmentPDFDownloadButton = ({
   chartData: Array<{ name: string; score: number; fullMark: number }>;
 }) => {
   const today = new Date();
-  const quarter = Math.floor(today.getMonth() / 3 + 1);
   const year = today.getFullYear();
-  const filename = `ai-readiness-report-Q${quarter}-${year}.pdf`;
+  const filename = `myzoneai-readiness-report-${year}.pdf`;
 
   return (
     <PDFDownloadLink

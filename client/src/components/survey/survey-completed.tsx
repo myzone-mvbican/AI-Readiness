@@ -36,6 +36,7 @@ import { useAuth } from "@/hooks/use-auth";
 interface SurveyCompletedProps {
   assessment: Assessment;
   questions?: CsvQuestion[];
+  additionalActions?: React.ReactNode;
 }
 
 // Define radar chart data type
@@ -48,14 +49,16 @@ interface RadarChartData {
 export default function SurveyCompleted({
   assessment,
   questions = [],
+  additionalActions,
 }: SurveyCompletedProps) {
   const { toast } = useToast();
   const { answers = [] } = assessment;
   const responsesRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<HTMLDivElement>(null);
 
-  // State for PDF generation only
+  // State for PDF generation and tracking recommendations request
   const [isLoading, setIsLoading] = useState(false);
+  const [recommendationsRequested, setRecommendationsRequested] = useState(false);
 
   // Access query client for mutations
   const queryClient = useQueryClient();
@@ -121,17 +124,17 @@ export default function SurveyCompleted({
 
   // Effect to handle recommendations
   useEffect(() => {
-    const fetchRecommendations = async () => {
-      // Skip if we already have recommendations or if we're already loading
-      if (
-        !assessment ||
-        assessment.recommendations ||
-        saveRecommendationsMutation.isPending ||
-        isLoading
-      ) {
-        return;
-      }
+    // Skip if we already have recommendations or if we're already loading
+    if (
+      !assessment ||
+      assessment.recommendations ||
+      saveRecommendationsMutation.isPending ||
+      isLoading
+    ) {
+      return;
+    }
 
+    const fetchRecommendations = async () => {
       try {
         const categoryScores = getCategoryScores(assessment, questions);
         if (!categoryScores.length) {
@@ -163,13 +166,8 @@ export default function SurveyCompleted({
         }
 
         // Save recommendations
-        const updateResult = await saveRecommendationsMutation.mutateAsync(payload);
-        
-        // Update the local assessment object directly to reflect the changes
-        if (assessment && result.content) {
-          assessment.recommendations = result.content;
-        }
-        
+        await saveRecommendationsMutation.mutateAsync(payload);
+
         toast({
           title: "Ready",
           description: "Personalized recommendations generated",
@@ -213,7 +211,7 @@ export default function SurveyCompleted({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 space-y-6 md:space-y-0 py-4">
-        <div className="col-span-1 flex items-center gap-4">
+        <div className="col-span-1 self-end flex items-center gap-4">
           <div className="bg-green-100 rounded-full p-5">
             <CheckCircle2 className="h-12 w-12 text-green-600" />
           </div>
@@ -227,22 +225,35 @@ export default function SurveyCompleted({
             </p>
           </div>
         </div>
-        <div className="col-span-1 self-center md:flex md:justify-end">
-          {isLoading || saveRecommendationsMutation.isPending ? (
-            <button
-              disabled
-              className="flex items-center gap-2 bg-gray-300 text-gray-600 px-4 py-2 rounded-md text-sm font-medium cursor-not-allowed"
-            >
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Preparing PDF...
-            </button>
-          ) : (
-            <AssessmentPDFDownloadButton
-              assessment={assessment}
-              questions={questions}
-              chartData={getRadarChartData()}
-            />
-          )}
+        <div className="col-span-1 self:center sm:flex sm:justify-end">
+          <div className="flex flex-col gap-4">
+            {isLoading || saveRecommendationsMutation.isPending ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    disabled
+                    className="flex items-center gap-2 bg-gray-300 text-gray-600 px-4 py-2 rounded-md text-sm font-medium cursor-not-allowed"
+                  >
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Preparing PDF...
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="p-2 max-w-xs">
+                  <p>
+                    Don't reload the page - Our AI Agent is crafting a beautiful
+                    PDF for you.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <AssessmentPDFDownloadButton
+                assessment={assessment}
+                questions={questions}
+                chartData={getRadarChartData()}
+              />
+            )}
+            {additionalActions}
+          </div>
         </div>
       </div>
 

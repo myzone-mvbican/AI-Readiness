@@ -3,7 +3,6 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-  TooltipProvider,
 } from "@/components/ui/tooltip";
 import SurveyCompleted from "@/components/survey/survey-completed";
 import { Button } from "@/components/ui/button";
@@ -26,36 +25,32 @@ export default function GuestAssessmentCompleted({
   setStage,
 }: GuestAssessmentCompletedProps) {
   const [showSignupModal, setShowSignupModal] = useState<boolean>(false);
+  const [startNew, setStartNew] = useState<boolean>(false);
 
-  return (
-    <>
-      <div className="w-full space-y-6">
-        <SurveyCompleted assessment={assessment} questions={questions} />
+  const AdditionalActions = () => {
+    return (
+      <>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              onClick={() => setShowSignupModal(true)}
+              className="relative group"
+            >
+              <span className="absolute -inset-0.5 bg-gradient-to-r from-primary/50 to-primary opacity-75 rounded-lg blur group-hover:opacity-100 transition duration-200"></span>
+              <span className="relative flex items-center justify-center px-6 py-2">
+                Create Account
+              </span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent className="p-2 max-w-xs">
+            <p>
+              Create an account to track your progress, view assessment history,
+              and get personalized recommendations
+            </p>
+          </TooltipContent>
+        </Tooltip>
 
-        {/* Action buttons displayed below survey results */}
-        <div className="flex flex-col sm:flex-row justify-center gap-4 pt-6">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={() => setShowSignupModal(true)}
-                  className="relative group"
-                >
-                  <span className="absolute -inset-0.5 bg-gradient-to-r from-primary/50 to-primary opacity-75 rounded-lg blur group-hover:opacity-100 transition duration-200"></span>
-                  <span className="relative flex items-center justify-center px-6 py-2">
-                    Create Account
-                  </span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="p-2 max-w-xs">
-                <p>
-                  Create an account to track your progress, view assessment
-                  history, and get personalized recommendations
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
+        {startNew && (
           <Button
             variant="outline"
             onClick={() => {
@@ -68,13 +63,26 @@ export default function GuestAssessmentCompleted({
           >
             Start New Assessment
           </Button>
-        </div>
+        )}
+      </>
+    );
+  };
+
+  return (
+    <>
+      <div className="w-full space-y-6">
+        <SurveyCompleted
+          assessment={assessment}
+          questions={questions}
+          additionalActions={<AdditionalActions />}
+        />
       </div>
       {/* Account creation modal */}
       <DialogUserCreate
         open={showSignupModal}
         guestUser={guestUser}
         onOpenChange={setShowSignupModal}
+        closeModal={() => setShowSignupModal(false)}
       />
     </>
   );
