@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,9 +27,11 @@ import {
   clearGuestAssessmentData,
 } from "@/lib/localStorage";
 import { SignupFormValues, signupSchema } from "@/schemas/validation-schemas";
+import { navigate } from "wouter/use-browser-location";
 
 interface DialogUserCreateProps {
   open: boolean;
+  closeModal: () => void;
   onOpenChange: (open: boolean) => void;
   onCancel?: () => void;
   guestUser: StorageGuestUser | null;
@@ -36,6 +39,7 @@ interface DialogUserCreateProps {
 
 export default function DialogUserExists({
   open,
+  closeModal,
   onOpenChange,
   guestUser,
 }: DialogUserCreateProps) {
@@ -83,11 +87,23 @@ export default function DialogUserExists({
         throw new Error(data.message || "Registration failed");
       }
 
+      closeModal();
+
       // Registration successful
       toast({
         title: "Account created successfully",
         description:
           "Your assessment has been linked to your new account. You can now log in with your credentials.",
+        action: (
+          <ToastAction
+            altText="Go to Authentification"
+            onClick={() => {
+              navigate("/auth");
+            }}
+          >
+            Login
+          </ToastAction>
+        ),
       });
 
       // Clear the guest data from localStorage
