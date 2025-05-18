@@ -309,26 +309,26 @@ export class AssessmentController {
       });
     }
   }
-  
+
   static async updateGuest(req: Request, res: Response) {
     try {
       const assessmentId = parseInt(req.params.id);
       const { surveyId, recommendations, email } = req.body;
 
-      if (!assessmentId || !surveyId || !recommendations || !email) {
+      if (!surveyId || !recommendations || !email) {
         return res.status(400).json({
           success: false,
-          message: "Missing required fields: surveyId, recommendations, email"
+          message: "Missing required fields: surveyId, recommendations, email",
         });
       }
 
       // Get existing assessment
       const existingAssessment = await AssessmentModel.getById(assessmentId);
-      
+
       if (!existingAssessment) {
         return res.status(404).json({
           success: false,
-          message: "Assessment not found"
+          message: "Assessment not found",
         });
       }
 
@@ -336,7 +336,7 @@ export class AssessmentController {
       if (existingAssessment.email !== email) {
         return res.status(403).json({
           success: false,
-          message: "Email does not match assessment"
+          message: "Email does not match assessment",
         });
       }
 
@@ -344,33 +344,32 @@ export class AssessmentController {
       if (existingAssessment.surveyTemplateId !== parseInt(surveyId)) {
         return res.status(403).json({
           success: false,
-          message: "Survey ID does not match assessment" 
+          message: "Survey ID does not match assessment",
         });
       }
 
       // Update the assessment with recommendations
       const updatedAssessment = await AssessmentModel.update(assessmentId, {
-        recommendations
+        recommendations,
       });
 
       if (!updatedAssessment) {
         return res.status(500).json({
           success: false,
-          message: "Failed to update assessment"
+          message: "Failed to update assessment",
         });
       }
 
       return res.status(200).json({
         success: true,
         message: "Assessment updated successfully",
-        assessment: updatedAssessment
+        assessment: updatedAssessment,
       });
-
     } catch (error) {
       console.error("Error updating guest assessment:", error);
       return res.status(500).json({
         success: false,
-        message: "Failed to update guest assessment"
+        message: "Failed to update guest assessment",
       });
     }
   }

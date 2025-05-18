@@ -31,6 +31,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { getCategoryScores } from "@/lib/generateRecommendations";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 interface SurveyCompletedProps {
   assessment: Assessment;
@@ -59,30 +60,69 @@ export default function SurveyCompleted({
   // Access query client for mutations
   const queryClient = useQueryClient();
 
+  // Check if user is authenticated
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
+  
+  // Define payload type for the mutation
+  type RecommendationPayload = {
+    recommendations: string;
+    email?: string;
+  };
+
   // Mutation for saving recommendations to the assessment
-  const saveRecommendationsMutation = useMutation({
-    mutationFn: async (recommendationText: string) => {
+  const saveRecommendationsMutation = useMutation<any, Error, RecommendationPayload>({
+    mutationFn: async (data) => {
+      // Determine which endpoint to use based on authentication status
+      const endpoint = isAuthenticated 
+        ? `/api/assessments/${assessment.id}` 
+        : `/api/public/assessments/${assessment.id}`;
+      
+      // For authenticated users, we don't need to include email
+      const payload = isAuthenticated
+        ? { recommendations: data.recommendations }
+        : { recommendations: data.recommendations, email: data.email };
+        
       const response = await apiRequest(
         "PATCH",
-        `/api/assessments/${assessment.id}`,
-        {
-          recommendations: recommendationText,
-        },
+        endpoint,
+        payload
       );
+      
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({
-        queryKey: [`/api/assessments/${assessment.id}`],
+      // Invalidate appropriate queries to refresh data
+      if (isAuthenticated) {
+        queryClient.invalidateQueries({
+          queryKey: [`/api/assessments/${assessment.id}`],
+        });
+      } else {
+        queryClient.invalidateQueries({
+          queryKey: [`/api/public/assessments/${assessment.id}`],
+        });
+      }
+      
+      // Show success toast
+      toast({
+        title: "Success",
+        description: "Recommendations saved successfully",
       });
     },
+    onError: (error) => {
+      // Show error toast
+      toast({
+        title: "Error",
+        description: `Failed to save recommendations: ${error.message}`,
+        variant: "destructive",
+      });
+    }
   });
 
   // Effect to handle recommendations
   useEffect(() => {
     const fetchRecommendations = async () => {
-      // Skip if we already have recommendations
+      // Skip if we already have recommendations or if we're already loading
       if (
         !assessment ||
         assessment.recommendations ||
@@ -100,6 +140,7 @@ export default function SurveyCompleted({
 
         setIsLoading(true);
 
+        // Same AI suggestions endpoint for both user types
         const response = await apiRequest("POST", "/api/ai-suggestions", {
           book: "The Lean Startup",
           categories: categoryScores,
@@ -111,7 +152,18 @@ export default function SurveyCompleted({
           throw new Error("Failed to generate recommendations");
         }
 
-        await saveRecommendationsMutation.mutateAsync(result.content);
+        // Create payload based on auth status
+        const payload: RecommendationPayload = {
+          recommendations: result.content
+        };
+        
+        // Only include email for guest users
+        if (!isAuthenticated && assessment.email) {
+          payload.email = assessment.email;
+        }
+        
+        // Save recommendations
+        await saveRecommendationsMutation.mutateAsync(payload);
 
         toast({
           title: "Ready",
@@ -130,7 +182,7 @@ export default function SurveyCompleted({
     };
 
     fetchRecommendations();
-  }, [assessment, questions]);
+  }, [assessment, questions, isAuthenticated, saveRecommendationsMutation]);
 
   // Function to prepare data for radar chart
   const getRadarChartData = (): RadarChartData[] => {
