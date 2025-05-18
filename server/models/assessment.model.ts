@@ -109,6 +109,14 @@ export class AssessmentModel {
       if (data.answers) {
         updateData.answers = JSON.stringify(data.answers);
       }
+      
+      // Handle completedOn timestamp when status changes to "completed"
+      if (data.status === 'completed' && existingAssessment.status !== 'completed') {
+        // Only set completedOn if it's not already set (idempotent)
+        if (!existingAssessment.completedOn) {
+          updateData.completedOn = new Date();
+        }
+      }
 
       // Update the record
       const [result] = await db

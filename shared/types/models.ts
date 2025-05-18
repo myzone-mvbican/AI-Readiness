@@ -53,6 +53,7 @@ export type AssessmentAnswer = {
 export type AssessmentDB = typeof assessments.$inferSelect;
 export type Assessment = Omit<AssessmentDB, "answers"> & {
   answers: Array<AssessmentAnswer>;
+  completedOn?: Date | null;
 };
 
 // Combined types for frontend use

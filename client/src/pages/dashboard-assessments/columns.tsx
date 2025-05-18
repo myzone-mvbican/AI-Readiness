@@ -121,6 +121,26 @@ export function getColumns({
       },
     },
     {
+      accessorKey: "completedOn",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="-ml-4"
+        >
+          Completed
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-muted-foreground">
+            {row.original.completedOn ? formatDate(row.original.completedOn) : "-"}
+          </div>
+        );
+      },
+    },
+    {
       accessorKey: "score",
       header: ({ column }) => (
         <Button
