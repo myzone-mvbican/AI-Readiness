@@ -124,24 +124,32 @@ export default function SurveyCompleted({
 
   // Effect to handle recommendations
   useEffect(() => {
-    // Skip if we already have recommendations or if we're already loading
+    // Skip if any of these conditions are true:
+    // 1. No assessment available
+    // 2. Already have recommendations
+    // 3. Mutation is in progress
+    // 4. Already loading
+    // 5. We've already requested recommendations before
     if (
       !assessment ||
       assessment.recommendations ||
       saveRecommendationsMutation.isPending ||
-      isLoading
+      isLoading ||
+      recommendationsRequested
     ) {
       return;
     }
 
     const fetchRecommendations = async () => {
       try {
+        // Mark that we've initiated a request to prevent duplicate calls
+        setRecommendationsRequested(true);
+        setIsLoading(true);
+        
         const categoryScores = getCategoryScores(assessment, questions);
         if (!categoryScores.length) {
           throw new Error("No category scores available");
         }
-
-        setIsLoading(true);
 
         // Same AI suggestions endpoint for both user types
         const response = await apiRequest("POST", "/api/ai-suggestions", {
@@ -166,10 +174,15 @@ export default function SurveyCompleted({
         }
 
         // Save recommendations
-        await saveRecommendationsMutation.mutateAsync(payload);
+        const updatedAssessment = await saveRecommendationsMutation.mutateAsync(payload);
+        
+        // Manually update assessment in local memory to prevent refetch
+        if (assessment && result.content) {
+          assessment.recommendations = result.content;
+        }
 
         toast({
-          title: "Ready",
+          title: "Ready", 
           description: "Personalized recommendations generated",
         });
       } catch (error) {
@@ -185,7 +198,7 @@ export default function SurveyCompleted({
     };
 
     fetchRecommendations();
-  }, [assessment, questions, isAuthenticated, saveRecommendationsMutation]);
+  }, [assessment?.id, isAuthenticated, recommendationsRequested]);
 
   // Function to prepare data for radar chart
   const getRadarChartData = (): RadarChartData[] => {
