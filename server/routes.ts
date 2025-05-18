@@ -154,7 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/public/users/exists", UserController.exists);
   // Create guest assessment (public endpoint)
   app.post("/api/public/assessments", AssessmentController.createGuest);
-  app.post("/api/public/assessments/:id", AssessmentController.updateGuest);
+  app.patch("/api/public/assessments/:id", AssessmentController.updateGuest);
   // Public endpoint for guest users to access survey details
   app.get("/api/public/surveys/detail/:id", SurveyController.getById);
 

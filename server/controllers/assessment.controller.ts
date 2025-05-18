@@ -313,18 +313,30 @@ export class AssessmentController {
   static async updateGuest(req: Request, res: Response) {
     try {
       const assessmentId = parseInt(req.params.id);
-      const { surveyId, recommendations, email } = req.body;
+      const { recommendations, email } = req.body;
 
-      if (!surveyId || !recommendations || !email) {
+      // 1. Validate required fields
+      if (!recommendations || !email) {
         return res.status(400).json({
           success: false,
-          message: "Missing required fields: surveyId, recommendations, email",
+          message: "Missing required fields: recommendations, email",
+        });
+      }
+      
+      // 2. Field-level validation - Ensure only recommendations field is being updated
+      const allowedFields = ['recommendations', 'email'];
+      const requestFields = Object.keys(req.body);
+      
+      const unauthorizedFields = requestFields.filter(field => !allowedFields.includes(field));
+      if (unauthorizedFields.length > 0) {
+        return res.status(403).json({
+          success: false,
+          message: `Unauthorized fields in request: ${unauthorizedFields.join(', ')}. Only 'recommendations' field can be updated.`,
         });
       }
 
-      // Get existing assessment
+      // 3. Get existing assessment
       const existingAssessment = await AssessmentModel.getById(assessmentId);
-
       if (!existingAssessment) {
         return res.status(404).json({
           success: false,
@@ -332,7 +344,15 @@ export class AssessmentController {
         });
       }
 
-      // Validate email matches
+      // 4. Guest-only validation - Verify this is a guest assessment (userId must be null)
+      if (existingAssessment.userId !== null) {
+        return res.status(403).json({
+          success: false,
+          message: "This endpoint can only be used for guest assessments",
+        });
+      }
+
+      // 5. Validate email matches
       if (existingAssessment.email !== email) {
         return res.status(403).json({
           success: false,
@@ -340,15 +360,7 @@ export class AssessmentController {
         });
       }
 
-      // Validate survey ID matches
-      if (existingAssessment.surveyTemplateId !== parseInt(surveyId)) {
-        return res.status(403).json({
-          success: false,
-          message: "Survey ID does not match assessment",
-        });
-      }
-
-      // Update the assessment with recommendations
+      // 6. Update the assessment with recommendations only
       const updatedAssessment = await AssessmentModel.update(assessmentId, {
         recommendations,
       });
