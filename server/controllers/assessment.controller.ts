@@ -1,28 +1,7 @@
 import { Request, Response } from "express";
 import { AssessmentModel } from "../models/assessment.model";
 import { SurveyModel } from "../models/survey.model";
-import { AssessmentAnswer } from "@shared/types/models";
-
-const getScore = (answers: AssessmentAnswer[]) => {
-  let score = null;
-
-  const answerValues = answers
-    .map((a: any) => (typeof a.a === "number" ? a.a : null))
-    .filter((value: any) => value !== null);
-
-  if (answerValues.length > 0) {
-    const rawScore = answerValues.reduce(
-      (sum: number, val: number) => sum + val,
-      0,
-    );
-
-    const adjustedScore =
-      ((rawScore + answers.length * 2) / (answers.length * 4)) * 100;
-    score = Math.round(adjustedScore);
-  }
-
-  return score;
-};
+import { getScore, formatDate } from "@/lib/utils";
 
 export class AssessmentController {
   static async getAll(req: Request, res: Response) {
@@ -84,12 +63,12 @@ export class AssessmentController {
 
   static async create(req: Request, res: Response) {
     try {
-      const { surveyTemplateId, title } = req.body;
+      const { surveyTemplateId } = req.body;
 
-      if (!surveyTemplateId || !title) {
+      if (!surveyTemplateId) {
         return res.status(400).json({
           success: false,
-          message: "Survey template ID and title are required",
+          message: "Survey template ID is required",
         });
       }
 
@@ -111,7 +90,7 @@ export class AssessmentController {
       );
 
       const newAssessment = await AssessmentModel.create({
-        title,
+        title: `${survey.title} - ${formatDate(new Date())}`,
         surveyTemplateId: parseInt(surveyTemplateId),
         userId: req.user!.id,
         status: "draft",
@@ -264,7 +243,7 @@ export class AssessmentController {
 
   static async createGuest(req: Request, res: Response) {
     try {
-      const { title, surveyId, email, answers, status } = req.body;
+      const { surveyId, email, answers, status } = req.body;
 
       if (!surveyId || !answers || !Array.isArray(answers)) {
         return res.status(400).json({
@@ -275,10 +254,10 @@ export class AssessmentController {
       }
 
       // Validate required fields
-      if (!title || !email) {
+      if (!answers || !email) {
         return res.status(400).json({
           success: false,
-          message: "Missing required fields: title & email.",
+          message: "Missing required fields: answers & email.",
         });
       }
 
@@ -292,9 +271,18 @@ export class AssessmentController {
         });
       }
 
+      const survey = await SurveyModel.getById(surveyTemplateId);
+
+      if (!survey) {
+        return res.status(404).json({
+          success: false,
+          message: "Survey template not found",
+        });
+      }
+
       // Create a guest assessment
       const assessmentData = {
-        title,
+        title: `${survey.title} - ${formatDate(new Date())}`,
         surveyTemplateId,
         userId: null, // null userId for guest assessments
         email,

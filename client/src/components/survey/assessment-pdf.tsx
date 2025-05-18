@@ -919,7 +919,7 @@ export const AssessmentPDFDownloadButton = ({
         />
       }
       fileName={filename}
-      className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"
+      className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"
       style={{ textDecoration: "none" }}
     >
       {({ loading, error }) => (

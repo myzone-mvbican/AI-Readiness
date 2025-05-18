@@ -184,6 +184,7 @@ export const updateAssessmentSchema = createInsertSchema(assessments)
     email: true,
     userId: true,
     recommendations: true,
+    completedOn: true,
   })
   .partial()
   .extend({
@@ -192,4 +193,5 @@ export const updateAssessmentSchema = createInsertSchema(assessments)
     status: assessmentStatusSchema.optional(),
     answers: z.array(assessmentAnswerSchema).optional(),
     recommendations: z.string().optional(), // Allow storing AI-generated recommendations
+    completedOn: z.date().nullable().optional(), // Allow setting completion timestamp
   });

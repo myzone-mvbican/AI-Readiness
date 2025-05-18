@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -102,15 +102,6 @@ export default function SurveyTemplate({
     );
   };
 
-  // Format date for display
-  const getFormattedDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), "PPP");
-    } catch (e) {
-      return "Unknown";
-    }
-  };
-
   // Get the status badge - in progress or completed
   const getStatusBadge = () => {
     const status = assessment.status || "draft";
@@ -189,7 +180,7 @@ export default function SurveyTemplate({
             <p className="text-muted-foreground mt-2">
               <span className="text-sm text-muted-foreground">
                 Last Updated:{" "}
-                {getFormattedDate(assessment.updatedAt?.toString() || "")}
+                {formatDate(assessment.updatedAt?.toString() || "")}
               </span>
             </p>
           )}
