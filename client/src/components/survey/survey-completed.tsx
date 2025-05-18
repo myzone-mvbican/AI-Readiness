@@ -63,7 +63,7 @@ export default function SurveyCompleted({
   // Check if user is authenticated
   const { user } = useAuth();
   const isAuthenticated = !!user;
-  
+
   // Define payload type for the mutation
   type RecommendationPayload = {
     recommendations: string;
@@ -71,24 +71,24 @@ export default function SurveyCompleted({
   };
 
   // Mutation for saving recommendations to the assessment
-  const saveRecommendationsMutation = useMutation<any, Error, RecommendationPayload>({
+  const saveRecommendationsMutation = useMutation<
+    any,
+    Error,
+    RecommendationPayload
+  >({
     mutationFn: async (data) => {
       // Determine which endpoint to use based on authentication status
-      const endpoint = isAuthenticated 
-        ? `/api/assessments/${assessment.id}` 
+      const endpoint = isAuthenticated
+        ? `/api/assessments/${assessment.id}`
         : `/api/public/assessments/${assessment.id}`;
-      
+
       // For authenticated users, we don't need to include email
       const payload = isAuthenticated
         ? { recommendations: data.recommendations }
         : { recommendations: data.recommendations, email: data.email };
-        
-      const response = await apiRequest(
-        "PATCH",
-        endpoint,
-        payload
-      );
-      
+
+      const response = await apiRequest("PATCH", endpoint, payload);
+
       return response.json();
     },
     onSuccess: () => {
@@ -102,21 +102,21 @@ export default function SurveyCompleted({
           queryKey: [`/api/public/assessments/${assessment.id}`],
         });
       }
-      
+
       // Show success toast
       toast({
         title: "Success",
-        description: "Recommendations saved successfully",
+        description: "Recommendations updated successfully",
       });
     },
     onError: (error) => {
       // Show error toast
       toast({
         title: "Error",
-        description: `Failed to save recommendations: ${error.message}`,
+        description: `Failed to update recommendations: ${error.message}`,
         variant: "destructive",
       });
-    }
+    },
   });
 
   // Effect to handle recommendations
@@ -154,17 +154,22 @@ export default function SurveyCompleted({
 
         // Create payload based on auth status
         const payload: RecommendationPayload = {
-          recommendations: result.content
+          recommendations: result.content,
         };
-        
+
         // Only include email for guest users
         if (!isAuthenticated && assessment.email) {
           payload.email = assessment.email;
         }
-        
-        // Save recommendations
-        await saveRecommendationsMutation.mutateAsync(payload);
 
+        // Save recommendations
+        const updateResult = await saveRecommendationsMutation.mutateAsync(payload);
+        
+        // Update the local assessment object directly to reflect the changes
+        if (assessment && result.content) {
+          assessment.recommendations = result.content;
+        }
+        
         toast({
           title: "Ready",
           description: "Personalized recommendations generated",
