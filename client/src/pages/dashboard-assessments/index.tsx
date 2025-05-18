@@ -93,8 +93,11 @@ export default function AssessmentsPage() {
               View all your completed and in-progress AI readiness assessments.
             </p>
           </div>
-          <div className="col-span-1 flex justify-end">
-            <Button onClick={assessmentCreateModal.onOpen}>
+          <div className="col-span-1 flex md:justify-end">
+            <Button
+              className="w-full md:w-auto"
+              onClick={assessmentCreateModal.onOpen}
+            >
               <PlusCircle className="mr-2 h-4 w-4" />
               Start New Assessment
             </Button>

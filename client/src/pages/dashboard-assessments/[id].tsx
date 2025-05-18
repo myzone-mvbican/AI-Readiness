@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useRoute, useLocation } from "wouter";
 import { DashboardLayout } from "@/components/layout/dashboard";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import {
@@ -47,13 +48,8 @@ export default function AssessmentDetailPage() {
     if (assessment) {
       // Load any existing saved answers from the assessment
       if (assessment.answers && assessment.answers.length > 0) {
-        // Convert any string question IDs to numbers and ensure proper structure
-        const fixedAnswers = assessment.answers.map(({ q, a }) => {
-          return { q, a };
-        });
-
         // Make sure to set the state
-        setAnswers(fixedAnswers);
+        setAnswers(assessment.answers);
       }
 
       // Get survey template information
@@ -247,11 +243,28 @@ export default function AssessmentDetailPage() {
     return <SurveyError />;
   }
 
+  const AdditionalActions = () => {
+    return (
+      <Button
+        variant="outline"
+        onClick={() => {
+          navigate("/dashboard/assessments");
+        }}
+      >
+        Return to Assessments
+      </Button>
+    );
+  };
+
   return (
     <DashboardLayout title={assessment.title}>
       {/* Use our reusable SurveyTemplate component instead of repeating the UI */}
       {isCompleted ? (
-        <SurveyCompleted assessment={assessment} questions={questions} />
+        <SurveyCompleted
+          assessment={assessment}
+          questions={questions}
+          additionalActions={<AdditionalActions />}
+        />
       ) : (
         <SurveyTemplate
           assessment={assessment}

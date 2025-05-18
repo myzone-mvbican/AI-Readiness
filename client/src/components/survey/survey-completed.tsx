@@ -19,6 +19,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 import { ChartContainer } from "@/components/ui/chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircle2, Loader2, InfoIcon } from "lucide-react";
@@ -29,6 +30,7 @@ import { CsvQuestion, Assessment } from "@shared/types";
 import { AssessmentPDFDownloadButton } from "./assessment-pdf";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { formatDate } from "@/lib/utils";
 import { getCategoryScores } from "@/lib/generateRecommendations";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -58,7 +60,8 @@ export default function SurveyCompleted({
 
   // State for PDF generation and tracking recommendations request
   const [isLoading, setIsLoading] = useState(false);
-  const [recommendationsRequested, setRecommendationsRequested] = useState(false);
+  const [recommendationsRequested, setRecommendationsRequested] =
+    useState(false);
 
   // Access query client for mutations
   const queryClient = useQueryClient();
@@ -145,7 +148,7 @@ export default function SurveyCompleted({
         // Mark that we've initiated a request to prevent duplicate calls
         setRecommendationsRequested(true);
         setIsLoading(true);
-        
+
         const categoryScores = getCategoryScores(assessment, questions);
         if (!categoryScores.length) {
           throw new Error("No category scores available");
@@ -174,15 +177,15 @@ export default function SurveyCompleted({
         }
 
         // Save recommendations
-        const updatedAssessment = await saveRecommendationsMutation.mutateAsync(payload);
-        
+        await saveRecommendationsMutation.mutateAsync(payload);
+
         // Manually update assessment in local memory to prevent refetch
         if (assessment && result.content) {
           assessment.recommendations = result.content;
         }
 
         toast({
-          title: "Ready", 
+          title: "Ready",
           description: "Personalized recommendations generated",
         });
       } catch (error) {
@@ -236,22 +239,24 @@ export default function SurveyCompleted({
               You scored {assessment.score} out of 100 on this AI readiness
               assessment.
             </p>
+            <p className="text-sm md:text-normal text-muted-foreground">
+              Completed on:{" "}
+              {formatDate(assessment.completedOn?.toString() || new Date())}
+            </p>
           </div>
         </div>
-        <div className="col-span-1 self:center sm:flex sm:justify-end">
+        <div className="col-span-1 self-center sm:flex sm:justify-end">
           <div className="flex flex-col gap-4">
+            {additionalActions}
             {isLoading || saveRecommendationsMutation.isPending ? (
-              <Tooltip>
+              <Tooltip defaultOpen>
                 <TooltipTrigger asChild>
-                  <button
-                    disabled
-                    className="flex items-center gap-2 bg-gray-300 text-gray-600 px-4 py-2 rounded-md text-sm font-medium cursor-not-allowed"
-                  >
+                  <Button disabled variant="secondary">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Preparing PDF...
-                  </button>
+                  </Button>
                 </TooltipTrigger>
-                <TooltipContent className="p-2 max-w-xs">
+                <TooltipContent side="left" className="p-2 max-w-xs">
                   <p>
                     Don't reload the page - Our AI Agent is crafting a beautiful
                     PDF for you.
@@ -265,7 +270,6 @@ export default function SurveyCompleted({
                 chartData={getRadarChartData()}
               />
             )}
-            {additionalActions}
           </div>
         </div>
       </div>
@@ -288,7 +292,7 @@ export default function SurveyCompleted({
                   </TooltipTrigger>
                   <TooltipContent className="p-2">
                     This score represents your organization's current AI
-                    readiness level
+                    readiness level.
                   </TooltipContent>
                 </Tooltip>
               </CardTitle>

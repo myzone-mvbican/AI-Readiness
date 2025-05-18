@@ -96,6 +96,7 @@ export const assessments = pgTable("assessments", {
   score: integer("score"),
   answers: text("answers").notNull(), // JSON string of answers array
   recommendations: text("recommendations"), // Store AI-generated recommendations
+  completedOn: timestamp("completed_on"), // Timestamp when assessment was completed
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

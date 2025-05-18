@@ -56,10 +56,6 @@ const createAssessmentFormSchema = z.object({
   surveyTemplateId: z.string().refine((val) => !isNaN(parseInt(val)), {
     message: "Please select a survey template",
   }),
-  title: z
-    .string()
-    .min(3, "Title must be at least 3 characters")
-    .max(100, "Title must be less than 100 characters"),
 });
 
 type CreateAssessmentFormValues = z.infer<typeof createAssessmentFormSchema>;
@@ -102,7 +98,6 @@ export function AssessmentCreateModal() {
   const form = useForm<CreateAssessmentFormValues>({
     resolver: zodResolver(createAssessmentFormSchema),
     defaultValues: {
-      title: "",
       surveyTemplateId: "",
     },
   });
@@ -201,7 +196,6 @@ export function AssessmentCreateModal() {
       }
 
       const response = await apiRequest("POST", "/api/assessments", {
-        title: values.title,
         surveyTemplateId: parseInt(values.surveyTemplateId),
       });
 
@@ -327,29 +321,6 @@ export function AssessmentCreateModal() {
                     </Select>
                     <FormDescription>
                       Select the assessment template you want to complete
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-foreground">
-                      Assessment Title
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder="Enter assessment title"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Give your assessment a descriptive title
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

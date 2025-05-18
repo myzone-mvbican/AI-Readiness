@@ -6,10 +6,11 @@ import {
 } from "@/components/ui/tooltip";
 import SurveyCompleted from "@/components/survey/survey-completed";
 import { Button } from "@/components/ui/button";
+import { UserPlus } from "lucide-react";
 import { GuestUser, clearGuestAssessmentData } from "@/lib/localStorage";
-import { AssessmentStage } from ".";
 import { Assessment, CsvQuestion } from "@shared/types";
 import DialogUserCreate from "./dialog-user-create";
+import { AssessmentStage } from ".";
 
 interface GuestAssessmentCompletedProps {
   assessment: Assessment;
@@ -32,20 +33,16 @@ export default function GuestAssessmentCompleted({
       <>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              onClick={() => setShowSignupModal(true)}
-              className="relative group"
-            >
-              <span className="absolute -inset-0.5 bg-gradient-to-r from-primary/50 to-primary opacity-75 rounded-lg blur group-hover:opacity-100 transition duration-200"></span>
-              <span className="relative flex items-center justify-center px-6 py-2">
-                Create Account
-              </span>
+            <Button onClick={() => setShowSignupModal(true)}>
+              <UserPlus className="h-4 w-4" />
+              <span className="relative">Create Account</span>
             </Button>
           </TooltipTrigger>
-          <TooltipContent className="p-2 max-w-xs">
+          <TooltipContent className="max-w-xs">
             <p>
               Create an account to track your progress, view assessment history,
-              and get personalized recommendations
+              and get personalized recommendations. Your assessment data will be
+              linked to your new account.
             </p>
           </TooltipContent>
         </Tooltip>
