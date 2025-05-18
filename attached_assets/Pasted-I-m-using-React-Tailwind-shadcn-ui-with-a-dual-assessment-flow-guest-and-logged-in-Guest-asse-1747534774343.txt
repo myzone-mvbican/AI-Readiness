@@ -1,0 +1,92 @@
+I’m using React + Tailwind + shadcn/ui with a dual-assessment flow (guest and logged-in). Guest assessments store an email on submission and are not linked to a userId. Logged-in users are already handled for recommendations via private API. Now I want to:
+
+🔁 1. Split API Logic in survey-completed.tsx
+Check auth state (isAuthenticated, user)
+
+If user is authenticated:
+
+Use existing private endpoint to fetch/update assessment
+
+If guest:
+
+Use new updateGuest endpoint from public API controller:
+
+http
+Copy
+Edit
+PUT /api/public/assessments/:id/guest
+Payload:
+
+json
+Copy
+Edit
+{
+  "email": "guest@email.com",
+  "recommendations": "markdown content"
+}
+Response: 200 if valid, 401 if email mismatch
+
+🔒 2. Security Verification for Guest
+The guest PUT endpoint must:
+
+Require email in the payload
+
+Match email to the target assessment’s stored email
+
+Only allow update if:
+
+userId is null
+
+email matches
+
+Optional Enhancements:
+Rate limit endpoint (per IP)
+
+Add client-side “check code” verification (e.g. 4-digit passcode sent via email — later)
+
+Log every guest PUT for auditing
+
+🔐 3. Field-Level Constraint
+In the updateGuest controller:
+
+Only allow mutation of:
+
+ts
+Copy
+Edit
+assessment.recommendations = req.body.recommendations
+Do not allow:
+
+status, score, answers, teamId, surveyId, userId, etc.
+
+Return 403 if any other keys are present in the payload
+
+✍️ 4. Client-Side Integration
+On survey-completed.tsx, when the assessment is finished and OpenAI completes:
+
+If guest:
+
+Call PUT /api/public/assessments/:id/guest
+
+Provide the email captured before starting the assessment
+
+If logged-in:
+
+Call private PUT /api/assessments/:id as before
+
+In either case:
+
+Persist recommendations into DB
+
+Skip re-fetch next time if value exists
+
+✅ Final Checklist
+ Use public/private API conditionally
+
+ Guest PUT requires email match, no userId
+
+ Only recommendations field can be updated by guest
+
+ Authenticated users use secure full update endpoint
+
+ Secure handling of recommendation generation for both types of users
