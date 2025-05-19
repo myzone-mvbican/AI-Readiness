@@ -287,6 +287,7 @@ export class AssessmentController {
         userId: null, // null userId for guest assessments
         email,
         answers,
+        completedOn: new Date(),
         status: status || "completed",
         score: getScore(answers),
       };

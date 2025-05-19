@@ -12,6 +12,7 @@ import {
   Polygon,
 } from "@react-pdf/renderer";
 import { Download } from "lucide-react";
+import { formatDate } from "@/lib/utils";
 import { Assessment, CsvQuestion } from "@shared/types";
 import logoPath from "@/assets/logo-myzone-ai.png";
 
@@ -295,81 +296,107 @@ const getRecommendations = (readinessLevel: string) => {
   }
 };
 
-const removeFormatting = (str: string) => {
-  return str
-    .replace(/[\*_]/g, "")
-    .replace(
-      /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83D[\uDE00-\uDE4F])/g,
-      "",
-    );
-};
-
 // Component to parse and render markdown content in PDF
 const RecommendationsContent = ({ markdown }: { markdown: string }) => {
-  // Parse markdown into structured content
-  const parseMarkdown = (markdown: string) => {
-    // Extract sections based on ## headers
-    const sections = markdown.split(/##\s+/g).filter(Boolean);
+  /**
+   * Lightweight scrub of inline markdown so the PDF shows clean text.
+   */
+  const removeFormatting = (str: string) => {
+    return str
+      .replace(/[\*_]/g, "")
+      .replace(
+        /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83D[\uDE00-\uDE4F])/g,
+        "",
+      )
+      .trim();
+  };
 
-    // If no sections found (no ## headers), create a single section with all content
-    if (sections.length === 0) {
-      return [
-        {
-          category: "Strategic Recommendations",
-          content: [{ type: "paragraph", text: markdown.trim() }],
-        },
-      ];
+  /**
+   * Return true if a trimmed line is an ordered/unordered list item.
+   *
+   *  - Unordered: "- text", "* text", "• text"
+   *  - Ordered  : "1. text" OR "1) text" (but NOT "1.2" / decimal numbers)
+   */
+  const isListItem = (line: string): boolean => {
+    if (/^(?:\*|-|•)\s+/.test(line)) return true; // unordered
+    // ordered list – number followed by . or ) and NOT another digit (avoids 9.1)
+    return /^(\d+)([.)])\s*/.test(line) && !/^\d+\.\d/.test(line);
+  };
+
+  /**
+   * Strip the list marker from a line and return its text.
+   */
+  const stripListMarker = (line: string): string => {
+    // unordered
+    if (/^(?:\*|-|•)\s+/.test(line)) {
+      return line.replace(/^(?:\*|-|•)\s+/, "");
     }
+    // ordered numeric ("1." or "1)")
+    return line.replace(/^(\d+)([.)])\s*/, "");
+  };
 
-    // Process each section into category and content
-    return sections.map((section) => {
-      const lines = section
-        .split("\n")
-        .filter((line) => line.trim().length > 0);
-      const category = lines[0]?.trim() || "Recommendations";
-      const content = lines.slice(1).join("\n").trim();
+  /**
+   * Parse a markdown snippet into array of sections, each with category & content.
+   */
+  const parseMarkdown = (md: string) => {
+    const rawSections = md.split(/\n?##\s+/g).filter(Boolean);
+    const blobs = rawSections.length ? rawSections : [md];
 
-      // Split content into paragraphs and bullet points
-      const items = content
-        .split("\n\n")
-        .map((paragraph) => {
-          if (
-            paragraph.trim().startsWith("-") ||
-            paragraph.trim().startsWith("*")
-          ) {
-            return paragraph
-              .split("\n")
-              .filter(
-                (line) =>
-                  line.trim().startsWith("-") || line.trim().startsWith("*"),
-              )
-              .map((line) => ({
-                type: "bullet",
-                text: removeFormatting(line.trim().substring(2).trim()),
-              }));
-          } else {
-            return {
-              type: "paragraph",
-              text: removeFormatting(paragraph.trim()),
-            };
-          }
-        })
-        .flat();
+    return blobs.map((blob) => {
+      const lines = blob.split(/\r?\n/);
+      const category = removeFormatting(lines[0] ?? "Recommendations").trim();
 
-      return { category: removeFormatting(category), content: items };
+      const items: { type: "paragraph" | "bullet"; text: string }[] = [];
+      let paraBuffer: string[] = [];
+
+      const flushParagraph = () => {
+        if (paraBuffer.length) {
+          items.push({
+            type: "paragraph",
+            text: removeFormatting(paraBuffer.join(" ").trim()),
+          });
+          paraBuffer = [];
+        }
+      };
+
+      lines.slice(1).forEach((raw) => {
+        const line = raw.trim();
+        if (!line) {
+          flushParagraph();
+          return; // blank line
+        }
+
+        if (isListItem(line)) {
+          flushParagraph();
+          items.push({
+            type: "bullet",
+            text: removeFormatting(stripListMarker(line)),
+          });
+        } else {
+          paraBuffer.push(line);
+        }
+      });
+
+      flushParagraph(); // leftover paragraph
+
+      return { category, content: items };
     });
   };
 
-  // Parse markdown into sections
+  // Parse markdown into structured sections once per render.
   const sections = parseMarkdown(markdown);
 
-  // Return the vertical stacked layout - showing just the sections provided in this chunk
-  // Each page will contain max 2 recommendations (from parent component logic)
+  const isLastSection = sections.length === 1;
+
+  /**
+   * Render: each section in a vertical stack. Parent component controls paging
+   * (e.g. max two sections per page).
+   */
   return (
     <View style={{ marginTop: 30 }}>
-      {sections.map((section, index) => (
+      {sections.map((section, idx) => (
         <View
-          key={`section-${index}`}
+          key={`section-${idx}`}
           style={{
             marginBottom: 50,
             borderLeftWidth: 4,
@@ -377,6 +404,7 @@ const RecommendationsContent = ({ markdown }: { markdown: string }) => {
             borderLeftStyle: "solid",
           }}
         >
+          {/* Section header */}
           <View
             style={{
               backgroundColor: "#F1F5F9",
@@ -396,42 +424,47 @@ const RecommendationsContent = ({ markdown }: { markdown: string }) => {
             </Text>
           </View>
 
+          {/* Section body */}
           <View style={{ padding: 10 }}>
-            {section.content.map((item: any, contentIdx: number) => {
+            {section.content.map((item, contentIdx) => {
+              const boldText = !isLastSection && [1, 4].includes(contentIdx);
+
               if (item.type === "paragraph") {
                 return (
                   <Text
                     key={`p-${contentIdx}`}
                     style={{
                       fontSize: 10,
+                      fontWeight: boldText ? "bold" : "normal",
                       color: "#334155",
-                      marginBottom: 8,
+                      marginBottom: boldText ? 2 : 8,
                       lineHeight: 1.5,
                     }}
                   >
-                    {item.text.trim()}
+                    {item.text}
                   </Text>
                 );
-              } else if (item.type === "bullet") {
+              }
+              if (item.type === "bullet") {
                 return (
                   <View
                     key={`b-${contentIdx}`}
                     style={{
                       flexDirection: "row",
-                      marginBottom: 6,
+                      marginBottom: 5,
                       marginLeft: 0,
                     }}
                   >
-                    <Text style={{ color: "#3B82F6", marginRight: 0 }}>•</Text>
                     <Text
                       style={{
                         flex: 1,
                         fontSize: 10,
+                        fontWeight: isLastSection ? "bold" : "normal",
                         color: "#334155",
-                        lineHeight: 1.5,
+                        lineHeight: 1.3,
                       }}
                     >
-                      {item.text}
+                      • {item.text}
                     </Text>
                   </View>
                 );
@@ -635,40 +668,12 @@ const AssessmentPDF = ({
   const { answers = [], survey: { title: surveyTitle } = {} } = assessment;
   const score = assessment.score || 0;
 
+  // Determine readiness level
+  const readinessLevel = getReadinessLevel(score);
+
   // Calculate date and quarter
   const today = new Date();
   const year = today.getFullYear();
-  const dateStr = today.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-
-  // Readiness level
-  const readinessLevel = getReadinessLevel(score);
-
-  // Use AI-generated recommendations if available, otherwise use default recommendations
-  const staticRecommendations = getRecommendations(readinessLevel);
-
-  // Parse AI-generated recommendations if available, or use static ones
-  let recommendations = staticRecommendations;
-
-  if (assessment.recommendations) {
-    // Extract bullet points from markdown content
-    const bulletPoints = assessment.recommendations
-      .split("\n")
-      .filter(
-        (line) => line.trim().startsWith("-") || line.trim().startsWith("*"),
-      )
-      .map((line) => line.trim().substring(2).trim())
-      .filter((line) => line.length > 0)
-      .slice(0, 5);
-
-    // Use the extracted recommendations if we found any
-    if (bulletPoints.length > 0) {
-      recommendations = bulletPoints;
-    }
-  }
 
   // Calculate total pages: Cover + Results + Recommendations + Responses
   const answerPages = Math.ceil(answers.length / 10);
@@ -691,7 +696,9 @@ const AssessmentPDF = ({
           <View style={styles.contentBox}>
             <Text style={styles.scoreText}>Score: {score} / 100</Text>
             <View style={styles.divider} />
-            <Text style={styles.dateText}>Report generated on: {dateStr}</Text>
+            <Text style={styles.dateText}>
+              Report generated on: {formatDate(today)}
+            </Text>
           </View>
         </View>
 
@@ -775,7 +782,7 @@ const AssessmentPDF = ({
               </Text>
               <Text style={styles.sectionSubtitle}>
                 Based on your assessment score of {score}/100 and insights from
-                "The Lean Startup"
+                "MyZone AI Blueprint"
               </Text>
 
               {/* Using the RecommendationsContent component for each page */}
@@ -791,6 +798,8 @@ const AssessmentPDF = ({
           ));
         } else {
           // Static recommendations page
+          const staticRecommendations = getRecommendations(readinessLevel);
+
           return (
             <Page key="recommendations-static" size="A4" style={styles.page}>
               <View style={styles.header}>
@@ -804,7 +813,7 @@ const AssessmentPDF = ({
               </Text>
 
               <View style={styles.recommendationBox}>
-                {recommendations.map((rec, idx) => (
+                {staticRecommendations.map((rec, idx) => (
                   <View key={idx} style={styles.recommendationItem}>
                     <Text style={styles.recommendationBullet}>•</Text>
                     <Text style={styles.recommendationText}>{rec}</Text>

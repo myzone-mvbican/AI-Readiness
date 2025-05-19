@@ -104,6 +104,26 @@ export function getColumns({
       },
     },
     {
+      accessorKey: "completedOn",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "desc")}
+          className="-ml-4"
+        >
+          Date Completed
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-muted-foreground">
+            {formatDate(row.original.completedOn)}
+          </div>
+        );
+      },
+    },
+    {
       accessorKey: "status",
       header: ({ column }) => (
         <Button
@@ -118,26 +138,6 @@ export function getColumns({
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
       filterFn: (row, id, value) => {
         return value.includes(row.getValue(id));
-      },
-    },
-    {
-      accessorKey: "completedOn",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="-ml-4"
-        >
-          Completed
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-muted-foreground">
-            {row.original.completedOn ? formatDate(row.original.completedOn) : "-"}
-          </div>
-        );
       },
     },
     {

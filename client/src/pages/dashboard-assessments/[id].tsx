@@ -110,16 +110,6 @@ export default function AssessmentDetailPage() {
           description:
             "Your AI readiness assessment has been completed successfully.",
         });
-
-        // Invalidate queries
-        queryClient.invalidateQueries({
-          queryKey: [`/api/assessments/${assessmentId}`],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["/api/assessments"],
-        });
-
-        // navigate(`/dashboard/assessments`);
       } else {
         // Just saving progress
         toast({
@@ -128,12 +118,14 @@ export default function AssessmentDetailPage() {
           title: "Progress saved",
           description: "Your progress has been saved.",
         });
-
-        // Invalidate the current assessment query to ensure latest data
-        queryClient.invalidateQueries({
-          queryKey: [`/api/assessments/${assessmentId}`],
-        });
       }
+      // Invalidate the current assessment query to ensure latest data
+      queryClient.invalidateQueries({
+        queryKey: [`/api/assessments/${assessmentId}`],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/assessments"],
+      });
     },
     onError: (error) => {
       toast({
