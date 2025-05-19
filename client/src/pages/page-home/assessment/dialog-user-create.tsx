@@ -7,6 +7,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -53,6 +60,8 @@ export default function DialogUserExists({
       name: guestUser?.name || "",
       email: guestUser?.email || "",
       company: guestUser?.company || "",
+      employeeCount: (guestUser?.employeeCount as "10-49" | "1-9" | "50-249" | "250-999" | "1000+") || "10-49",
+      industry: (guestUser?.industry as "technology" | "healthcare" | "finance" | "retail" | "manufacturing" | "education" | "government" | "energy" | "transportation" | "other") || "technology",
       password: "",
       confirmPassword: "",
     },
@@ -64,6 +73,8 @@ export default function DialogUserExists({
       form.setValue("name", guestUser.name || "");
       form.setValue("email", guestUser.email || "");
       form.setValue("company", guestUser.company || "");
+      form.setValue("employeeCount", guestUser.employeeCount || "10-49");
+      form.setValue("industry", guestUser.industry || "technology");
     }
   }, [guestUser, form, open]);
 
@@ -178,10 +189,72 @@ export default function DialogUserExists({
               name="company"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Compay</FormLabel>
+                  <FormLabel>Company</FormLabel>
                   <FormControl>
                     <Input type="text" placeholder="Your Company" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="employeeCount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Company Size</FormLabel>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select company size" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="1-9">1-9 employees</SelectItem>
+                      <SelectItem value="10-49">10-49 employees</SelectItem>
+                      <SelectItem value="50-249">50-249 employees</SelectItem>
+                      <SelectItem value="250-999">250-999 employees</SelectItem>
+                      <SelectItem value="1000+">1000+ employees</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="industry"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Industry</FormLabel>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select industry" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="technology">Technology</SelectItem>
+                      <SelectItem value="healthcare">Healthcare</SelectItem>
+                      <SelectItem value="finance">Finance</SelectItem>
+                      <SelectItem value="retail">Retail</SelectItem>
+                      <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                      <SelectItem value="education">Education</SelectItem>
+                      <SelectItem value="government">Government</SelectItem>
+                      <SelectItem value="energy">Energy</SelectItem>
+                      <SelectItem value="transportation">Transportation</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
                 </FormItem>
               )}
             />
