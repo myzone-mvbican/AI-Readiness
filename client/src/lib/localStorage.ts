@@ -23,7 +23,9 @@ export interface GuestUser {
   id: string;
   name: string;
   email: string;
-  company?: string;
+  company: string;
+  employeeCount: string;
+  industry: string;
 }
 
 // Guest assessment data interface

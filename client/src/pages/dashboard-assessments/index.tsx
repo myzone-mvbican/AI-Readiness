@@ -31,9 +31,7 @@ export default function AssessmentsPage() {
   const assessmentCreateModal = useAssessmentCreateModal();
 
   // State for sorting and filtering
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: 'completedOn', desc: true } // Default sort by completedOn in descending order
-  ]);
+  const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [globalFilter, setGlobalFilter] = useState("");

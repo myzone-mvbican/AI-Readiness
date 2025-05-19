@@ -20,7 +20,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { ToastAction } from "@/components/ui/toast";
 import { ChartContainer } from "@/components/ui/chart";
+import { navigate } from "wouter/use-browser-location";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircle2, Loader2, InfoIcon } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -60,8 +62,6 @@ export default function SurveyCompleted({
 
   // State for PDF generation and tracking recommendations request
   const [isLoading, setIsLoading] = useState(false);
-  const [recommendationsRequested, setRecommendationsRequested] =
-    useState(false);
 
   // Access query client for mutations
   const queryClient = useQueryClient();
@@ -127,26 +127,15 @@ export default function SurveyCompleted({
 
   // Effect to handle recommendations
   useEffect(() => {
-    // Skip if any of these conditions are true:
-    // 1. No assessment available
-    // 2. Already have recommendations
-    // 3. Mutation is in progress
-    // 4. Already loading
-    // 5. We've already requested recommendations before
-    if (
-      !assessment ||
-      assessment.recommendations ||
-      saveRecommendationsMutation.isPending ||
-      isLoading ||
-      recommendationsRequested
-    ) {
+    // Only fetch recommendations if not already present
+    // and if questions are available
+    // and if not loading
+    if (isLoading || questions.length == 0 || assessment?.recommendations) {
       return;
     }
 
     const fetchRecommendations = async () => {
       try {
-        // Mark that we've initiated a request to prevent duplicate calls
-        setRecommendationsRequested(true);
         setIsLoading(true);
 
         const categoryScores = getCategoryScores(assessment, questions);
@@ -156,9 +145,7 @@ export default function SurveyCompleted({
 
         // Same AI suggestions endpoint for both user types
         const response = await apiRequest("POST", "/api/ai-suggestions", {
-          book: "The Lean Startup",
           categories: categoryScores,
-          userEmail: assessment.email,
         });
 
         const result = await response.json();
@@ -186,13 +173,23 @@ export default function SurveyCompleted({
 
         toast({
           title: "Ready",
-          description: "Personalized recommendations generated",
+          description: "Recommendations generated.",
+          action: isAuthenticated ? (
+            <ToastAction
+              altText="View Recommendations"
+              onClick={() => {
+                navigate(`/dashboard/assessments/${assessment.id}`);
+              }}
+            >
+              View
+            </ToastAction>
+          ) : undefined,
         });
       } catch (error) {
         console.error("Recommendations error:", error);
         toast({
           title: "Error",
-          description: "Failed to generate recommendations",
+          description: "Failed to generate recommendations.",
           variant: "destructive",
         });
       } finally {
@@ -201,7 +198,7 @@ export default function SurveyCompleted({
     };
 
     fetchRecommendations();
-  }, [assessment?.id, isAuthenticated, recommendationsRequested]);
+  }, [assessment, isAuthenticated]);
 
   // Function to prepare data for radar chart
   const getRadarChartData = (): RadarChartData[] => {
@@ -248,7 +245,9 @@ export default function SurveyCompleted({
         <div className="col-span-1 self-center sm:flex sm:justify-end">
           <div className="flex flex-col gap-4">
             {additionalActions}
-            {isLoading || saveRecommendationsMutation.isPending ? (
+            {isLoading ||
+            saveRecommendationsMutation.isPending ||
+            assessment?.recommendations === null ? (
               <Tooltip defaultOpen>
                 <TooltipTrigger asChild>
                   <Button disabled variant="secondary">
@@ -423,14 +422,16 @@ export default function SurveyCompleted({
         </TabsContent>
 
         <TabsContent value="suggestions">
-          {isLoading || saveRecommendationsMutation.isPending ? (
+          {isLoading ||
+          saveRecommendationsMutation.isPending ||
+          assessment?.recommendations === null ? (
             <div className="h-[calc(100dvh-330px)] flex items-center justify-center">
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="text-muted-foreground">
                   Our AI agent is working to create actionable recommendations
-                  based on your assessment results. It will be ready in a
-                  moment.
+                  based on your assessment results. It will be ready in a moment
+                  - we will let you know once is done.
                 </p>
               </div>
             </div>
