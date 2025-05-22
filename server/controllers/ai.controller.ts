@@ -51,10 +51,8 @@ export class AIController {
 
       // Prepare system prompt
       let systemPrompt = AIController.getIntroText();
-      // Append each category to systemPrompt as comment
-      categories.forEach((category) => {
-        systemPrompt += AIController.getSectionText(category);
-      });
+      // Append category
+      systemPrompt += AIController.getSectionText();
       // Append rocks
       systemPrompt += AIController.getRocksText();
       // Append ensure text
@@ -102,34 +100,28 @@ export class AIController {
     }
   }
 
-  static getSectionText({ name, score, benchmark, previousScore }) {
+  static getSectionText() {
     let systemPrompt = `
-## {{emoji}} ${name}
+// === START CATEGORY SECTION ===
+// Repeat this block for each category
+## {{emoji}} {{category.name}}
 
 *Generate a 3–4-sentence summary, tailored recommendations, and identify patterns or outliers. If scores show critical issues, highlight them with urgency and suggest corrective actions or resources. All suggestions should be practical, data-driven, and context-aware.*
 
 **How You Performed**
 
-* **Current Score:** ${score} / 10 (${((score / 10) * 100).toFixed(0)}%)
-`;
+* **Current Score:** {{category.score}} / 10 (percentage%)
+* **Benchmark:** {{category.benchmark}} / 10 (percentage%)
+* **Trend vs. Previous:** Trend (Up by|Down by x points or No change) or First-time assessment
 
-    if (benchmark != null) {
-      systemPrompt += `* **Benchmark:** ${benchmark ? `${((benchmark / 10) * 100).toFixed(0)}%` : "N/A"}`;
-    }
-
-    if (previousScore != null) {
-      const delta = score - previousScore;
-      systemPrompt += `* **Trend vs. Previous:** ${delta > 0 ? "⬆ Up by" : delta < 0 ? "⬇ Down by" : "→ No change"} ${Math.abs(delta)} points`;
-    } else {
-      systemPrompt += `* **Trend vs. Previous:** First-time assessment`;
-    }
-
-    systemPrompt += `
-    
 **{{emoji}} Key Best Practices** _(top 3)_`;
     for (let i = 1; i <= 3; i++) {
       systemPrompt += `${i}. …`;
     }
+
+    systemPrompt += `
+// === END CATEGORY SECTION ===
+`;
 
     return systemPrompt;
   }
@@ -167,10 +159,12 @@ Output/Ensure:
 - Bulleted Markdown, ready for PDF conversion.  
 - If 'benchmark' is null, omit that line.
 - If 'previousScore' is null, say "First-time assessment" instead of trend.
-- Use emojis for categories headlines use an emoji representing the category.
+- Infer an appropriate emoji for each category based on its name and theme.
 - Use emoji representing keys for keys best practices headline.
 - Highlight critical areas needing immediate attention.
 - Keep each Best Practice bullet ≤ 20 words, and rationales ≤ 30 words.
+- Tone: Concise, insightful, strategic.
+- Avoid fluff or generic advice.
 - All insights should be practical, data-informed, and professionally relevant for managerial decision-making in the given company industry context.
     `;
   }
