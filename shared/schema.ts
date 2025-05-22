@@ -88,7 +88,7 @@ export const assessments = pgTable("assessments", {
   title: text("title").notNull(),
   userId: integer("user_id")
     .references(() => users.id),  // Removed .notNull() to support guest assessments
-  email: text("email"),  // Added to store guest user email
+  guest: text("guest"),  // JSON string of guest user data from localStorage
   surveyTemplateId: integer("survey_template_id")
     .notNull()
     .references(() => surveys.id),
