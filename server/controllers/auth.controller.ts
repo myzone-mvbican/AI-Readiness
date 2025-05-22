@@ -3,6 +3,7 @@ import { db } from "../db";
 import { eq, and, isNull } from "drizzle-orm";
 import { UserModel } from "../models/user.model";
 import { TeamModel } from "../models/team.model";
+import { AssessmentModel } from "../models/assessment.model";
 import { assessments } from "@shared/schema";
 import {
   loginSchema,
@@ -252,26 +253,7 @@ export class AuthController {
 
           // Check for guest assessments with this email and associate them with the new user
           try {
-            const guestAssessments = await db
-              .select()
-              .from(assessments)
-              .where(
-                and(
-                  eq(assessments.email, user.email),
-                  isNull(assessments.userId),
-                ),
-              );
-
-            // If we found any guest assessments, update them to associate with this user
-            if (guestAssessments.length > 0) {
-              // Update each assessment to set the userId
-              for (const assessment of guestAssessments) {
-                await db
-                  .update(assessments)
-                  .set({ userId: user.id })
-                  .where(eq(assessments.id, assessment.id));
-              }
-            }
+            await AssessmentModel.assignGuestAssessmentsToUser(user.email, user.id);
           } catch (err) {
             // Just log the error but don't fail registration if this fails
             console.error(
@@ -365,23 +347,7 @@ export class AuthController {
 
       // Check for guest assessments with this email and associate them with the new user
       try {
-        const guestAssessments = await db
-          .select()
-          .from(assessments)
-          .where(
-            and(eq(assessments.email, user.email), isNull(assessments.userId)),
-          );
-
-        // If we found any guest assessments, update them to associate with this user
-        if (guestAssessments.length > 0) {
-          // Update each assessment to set the userId
-          for (const assessment of guestAssessments) {
-            await db
-              .update(assessments)
-              .set({ userId: user.id })
-              .where(eq(assessments.id, assessment.id));
-          }
-        }
+        await AssessmentModel.assignGuestAssessmentsToUser(user.email, user.id);
       } catch (err) {
         // Just log the error but don't fail registration if this fails
         console.error(
