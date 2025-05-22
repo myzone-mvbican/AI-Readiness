@@ -56,13 +56,13 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
       // Create assessment result data for local storage and display
       const assessmentResult: {
         title: string;
-        email?: string;
+        guestData: any;
         surveyId: number;
         answers: AssessmentAnswer[];
         status: string;
       } = {
         title: `${guestUser?.company || guestUser?.name}'s AI Readiness Assessment`,
-        email: guestUser?.email,
+        guestData: guestUser, // Send the complete guest user data
         surveyId: defaultSurveyId,
         answers: answers,
         status: "completed",
