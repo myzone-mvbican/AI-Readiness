@@ -45,6 +45,9 @@ type LoginData = {
 type RegisterData = {
   name: string;
   email: string;
+  company: string;
+  employeeCount: "1-9" | "10-49" | "50-249" | "250-999" | "1000+";
+  industry: "technology" | "healthcare" | "finance" | "retail" | "manufacturing" | "education" | "government" | "energy" | "transportation" | "other";
   password: string;
   confirmPassword?: string;
 };

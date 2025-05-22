@@ -81,7 +81,9 @@ export class UserModel {
       // If a new password is provided, hash it
       let updatedUserData = { ...userData };
       if (userData.password) {
-        updatedUserData.password = await this.hashPassword(userData.password);
+        updatedUserData.password = await UserModel.hashPassword(
+          userData.password,
+        );
       }
 
       // Update user in database

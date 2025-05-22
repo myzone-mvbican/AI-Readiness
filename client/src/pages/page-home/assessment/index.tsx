@@ -50,13 +50,9 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   const [showResumeDialog, setShowResumeDialog] = useState(hasSavedAnswers);
   const [surveyData, setSurveyData] = useState<any | null>(null);
   const [questionData, setQuestionData] = useState<any>([]);
-  const [currentScore, setCurrentScore] = useState<number>(0);
 
   const handleQuestionsSubmit = async (answers: AssessmentAnswer[]) => {
     try {
-      // Use the live-calculated score that's been tracked as the user answers questions
-      const score = currentScore > 0 ? currentScore : calculateScore(answers);
-
       // Create assessment result data for local storage and display
       const assessmentResult: {
         title: string;
@@ -64,14 +60,12 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
         surveyId: number;
         answers: AssessmentAnswer[];
         status: string;
-        score: number;
       } = {
         title: `${guestUser?.company || guestUser?.name}'s AI Readiness Assessment`,
         email: guestUser?.email,
         surveyId: defaultSurveyId,
         answers: answers,
         status: "completed",
-        score,
       };
 
       // Save to server using the public API
@@ -105,22 +99,6 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
     }
   };
 
-  const calculateScore = (answers: AssessmentAnswer[]): number => {
-    // Simple scoring algorithm
-    const validAnswers = answers.filter(
-      (a) => a.a !== undefined && a.a !== null,
-    );
-    if (validAnswers.length === 0) return 0;
-
-    const total = validAnswers.reduce((sum, answer) => {
-      return sum + (answer.a || 0);
-    }, 0);
-
-    // Convert to 0-100 scale (normalize from -2 to 2 range)
-    const normalized = (total / (validAnswers.length * 2) + 1) * 50;
-    return Math.round(normalized);
-  };
-
   const backToInfoCollection = () => {
     // Go back to info collection stage and clear ALL guest data (not just survey data)
     clearGuestAssessmentData(); // Clear all guest data including user info
@@ -146,15 +124,11 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
         return (
           <ScreenSurvey
             surveyId={defaultSurveyId}
+            guestUser={guestUser}
             questions={questionData}
             setQuestions={setQuestionData}
-            guestUser={guestUser}
             onSubmit={handleQuestionsSubmit}
             onCancel={backToInfoCollection}
-            onScoreChange={(score: number) => {
-              // Update the current score in real time as user selects answers
-              setCurrentScore(score);
-            }}
           />
         );
 
