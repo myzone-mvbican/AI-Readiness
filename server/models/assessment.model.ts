@@ -1,5 +1,5 @@
 import { db } from "../db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, isNull, isNotNull } from "drizzle-orm";
 import { assessments } from "@shared/schema";
 import { Assessment, Survey } from "@shared/types";
 import { InsertAssessment, UpdateAssessment } from "@shared/types/requests";
@@ -149,6 +149,59 @@ export class AssessmentModel {
       return result.length > 0;
     } catch (error) {
       console.error(`Error deleting assessment ${id}:`, error);
+      return false;
+    }
+  }
+
+  static async getGuestAssessmentsByEmail(email: string): Promise<Assessment[]> {
+    try {
+      const result = await db
+        .select()
+        .from(assessments)
+        .where(isNull(assessments.userId)); // Only get guest assessments
+
+      // Filter by email from guest JSON data
+      const guestAssessments = result.filter(assessment => {
+        if (!assessment.guest) return false;
+        try {
+          const guestData = JSON.parse(assessment.guest);
+          return guestData.email === email;
+        } catch (error) {
+          console.error('Error parsing guest data:', error);
+          return false;
+        }
+      });
+
+      return guestAssessments.map((assessment) => ({
+        ...assessment,
+        answers: JSON.parse(assessment.answers),
+      }));
+    } catch (error) {
+      console.error("Error getting guest assessments by email:", error);
+      return [];
+    }
+  }
+
+  static async assignGuestAssessmentsToUser(email: string, userId: number): Promise<boolean> {
+    try {
+      // Get all guest assessments for this email
+      const guestAssessments = await this.getGuestAssessmentsByEmail(email);
+      
+      // Update each assessment to assign to the user
+      for (const assessment of guestAssessments) {
+        await db
+          .update(assessments)
+          .set({
+            userId: userId,
+            guest: null, // Clear guest data once assigned to user
+            updatedAt: new Date(),
+          })
+          .where(eq(assessments.id, assessment.id));
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error assigning guest assessments to user:", error);
       return false;
     }
   }
