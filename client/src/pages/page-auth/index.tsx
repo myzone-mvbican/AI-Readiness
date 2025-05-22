@@ -1,14 +1,29 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  Form,
+} from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { GoogleLogin } from "@react-oauth/google";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import {
   loginSchema,
@@ -51,11 +66,15 @@ export default function AuthPage() {
     handleSubmit: handleSignupSubmit,
     formState: { errors: signupErrors },
     setValue,
+    control,
   } = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
       name: "",
       email: "",
+      company: "",
+      employeeCount: "10-49",
+      industry: "technology",
       password: "",
       confirmPassword: "",
     },
@@ -88,6 +107,9 @@ export default function AuthPage() {
       await registerMutation.mutateAsync({
         name: data.name,
         email: data.email,
+        company: data.company,
+        employeeCount: data.employeeCount,
+        industry: data.industry,
         password: data.password,
         confirmPassword: data.confirmPassword,
       });
@@ -324,6 +346,105 @@ export default function AuthPage() {
                     {signupErrors.email && (
                       <p className="text-sm text-red-500">
                         {signupErrors.email.message}
+                      </p>
+                    )}
+                  </div>
+                  
+                  {/* Company field */}
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="signup-company"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Company
+                    </Label>
+                    <Input
+                      id="signup-company"
+                      type="text"
+                      placeholder="Your Company"
+                      {...registerSignup("company")}
+                      className={signupErrors.company ? "border-red-500" : ""}
+                    />
+                    {signupErrors.company && (
+                      <p className="text-sm text-red-500">
+                        {signupErrors.company.message}
+                      </p>
+                    )}
+                  </div>
+                  
+                  {/* Company Size field */}
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="signup-employee-count"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Company Size
+                    </Label>
+                    <Controller
+                      control={control}
+                      name="employeeCount"
+                      render={({ field }) => (
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <SelectTrigger id="signup-employee-count" className={signupErrors.employeeCount ? "border-red-500" : ""}>
+                            <SelectValue placeholder="Select company size" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1-9">1-9 employees</SelectItem>
+                            <SelectItem value="10-49">10-49 employees</SelectItem>
+                            <SelectItem value="50-249">50-249 employees</SelectItem>
+                            <SelectItem value="250-999">250-999 employees</SelectItem>
+                            <SelectItem value="1000+">1000+ employees</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    {signupErrors.employeeCount && (
+                      <p className="text-sm text-red-500">
+                        {signupErrors.employeeCount.message}
+                      </p>
+                    )}
+                  </div>
+                  
+                  {/* Industry field */}
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="signup-industry"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Industry
+                    </Label>
+                    <Controller
+                      control={control}
+                      name="industry"
+                      render={({ field }) => (
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <SelectTrigger id="signup-industry" className={signupErrors.industry ? "border-red-500" : ""}>
+                            <SelectValue placeholder="Select industry" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="technology">Technology</SelectItem>
+                            <SelectItem value="healthcare">Healthcare</SelectItem>
+                            <SelectItem value="finance">Finance</SelectItem>
+                            <SelectItem value="retail">Retail</SelectItem>
+                            <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                            <SelectItem value="education">Education</SelectItem>
+                            <SelectItem value="government">Government</SelectItem>
+                            <SelectItem value="energy">Energy</SelectItem>
+                            <SelectItem value="transportation">Transportation</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    {signupErrors.industry && (
+                      <p className="text-sm text-red-500">
+                        {signupErrors.industry.message}
                       </p>
                     )}
                   </div>

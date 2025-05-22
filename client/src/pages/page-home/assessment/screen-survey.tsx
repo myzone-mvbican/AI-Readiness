@@ -17,7 +17,6 @@ interface GuestSurveyProps {
   surveyId: number;
   onSubmit: (answers: AssessmentAnswer[]) => void;
   onCancel?: () => void;
-  onScoreChange?: (score: number) => void;
   questions: CsvQuestion[];
   setQuestions: React.Dispatch<React.SetStateAction<CsvQuestion[]>>;
 }
@@ -27,7 +26,6 @@ export default function GuestSurvey({
   surveyId,
   onSubmit,
   onCancel,
-  onScoreChange,
   questions,
   setQuestions,
 }: GuestSurveyProps) {
@@ -67,15 +65,9 @@ export default function GuestSurvey({
         if (savedData.currentStep !== undefined) {
           setCurrentStep(savedData.currentStep);
         }
-
-        // Calculate and report the score from saved answers
-        if (onScoreChange && savedData.answers.length > 0) {
-          const score = calculateScore(savedData.answers);
-          onScoreChange(score);
-        }
       }
     }
-  }, [hasSavedAnswers, onScoreChange]);
+  }, [hasSavedAnswers]);
 
   // Format questions when data is loaded
   useEffect(() => {
@@ -122,12 +114,6 @@ export default function GuestSurvey({
     // Save to localStorage
     saveGuestAssessmentAnswers(surveyId, updatedAnswers, currentStep);
 
-    // Calculate and report score
-    if (onScoreChange) {
-      const score = calculateScore(updatedAnswers);
-      onScoreChange(score);
-    }
-
     // Clear any existing timeout
     if (advanceTimeout) {
       clearTimeout(advanceTimeout);
@@ -168,12 +154,6 @@ export default function GuestSurvey({
 
     // Then submit
     setIsSubmitting(true);
-
-    // Calculate final score
-    const score = calculateScore(answers);
-    if (onScoreChange) {
-      onScoreChange(score);
-    }
 
     // Send answers to parent component
     onSubmit(answers);

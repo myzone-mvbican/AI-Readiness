@@ -33,26 +33,29 @@ import DialogUserExists from "./dialog-user-exists";
 
 // Form validation schema
 const guestAssessmentFormSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+  name: z.string().min(3, { message: "Name must be at least 3 characters" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
   company: z.string().min(1, { message: "Company name is required" }),
   employeeCount: z.enum(["1-9", "10-49", "50-249", "250-999", "1000+"], {
     errorMap: () => ({ message: "Please select your company size" }),
   }),
-  industry: z.enum([
-    "technology",
-    "healthcare",
-    "finance",
-    "retail",
-    "manufacturing",
-    "education",
-    "government",
-    "energy",
-    "transportation",
-    "other",
-  ], {
-    errorMap: () => ({ message: "Please select your industry" }),
-  }),
+  industry: z.enum(
+    [
+      "technology",
+      "healthcare",
+      "finance",
+      "retail",
+      "manufacturing",
+      "education",
+      "government",
+      "energy",
+      "transportation",
+      "other",
+    ],
+    {
+      errorMap: () => ({ message: "Please select your industry" }),
+    },
+  ),
 });
 
 type GuestAssessmentFormValues = z.infer<typeof guestAssessmentFormSchema>;
@@ -80,8 +83,8 @@ export default function GuestAssessmentForm({
       name: "",
       email: "",
       company: "",
-      employeeCount: "10-49",
-      industry: "technology",
+      employeeCount: undefined,
+      industry: undefined,
     },
   });
 
@@ -183,8 +186,8 @@ export default function GuestAssessmentForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Company Size</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
+                    <Select
+                      onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
@@ -196,7 +199,9 @@ export default function GuestAssessmentForm({
                         <SelectItem value="1-9">1-9 employees</SelectItem>
                         <SelectItem value="10-49">10-49 employees</SelectItem>
                         <SelectItem value="50-249">50-249 employees</SelectItem>
-                        <SelectItem value="250-999">250-999 employees</SelectItem>
+                        <SelectItem value="250-999">
+                          250-999 employees
+                        </SelectItem>
                         <SelectItem value="1000+">1000+ employees</SelectItem>
                       </SelectContent>
                     </Select>
@@ -211,8 +216,8 @@ export default function GuestAssessmentForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Industry</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
+                    <Select
+                      onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
@@ -225,11 +230,15 @@ export default function GuestAssessmentForm({
                         <SelectItem value="healthcare">Healthcare</SelectItem>
                         <SelectItem value="finance">Finance</SelectItem>
                         <SelectItem value="retail">Retail</SelectItem>
-                        <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                        <SelectItem value="manufacturing">
+                          Manufacturing
+                        </SelectItem>
                         <SelectItem value="education">Education</SelectItem>
                         <SelectItem value="government">Government</SelectItem>
                         <SelectItem value="energy">Energy</SelectItem>
-                        <SelectItem value="transportation">Transportation</SelectItem>
+                        <SelectItem value="transportation">
+                          Transportation
+                        </SelectItem>
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
