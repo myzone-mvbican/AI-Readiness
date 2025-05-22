@@ -243,7 +243,7 @@ export class AssessmentController {
 
   static async createGuest(req: Request, res: Response) {
     try {
-      const { surveyId, email, answers, status } = req.body;
+      const { surveyId, guestData, answers, status } = req.body;
 
       if (!surveyId || !answers || !Array.isArray(answers)) {
         return res.status(400).json({
@@ -254,10 +254,10 @@ export class AssessmentController {
       }
 
       // Validate required fields
-      if (!answers || !email) {
+      if (!answers || !guestData) {
         return res.status(400).json({
           success: false,
-          message: "Missing required fields: answers & email.",
+          message: "Missing required fields: answers & guestData.",
         });
       }
 
@@ -285,7 +285,7 @@ export class AssessmentController {
         title: `${survey.title} - ${formatDate(new Date())}`,
         surveyTemplateId,
         userId: null, // null userId for guest assessments
-        email,
+        guest: JSON.stringify(guestData), // Store guest data as JSON string
         answers,
         completedOn: new Date(),
         status: status || "completed",
@@ -352,11 +352,26 @@ export class AssessmentController {
         });
       }
 
-      // 5. Validate email matches
-      if (existingAssessment.email !== email) {
+      // 5. Validate email matches guest data
+      if (!existingAssessment.guest) {
         return res.status(403).json({
           success: false,
-          message: "Email does not match assessment",
+          message: "Invalid guest assessment - no guest data found",
+        });
+      }
+
+      try {
+        const guestData = JSON.parse(existingAssessment.guest);
+        if (guestData.email !== email) {
+          return res.status(403).json({
+            success: false,
+            message: "Email does not match assessment",
+          });
+        }
+      } catch (error) {
+        return res.status(500).json({
+          success: false,
+          message: "Invalid guest data format",
         });
       }
 
