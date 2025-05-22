@@ -69,7 +69,7 @@ export class AIController {
 
       // Make API request to OpenAI
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        model: "gpt-4.1",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPayload },
@@ -158,7 +158,9 @@ _Rationale:_ {{rock.rationale}}
   static getEnsureText() {
     return `
 Inputs:
-- JSON object with categories, each with name, score, previousScore, and benchmark.
+- JSON object with:
+-- categories, each with name, score, previousScore, and benchmark.
+-- with company data: name, employeeCount, industry.
 Output/Ensure:
 - Do not create a title for the report - just start with the first category.
 - Do not output "usual" lines between categories.
@@ -169,7 +171,7 @@ Output/Ensure:
 - Use emoji representing keys for keys best practices headline.
 - Highlight critical areas needing immediate attention.
 - Keep each Best Practice bullet ≤ 20 words, and rationales ≤ 30 words.
-- All insights should be practical, data-informed, and professionally relevant for managerial decision-making in the given industry context.
+- All insights should be practical, data-informed, and professionally relevant for managerial decision-making in the given company industry context.
     `;
   }
 
@@ -480,7 +482,7 @@ Innovation & Adaptability as Core Values
 If your company’s values don’t include:
 Innovation (embracing what’s next)
 Adaptability (flexibility in fast-moving environments)
-you’re going to struggle to scale AI.
+you o�re going to struggle to scale AI.
 We help every client audit and revise their core values to align with being an AI-first organization. These values must be lived in hiring, feedback, planning, and leadership communication.
 Strategic Role-Play Simulations
 We simulate how you f�d:
