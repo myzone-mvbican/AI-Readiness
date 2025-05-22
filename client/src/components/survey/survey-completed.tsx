@@ -169,15 +169,10 @@ export default function SurveyCompleted({
           throw new Error("Failed to generate recommendations");
         }
 
-        // Create payload based on auth status
+        // Create payload for saving recommendations
         const payload: RecommendationPayload = {
           recommendations: result.content,
         };
-
-        // Only include email for guest users
-        if (!isAuthenticated && assessment.email) {
-          payload.email = assessment.email;
-        }
 
         // Save recommendations
         await saveRecommendationsMutation.mutateAsync(payload);

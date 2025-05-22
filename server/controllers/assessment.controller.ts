@@ -352,26 +352,11 @@ export class AssessmentController {
         });
       }
 
-      // 5. Validate email matches guest data
+      // 5. Validate this is a guest assessment with guest data
       if (!existingAssessment.guest) {
         return res.status(403).json({
           success: false,
           message: "Invalid guest assessment - no guest data found",
-        });
-      }
-
-      try {
-        const guestData = JSON.parse(existingAssessment.guest);
-        if (guestData.email !== email) {
-          return res.status(403).json({
-            success: false,
-            message: "Email does not match assessment",
-          });
-        }
-      } catch (error) {
-        return res.status(500).json({
-          success: false,
-          message: "Invalid guest data format",
         });
       }
 
