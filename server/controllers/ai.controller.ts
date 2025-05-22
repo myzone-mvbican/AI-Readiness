@@ -9,10 +9,17 @@ interface Category {
   benchmark: number | null;
 }
 
+// Define interface for company data
+interface CompanyData {
+  name: string;
+  employeeCount: string;
+  industry: string;
+}
+
 // Define interface for request body
 interface AIRequestBody {
   categories: Category[];
-  company?: string;
+  company?: CompanyData;
 }
 
 export class AIController {
@@ -62,7 +69,7 @@ export class AIController {
 
       // Make API request to OpenAI
       const completion = await openai.chat.completions.create({
-        model: "gpt-4.1",
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPayload },

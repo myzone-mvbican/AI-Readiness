@@ -311,18 +311,18 @@ export class AssessmentController {
   static async updateGuest(req: Request, res: Response) {
     try {
       const assessmentId = parseInt(req.params.id);
-      const { recommendations, email } = req.body;
+      const { recommendations } = req.body;
 
       // 1. Validate required fields
-      if (!recommendations || !email) {
+      if (!recommendations) {
         return res.status(400).json({
           success: false,
-          message: "Missing required fields: recommendations, email",
+          message: "Missing required field: recommendations",
         });
       }
 
       // 2. Field-level validation - Ensure only recommendations field is being updated
-      const allowedFields = ["recommendations", "email"];
+      const allowedFields = ["recommendations"];
       const requestFields = Object.keys(req.body);
 
       const unauthorizedFields = requestFields.filter(

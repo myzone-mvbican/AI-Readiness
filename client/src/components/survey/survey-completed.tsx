@@ -143,9 +143,25 @@ export default function SurveyCompleted({
           throw new Error("No category scores available");
         }
 
+        // Get company data from assessment
+        let companyData = null;
+        if (assessment.guest) {
+          try {
+            const guestData = JSON.parse(assessment.guest);
+            companyData = {
+              name: guestData.company || '',
+              employeeCount: guestData.employeeCount || '',
+              industry: guestData.industry || ''
+            };
+          } catch (error) {
+            console.error('Error parsing guest data:', error);
+          }
+        }
+
         // Same AI suggestions endpoint for both user types
         const response = await apiRequest("POST", "/api/ai-suggestions", {
           categories: categoryScores,
+          ...(companyData && { company: companyData })
         });
 
         const result = await response.json();
