@@ -225,39 +225,60 @@ export class AuthController {
             googleId: googleUserData.sub,
           });
 
-          // // Auto-assign user to the "Client" team
-          // try {
-          //   // Check if user's email is part of the myzone.ai domain (admin users)
-          //   const isMyZoneEmail = user.email.endsWith("@myzone.ai");
+          // Auto-assign user to the "Client" team
+          try {
+            // Check if user's email is part of the myzone.ai domain (admin users)
+            const isMyZoneEmail = user.email.endsWith("@myzone.ai");
 
-          //   // Only assign to Client team if not a myzone email (admins)
-          //   if (!isMyZoneEmail) {
-          //     // Look for the Client team
-          //     let clientTeam = await storage.getTeamByName("Client");
+            // Determine which team to assign:
+            // - If it's a myzone.ai email, MyZone team
+            // - Otherwise, Client team
+            let defaultTeam = await TeamModel.getByName(
+              isMyZoneEmail ? "MyZone" : "Client",
+            );
 
-          //     // If Client team doesn't exist, create it
-          //     if (!clientTeam) {
-          //       clientTeam = await storage.createTeam({
-          //         name: "Client",
-          //       });
-          //       console.log("Created default Client team");
-          //     }
+            // Add user to the Default team
+            if (defaultTeam) {
+              await TeamModel.addUser({
+                userId: user.id,
+                teamId: defaultTeam.id,
+                role: "client",
+              });
+            }
+          } catch (teamError) {
+            console.error("Error assigning user to team:", teamError);
+            // Continue with user creation even if team assignment fails
+          }
 
-          //     // Add user to the Client team
-          //     await storage.addUserToTeam({
-          //       userId: user.id,
-          //       teamId: clientTeam.id,
-          //       role: "client",
-          //     });
+          // Check for guest assessments with this email and associate them with the new user
+          try {
+            const guestAssessments = await db
+              .select()
+              .from(assessments)
+              .where(
+                and(
+                  eq(assessments.email, user.email),
+                  isNull(assessments.userId),
+                ),
+              );
 
-          //     console.log(
-          //       `Auto-assigned Google user ${user.email} to Client team`,
-          //     );
-          //   }
-          // } catch (teamError) {
-          //   console.error("Error assigning Google user to team:", teamError);
-          //   // Continue with user creation even if team assignment fails
-          // }
+            // If we found any guest assessments, update them to associate with this user
+            if (guestAssessments.length > 0) {
+              // Update each assessment to set the userId
+              for (const assessment of guestAssessments) {
+                await db
+                  .update(assessments)
+                  .set({ userId: user.id })
+                  .where(eq(assessments.id, assessment.id));
+              }
+            }
+          } catch (err) {
+            // Just log the error but don't fail registration if this fails
+            console.error(
+              "Error associating guest assessments with new user:",
+              err,
+            );
+          }
         } else {
           // User exists with this email but not connected to Google yet
           // Connect the Google ID to this user

@@ -5,14 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  Form,
-} from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { GoogleLogin } from "@react-oauth/google";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -73,8 +65,8 @@ export default function AuthPage() {
       name: "",
       email: "",
       company: "",
-      employeeCount: "10-49",
-      industry: "technology",
+      employeeCount: undefined,
+      industry: undefined,
       password: "",
       confirmPassword: "",
     },
@@ -160,7 +152,7 @@ export default function AuthPage() {
   return (
     <div className="container flex flex-col flex-grow">
       {/* Form section */}
-      <div className="w-full max-w-[600px] mx-auto p-8 flex flex-col flex-grow justify-center">
+      <div className="w-full max-w-[600px] mx-auto py-8 flex flex-col flex-grow justify-center">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
             Welcome to MyZone AI
@@ -349,65 +341,82 @@ export default function AuthPage() {
                       </p>
                     )}
                   </div>
-                  
-                  {/* Company field */}
-                  <div className="space-y-1">
-                    <Label
-                      htmlFor="signup-company"
-                      className="text-sm font-medium text-gray-700"
-                    >
-                      Company
-                    </Label>
-                    <Input
-                      id="signup-company"
-                      type="text"
-                      placeholder="Your Company"
-                      {...registerSignup("company")}
-                      className={signupErrors.company ? "border-red-500" : ""}
-                    />
-                    {signupErrors.company && (
-                      <p className="text-sm text-red-500">
-                        {signupErrors.company.message}
-                      </p>
-                    )}
-                  </div>
-                  
-                  {/* Company Size field */}
-                  <div className="space-y-1">
-                    <Label
-                      htmlFor="signup-employee-count"
-                      className="text-sm font-medium text-gray-700"
-                    >
-                      Company Size
-                    </Label>
-                    <Controller
-                      control={control}
-                      name="employeeCount"
-                      render={({ field }) => (
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <SelectTrigger id="signup-employee-count" className={signupErrors.employeeCount ? "border-red-500" : ""}>
-                            <SelectValue placeholder="Select company size" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1-9">1-9 employees</SelectItem>
-                            <SelectItem value="10-49">10-49 employees</SelectItem>
-                            <SelectItem value="50-249">50-249 employees</SelectItem>
-                            <SelectItem value="250-999">250-999 employees</SelectItem>
-                            <SelectItem value="1000+">1000+ employees</SelectItem>
-                          </SelectContent>
-                        </Select>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Company field */}
+                    <div className="space-y-1">
+                      <Label
+                        htmlFor="signup-company"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Company
+                      </Label>
+                      <Input
+                        id="signup-company"
+                        type="text"
+                        placeholder="Your Company"
+                        {...registerSignup("company")}
+                        className={signupErrors.company ? "border-red-500" : ""}
+                      />
+                      {signupErrors.company && (
+                        <p className="text-sm text-red-500">
+                          {signupErrors.company.message}
+                        </p>
                       )}
-                    />
-                    {signupErrors.employeeCount && (
-                      <p className="text-sm text-red-500">
-                        {signupErrors.employeeCount.message}
-                      </p>
-                    )}
+                    </div>
+
+                    {/* Company Size field */}
+                    <div className="space-y-1">
+                      <Label
+                        htmlFor="signup-employee-count"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Company Size
+                      </Label>
+                      <Controller
+                        control={control}
+                        name="employeeCount"
+                        render={({ field }) => (
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <SelectTrigger
+                              id="signup-employee-count"
+                              className={
+                                signupErrors.employeeCount
+                                  ? "border-red-500"
+                                  : ""
+                              }
+                            >
+                              <SelectValue placeholder="Select company size" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1-9">1-9 employees</SelectItem>
+                              <SelectItem value="10-49">
+                                10-49 employees
+                              </SelectItem>
+                              <SelectItem value="50-249">
+                                50-249 employees
+                              </SelectItem>
+                              <SelectItem value="250-999">
+                                250-999 employees
+                              </SelectItem>
+                              <SelectItem value="1000+">
+                                1000+ employees
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                      {signupErrors.employeeCount && (
+                        <p className="text-sm text-red-500">
+                          {signupErrors.employeeCount.message}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  
+
                   {/* Industry field */}
                   <div className="space-y-1">
                     <Label
@@ -424,19 +433,34 @@ export default function AuthPage() {
                           onValueChange={field.onChange}
                           defaultValue={field.value}
                         >
-                          <SelectTrigger id="signup-industry" className={signupErrors.industry ? "border-red-500" : ""}>
+                          <SelectTrigger
+                            id="signup-industry"
+                            className={
+                              signupErrors.industry ? "border-red-500" : ""
+                            }
+                          >
                             <SelectValue placeholder="Select industry" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="technology">Technology</SelectItem>
-                            <SelectItem value="healthcare">Healthcare</SelectItem>
+                            <SelectItem value="technology">
+                              Technology
+                            </SelectItem>
+                            <SelectItem value="healthcare">
+                              Healthcare
+                            </SelectItem>
                             <SelectItem value="finance">Finance</SelectItem>
                             <SelectItem value="retail">Retail</SelectItem>
-                            <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                            <SelectItem value="manufacturing">
+                              Manufacturing
+                            </SelectItem>
                             <SelectItem value="education">Education</SelectItem>
-                            <SelectItem value="government">Government</SelectItem>
+                            <SelectItem value="government">
+                              Government
+                            </SelectItem>
                             <SelectItem value="energy">Energy</SelectItem>
-                            <SelectItem value="transportation">Transportation</SelectItem>
+                            <SelectItem value="transportation">
+                              Transportation
+                            </SelectItem>
                             <SelectItem value="other">Other</SelectItem>
                           </SelectContent>
                         </Select>
@@ -449,50 +473,54 @@ export default function AuthPage() {
                     )}
                   </div>
 
-                  {/* Password field */}
-                  <div className="space-y-1">
-                    <Label
-                      htmlFor="signup-password"
-                      className="text-sm font-medium text-gray-700"
-                    >
-                      Password
-                    </Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="••••••••"
-                      {...registerSignup("password")}
-                      className={signupErrors.password ? "border-red-500" : ""}
-                    />
-                    {signupErrors.password && (
-                      <p className="text-sm text-red-500">
-                        {signupErrors.password.message}
-                      </p>
-                    )}
-                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Password field */}
+                    <div className="space-y-1">
+                      <Label
+                        htmlFor="signup-password"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Password
+                      </Label>
+                      <Input
+                        id="signup-password"
+                        type="password"
+                        placeholder="••••••••"
+                        {...registerSignup("password")}
+                        className={
+                          signupErrors.password ? "border-red-500" : ""
+                        }
+                      />
+                      {signupErrors.password && (
+                        <p className="text-sm text-red-500">
+                          {signupErrors.password.message}
+                        </p>
+                      )}
+                    </div>
 
-                  {/* Confirm Password field */}
-                  <div className="space-y-1">
-                    <Label
-                      htmlFor="signup-confirmPassword"
-                      className="text-sm font-medium text-gray-700"
-                    >
-                      Confirm Password
-                    </Label>
-                    <Input
-                      id="signup-confirmPassword"
-                      type="password"
-                      placeholder="••••••••"
-                      {...registerSignup("confirmPassword")}
-                      className={
-                        signupErrors.confirmPassword ? "border-red-500" : ""
-                      }
-                    />
-                    {signupErrors.confirmPassword && (
-                      <p className="text-sm text-red-500">
-                        {signupErrors.confirmPassword.message}
-                      </p>
-                    )}
+                    {/* Confirm Password field */}
+                    <div className="space-y-1">
+                      <Label
+                        htmlFor="signup-confirmPassword"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Confirm Password
+                      </Label>
+                      <Input
+                        id="signup-confirmPassword"
+                        type="password"
+                        placeholder="••••••••"
+                        {...registerSignup("confirmPassword")}
+                        className={
+                          signupErrors.confirmPassword ? "border-red-500" : ""
+                        }
+                      />
+                      {signupErrors.confirmPassword && (
+                        <p className="text-sm text-red-500">
+                          {signupErrors.confirmPassword.message}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Submit button */}
