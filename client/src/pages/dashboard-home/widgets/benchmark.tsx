@@ -2,12 +2,6 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import {
-  Tooltip as ShadcnTooltip,
-  TooltipContent,
-  TooltipTrigger,
-  TooltipProvider,
-} from "@/components/ui/tooltip";
 import { Bar, BarChart, CartesianGrid, XAxis, LabelList } from "recharts";
 import {
   ChartConfig,
@@ -19,8 +13,8 @@ import {
 } from "@/components/ui/chart";
 import {
   TrendingUp,
-  Users,
   Building2,
+  Users,
   Globe,
   ArrowUp,
   ArrowDown,
@@ -41,14 +35,12 @@ interface BenchmarkData {
 
 interface BenchmarkWidgetProps {
   assessmentId: number;
-  className?: string;
 }
 
-export function BenchmarkWidget({
-  assessmentId,
-  className,
-}: BenchmarkWidgetProps) {
-  const [activeChart, setActiveChart] = useState<"industry" | "global">("global");
+export function BenchmarkWidget({ assessmentId }: BenchmarkWidgetProps) {
+  const [activeChart, setActiveChart] = useState<"industry" | "global">(
+    "global",
+  );
 
   const {
     data: benchmarkData,
@@ -64,7 +56,7 @@ export function BenchmarkWidget({
 
   if (isLoading) {
     return (
-      <Card className={className}>
+      <Card className="col-span-2 lg:col-span-3 xl:col-span-4">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
@@ -84,7 +76,7 @@ export function BenchmarkWidget({
 
   if (error || !benchmarkData?.success || !benchmarkData?.data) {
     return (
-      <Card className={className}>
+      <Card className="col-span-2 lg:col-span-3 xl:col-span-4">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
@@ -112,9 +104,11 @@ export function BenchmarkWidget({
   const hasIndustryData = data.categories.some(
     (c) => c.industryAverage !== null,
   );
+
   const avgUserScore =
     data.categories.reduce((sum, c) => sum + c.userScore, 0) /
     data.categories.length;
+
   const avgIndustryScore = hasIndustryData
     ? data.categories
         .filter((c) => c.industryAverage !== null)
@@ -124,20 +118,25 @@ export function BenchmarkWidget({
 
   // Calculate total averages for the switcher display
   const userTotal = Math.round(avgUserScore) / 10;
-  const industryTotal = hasIndustryData && avgIndustryScore 
-    ? Math.round(avgIndustryScore) / 10 
-    : null;
-  const globalTotal = Math.round(
-    data.categories.reduce((sum, c) => sum + (c.globalAverage || 0), 0) / 
-    data.categories.length
-  ) / 10;
+
+  const industryTotal =
+    hasIndustryData && avgIndustryScore
+      ? Math.round(avgIndustryScore) / 10
+      : null;
+
+  const globalTotal =
+    Math.round(
+      data.categories.reduce((sum, c) => sum + (c.globalAverage || 0), 0) /
+        data.categories.length,
+    ) / 10;
 
   // Prepare chart data based on active comparison
   const chartData = data.categories.map((category) => {
-    const benchmarkValue = activeChart === "industry" 
-      ? category.industryAverage 
-      : category.globalAverage;
-    
+    const benchmarkValue =
+      activeChart === "industry"
+        ? category.industryAverage
+        : category.globalAverage;
+
     return {
       name: category.name.replace(/ & /g, " &\n"), // Add line breaks for better readability
       userScore: Math.round(category.userScore) / 10, // userScore is 0-100, convert to 0-10
@@ -164,114 +163,112 @@ export function BenchmarkWidget({
     : null;
 
   return (
-    <TooltipProvider>
-      <Card className="col-span-2 lg:col-span-3 xl:col-span-4">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Your AI Readiness vs Industry Benchmarks
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {/* Interactive Switcher Header */}
-          <div className="flex flex-col sm:flex-row gap-6 mb-6">
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="grid gap-2">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="h-3 w-3 rounded-full bg-chart-1" />
-                  Your Score
-                </div>
-                <div className="text-2xl font-bold">{userTotal.toFixed(1)}</div>
-              </div>
-              
-              {hasIndustryData && industryTotal && (
-                <div 
-                  className={`grid gap-2 cursor-pointer rounded-lg p-2 transition-colors ${
-                    activeChart === "industry" ? "bg-muted" : "hover:bg-muted/50"
-                  }`}
-                  onClick={() => setActiveChart("industry")}
-                >
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="h-3 w-3 rounded-full bg-chart-2" />
-                    Industry
-                  </div>
-                  <div className="text-2xl font-bold">{industryTotal.toFixed(1)}</div>
-                </div>
-              )}
-              
-              <div 
-                className={`grid gap-2 cursor-pointer rounded-lg p-2 transition-colors ${
-                  activeChart === "global" ? "bg-muted" : "hover:bg-muted/50"
-                }`}
-                onClick={() => setActiveChart("global")}
-              >
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="h-3 w-3 rounded-full bg-chart-2" />
-                  Global
-                </div>
-                <div className="text-2xl font-bold">{globalTotal.toFixed(1)}</div>
-              </div>
+    <Card className="col-span-2 lg:col-span-3 xl:col-span-4">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <TrendingUp className="h-5 w-5" />
+          Your AI Readiness vs Industry Benchmarks
+        </CardTitle>
+
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="h-3 w-3 rounded-full bg-chart-1" />
+              Your Score
             </div>
+            <div className="text-2xl font-bold">{userTotal.toFixed(1)}</div>
           </div>
 
-          <div className="flex gap-6">
-            {/* Chart Section - Reduced Width */}
-            <div className="flex-1">
-              <ChartContainer config={chartConfig}>
-                <BarChart accessibilityLayer data={chartData}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="name"
-                    tickLine={false}
-                    tickMargin={10}
-                    axisLine={false}
-                    angle={-45}
-                    textAnchor="end"
-                    height={80}
-                    interval={0}
-                    fontSize={11}
-                  />
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent indicator="dashed" />}
-                  />
-                  <ChartLegend content={<ChartLegendContent />} />
-                  <Bar 
-                    dataKey="userScore" 
-                    fill="var(--color-userScore)" 
-                    radius={4} 
-                  >
-                    <LabelList
-                      dataKey="userScore"
-                      position="center"
-                      className="fill-background"
-                      fontSize={12}
-                      formatter={(value: number) => value > 0 ? `${value.toFixed(1)}` : ""}
-                    />
-                  </Bar>
-                  <Bar 
-                    dataKey="benchmark" 
-                    fill="var(--color-benchmark)" 
-                    radius={4} 
-                  >
-                    <LabelList
-                      dataKey="benchmark"
-                      position="center"
-                      className="fill-background"
-                      fontSize={12}
-                      formatter={(value: number) => value > 0 ? `${value.toFixed(1)}` : ""}
-                    />
-                  </Bar>
-                </BarChart>
-              </ChartContainer>
-            </div>
-
-            {/* Sidebar Section */}
-            <div className="w-64 space-y-4">
-              {/* Quarter Label */}
-              <div className="text-sm text-muted-foreground">
-                {data.quarter}
+          {hasIndustryData && industryTotal && (
+            <div
+              className={`grid gap-2 cursor-pointer rounded-lg p-2 transition-colors ${
+                activeChart === "industry" ? "bg-muted" : "hover:bg-muted/50"
+              }`}
+              onClick={() => setActiveChart("industry")}
+            >
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="h-3 w-3 rounded-full bg-chart-2" />
+                Industry
               </div>
+              <div className="text-2xl font-bold">
+                {industryTotal.toFixed(1)}
+              </div>
+            </div>
+          )}
+
+          <div
+            className={`grid gap-2 cursor-pointer rounded-lg p-2 transition-colors ${
+              activeChart === "global" ? "bg-muted" : "hover:bg-muted/50"
+            }`}
+            onClick={() => setActiveChart("global")}
+          >
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="h-3 w-3 rounded-full bg-chart-2" />
+              Global
+            </div>
+            <div className="text-2xl font-bold">{globalTotal.toFixed(1)}</div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex gap-6">
+          {/* Chart Section - Reduced Width */}
+          <div className="flex-1">
+            <ChartContainer config={chartConfig}>
+              <BarChart accessibilityLayer data={chartData}>
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="name"
+                  tickLine={false}
+                  tickMargin={10}
+                  axisLine={false}
+                  height={50}
+                  interval={0}
+                  fontSize={10}
+                />
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent indicator="dashed" />}
+                />
+                <ChartLegend content={<ChartLegendContent />} />
+                <Bar
+                  dataKey="userScore"
+                  fill="var(--color-userScore)"
+                  radius={4}
+                >
+                  <LabelList
+                    dataKey="userScore"
+                    position="insideTop"
+                    className="fill-background"
+                    fontSize={12}
+                    formatter={(value: number) =>
+                      value > 0 ? `${value.toFixed(1)}` : ""
+                    }
+                  />
+                </Bar>
+                <Bar
+                  dataKey="benchmark"
+                  fill="var(--color-benchmark)"
+                  radius={4}
+                >
+                  <LabelList
+                    dataKey="benchmark"
+                    position="insideTop"
+                    className="fill-background"
+                    fontSize={12}
+                    formatter={(value: number) =>
+                      value > 0 ? `${value.toFixed(1)}` : ""
+                    }
+                  />
+                </Bar>
+              </BarChart>
+            </ChartContainer>
+          </div>
+
+          {/* Sidebar Section */}
+          <div className="w-68 space-y-4">
+            {/* Quarter Label */}
+            <div className="text-sm text-muted-foreground">{data.quarter}</div>
 
             {/* Performance Summary */}
             <div className="space-y-3">
@@ -303,7 +300,13 @@ export function BenchmarkWidget({
                     Global Average
                   </span>
                   <span className="font-semibold">
-                    {Math.round(data.categories.reduce((sum, c) => sum + (c.globalAverage || 0), 0) / data.categories.length) / 10}/10
+                    {Math.round(
+                      data.categories.reduce(
+                        (sum, c) => sum + (c.globalAverage || 0),
+                        0,
+                      ) / data.categories.length,
+                    ) / 10}
+                    /10
                   </span>
                 </div>
               </div>
@@ -347,7 +350,6 @@ export function BenchmarkWidget({
           </div>
         </div>
       </CardContent>
-      </Card>
-    </TooltipProvider>
+    </Card>
   );
 }

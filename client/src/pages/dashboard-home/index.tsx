@@ -2,6 +2,7 @@ import { DashboardLayout } from "@/components/layout/dashboard";
 import { ProfileCompletionCard } from "./widgets/profile-completion";
 import { NewAssessmentCard } from "./widgets/new-assessment";
 import { QuickActions } from "./widgets/quick-actions";
+import { PerformanceSummary } from "./widgets/performance-summary";
 import { BenchmarkWidget } from "./widgets/benchmark";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
@@ -49,12 +50,17 @@ export default function DashboardHome() {
           {/* Start New Assessment Card */}
           <NewAssessmentCard />
 
+          {/* Quick Actions */}
+          <QuickActions />
+
           {/* Profile Completion Card */}
           {user && <ProfileCompletionCard user={user} />}
 
-          {/* Benchmark Widget - Show for users with completed assessments */}
+          {/* Performance Summary - Show for users with completed assessments */}
           {latestCompletedAssessment && (
-            <BenchmarkWidget assessmentId={latestCompletedAssessment.id} />
+            <PerformanceSummary 
+              assessmentId={latestCompletedAssessment.id}
+            />
           )}
         </div>
       </div>
