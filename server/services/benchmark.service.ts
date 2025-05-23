@@ -411,8 +411,8 @@ export class BenchmarkService {
         return {
           name: category,
           userScore: Math.round(userScore * 100) / 100,
-          industryAverage: industryStat ? industryStat.averageScore / 100 : null,
-          globalAverage: globalStat ? globalStat.averageScore / 100 : null,
+          industryAverage: industryStat ? industryStat.averageScore : null,
+          globalAverage: globalStat ? globalStat.averageScore : null,
         };
       });
 
