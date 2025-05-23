@@ -367,7 +367,19 @@ export class BenchmarkService {
       const globalStats = stats.filter(s => s.industry === 'global');
 
       // Calculate user's category scores using real data
-      const answers = JSON.parse(assessment.answers);
+      let answers: any[] = [];
+      try {
+        // Handle both string and already parsed answers
+        if (typeof assessment.answers === 'string') {
+          answers = JSON.parse(assessment.answers);
+        } else {
+          answers = assessment.answers || [];
+        }
+      } catch (parseError) {
+        console.error('Error parsing assessment answers:', parseError);
+        answers = [];
+      }
+      
       const userCategoryScores = await this.calculateCategoryScores(answers, assessment.surveyTemplateId);
 
       const categories = Object.entries(userCategoryScores).map(([category, userScore]) => {
