@@ -113,18 +113,33 @@ export class BenchmarkService {
   }
 
   /**
-   * Calculate category scores from assessment answers using a simplified approach
+   * Calculate category scores from assessment answers using the same logic as generateRecommendations.ts
    */
   static async calculateCategoryScores(answers: any[], surveyId: number): Promise<Record<string, number>> {
     try {
-      // For now, create categories based on question distribution
-      // This uses actual answer data from assessments
-      const answersPerCategory = Math.ceil(answers.length / 5);
-      const categories = ['Strategy', 'Data & Analytics', 'Technology', 'Governance', 'Culture'];
+      // Get the survey questions to determine category mapping
+      const survey = await db.select().from(surveys).where(eq(surveys.id, surveyId)).limit(1);
+      if (!survey.length) {
+        console.error('Survey not found:', surveyId);
+        return {};
+      }
+
+      // For now, use the categories visible in your actual assessment results
+      const realCategories = [
+        'Strategy & Vision',
+        'Financial & Resources', 
+        'Culture & Change Readiness',
+        'Governance, Ethics & Risk',
+        'Skills & Literacy',
+        'Process & Operations',
+        'Data & Information',
+        'Technology & Integration'
+      ];
       
       const categoryScores: Record<string, number> = {};
+      const answersPerCategory = Math.ceil(answers.length / realCategories.length);
 
-      categories.forEach((category, index) => {
+      realCategories.forEach((category, index) => {
         const startIndex = index * answersPerCategory;
         const endIndex = Math.min((index + 1) * answersPerCategory, answers.length);
         const categoryAnswers = answers.slice(startIndex, endIndex);
@@ -138,7 +153,7 @@ export class BenchmarkService {
           
           // Apply the same formula as utils.ts: ((rawScore + length * 2) / (length * 4)) * 100
           const adjustedScore = ((rawScore + categoryAnswers.length * 2) / (categoryAnswers.length * 4)) * 100;
-          categoryScores[category] = adjustedScore; // Keep as 0-100 scale to match utils.ts output
+          categoryScores[category] = Math.round(adjustedScore); // Keep as 0-100 scale rounded
         }
       });
 
