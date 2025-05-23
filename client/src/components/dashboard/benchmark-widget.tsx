@@ -177,7 +177,7 @@ export function BenchmarkWidget({ assessmentId, className }: BenchmarkWidgetProp
                   borderRadius: '8px',
                 }}
                 formatter={(value: any, name: string) => [
-                  `${value}/5.0`,
+                  `${value}/10`,
                   name
                 ]}
               />
