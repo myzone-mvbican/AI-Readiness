@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip as ShadcnTooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { TrendingUp, Users, Building2, Globe } from "lucide-react";
+import { TrendingUp, Users, Building2, Globe, ArrowUp, ArrowDown, Minus } from "lucide-react";
 
 interface BenchmarkData {
   quarter: string;
@@ -102,122 +103,155 @@ export function BenchmarkWidget({ assessmentId, className }: BenchmarkWidgetProp
     : null;
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
+    <TooltipProvider>
+      <Card className={className}>
+        <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
             Your AI Readiness vs Industry Benchmarks
           </CardTitle>
-          
-          <Badge 
-            variant="outline" 
-            className="flex items-center gap-1 cursor-pointer hover:bg-muted transition-colors"
-            onClick={() => setShowGlobal(!showGlobal)}
-            title={`Switch to ${showGlobal ? 'Industry' : 'Global'} comparison`}
-          >
-            {showGlobal ? (
-              <>
-                <Globe className="h-3 w-3" />
-                Global
-              </>
-            ) : (
-              <>
-                <Building2 className="h-3 w-3" />
-                {data.industry}
-              </>
-            )}
-          </Badge>
-        </div>
-        
-        <div className="flex flex-wrap gap-2 mt-2">
-          <Badge variant="outline">
-            {data.quarter}
-          </Badge>
-          {performanceIndicator && (
-            <Badge 
-              variant={performanceIndicator === "above" ? "default" : "secondary"}
-              className={performanceIndicator === "above" ? "bg-green-100 text-green-800 border-green-200" : ""}
-            >
-              {performanceIndicator === "above" ? "Above Average" : "Below Average"}
-            </Badge>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="h-[350px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={chartData}
-              margin={{
-                top: 20,
-                right: 30,
-                left: 20,
-                bottom: 60,
-              }}
-            >
-              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-              <XAxis 
-                dataKey="name" 
-                angle={-45}
-                textAnchor="end"
-                height={80}
-                interval={0}
-                fontSize={12}
-              />
-              <YAxis 
-                domain={[0, 10]}
-                tickCount={11}
-                fontSize={12}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--background))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px',
-                }}
-                formatter={(value: any, name: string) => [
-                  `${value}/10`,
-                  name
-                ]}
-              />
-              <Legend />
-              <Bar 
-                dataKey="Your Score" 
-                fill="hsl(var(--primary))" 
-                radius={[2, 2, 0, 0]}
-                maxBarSize={60}
-              />
-              <Bar 
-                dataKey={showGlobal ? "Global Average" : "Industry Average"}
-                fill="hsl(var(--muted-foreground))" 
-                radius={[2, 2, 0, 0]}
-                maxBarSize={60}
-                opacity={0.7}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Summary Statistics */}
-        <div className="mt-4 pt-4 border-t border-border">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-            <div className="text-center">
-              <div className="font-semibold text-lg">
-                {Math.round(avgUserScore) / 10}/10
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-6">
+            {/* Chart Section - Reduced Width */}
+            <div className="flex-1">
+              <div className="h-[350px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={chartData}
+                    margin={{
+                      top: 20,
+                      right: 10,
+                      left: 20,
+                      bottom: 60,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                    <XAxis 
+                      dataKey="name" 
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                      interval={0}
+                      fontSize={12}
+                    />
+                    <YAxis 
+                      domain={[0, 10]}
+                      tickCount={11}
+                      fontSize={12}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                      }}
+                      formatter={(value: any, name: string) => [
+                        `${value}/10`,
+                        name
+                      ]}
+                    />
+                    <Legend />
+                    <Bar 
+                      dataKey="Your Score" 
+                      fill="hsl(var(--primary))" 
+                      radius={[2, 2, 0, 0]}
+                      maxBarSize={60}
+                    />
+                    <Bar 
+                      dataKey={showGlobal ? "Global Average" : "Industry Average"}
+                      fill="hsl(var(--muted-foreground))" 
+                      radius={[2, 2, 0, 0]}
+                      maxBarSize={60}
+                      opacity={0.7}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
-              <div className="text-muted-foreground">Your Average</div>
             </div>
-            {avgIndustryScore && (
-              <div className="text-center">
-                <div className="font-semibold text-lg">
-                  {Math.round(avgIndustryScore) / 10}/10
+
+            {/* Sidebar Section */}
+            <div className="w-64 space-y-4">
+              {/* Quarter and Toggle Badge */}
+              <div className="space-y-2">
+                <div className="text-sm text-muted-foreground">
+                  {data.quarter}
                 </div>
-                <div className="text-muted-foreground">Industry Average</div>
+                
+                <ShadcnTooltip>
+                  <TooltipTrigger asChild>
+                    <Badge 
+                      variant="outline" 
+                      className="flex items-center gap-1 cursor-pointer hover:bg-muted transition-colors w-fit"
+                      onClick={() => setShowGlobal(!showGlobal)}
+                    >
+                      {showGlobal ? (
+                        <>
+                          <Globe className="h-3 w-3" />
+                          Global
+                        </>
+                      ) : (
+                        <>
+                          <Building2 className="h-3 w-3" />
+                          {data.industry}
+                        </>
+                      )}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Switch to {showGlobal ? 'Industry' : 'Global'} comparison</p>
+                  </TooltipContent>
+                </ShadcnTooltip>
               </div>
-            )}
-            <div className="text-center">
-              <div className="text-xs text-muted-foreground">
+
+              {/* Performance Summary */}
+              <div className="space-y-3">
+                <div className="text-sm font-medium">Performance Summary</div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Your Average</span>
+                    <span className="font-semibold">
+                      {Math.round(avgUserScore) / 10}/10
+                    </span>
+                  </div>
+                  
+                  {avgIndustryScore && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">
+                        {showGlobal ? 'Global' : 'Industry'} Average
+                      </span>
+                      <span className="font-semibold">
+                        {Math.round(avgIndustryScore) / 10}/10
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Trend Analysis */}
+              <div className="space-y-3">
+                <div className="text-sm font-medium">Trend Analysis</div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Minus className="h-4 w-4" />
+                  <span>First assessment - no trend data</span>
+                </div>
+              </div>
+
+              {/* Performance Indicator */}
+              {performanceIndicator && (
+                <div className="space-y-2">
+                  <Badge 
+                    variant={performanceIndicator === "above" ? "default" : "secondary"}
+                    className={performanceIndicator === "above" ? "bg-green-100 text-green-800 border-green-200" : ""}
+                  >
+                    {performanceIndicator === "above" ? "Above Average" : "Below Average"}
+                  </Badge>
+                </div>
+              )}
+
+              {/* Data Source Info */}
+              <div className="text-xs text-muted-foreground pt-2 border-t border-border">
                 {hasIndustryData 
                   ? `Based on ${data.industry} submissions in ${data.quarter}`
                   : "Using global benchmarks (insufficient industry data)"
@@ -225,8 +259,8 @@ export function BenchmarkWidget({ assessmentId, className }: BenchmarkWidgetProp
               </div>
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 }
