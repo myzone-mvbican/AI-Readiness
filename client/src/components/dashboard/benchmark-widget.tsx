@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { TrendingUp, Users, Building2 } from "lucide-react";
+import { TrendingUp, Users, Building2, Globe } from "lucide-react";
 
 interface BenchmarkData {
   quarter: string;
@@ -22,6 +23,8 @@ interface BenchmarkWidgetProps {
 }
 
 export function BenchmarkWidget({ assessmentId, className }: BenchmarkWidgetProps) {
+  const [showGlobal, setShowGlobal] = useState(false);
+  
   const { data: benchmarkData, isLoading, error } = useQuery<{
     success: boolean;
     data: BenchmarkData;
@@ -72,13 +75,17 @@ export function BenchmarkWidget({ assessmentId, className }: BenchmarkWidgetProp
 
   const { data } = benchmarkData;
   
-  // Prepare chart data
-  const chartData = data.categories.map(category => ({
-    name: category.name,
-    "Your Score": Math.round(category.userScore * 100) / 100,
-    "Industry Average": category.industryAverage ? Math.round(category.industryAverage * 100) / 100 : null,
-    "Global Average": category.globalAverage ? Math.round(category.globalAverage * 100) / 100 : null,
-  }));
+  // Prepare chart data (convert to 1-10 scale) and choose which comparison to show
+  const chartData = data.categories.map(category => {
+    const benchmarkValue = showGlobal ? category.globalAverage : category.industryAverage;
+    const benchmarkLabel = showGlobal ? "Global Average" : "Industry Average";
+    
+    return {
+      name: category.name,
+      "Your Score": Math.round((category.userScore * 2) * 100) / 100, // Convert 5-point to 10-point scale
+      [benchmarkLabel]: benchmarkValue ? Math.round((benchmarkValue * 2) * 100) / 100 : null,
+    };
+  });
 
   // Calculate statistics
   const hasIndustryData = data.categories.some(c => c.industryAverage !== null);
@@ -97,15 +104,33 @@ export function BenchmarkWidget({ assessmentId, className }: BenchmarkWidgetProp
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5" />
-          Your AI Readiness vs Industry Benchmarks
-        </CardTitle>
-        <div className="flex flex-wrap gap-2 mt-2">
-          <Badge variant="secondary" className="flex items-center gap-1">
-            <Building2 className="h-3 w-3" />
-            {data.industry}
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Your AI Readiness vs Industry Benchmarks
+          </CardTitle>
+          
+          <Badge 
+            variant="outline" 
+            className="flex items-center gap-1 cursor-pointer hover:bg-muted transition-colors"
+            onClick={() => setShowGlobal(!showGlobal)}
+            title={`Switch to ${showGlobal ? 'Industry' : 'Global'} comparison`}
+          >
+            {showGlobal ? (
+              <>
+                <Globe className="h-3 w-3" />
+                Global
+              </>
+            ) : (
+              <>
+                <Building2 className="h-3 w-3" />
+                {data.industry}
+              </>
+            )}
           </Badge>
+        </div>
+        
+        <div className="flex flex-wrap gap-2 mt-2">
           <Badge variant="outline">
             {data.quarter}
           </Badge>
@@ -114,7 +139,7 @@ export function BenchmarkWidget({ assessmentId, className }: BenchmarkWidgetProp
               variant={performanceIndicator === "above" ? "default" : "secondary"}
               className={performanceIndicator === "above" ? "bg-green-100 text-green-800 border-green-200" : ""}
             >
-              {performanceIndicator === "above" ? "Above Industry" : "Below Industry"}
+              {performanceIndicator === "above" ? "Above Average" : "Below Average"}
             </Badge>
           )}
         </div>
@@ -141,8 +166,8 @@ export function BenchmarkWidget({ assessmentId, className }: BenchmarkWidgetProp
                 fontSize={12}
               />
               <YAxis 
-                domain={[0, 5]}
-                tickCount={6}
+                domain={[0, 10]}
+                tickCount={11}
                 fontSize={12}
               />
               <Tooltip
@@ -163,21 +188,12 @@ export function BenchmarkWidget({ assessmentId, className }: BenchmarkWidgetProp
                 radius={[2, 2, 0, 0]}
                 maxBarSize={60}
               />
-              {hasIndustryData && (
-                <Bar 
-                  dataKey="Industry Average" 
-                  fill="hsl(var(--muted-foreground))" 
-                  radius={[2, 2, 0, 0]}
-                  maxBarSize={60}
-                  opacity={0.7}
-                />
-              )}
               <Bar 
-                dataKey="Global Average" 
-                fill="hsl(var(--secondary))" 
+                dataKey={showGlobal ? "Global Average" : "Industry Average"}
+                fill="hsl(var(--muted-foreground))" 
                 radius={[2, 2, 0, 0]}
                 maxBarSize={60}
-                opacity={0.5}
+                opacity={0.7}
               />
             </BarChart>
           </ResponsiveContainer>
