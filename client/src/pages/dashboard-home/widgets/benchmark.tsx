@@ -297,7 +297,7 @@ export function BenchmarkWidget({
           </div>
         </div>
       </CardContent>
-    </Card>
+      </Card>
     </TooltipProvider>
   );
 }
