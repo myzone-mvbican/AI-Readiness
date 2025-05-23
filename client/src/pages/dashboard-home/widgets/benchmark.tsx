@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -48,6 +48,7 @@ export function BenchmarkWidget({
   assessmentId,
   className,
 }: BenchmarkWidgetProps) {
+  const [activeChart, setActiveChart] = useState<"industry" | "global">("global");
 
   const {
     data: benchmarkData,
@@ -107,33 +108,7 @@ export function BenchmarkWidget({
 
   const { data } = benchmarkData;
 
-  // Prepare chart data with both industry and global averages
-  const chartData = data.categories.map((category) => {
-    return {
-      name: category.name.replace(/ & /g, " &\n"), // Add line breaks for better readability
-      userScore: Math.round(category.userScore) / 10, // userScore is 0-100, convert to 0-10
-      industry: category.industryAverage ? Math.round(category.industryAverage) / 10 : null,
-      global: category.globalAverage ? Math.round(category.globalAverage) / 10 : null,
-    };
-  });
-
-  // Chart configuration for shadcn charts
-  const chartConfig = {
-    userScore: {
-      label: "Your Score",
-      color: "hsl(var(--chart-1))",
-    },
-    industry: {
-      label: "Industry Average",
-      color: "hsl(var(--chart-2))",
-    },
-    global: {
-      label: "Global Average", 
-      color: "hsl(var(--chart-3))",
-    },
-  } satisfies ChartConfig;
-
-  // Calculate statistics (convert to 0-10 scale for display)
+  // Calculate statistics first (convert to 0-10 scale for display)
   const hasIndustryData = data.categories.some(
     (c) => c.industryAverage !== null,
   );
@@ -146,6 +121,41 @@ export function BenchmarkWidget({
         .reduce((sum, c) => sum + (c.industryAverage || 0), 0) /
       data.categories.filter((c) => c.industryAverage !== null).length
     : null;
+
+  // Calculate total averages for the switcher display
+  const userTotal = Math.round(avgUserScore) / 10;
+  const industryTotal = hasIndustryData && avgIndustryScore 
+    ? Math.round(avgIndustryScore) / 10 
+    : null;
+  const globalTotal = Math.round(
+    data.categories.reduce((sum, c) => sum + (c.globalAverage || 0), 0) / 
+    data.categories.length
+  ) / 10;
+
+  // Prepare chart data based on active comparison
+  const chartData = data.categories.map((category) => {
+    const benchmarkValue = activeChart === "industry" 
+      ? category.industryAverage 
+      : category.globalAverage;
+    
+    return {
+      name: category.name.replace(/ & /g, " &\n"), // Add line breaks for better readability
+      userScore: Math.round(category.userScore) / 10, // userScore is 0-100, convert to 0-10
+      benchmark: benchmarkValue ? Math.round(benchmarkValue) / 10 : null,
+    };
+  });
+
+  // Chart configuration for shadcn charts
+  const chartConfig = {
+    userScore: {
+      label: "Your Score",
+      color: "hsl(var(--chart-1))",
+    },
+    benchmark: {
+      label: activeChart === "industry" ? "Industry Average" : "Global Average",
+      color: "hsl(var(--chart-2))",
+    },
+  } satisfies ChartConfig;
 
   const performanceIndicator = avgIndustryScore
     ? avgUserScore > avgIndustryScore
@@ -163,6 +173,47 @@ export function BenchmarkWidget({
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Interactive Switcher Header */}
+          <div className="flex flex-col sm:flex-row gap-6 mb-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="h-3 w-3 rounded-full bg-chart-1" />
+                  Your Score
+                </div>
+                <div className="text-2xl font-bold">{userTotal.toFixed(1)}</div>
+              </div>
+              
+              {hasIndustryData && industryTotal && (
+                <div 
+                  className={`grid gap-2 cursor-pointer rounded-lg p-2 transition-colors ${
+                    activeChart === "industry" ? "bg-muted" : "hover:bg-muted/50"
+                  }`}
+                  onClick={() => setActiveChart("industry")}
+                >
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="h-3 w-3 rounded-full bg-chart-2" />
+                    Industry
+                  </div>
+                  <div className="text-2xl font-bold">{industryTotal.toFixed(1)}</div>
+                </div>
+              )}
+              
+              <div 
+                className={`grid gap-2 cursor-pointer rounded-lg p-2 transition-colors ${
+                  activeChart === "global" ? "bg-muted" : "hover:bg-muted/50"
+                }`}
+                onClick={() => setActiveChart("global")}
+              >
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="h-3 w-3 rounded-full bg-chart-2" />
+                  Global
+                </div>
+                <div className="text-2xl font-bold">{globalTotal.toFixed(1)}</div>
+              </div>
+            </div>
+          </div>
+
           <div className="flex gap-6">
             {/* Chart Section - Reduced Width */}
             <div className="flex-1">
@@ -198,28 +249,13 @@ export function BenchmarkWidget({
                       formatter={(value: number) => value > 0 ? `${value.toFixed(1)}` : ""}
                     />
                   </Bar>
-                  {hasIndustryData && (
-                    <Bar 
-                      dataKey="industry" 
-                      fill="var(--color-industry)" 
-                      radius={4} 
-                    >
-                      <LabelList
-                        dataKey="industry"
-                        position="center"
-                        className="fill-background"
-                        fontSize={12}
-                        formatter={(value: number) => value > 0 ? `${value.toFixed(1)}` : ""}
-                      />
-                    </Bar>
-                  )}
                   <Bar 
-                    dataKey="global" 
-                    fill="var(--color-global)" 
+                    dataKey="benchmark" 
+                    fill="var(--color-benchmark)" 
                     radius={4} 
                   >
                     <LabelList
-                      dataKey="global"
+                      dataKey="benchmark"
                       position="center"
                       className="fill-background"
                       fontSize={12}
