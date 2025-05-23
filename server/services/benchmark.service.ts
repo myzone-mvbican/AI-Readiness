@@ -1,0 +1,382 @@
+import { db } from "../db";
+import { assessments, surveyStats, users, surveys } from "@shared/schema";
+import { eq, and, gte, lte, isNull, isNotNull, sql } from "drizzle-orm";
+
+interface BenchmarkData {
+  quarter: string;
+  surveyTemplateId: number;
+  industry: string;
+  categories: {
+    name: string;
+    userScore: number;
+    industryAverage: number | null;
+    globalAverage: number | null;
+  }[];
+}
+
+export class BenchmarkService {
+  /**
+   * Get current quarter string in format "YYYY-QX"
+   */
+  static getCurrentQuarter(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const quarter = Math.ceil(month / 3);
+    return `${year}-Q${quarter}`;
+  }
+
+  /**
+   * Get quarter date range for SQL queries
+   */
+  static getQuarterDateRange(quarter: string): { start: Date; end: Date } {
+    const [year, q] = quarter.split('-Q');
+    const yearNum = parseInt(year);
+    const quarterNum = parseInt(q);
+    
+    const startMonth = (quarterNum - 1) * 3;
+    const endMonth = quarterNum * 3;
+    
+    const start = new Date(yearNum, startMonth, 1);
+    const end = new Date(yearNum, endMonth, 0, 23, 59, 59, 999);
+    
+    return { start, end };
+  }
+
+  /**
+   * Check if assessment should be excluded from benchmarking
+   */
+  static shouldExcludeAssessment(assessment: any): boolean {
+    if (!assessment.answers || !assessment.completedOn) return true;
+
+    try {
+      const answers = JSON.parse(assessment.answers);
+      
+      // Exclude if less than 50% of questions answered (assuming ~20 questions)
+      if (answers.length < 10) return true;
+      
+      // Exclude if all answers are the same (indicates dummy/test data)
+      const uniqueValues = new Set(answers.map((a: any) => a.value));
+      if (uniqueValues.size === 1) return true;
+
+      return false;
+    } catch (error) {
+      console.error('Error parsing assessment answers:', error);
+      return true;
+    }
+  }
+
+  /**
+   * Get user industry from assessment (guest or authenticated user)
+   */
+  static getUserIndustry(assessment: any, user: any): string | null {
+    // For guest assessments, parse guest data
+    if (assessment.guest && !assessment.userId) {
+      try {
+        const guestData = JSON.parse(assessment.guest);
+        return guestData.industry || null;
+      } catch (error) {
+        console.error('Error parsing guest data:', error);
+        return null;
+      }
+    }
+
+    // For authenticated users
+    return user?.industry || null;
+  }
+
+  /**
+   * Calculate category scores from real assessment answers using survey questions
+   */
+  static async calculateCategoryScores(answers: any[], surveyId: number): Promise<Record<string, number>> {
+    try {
+      // Get actual survey questions to determine categories
+      const survey = await db
+        .select()
+        .from(surveys)
+        .where(eq(surveys.id, surveyId))
+        .limit(1);
+
+      if (!survey.length) {
+        return {};
+      }
+
+      // Parse questions from survey file
+      const questions = JSON.parse(survey[0].fileReference || '[]');
+      const categoryTotals: Record<string, { total: number; count: number }> = {};
+
+      answers.forEach((answer) => {
+        const question = questions.find((q: any) => q.id === answer.questionId);
+        if (!question || !question.category) return;
+
+        const category = question.category;
+        if (!categoryTotals[category]) {
+          categoryTotals[category] = { total: 0, count: 0 };
+        }
+
+        categoryTotals[category].total += answer.value;
+        categoryTotals[category].count += 1;
+      });
+
+      // Return average scores per category
+      const categoryScores: Record<string, number> = {};
+      Object.entries(categoryTotals).forEach(([category, data]) => {
+        categoryScores[category] = data.total / data.count;
+      });
+
+      return categoryScores;
+    } catch (error) {
+      console.error('Error calculating category scores:', error);
+      return {};
+    }
+  }
+
+  /**
+   * Recalculate survey statistics for all industries and quarters
+   */
+  static async recalculateSurveyStats(): Promise<void> {
+    console.log('Starting survey statistics recalculation...');
+
+    try {
+      const currentQuarter = this.getCurrentQuarter();
+      const { start, end } = this.getQuarterDateRange(currentQuarter);
+
+      // Get all completed assessments in current quarter with user data
+      const completedAssessments = await db
+        .select({
+          assessment: assessments,
+          user: users,
+        })
+        .from(assessments)
+        .leftJoin(users, eq(assessments.userId, users.id))
+        .where(
+          and(
+            eq(assessments.status, 'completed'),
+            isNotNull(assessments.completedOn),
+            gte(assessments.completedOn, start),
+            lte(assessments.completedOn, end)
+          )
+        );
+
+      console.log(`Found ${completedAssessments.length} completed assessments in ${currentQuarter}`);
+
+      // Filter out excluded assessments
+      const validAssessments = completedAssessments.filter(({ assessment }) => 
+        !this.shouldExcludeAssessment(assessment)
+      );
+
+      console.log(`${validAssessments.length} assessments passed quality filters`);
+
+      // Group assessments by industry and survey template
+      const groupedData: Record<string, Record<number, any[]>> = {};
+
+      validAssessments.forEach(({ assessment, user }) => {
+        const industry = this.getUserIndustry(assessment, user) || 'Unknown';
+        const surveyId = assessment.surveyTemplateId;
+
+        if (!groupedData[industry]) {
+          groupedData[industry] = {};
+        }
+        if (!groupedData[industry][surveyId]) {
+          groupedData[industry][surveyId] = [];
+        }
+
+        groupedData[industry][surveyId].push({ assessment, user });
+      });
+
+      // Process each industry and calculate stats
+      for (const [industry, surveyGroups] of Object.entries(groupedData)) {
+        for (const [surveyIdStr, assessmentData] of Object.entries(surveyGroups)) {
+          const surveyId = parseInt(surveyIdStr);
+          
+          // Skip industries with less than 5 assessments (minimum for reliability)
+          if (assessmentData.length < 5) {
+            console.log(`Skipping ${industry} (${assessmentData.length} assessments, minimum 5 required)`);
+            continue;
+          }
+
+          await this.calculateAndStoreCategoryStats(assessmentData, industry, surveyId, currentQuarter);
+        }
+      }
+
+      // Calculate global fallback stats for industries that didn't meet threshold
+      await this.calculateGlobalStats(validAssessments, currentQuarter);
+
+      console.log('Survey statistics recalculation completed successfully');
+    } catch (error) {
+      console.error('Error recalculating survey statistics:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Calculate and store category statistics for a specific industry using real data
+   */
+  static async calculateAndStoreCategoryStats(
+    assessmentData: any[],
+    industry: string,
+    surveyId: number,
+    quarter: string
+  ): Promise<void> {
+    const categoryStats: Record<string, { total: number; count: number }> = {};
+
+    for (const { assessment } of assessmentData) {
+      try {
+        const answers = JSON.parse(assessment.answers);
+        const categoryScores = await this.calculateCategoryScores(answers, surveyId);
+
+        Object.entries(categoryScores).forEach(([category, score]) => {
+          if (!categoryStats[category]) {
+            categoryStats[category] = { total: 0, count: 0 };
+          }
+          
+          categoryStats[category].total += score;
+          categoryStats[category].count += 1;
+        });
+      } catch (error) {
+        console.error('Error processing assessment answers:', error);
+      }
+    }
+
+    // Store statistics for each category
+    for (const [category, stats] of Object.entries(categoryStats)) {
+      const averageScore = stats.total / stats.count;
+      
+      await this.upsertSurveyStats({
+        industry,
+        category,
+        quarter,
+        surveyTemplateId: surveyId,
+        averageScore: Math.round(averageScore * 100), // Store as integer (score * 100)
+        completedCount: stats.count,
+      });
+    }
+
+    console.log(`Stored stats for ${industry}: ${Object.keys(categoryStats).length} categories, ${assessmentData.length} assessments`);
+  }
+
+  /**
+   * Calculate global statistics for fallback
+   */
+  static async calculateGlobalStats(assessmentData: any[], quarter: string): Promise<void> {
+    const surveyGroups: Record<number, any[]> = {};
+
+    assessmentData.forEach(({ assessment, user }) => {
+      const surveyId = assessment.surveyTemplateId;
+      if (!surveyGroups[surveyId]) {
+        surveyGroups[surveyId] = [];
+      }
+      surveyGroups[surveyId].push({ assessment, user });
+    });
+
+    for (const [surveyIdStr, surveyAssessments] of Object.entries(surveyGroups)) {
+      const surveyId = parseInt(surveyIdStr);
+      
+      if (surveyAssessments.length >= 5) {
+        await this.calculateAndStoreCategoryStats(surveyAssessments, 'global', surveyId, quarter);
+      }
+    }
+  }
+
+  /**
+   * Upsert survey statistics
+   */
+  static async upsertSurveyStats(data: {
+    industry: string;
+    category: string;
+    quarter: string;
+    surveyTemplateId: number;
+    averageScore: number;
+    completedCount: number;
+  }): Promise<void> {
+    await db
+      .insert(surveyStats)
+      .values({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [surveyStats.industry, surveyStats.category, surveyStats.quarter, surveyStats.surveyTemplateId],
+        set: {
+          averageScore: data.averageScore,
+          completedCount: data.completedCount,
+          updatedAt: new Date(),
+        },
+      });
+  }
+
+  /**
+   * Get benchmark data for a specific assessment
+   */
+  static async getBenchmarkData(assessmentId: number): Promise<BenchmarkData | null> {
+    try {
+      // Get assessment with user data
+      const result = await db
+        .select({
+          assessment: assessments,
+          user: users,
+        })
+        .from(assessments)
+        .leftJoin(users, eq(assessments.userId, users.id))
+        .where(eq(assessments.id, assessmentId))
+        .limit(1);
+
+      if (!result.length) {
+        return null;
+      }
+
+      const { assessment, user } = result[0];
+      
+      if (!assessment.completedOn) {
+        return null;
+      }
+
+      const quarter = this.getCurrentQuarter();
+      const industry = this.getUserIndustry(assessment, user);
+      
+      if (!industry) {
+        return null;
+      }
+
+      // Get industry and global stats for this survey
+      const stats = await db
+        .select()
+        .from(surveyStats)
+        .where(
+          and(
+            eq(surveyStats.quarter, quarter),
+            eq(surveyStats.surveyTemplateId, assessment.surveyTemplateId)
+          )
+        );
+
+      const industryStats = stats.filter(s => s.industry === industry);
+      const globalStats = stats.filter(s => s.industry === 'global');
+
+      // Calculate user's category scores using real data
+      const answers = JSON.parse(assessment.answers);
+      const userCategoryScores = await this.calculateCategoryScores(answers, assessment.surveyTemplateId);
+
+      const categories = Object.entries(userCategoryScores).map(([category, userScore]) => {
+        const industryStat = industryStats.find(s => s.category === category);
+        const globalStat = globalStats.find(s => s.category === category);
+
+        return {
+          name: category,
+          userScore: Math.round(userScore * 100) / 100,
+          industryAverage: industryStat ? industryStat.averageScore / 100 : null,
+          globalAverage: globalStat ? globalStat.averageScore / 100 : null,
+        };
+      });
+
+      return {
+        quarter,
+        surveyTemplateId: assessment.surveyTemplateId,
+        industry,
+        categories,
+      };
+    } catch (error) {
+      console.error('Error getting benchmark data:', error);
+      return null;
+    }
+  }
+}
