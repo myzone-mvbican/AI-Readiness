@@ -100,3 +100,29 @@ export const assessments = pgTable("assessments", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+// Survey Statistics for benchmarking
+export const surveyStats = pgTable("survey_stats", {
+  id: serial("id").primaryKey(),
+  industry: text("industry").notNull(), // e.g., "Healthcare", "Technology", or "global"
+  category: text("category").notNull(), // e.g., "Strategy", "Data & Analytics"
+  quarter: text("quarter").notNull(), // e.g., "2025-Q2"
+  surveyTemplateId: integer("survey_template_id")
+    .notNull()
+    .references(() => surveys.id),
+  averageScore: integer("average_score").notNull(), // Average score for this category/industry/quarter
+  completedCount: integer("completed_count").notNull(), // Number of assessments included
+  segmentKey: text("segment_key"), // Optional for future segmentation (e.g., "industry|region")
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    // Unique constraint to prevent duplicate stats for same industry/category/quarter/survey
+    unq: uniqueIndex("survey_stats_unq").on(
+      table.industry, 
+      table.category, 
+      table.quarter, 
+      table.surveyTemplateId
+    ),
+  };
+});

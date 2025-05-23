@@ -1,0 +1,160 @@
+I'm building a benchmark comparison system for quarterly assessments using React, Node/Express, and a DB (Postgres or equivalent). I need to:
+
+Aggregate scores by category per industry and quarter
+
+Compare user/team scores to industry averages
+
+Display results in a chart widget on /dashboard/
+
+I’m also applying constraints for reliability and growth. Here's what needs to be built:
+
+🧠 1. Backend Model: SurveyStats
+Create a table:
+
+ts
+Copy
+Edit
+SurveyStats {
+  id: string
+  industry: string | "global"
+  category: string // e.g., "Strategy"
+  quarter: string  // e.g., "2025-Q2"
+  surveyTemplateId: string
+  averageScore: number
+  completedCount: number
+  segmentKey?: string // e.g., "industry|region" or null
+  createdAt: Date
+  updatedAt: Date
+}
+This allows fast lookups and filtered aggregation by quarter, industry, and segment.
+
+🔁 2. Aggregation Logic (recalculateSurveyStats())
+Create a service function or cron job that:
+
+Fetches all completed assessments with completedOn inside the current or target quarter
+
+Groups by:
+
+industry
+
+category
+
+surveyTemplateId
+
+Calculates:
+
+Average score per category
+
+Number of completed assessments
+
+Only includes industries with ≥ 5 assessments
+
+For those that don’t meet threshold → fallback to "global"
+
+Applies filters:
+
+Ignore dummy/test users
+
+Exclude assessments where:
+
+All scores are the same (e.g., 10 identical answers)
+
+Or <50% of questions were answered
+
+Upserts into SurveyStats
+
+Schedule this weekly via cron (or after X new completions).
+
+🔐 3. Public API Route: /api/surveys/benchmark/:id
+Returns comparison-ready data:
+
+json
+Copy
+Edit
+{
+  "quarter": "2025-Q2",
+  "surveyTemplateId": "19",
+  "industry": "Healthcare",
+  "categories": [
+    {
+      "name": "Strategy",
+      "userScore": 6.2,
+      "industryAverage": 5.4,
+      "globalAverage": 5.9
+    },
+    ...
+  ]
+}
+Logic:
+
+Look up assessment
+
+Determine user’s industry and quarter
+
+Pull matching SurveyStats
+
+Include fallback to global averages if needed
+
+📊 4. Frontend Widget on /dashboard/: Score vs. Industry Average
+Use a Card from shadcn/ui to wrap the chart component.
+
+Placement:
+On /dashboard/ main route
+
+Show this widget for logged-in users with at least one completed assessment
+
+Chart:
+Use recharts or from shadcn, wrapped in a Card:
+
+tsx
+Copy
+Edit
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+
+<Card>
+  <CardHeader>
+    <CardTitle>Your AI Readiness vs Industry Benchmarks</CardTitle>
+  </CardHeader>
+  <CardContent className="h-[300px]">
+    <ResponsiveBar
+      data={data}
+      keys={['userScore', 'industryAverage']}
+      indexBy="name"
+      colors={['#3b82f6', '#9ca3af']}
+      layout="vertical"
+    />
+  </CardContent>
+</Card>
+Optional:
+Show a subtitle: "Based on 158 Healthcare submissions in Q2 2025"
+
+Show badge or label fallback if "global" is used instead of industry
+
+🧠 5. Optional Enhancements (structure support now)
+Feature	Add to schema?	Why?
+Region / Org Size	segmentKey field	For future segmentation
+stdDev, median	Extend stats calc	Show score distribution
+Delta to previous Q	previousScore prop	For showing progress trends
+
+✅ Final Deliverables
+Backend
+ SurveyStats table
+
+ Aggregation cron job (recalculateSurveyStats)
+
+ Quality filters: dummy user, same scores, too few answers
+
+ Min 5 responses per industry to publish
+
+ Global fallback
+
+ API: GET /api/benchmark/:assessmentId
+
+Frontend
+ Chart widget on /dashboard/ route
+
+ Bar chart: category vs industry
+
+ Fallback message if no industry benchmark
+
+ Use shadcn/ui Card components
