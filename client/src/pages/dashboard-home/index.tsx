@@ -100,6 +100,14 @@ export default function DashboardHome() {
           {/* Profile Completion Card */}
           {user && <ProfileCompletionCard user={user} />}
         </div>
+
+        {/* Benchmark Widget - Show for users with completed assessments */}
+        {latestCompletedAssessment && (
+          <BenchmarkWidget 
+            assessmentId={latestCompletedAssessment.id}
+            className="w-full"
+          />
+        )}
       </div>
     </DashboardLayout>
   );
