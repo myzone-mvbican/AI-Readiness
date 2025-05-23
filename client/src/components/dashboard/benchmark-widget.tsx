@@ -75,7 +75,7 @@ export function BenchmarkWidget({ assessmentId, className }: BenchmarkWidgetProp
 
   const { data } = benchmarkData;
   
-  // Prepare chart data (convert to 1-10 scale) and choose which comparison to show
+  // Prepare chart data (0-10 scale) and choose which comparison to show
   const chartData = data.categories.map(category => {
     const benchmarkValue = showGlobal ? category.globalAverage : category.industryAverage;
     const benchmarkLabel = showGlobal ? "Global Average" : "Industry Average";
