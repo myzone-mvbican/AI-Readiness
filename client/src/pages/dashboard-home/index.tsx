@@ -53,14 +53,6 @@ export default function DashboardHome() {
           </p>
         </div>
 
-        {/* Benchmark Widget - Show for users with completed assessments */}
-        {latestCompletedAssessment && (
-          <BenchmarkWidget 
-            assessmentId={latestCompletedAssessment.id}
-            className="col-span-full"
-          />
-        )}
-
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {/* Start New Assessment Card */}
           <NewAssessmentCard />
