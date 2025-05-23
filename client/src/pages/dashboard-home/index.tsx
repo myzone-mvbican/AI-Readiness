@@ -12,10 +12,33 @@ import {
 import { BarChart3, ClipboardCheck, TrendingUp } from "lucide-react";
 import { ProfileCompletionCard } from "./widgets/profile-completion";
 import { NewAssessmentCard } from "./widgets/new-assessment";
+import { BenchmarkWidget } from "@/components/dashboard/benchmark-widget";
 import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
 
 export default function DashboardHome() {
   const { user } = useAuth();
+
+  // Fetch user's completed assessments to show benchmark data
+  const { data: assessments } = useQuery<{
+    success: boolean;
+    assessments: Array<{
+      id: number;
+      title: string;
+      status: string;
+      completedOn: string | null;
+      score: number | null;
+    }>;
+  }>({
+    queryKey: ["/api/assessments"],
+    enabled: !!user,
+  });
+
+  // Find the most recent completed assessment for benchmark comparison
+  const latestCompletedAssessment = assessments?.assessments
+    ?.filter(a => a.status === 'completed' && a.completedOn)
+    ?.sort((a, b) => new Date(b.completedOn!).getTime() - new Date(a.completedOn!).getTime())
+    ?.[0];
 
   return (
     <DashboardLayout title="Welcome">
@@ -29,6 +52,14 @@ export default function DashboardHome() {
             insights all in one place.
           </p>
         </div>
+
+        {/* Benchmark Widget - Show for users with completed assessments */}
+        {latestCompletedAssessment && (
+          <BenchmarkWidget 
+            assessmentId={latestCompletedAssessment.id}
+            className="col-span-full"
+          />
+        )}
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {/* Start New Assessment Card */}
