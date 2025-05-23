@@ -138,7 +138,7 @@ export class BenchmarkService {
           
           // Apply the same formula as utils.ts: ((rawScore + length * 2) / (length * 4)) * 100
           const adjustedScore = ((rawScore + categoryAnswers.length * 2) / (categoryAnswers.length * 4)) * 100;
-          categoryScores[category] = Math.round(adjustedScore) / 100; // Convert to 0-1 scale for consistency
+          categoryScores[category] = adjustedScore; // Keep as 0-100 scale to match utils.ts output
         }
       });
 

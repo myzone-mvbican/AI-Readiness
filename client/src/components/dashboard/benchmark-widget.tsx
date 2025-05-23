@@ -82,8 +82,8 @@ export function BenchmarkWidget({ assessmentId, className }: BenchmarkWidgetProp
     
     return {
       name: category.name,
-      "Your Score": Math.round(category.userScore * 100) / 10, // userScore is already 0-1, convert to 0-10
-      [benchmarkLabel]: benchmarkValue ? Math.round(benchmarkValue * 100) / 10 : null,
+      "Your Score": Math.round(category.userScore) / 10, // userScore is 0-100, convert to 0-10
+      [benchmarkLabel]: benchmarkValue ? Math.round(benchmarkValue) / 10 : null,
     };
   });
 
