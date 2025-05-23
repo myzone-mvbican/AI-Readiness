@@ -87,7 +87,7 @@ export function BenchmarkWidget({ assessmentId, className }: BenchmarkWidgetProp
     };
   });
 
-  // Calculate statistics
+  // Calculate statistics (convert to 0-10 scale for display)
   const hasIndustryData = data.categories.some(c => c.industryAverage !== null);
   const avgUserScore = data.categories.reduce((sum, c) => sum + c.userScore, 0) / data.categories.length;
   const avgIndustryScore = hasIndustryData 
@@ -204,14 +204,14 @@ export function BenchmarkWidget({ assessmentId, className }: BenchmarkWidgetProp
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
             <div className="text-center">
               <div className="font-semibold text-lg">
-                {Math.round(avgUserScore * 100) / 100}/5.0
+                {Math.round(avgUserScore) / 10}/10
               </div>
               <div className="text-muted-foreground">Your Average</div>
             </div>
             {avgIndustryScore && (
               <div className="text-center">
                 <div className="font-semibold text-lg">
-                  {Math.round(avgIndustryScore * 100) / 100}/5.0
+                  {Math.round(avgIndustryScore) / 10}/10
                 </div>
                 <div className="text-muted-foreground">Industry Average</div>
               </div>
