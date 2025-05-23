@@ -130,13 +130,15 @@ export class BenchmarkService {
         const categoryAnswers = answers.slice(startIndex, endIndex);
         
         if (categoryAnswers.length > 0) {
-          // Handle your actual data format: convert from -2 to +2 scale to 1-5 scale
-          const totalScore = categoryAnswers.reduce((sum, answer) => {
-            // Convert from -2,-1,0,1,2 to 1,2,3,4,5 scale
-            const normalizedValue = (answer.a || answer.value || 0) + 3;
-            return sum + Math.max(1, Math.min(5, normalizedValue));
+          // Use the same scoring logic as utils.ts getScore function
+          const rawScore = categoryAnswers.reduce((sum, answer) => {
+            const answerValue = answer.a || answer.value || 0;
+            return sum + answerValue;
           }, 0);
-          categoryScores[category] = totalScore / categoryAnswers.length;
+          
+          // Apply the same formula as utils.ts: ((rawScore + length * 2) / (length * 4)) * 100
+          const adjustedScore = ((rawScore + categoryAnswers.length * 2) / (categoryAnswers.length * 4)) * 100;
+          categoryScores[category] = Math.round(adjustedScore) / 100; // Convert to 0-1 scale for consistency
         }
       });
 
