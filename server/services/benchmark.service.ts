@@ -86,6 +86,33 @@ export class BenchmarkService {
   }
 
   /**
+   * Get user company size from assessment (guest or authenticated user)
+   */
+  static getUserCompanySize(assessment: any, user: any): string | null {
+    // For guest assessments, parse guest data
+    if (assessment.guest && !assessment.userId) {
+      try {
+        const guestData = JSON.parse(assessment.guest);
+        return guestData.employeeCount || null;
+      } catch (error) {
+        console.error('Error parsing guest data:', error);
+        return null;
+      }
+    }
+
+    // For authenticated users
+    return user?.employeeCount || null;
+  }
+
+  /**
+   * Create segment key for more granular benchmarking
+   */
+  static createSegmentKey(industry: string, companySize: string | null): string {
+    if (!companySize) return industry;
+    return `${industry}|${companySize}`;
+  }
+
+  /**
    * Calculate category scores from real assessment answers using survey questions
    */
   static async calculateCategoryScores(answers: any[], surveyId: number): Promise<Record<string, number>> {
@@ -172,8 +199,11 @@ export class BenchmarkService {
 
       validAssessments.forEach(({ assessment, user }) => {
         const industry = this.getUserIndustry(assessment, user) || 'Unknown';
+        const companySize = this.getUserCompanySize(assessment, user);
+        const segmentKey = this.createSegmentKey(industry, companySize);
         const surveyId = assessment.surveyTemplateId;
 
+        // Group by both industry and segment for more detailed benchmarking
         if (!groupedData[industry]) {
           groupedData[industry] = {};
         }
@@ -181,7 +211,7 @@ export class BenchmarkService {
           groupedData[industry][surveyId] = [];
         }
 
-        groupedData[industry][surveyId].push({ assessment, user });
+        groupedData[industry][surveyId].push({ assessment, user, segmentKey });
       });
 
       // Process each industry and calculate stats
