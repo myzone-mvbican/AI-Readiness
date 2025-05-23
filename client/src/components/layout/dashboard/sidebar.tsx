@@ -21,7 +21,7 @@ import {
 import {
   Home,
   ClipboardCheck,
-  // BarChart3,
+  TrendingUp,
   PlusCircle,
   ScrollText,
   FileSpreadsheet,
@@ -76,11 +76,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       url: "/dashboard/assessments",
       icon: ClipboardCheck,
     },
-    // {
-    //   title: "Reports",
-    //   url: "/dashboard/reports",
-    //   icon: BarChart3,
-    // },
+    {
+      title: "Compare",
+      url: "/dashboard/compare",
+      icon: TrendingUp,
+    },
   ];
 
   // Admin-only menu items that are only shown when the current team has admin role

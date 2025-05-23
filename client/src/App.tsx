@@ -21,6 +21,7 @@ import PageAuth from "@/pages/page-auth";
 import PageAbout from "@/pages/page-about";
 // Dashboard pages
 import DashboardHome from "@/pages/dashboard-home";
+import DashboardCompare from "@/pages/dashboard-compare";
 import AssessmentsPage from "@/pages/dashboard-assessments";
 import AssessmentDetailPage from "@/pages/dashboard-assessments/[id]";
 // Admin pages
@@ -45,6 +46,10 @@ function Router() {
         <ProtectedRoute
           path="/dashboard/assessments"
           component={AssessmentsPage}
+        />
+        <ProtectedRoute
+          path="/dashboard/compare"
+          component={DashboardCompare}
         />
         <ProtectedRoute
           path="/dashboard/account/settings"
