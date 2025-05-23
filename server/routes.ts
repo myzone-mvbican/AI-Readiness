@@ -149,6 +149,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Suggestions endpoint
   app.post("/api/ai-suggestions", AIController.generateSuggestions);
 
+  // Benchmark routes
+  app.get("/api/surveys/benchmark/:id", BenchmarkController.getBenchmark);
+  app.post("/api/admin/benchmark/recalculate", auth, requireAdmin, BenchmarkController.recalculateStats);
+
   // Public routes
 
   // Check if user email exists (public endpoint)
