@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -8,12 +8,14 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, LabelList } from "recharts";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
 } from "@/components/ui/chart";
 import {
   TrendingUp,
@@ -46,7 +48,6 @@ export function BenchmarkWidget({
   assessmentId,
   className,
 }: BenchmarkWidgetProps) {
-  const [showGlobal, setShowGlobal] = useState(false);
 
   const {
     data: benchmarkData,
@@ -106,16 +107,13 @@ export function BenchmarkWidget({
 
   const { data } = benchmarkData;
 
-  // Prepare chart data (0-10 scale) and choose which comparison to show
+  // Prepare chart data with both industry and global averages
   const chartData = data.categories.map((category) => {
-    const benchmarkValue = showGlobal
-      ? category.globalAverage
-      : category.industryAverage;
-
     return {
       name: category.name.replace(/ & /g, " &\n"), // Add line breaks for better readability
       userScore: Math.round(category.userScore) / 10, // userScore is 0-100, convert to 0-10
-      benchmark: benchmarkValue ? Math.round(benchmarkValue) / 10 : null, // benchmarkValue is 0-100, convert to 0-10
+      industry: category.industryAverage ? Math.round(category.industryAverage) / 10 : null,
+      global: category.globalAverage ? Math.round(category.globalAverage) / 10 : null,
     };
   });
 
@@ -125,9 +123,13 @@ export function BenchmarkWidget({
       label: "Your Score",
       color: "hsl(var(--chart-1))",
     },
-    benchmark: {
-      label: showGlobal ? "Global Average" : "Industry Average",
+    industry: {
+      label: "Industry Average",
       color: "hsl(var(--chart-2))",
+    },
+    global: {
+      label: "Global Average", 
+      color: "hsl(var(--chart-3))",
     },
   } satisfies ChartConfig;
 
@@ -182,55 +184,58 @@ export function BenchmarkWidget({
                     cursor={false}
                     content={<ChartTooltipContent indicator="dashed" />}
                   />
+                  <ChartLegend content={<ChartLegendContent />} />
                   <Bar 
                     dataKey="userScore" 
                     fill="var(--color-userScore)" 
                     radius={4} 
-                  />
+                  >
+                    <LabelList
+                      dataKey="userScore"
+                      position="center"
+                      className="fill-background"
+                      fontSize={12}
+                      formatter={(value: number) => value > 0 ? `${value.toFixed(1)}` : ""}
+                    />
+                  </Bar>
+                  {hasIndustryData && (
+                    <Bar 
+                      dataKey="industry" 
+                      fill="var(--color-industry)" 
+                      radius={4} 
+                    >
+                      <LabelList
+                        dataKey="industry"
+                        position="center"
+                        className="fill-background"
+                        fontSize={12}
+                        formatter={(value: number) => value > 0 ? `${value.toFixed(1)}` : ""}
+                      />
+                    </Bar>
+                  )}
                   <Bar 
-                    dataKey="benchmark" 
-                    fill="var(--color-benchmark)" 
+                    dataKey="global" 
+                    fill="var(--color-global)" 
                     radius={4} 
-                  />
+                  >
+                    <LabelList
+                      dataKey="global"
+                      position="center"
+                      className="fill-background"
+                      fontSize={12}
+                      formatter={(value: number) => value > 0 ? `${value.toFixed(1)}` : ""}
+                    />
+                  </Bar>
                 </BarChart>
               </ChartContainer>
             </div>
 
             {/* Sidebar Section */}
             <div className="w-64 space-y-4">
-            {/* Quarter and Toggle Badge */}
-            <div className="space-y-2">
+              {/* Quarter Label */}
               <div className="text-sm text-muted-foreground">
                 {data.quarter}
               </div>
-
-              <ShadcnTooltip>
-                <TooltipTrigger asChild>
-                  <Badge
-                    variant="outline"
-                    className="flex items-center gap-1 cursor-pointer hover:bg-muted transition-colors w-fit"
-                    onClick={() => setShowGlobal(!showGlobal)}
-                  >
-                    {showGlobal ? (
-                      <>
-                        <Globe className="h-3 w-3" />
-                        Global
-                      </>
-                    ) : (
-                      <>
-                        <Building2 className="h-3 w-3" />
-                        {data.industry}
-                      </>
-                    )}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    Switch to {showGlobal ? "Industry" : "Global"} comparison
-                  </p>
-                </TooltipContent>
-              </ShadcnTooltip>
-            </div>
 
             {/* Performance Summary */}
             <div className="space-y-3">
@@ -246,16 +251,25 @@ export function BenchmarkWidget({
                   </span>
                 </div>
 
-                {avgIndustryScore && (
+                {hasIndustryData && avgIndustryScore && (
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">
-                      {showGlobal ? "Global" : "Industry"} Average
+                      Industry Average
                     </span>
                     <span className="font-semibold">
                       {Math.round(avgIndustryScore) / 10}/10
                     </span>
                   </div>
                 )}
+
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">
+                    Global Average
+                  </span>
+                  <span className="font-semibold">
+                    {Math.round(data.categories.reduce((sum, c) => sum + (c.globalAverage || 0), 0) / data.categories.length) / 10}/10
+                  </span>
+                </div>
               </div>
             </div>
 
