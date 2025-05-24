@@ -1,38 +1,10 @@
 import { DashboardLayout } from "@/components/layout/dashboard";
 import { ProfileCompletionCard } from "./widgets/profile-completion";
 import { NewAssessmentCard } from "./widgets/new-assessment";
-import { QuickActions } from "./widgets/quick-actions";
-import { PerformanceSummary } from "./widgets/performance-summary";
-import { BenchmarkWidget } from "./widgets/benchmark";
-import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
+import { QuickActionsCard } from "./widgets/quick-actions";
+import { PerformanceSummaryCard } from "./widgets/performance-summary";
 
 export default function DashboardHome() {
-  const { user } = useAuth();
-
-  // Fetch user's completed assessments to show benchmark data
-  const { data: assessments } = useQuery<{
-    success: boolean;
-    assessments: Array<{
-      id: number;
-      title: string;
-      status: string;
-      completedOn: string | null;
-      score: number | null;
-    }>;
-  }>({
-    queryKey: ["/api/assessments"],
-    enabled: !!user,
-  });
-
-  // Find the most recent completed assessment for benchmark comparison
-  const latestCompletedAssessment = assessments?.assessments
-    ?.filter((a) => a.status === "completed" && a.completedOn)
-    ?.sort(
-      (a, b) =>
-        new Date(b.completedOn!).getTime() - new Date(a.completedOn!).getTime(),
-    )?.[0];
-
   return (
     <DashboardLayout title="Welcome">
       <div className="space-y-6">
@@ -50,18 +22,14 @@ export default function DashboardHome() {
           {/* Start New Assessment Card */}
           <NewAssessmentCard />
 
-          {/* Quick Actions */}
-          <QuickActions />
+          {/* Quick Actions Card */}
+          <QuickActionsCard />
+
+          {/* Performance Summary Card */}
+          <PerformanceSummaryCard />
 
           {/* Profile Completion Card */}
-          {user && <ProfileCompletionCard user={user} />}
-
-          {/* Performance Summary - Show for users with completed assessments */}
-          {latestCompletedAssessment && (
-            <PerformanceSummary 
-              assessmentId={latestCompletedAssessment.id}
-            />
-          )}
+          <ProfileCompletionCard />
         </div>
       </div>
     </DashboardLayout>

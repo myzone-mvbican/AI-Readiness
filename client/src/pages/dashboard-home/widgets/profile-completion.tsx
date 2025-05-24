@@ -9,6 +9,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
+  CardFooter,
   CardTitle,
 } from "@/components/ui/card";
 
@@ -60,7 +61,7 @@ export function ProfileCompletionCard() {
   // When profile is 100% complete
   if (completionPercentage === 100) {
     return (
-      <Card className="col-span-1 overflow-hidden relative">
+      <Card className="col-span-1 flex flex-col overflow-hidden relative">
         <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-medium text-center">
@@ -81,24 +82,26 @@ export function ProfileCompletionCard() {
             <p className="text-sm text-muted-foreground mb-4">
               You're all set to get the most from your AI Readiness Dashboard.
             </p>
-            <Link href="/dashboard/account/settings" asChild>
-              <Button
-                variant="outline"
-                className="w-full flex items-center gap-1"
-              >
-                Edit Profile
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </Link>
           </div>
         </CardContent>
+        <CardFooter className="text-xs text-muted-foreground pt-5 mt-auto border-t border-border">
+          <Link href="/dashboard/account/settings" asChild>
+            <Button
+              variant="outline"
+              className="w-full flex items-center gap-1"
+            >
+              Edit Profile
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </Link>
+        </CardFooter>
       </Card>
     );
   }
 
   // When profile is incomplete
   return (
-    <Card className="col-span-1">
+    <Card className="col-span-1 flex flex-col">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-medium">
           Profile Completion
@@ -131,12 +134,13 @@ export function ProfileCompletionCard() {
               ))}
             </ul>
           </div>
-
-          <Link href="/dashboard/account/settings" asChild>
-            <Button className="w-full">Complete Your Profile</Button>
-          </Link>
         </div>
       </CardContent>
+      <CardFooter className="text-xs text-muted-foreground pt-5 mt-auto border-t border-border">
+        <Link href="/dashboard/account/settings" asChild>
+          <Button className="w-full">Complete Your Profile</Button>
+        </Link>
+      </CardFooter>
     </Card>
   );
 }
