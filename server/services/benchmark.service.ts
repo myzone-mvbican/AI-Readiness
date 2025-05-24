@@ -281,7 +281,6 @@ export class BenchmarkService {
         industry,
         category,
         quarter,
-        surveyTemplateId: surveyId,
         averageScore: Math.round(averageScore * 100), // Store as integer (score * 100)
         completedCount: stats.count,
       });
@@ -320,7 +319,6 @@ export class BenchmarkService {
     industry: string;
     category: string;
     quarter: string;
-    surveyTemplateId: number;
     averageScore: number;
     completedCount: number;
   }): Promise<void> {
@@ -331,7 +329,7 @@ export class BenchmarkService {
         updatedAt: new Date(),
       })
       .onConflictDoUpdate({
-        target: [surveyStats.industry, surveyStats.category, surveyStats.quarter, surveyStats.surveyTemplateId],
+        target: [surveyStats.industry, surveyStats.category, surveyStats.quarter],
         set: {
           averageScore: data.averageScore,
           completedCount: data.completedCount,
@@ -373,16 +371,11 @@ export class BenchmarkService {
         return null;
       }
 
-      // Get industry and global stats for this survey
+      // Get industry and global stats for this quarter
       const stats = await db
         .select()
         .from(surveyStats)
-        .where(
-          and(
-            eq(surveyStats.quarter, quarter),
-            eq(surveyStats.surveyTemplateId, assessment.surveyTemplateId)
-          )
-        );
+        .where(eq(surveyStats.quarter, quarter));
 
       const industryStats = stats.filter(s => s.industry === industry);
       const globalStats = stats.filter(s => s.industry === 'global');
@@ -417,7 +410,6 @@ export class BenchmarkService {
 
       return {
         quarter,
-        surveyTemplateId: assessment.surveyTemplateId,
         industry,
         categories,
       };
