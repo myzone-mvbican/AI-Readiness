@@ -2,41 +2,61 @@ import { Request, Response } from "express";
 import { db } from "../db";
 import { UserModel } from "../models/user.model";
 import { TeamModel } from "../models/team.model";
+import { UserService } from "../services/user.service";
 import { users } from "@shared/schema";
 import { updateUserSchema } from "@shared/validation/schemas";
 
 export class UserController {
   static async getAll(req: Request, res: Response) {
     try {
-      // Get basic user information excluding passwords
-      const allUsers = await db
-        .select({
-          id: users.id,
-          name: users.name,
-          email: users.email,
-          company: users.company,
-          employeeCount: users.employeeCount,
-          industry: users.industry,
-          role: users.role,
-          createdAt: users.createdAt,
-          updatedAt: users.updatedAt,
-        })
-        .from(users);
+      // Parse pagination parameters
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const search = req.query.search as string;
+      const sortBy = (req.query.sortBy as string) || 'createdAt';
+      const sortOrder = (req.query.sortOrder as string) || 'desc';
 
-      // For each user, get their teams
-      const usersWithTeams = await Promise.all(
-        allUsers.map(async (user) => {
-          const teams = await TeamModel.getByUserId(user.id);
-          return {
-            ...user,
-            teams: teams,
-          };
-        }),
-      );
+      // Validate pagination parameters
+      if (page < 1) {
+        return res.status(400).json({
+          success: false,
+          message: "Page must be greater than 0",
+        });
+      }
+
+      if (![10, 25, 50].includes(limit)) {
+        return res.status(400).json({
+          success: false,
+          message: "Limit must be 10, 25, or 50",
+        });
+      }
+
+      if (sortBy !== 'createdAt') {
+        return res.status(400).json({
+          success: false,
+          message: "sortBy must be 'createdAt'",
+        });
+      }
+
+      if (!['asc', 'desc'].includes(sortOrder)) {
+        return res.status(400).json({
+          success: false,
+          message: "sortOrder must be 'asc' or 'desc'",
+        });
+      }
+
+      // Get paginated users using the service
+      const result = await UserService.getAll({
+        page,
+        limit,
+        search,
+        sortBy: sortBy as 'createdAt',
+        sortOrder: sortOrder as 'asc' | 'desc',
+      });
 
       return res.status(200).json({
         success: true,
-        users: usersWithTeams,
+        ...result,
       });
     } catch (error) {
       console.error("Get all users error:", error);
