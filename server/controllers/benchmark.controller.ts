@@ -4,7 +4,7 @@ import { BenchmarkService } from "../services/benchmark.service";
 export class BenchmarkController {
   /**
    * Get benchmark comparison data for a specific assessment
-   * GET /api/surveys/benchmark/:id
+   * GET /api/assessments/:id/benchmark
    */
   static async getBenchmark(req: Request, res: Response) {
     try {
@@ -17,7 +17,8 @@ export class BenchmarkController {
         });
       }
 
-      const benchmarkData = await BenchmarkService.getBenchmarkData(assessmentId);
+      const benchmarkData =
+        await BenchmarkService.getBenchmarkData(assessmentId);
 
       if (!benchmarkData) {
         return res.status(404).json({

@@ -302,200 +302,189 @@ export default function DashboardCompare() {
             </p>
           </div>
         </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm lg:text-lg font-medium">
-              {activeChart === "industry"
-                ? `Benchmark comparison with ${industry} average`
-                : "Benchmark comparison with global average"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid lg:grid-cols-7">
-              {/* Interactive Pie Chart */}
-              <div className="lg:col-span-2">
-                <Card data-chart={pieChartId} className="flex flex-col">
-                  <ChartStyle id={pieChartId} config={pieChartConfig} />
-                  <CardHeader className="flex-row items-start space-y-0">
-                    <div className="grid gap-1">
-                      <CardTitle className="text-sm lg:text-lg">
-                        Compare against:
-                      </CardTitle>
-                    </div>
-                    <Select
-                      value={activeView}
-                      onValueChange={(value: "industry" | "global") => {
-                        setActiveView(value);
-                        setActiveChart(value);
-                      }}
-                    >
-                      <SelectTrigger
-                        className="ml-auto h-7 w-[130px] rounded-lg pl-2.5"
-                        aria-label="Select view"
-                      >
-                        <SelectValue placeholder="Select view" />
-                      </SelectTrigger>
-                      <SelectContent align="end" className="rounded-xl">
-                        {hasIndustryData && (
-                          <SelectItem value="industry" className="rounded-lg">
-                            <div className="flex items-center gap-2 text-xs capitalize">
-                              <span className="flex h-3 w-3 shrink-0 rounded-sm bg-chart-2" />
-                              {industry}
-                            </div>
-                          </SelectItem>
-                        )}
-                        <SelectItem value="global" className="rounded-lg">
-                          <div className="flex items-center gap-2 text-xs">
-                            <span className="flex h-3 w-3 shrink-0 rounded-sm bg-chart-3" />
-                            Global
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </CardHeader>
-                  <CardContent className="pt-5 border-t border-border">
-                    {/* Performance Indicator */}
-                    {performanceIndicator && (
-                      <div className="flex flex-col gap-3 items-center justify-center">
-                        <p className="text-muted-foreground">
-                          {company} scored {(avgUserScore / 10).toFixed(1)}
-                        </p>
-                        <Badge
-                          variant={
-                            performanceIndicator === "above"
-                              ? "success"
-                              : "destructive"
-                          }
-                        >
-                          {performanceIndicator === "above"
-                            ? "Above Average"
-                            : "Below Average"}
-                        </Badge>
-                      </div>
+        <p className="text-sm lg:text-lg font-medium">
+          {activeChart === "industry"
+            ? `Benchmark comparison with ${industry} average`
+            : "Benchmark comparison with global average"}
+        </p>
+        <div className="grid grid-cols-1 lg:grid-cols-7">
+          {/* Interactive Pie Chart */}
+          <div className="lg:col-span-2">
+            <Card data-chart={pieChartId} className="flex flex-col">
+              <ChartStyle id={pieChartId} config={pieChartConfig} />
+              <CardHeader className="flex-row items-start space-y-0">
+                <div className="grid gap-1">
+                  <CardTitle className="text-sm lg:text-lg">
+                    Compare against:
+                  </CardTitle>
+                </div>
+                <Select
+                  value={activeView}
+                  onValueChange={(value: "industry" | "global") => {
+                    setActiveView(value);
+                    setActiveChart(value);
+                  }}
+                >
+                  <SelectTrigger
+                    className="ml-auto h-7 w-[130px] rounded-lg pl-2.5"
+                    aria-label="Select view"
+                  >
+                    <SelectValue placeholder="Select view" />
+                  </SelectTrigger>
+                  <SelectContent align="end" className="rounded-xl">
+                    {hasIndustryData && (
+                      <SelectItem value="industry" className="rounded-lg">
+                        <div className="flex items-center gap-2 text-xs capitalize">
+                          <span className="flex h-3 w-3 shrink-0 rounded-sm bg-chart-2" />
+                          {industry}
+                        </div>
+                      </SelectItem>
                     )}
-                    <ChartContainer
-                      id={pieChartId}
-                      config={pieChartConfig}
-                      className="mx-auto aspect-square w-full max-w-[300px]"
-                    >
-                      <PieChart>
-                        <ChartTooltip
-                          cursor={false}
-                          content={<ChartTooltipContent hideLabel />}
-                        />
-                        <Pie
-                          data={pieChartData}
-                          dataKey="value"
-                          nameKey="type"
-                          innerRadius={60}
-                          strokeWidth={5}
-                        >
-                          <Label
-                            content={({ viewBox }) => {
-                              if (
-                                viewBox &&
-                                "cx" in viewBox &&
-                                "cy" in viewBox
-                              ) {
-                                return (
-                                  <text
-                                    x={viewBox.cx}
-                                    y={viewBox.cy}
-                                    textAnchor="middle"
-                                    dominantBaseline="middle"
-                                  >
-                                    <tspan
-                                      x={viewBox.cx}
-                                      y={viewBox.cy}
-                                      className="fill-foreground text-3xl font-bold"
-                                    >
-                                      {selectedScore.toFixed(1)}
-                                    </tspan>
-                                    <tspan
-                                      x={viewBox.cx}
-                                      y={(viewBox.cy || 0) + 24}
-                                      className="fill-muted-foreground"
-                                    >
-                                      {activeView === "industry"
-                                        ? "Industry Avg"
-                                        : "Global Avg"}
-                                    </tspan>
-                                  </text>
-                                );
-                              }
-                            }}
-                          />
-                        </Pie>
-                      </PieChart>
-                    </ChartContainer>
-                  </CardContent>
-                  <CardFooter className="pt-5 border-t border-border">
-                    <p className="text-xs lg:text-[1rem] text-muted-foreground">
-                      {activeChart === "industry"
-                        ? `Based on ${data.industry} submissions in ${data.quarter}`
-                        : `Based on global submissions in ${data.quarter}`}
+                    <SelectItem value="global" className="rounded-lg">
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="flex h-3 w-3 shrink-0 rounded-sm bg-chart-3" />
+                        Global
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </CardHeader>
+              <CardContent className="pt-5 border-t border-border">
+                {/* Performance Indicator */}
+                {performanceIndicator && (
+                  <div className="flex flex-col gap-3 items-center justify-center">
+                    <p className="text-muted-foreground">
+                      {company} scored {(avgUserScore / 10).toFixed(1)}
                     </p>
-                  </CardFooter>
-                </Card>
-              </div>
-              <div className="lg:col-span-5 hidden lg:block">
-                {/* Chart */}
-                <ChartContainer config={chartConfig}>
-                  <BarChart accessibilityLayer data={chartData}>
-                    <CartesianGrid vertical={false} />
-                    <XAxis dataKey="name" tickMargin={10} fontSize={9} />
-                    <YAxis
-                      domain={[0, 10]}
-                      tickCount={6}
-                      fontSize={11}
-                      label={{
-                        value: "Score (0-10)",
-                        angle: -90,
-                        position: "insideCenter",
-                      }}
-                    />
+                    <Badge
+                      variant={
+                        performanceIndicator === "above"
+                          ? "success"
+                          : "destructive"
+                      }
+                    >
+                      {performanceIndicator === "above"
+                        ? "Above Average"
+                        : "Below Average"}
+                    </Badge>
+                  </div>
+                )}
+                <ChartContainer
+                  id={pieChartId}
+                  config={pieChartConfig}
+                  className="mx-auto aspect-square w-full max-w-[300px]"
+                >
+                  <PieChart>
                     <ChartTooltip
                       cursor={false}
-                      content={<ChartTooltipContent indicator="dot" />}
+                      content={<ChartTooltipContent hideLabel />}
                     />
-                    <ChartLegend content={<ChartLegendContent />} />
-                    <Bar
-                      dataKey="userScore"
-                      fill="var(--color-userScore)"
-                      radius={4}
+                    <Pie
+                      data={pieChartData}
+                      dataKey="value"
+                      nameKey="type"
+                      innerRadius={60}
+                      strokeWidth={5}
                     >
-                      <LabelList
-                        dataKey="userScore"
-                        position="insideTop"
-                        className="fill-background"
-                        fontSize={12}
-                        formatter={(value: number) =>
-                          value > 0 ? `${value.toFixed(1)}` : ""
-                        }
+                      <Label
+                        content={({ viewBox }) => {
+                          if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                            return (
+                              <text
+                                x={viewBox.cx}
+                                y={viewBox.cy}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                              >
+                                <tspan
+                                  x={viewBox.cx}
+                                  y={viewBox.cy}
+                                  className="fill-foreground text-3xl font-bold"
+                                >
+                                  {selectedScore.toFixed(1)}
+                                </tspan>
+                                <tspan
+                                  x={viewBox.cx}
+                                  y={(viewBox.cy || 0) + 24}
+                                  className="fill-muted-foreground"
+                                >
+                                  {activeView === "industry"
+                                    ? "Industry Avg"
+                                    : "Global Avg"}
+                                </tspan>
+                              </text>
+                            );
+                          }
+                        }}
                       />
-                    </Bar>
-                    <Bar
-                      dataKey="benchmark"
-                      fill="var(--color-benchmark)"
-                      radius={4}
-                    >
-                      <LabelList
-                        dataKey="benchmark"
-                        position="insideTop"
-                        className="fill-background"
-                        fontSize={12}
-                        formatter={(value: number) =>
-                          value > 0 ? `${value.toFixed(1)}` : ""
-                        }
-                      />
-                    </Bar>
-                  </BarChart>
+                    </Pie>
+                  </PieChart>
                 </ChartContainer>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+              <CardFooter className="pt-5 border-t border-border">
+                <p className="text-xs lg:text-[1rem] text-muted-foreground">
+                  {activeChart === "industry"
+                    ? `Based on ${data.industry} submissions in ${data.quarter}`
+                    : `Based on global submissions in ${data.quarter}`}
+                </p>
+              </CardFooter>
+            </Card>
+          </div>
+          <div className="lg:col-span-5 hidden lg:block">
+            {/* Chart */}
+            <ChartContainer config={chartConfig}>
+              <BarChart accessibilityLayer data={chartData}>
+                <CartesianGrid vertical={false} />
+                <XAxis dataKey="name" tickMargin={10} fontSize={9} />
+                <YAxis
+                  domain={[0, 10]}
+                  tickCount={6}
+                  fontSize={11}
+                  label={{
+                    value: "Score (0-10)",
+                    angle: -90,
+                    position: "insideCenter",
+                  }}
+                />
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent indicator="dot" />}
+                />
+                <ChartLegend content={<ChartLegendContent />} />
+                <Bar
+                  dataKey="userScore"
+                  fill="var(--color-userScore)"
+                  radius={4}
+                >
+                  <LabelList
+                    dataKey="userScore"
+                    position="insideTop"
+                    className="fill-background"
+                    fontSize={12}
+                    formatter={(value: number) =>
+                      value > 0 ? `${value.toFixed(1)}` : ""
+                    }
+                  />
+                </Bar>
+                <Bar
+                  dataKey="benchmark"
+                  fill="var(--color-benchmark)"
+                  radius={4}
+                >
+                  <LabelList
+                    dataKey="benchmark"
+                    position="insideTop"
+                    className="fill-background"
+                    fontSize={12}
+                    formatter={(value: number) =>
+                      value > 0 ? `${value.toFixed(1)}` : ""
+                    }
+                  />
+                </Bar>
+              </BarChart>
+            </ChartContainer>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );
