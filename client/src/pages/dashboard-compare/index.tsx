@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { TrendingUp, Building2 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/dashboard";
 import { Badge } from "@/components/ui/badge";
+import { Loading } from "./loading";
 import {
   Bar,
   BarChart,
@@ -95,81 +96,26 @@ export default function DashboardCompare() {
 
   // Auto-select Global when user's industry has no data (must be before conditional returns)
   useEffect(() => {
-    if (benchmarkData?.data && !benchmarkData.data.categories.some(c => c.industryAverage !== null) && activeChart === "industry") {
+    if (
+      benchmarkData?.data &&
+      !benchmarkData.data.categories.some((c) => c.industryAverage !== null) &&
+      activeChart === "industry"
+    ) {
       setActiveChart("global");
       setActiveView("global");
     }
   }, [benchmarkData, activeChart]);
 
   if (!latestCompletedAssessment) {
-    return (
-      <DashboardLayout>
-        <div className="flex-1 space-y-4 p-4 lg:p-8 pt-6">
-          <div className="flex items-center justify-between space-y-2">
-            <h2 className="text-3xl font-bold tracking-tight">
-              Benchmark Comparison
-            </h2>
-          </div>
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center text-muted-foreground">
-                <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No completed assessments found</p>
-                <p className="text-sm mt-2">
-                  Complete an assessment to see benchmark comparisons
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </DashboardLayout>
-    );
+    return <Loading type="none" />;
   }
 
   if (isLoading) {
-    return (
-      <DashboardLayout>
-        <div className="flex-1 space-y-4 p-4 lg:p-8 pt-6">
-          <div className="flex items-center justify-between space-y-2">
-            <h2 className="text-3xl font-bold tracking-tight">
-              Benchmark Comparison
-            </h2>
-          </div>
-          <Card>
-            <CardContent className="p-6">
-              <div className="animate-pulse text-muted-foreground text-center">
-                Loading benchmark data...
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </DashboardLayout>
-    );
+    return <Loading type="loading" />;
   }
 
   if (error || !benchmarkData?.success || !benchmarkData?.data) {
-    return (
-      <DashboardLayout>
-        <div className="flex-1 space-y-4 p-4 lg:p-8 pt-6">
-          <div className="flex items-center justify-between space-y-2">
-            <h2 className="text-3xl font-bold tracking-tight">
-              Benchmark Comparison
-            </h2>
-          </div>
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center text-muted-foreground">
-                <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Benchmark data not available</p>
-                <p className="text-sm mt-2">
-                  Please try again later or contact support
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </DashboardLayout>
-    );
+    return <Loading type="error" />;
   }
 
   const { data } = benchmarkData;
@@ -290,25 +236,25 @@ export default function DashboardCompare() {
     ? avgUserScore > avgIndustryScore
       ? "above"
       : "below"
-    : null;
+    : avgUserScore > avgGlobalScore
+      ? "above"
+      : "below";
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 space-y-3">
-          <div className="col-span-1">
-            <div className="col-span-1 flex items-center space-x-2">
-              <TrendingUp className="h-6 w-6 text-foreground" />
-              <h2 className="text-xl text-foreground font-semibold">
-                Your Assessments
-              </h2>
-            </div>
-            <p className="text-muted-foreground mt-2">
-              {activeChart === "industry"
-                ? `${company}'s AI Readiness vs ${industry} benchmarks.`
-                : `${company}'s AI Readiness vs global benchmarks.`}
-            </p>
+        <div className="grid grid-cols-1 space-y-3">
+          <div className="col-span-1 flex items-center space-x-2">
+            <TrendingUp className="h-6 w-6 text-foreground" />
+            <h2 className="text-xl text-foreground font-semibold">
+              Your Assessments
+            </h2>
           </div>
+          <p className="text-muted-foreground mt-2">
+            {activeChart === "industry"
+              ? `${company}'s AI Readiness vs ${industry} benchmarks.`
+              : `${company}'s AI Readiness vs global benchmarks.`}
+          </p>
         </div>
         <p className="text-sm lg:text-lg font-medium">
           {activeChart === "industry"
@@ -340,16 +286,20 @@ export default function DashboardCompare() {
                     <SelectValue placeholder="Select view" />
                   </SelectTrigger>
                   <SelectContent align="end" className="rounded-xl">
-                    <SelectItem 
-                      value="industry" 
-                      className="rounded-lg" 
+                    <SelectItem
+                      value="industry"
+                      className="rounded-lg"
                       disabled={!hasIndustryData}
                     >
                       <div className="flex items-center gap-2 text-xs capitalize">
-                        <span className={`flex h-3 w-3 shrink-0 rounded-sm ${hasIndustryData ? 'bg-chart-2' : 'bg-muted'}`} />
+                        <span
+                          className={`flex h-3 w-3 shrink-0 rounded-sm ${hasIndustryData ? "bg-chart-2" : "bg-muted"}`}
+                        />
                         {industry}
                         {!hasIndustryData && (
-                          <span className="text-xs text-muted-foreground ml-1">(No data)</span>
+                          <span className="text-xs text-muted-foreground ml-1">
+                            (No data)
+                          </span>
                         )}
                       </div>
                     </SelectItem>
