@@ -145,13 +145,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/assessments/:id", auth, AssessmentController.update);
   // Delete an assessment
   app.delete("/api/assessments/:id", auth, AssessmentController.delete);
+  // Benchmark routes
+  app.get(
+    "/api/assessments/:id/benchmark",
+    auth,
+    BenchmarkController.getBenchmark,
+  );
 
   // AI Suggestions endpoint
   app.post("/api/ai-suggestions", AIController.generateSuggestions);
 
-  // Benchmark routes
-  app.get("/api/surveys/benchmark/:id", BenchmarkController.getBenchmark);
-  app.post("/api/admin/benchmark/recalculate", auth, requireAdmin, BenchmarkController.recalculateStats);
+  app.post(
+    "/api/admin/benchmark/recalculate",
+    auth,
+    requireAdmin,
+    BenchmarkController.recalculateStats,
+  );
 
   // Public routes
 

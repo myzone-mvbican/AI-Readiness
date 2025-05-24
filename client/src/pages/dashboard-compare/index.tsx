@@ -10,7 +10,12 @@ import {
   XAxis,
   YAxis,
   LabelList,
+  Pie,
+  PieChart,
+  Sector,
+  Label,
 } from "recharts";
+import { PieSectorDataItem } from "recharts/types/polar/Pie";
 import {
   Card,
   CardHeader,
@@ -25,7 +30,15 @@ import {
   ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
+  ChartStyle,
 } from "@/components/ui/chart";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface BenchmarkData {
   quarter: string;
@@ -44,6 +57,7 @@ export default function DashboardCompare() {
   const [activeChart, setActiveChart] = useState<"industry" | "global">(
     "global",
   );
+  const [activeView, setActiveView] = useState<"yourScore" | "industry" | "global">("yourScore");
 
   // Fetch user's completed assessments
   const { data: assessments } = useQuery<{
@@ -76,7 +90,7 @@ export default function DashboardCompare() {
     success: boolean;
     data: BenchmarkData;
   }>({
-    queryKey: [`/api/surveys/benchmark/${latestCompletedAssessment?.id}`],
+    queryKey: [`/api/assessments/${latestCompletedAssessment?.id}/benchmark`],
     enabled: !!latestCompletedAssessment?.id,
   });
 
@@ -192,14 +206,17 @@ export default function DashboardCompare() {
     };
   });
 
+  const { company = "Your company", industry = "Industry" } = user;
+
   // Chart configuration
   const chartConfig = {
     userScore: {
-      label: "Your Score",
+      label: `${company} score`,
       color: "hsl(var(--chart-1))",
     },
     benchmark: {
-      label: activeChart === "industry" ? "Industry Average" : "Global Average",
+      label:
+        activeChart === "industry" ? `${industry} average` : "Global average",
       color: "hsl(var(--chart-2))",
     },
   } satisfies ChartConfig;
@@ -217,8 +234,8 @@ export default function DashboardCompare() {
             </div>
             <p className="text-muted-foreground mt-2">
               {activeChart === "industry"
-                ? "Your AI Readiness vs Industry Benchmarks."
-                : "Your AI Readiness vs Global Benchmarks."}
+                ? `${company}'s AI Readiness vs ${industry} benchmarks.`
+                : `${company}'s AI Readiness vs global benchmarks.`}
             </p>
           </div>
         </div>
@@ -227,60 +244,58 @@ export default function DashboardCompare() {
           <CardHeader>
             <CardTitle className="text-lg font-medium">
               {activeChart === "industry"
-                ? "Benchmark Comparison with Industry Average"
-                : "Benchmark Comparison with Global Average"}
+                ? `Benchmark comparison with ${industry} average`
+                : "Benchmark comparison with global average"}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-7">
               <div className="md:col-span-2 p-3 lg:p-6 bg-muted rounded-lg">
-                {/* Interactive Switcher Header */}
-                <div className="flex flex-col sm:flex-row gap-6 mb-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div className="grid gap-2">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <div className="h-3 w-3 rounded-full bg-chart-1" />
-                        Your Score
-                      </div>
-                      <div className="text-2xl font-bold">
-                        {userTotal.toFixed(1)}
-                      </div>
+                {/* Switcher */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid gap-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="h-3 w-3 rounded-full bg-chart-1" />
+                      Your Score
                     </div>
+                    <div className="text-2xl font-bold">
+                      {userTotal.toFixed(1)}
+                    </div>
+                  </div>
 
-                    {hasIndustryData && industryTotal && (
-                      <div
-                        className={`grid gap-2 cursor-pointer rounded-lg p-2 transition-colors ${
-                          activeChart === "industry"
-                            ? "bg-white"
-                            : "hover:bg-white/50"
-                        }`}
-                        onClick={() => setActiveChart("industry")}
-                      >
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <div className="h-3 w-3 rounded-full bg-chart-2" />
-                          Industry
-                        </div>
-                        <div className="text-2xl font-bold">
-                          {industryTotal.toFixed(1)}
-                        </div>
-                      </div>
-                    )}
-
+                  {hasIndustryData && industryTotal && (
                     <div
                       className={`grid gap-2 cursor-pointer rounded-lg p-2 transition-colors ${
-                        activeChart === "global"
+                        activeChart === "industry"
                           ? "bg-white"
                           : "hover:bg-white/50"
                       }`}
-                      onClick={() => setActiveChart("global")}
+                      onClick={() => setActiveChart("industry")}
                     >
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <div className="h-3 w-3 rounded-full bg-chart-2" />
-                        Global
+                        {industry}
                       </div>
                       <div className="text-2xl font-bold">
-                        {globalTotal.toFixed(1)}
+                        {industryTotal.toFixed(1)}
                       </div>
+                    </div>
+                  )}
+
+                  <div
+                    className={`grid gap-2 cursor-pointer rounded-lg p-2 transition-colors ${
+                      activeChart === "global"
+                        ? "bg-white"
+                        : "hover:bg-white/50"
+                    }`}
+                    onClick={() => setActiveChart("global")}
+                  >
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="h-3 w-3 rounded-full bg-chart-2" />
+                      Global
+                    </div>
+                    <div className="text-2xl font-bold">
+                      {globalTotal.toFixed(1)}
                     </div>
                   </div>
                 </div>
@@ -298,12 +313,12 @@ export default function DashboardCompare() {
                       label={{
                         value: "Score (0-10)",
                         angle: -90,
-                        position: "insideLeft",
+                        position: "insideCenter",
                       }}
                     />
                     <ChartTooltip
                       cursor={false}
-                      content={<ChartTooltipContent indicator="dashed" />}
+                      content={<ChartTooltipContent indicator="dot" />}
                     />
                     <ChartLegend content={<ChartLegendContent />} />
                     <Bar
