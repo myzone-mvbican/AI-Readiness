@@ -117,25 +117,34 @@ export default function UsersPage() {
   // Get properly typed users array
   const users = usersData?.users || [];
 
-  // Set up table
+  // Set up table (client-side filtering only, pagination handled server-side)
   const table = useReactTable({
     data: users,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     state: {
       sorting,
       columnFilters,
       columnVisibility,
-      globalFilter,
     },
   });
+
+  // Server-side search with debounce
+  const [searchInput, setSearchInput] = useState("");
+  
+  useMemo(() => {
+    const timeoutId = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1); // Reset to first page when searching
+    }, 500);
+    
+    return () => clearTimeout(timeoutId);
+  }, [searchInput]);
 
   // Loading state
   if (isLoadingUsers) {
@@ -170,11 +179,27 @@ export default function UsersPage() {
           <div className="relative w-64">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search users..."
-              value={globalFilter}
-              onChange={(e) => setGlobalFilter(e.target.value)}
+              placeholder="Search users by name or email..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               className="pl-8"
             />
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-muted-foreground">Page size:</span>
+            <Select value={pageSize.toString()} onValueChange={(value) => {
+              setPageSize(parseInt(value));
+              setPage(1);
+            }}>
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -226,26 +251,48 @@ export default function UsersPage() {
             </TableBody>
           </Table>
         </div>
-        {/* Pagination */}
-        <div className="flex items-center justify-end space-x-2 py-4">
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-muted-foreground"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-muted-foreground"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
+        
+        {/* Server-side Pagination */}
+        <div className="flex items-center justify-between py-4">
+          <div className="text-sm text-muted-foreground">
+            {usersData?.pagination && (
+              <>
+                Showing {((usersData.pagination.page - 1) * usersData.pagination.limit) + 1} to{' '}
+                {Math.min(
+                  usersData.pagination.page * usersData.pagination.limit,
+                  usersData.pagination.total
+                )} of {usersData.pagination.total} users
+              </>
+            )}
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(page - 1)}
+              disabled={!usersData?.pagination?.hasPrev || isLoadingUsers}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Previous
+            </Button>
+            
+            <div className="flex items-center space-x-1">
+              <span className="text-sm text-muted-foreground">
+                Page {usersData?.pagination?.page || 1} of {usersData?.pagination?.totalPages || 1}
+              </span>
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(page + 1)}
+              disabled={!usersData?.pagination?.hasNext || isLoadingUsers}
+            >
+              Next
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
         </div>
       </div>
 
