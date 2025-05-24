@@ -93,6 +93,14 @@ export default function DashboardCompare() {
     enabled: !!latestCompletedAssessment?.id,
   });
 
+  // Auto-select Global when user's industry has no data (must be before conditional returns)
+  useEffect(() => {
+    if (benchmarkData?.data && !benchmarkData.data.categories.some(c => c.industryAverage !== null) && activeChart === "industry") {
+      setActiveChart("global");
+      setActiveView("global");
+    }
+  }, [benchmarkData, activeChart]);
+
   if (!latestCompletedAssessment) {
     return (
       <DashboardLayout>
@@ -171,14 +179,6 @@ export default function DashboardCompare() {
   const hasIndustryData = data.categories.some(
     (c) => c.industryAverage !== null,
   );
-
-  // Auto-select Global when user's industry has no data
-  useEffect(() => {
-    if (data && !hasIndustryData && activeChart === "industry") {
-      setActiveChart("global");
-      setActiveView("global");
-    }
-  }, [data, hasIndustryData, activeChart]);
 
   const avgUserScore =
     data.categories.reduce((sum, c) => sum + c.userScore, 0) /
