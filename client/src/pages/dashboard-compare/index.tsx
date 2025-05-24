@@ -392,7 +392,8 @@ export default function DashboardCompare() {
                                       y={(viewBox.cy || 0) + 24}
                                       className="fill-muted-foreground"
                                     >
-                                      Average Score
+                                      {activeView === "yourScore" ? "Your Score" : 
+                                       activeView === "industry" ? "Industry Avg" : "Global Avg"}
                                     </tspan>
                                   </text>
                                 );
