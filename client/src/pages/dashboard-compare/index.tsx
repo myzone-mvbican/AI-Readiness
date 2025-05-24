@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { TrendingUp, Building2 } from "lucide-react";
@@ -172,6 +172,14 @@ export default function DashboardCompare() {
     (c) => c.industryAverage !== null,
   );
 
+  // Auto-select Global when user's industry has no data
+  useEffect(() => {
+    if (data && !hasIndustryData && activeChart === "industry") {
+      setActiveChart("global");
+      setActiveView("global");
+    }
+  }, [data, hasIndustryData, activeChart]);
+
   const avgUserScore =
     data.categories.reduce((sum, c) => sum + c.userScore, 0) /
     data.categories.length;
@@ -332,14 +340,19 @@ export default function DashboardCompare() {
                     <SelectValue placeholder="Select view" />
                   </SelectTrigger>
                   <SelectContent align="end" className="rounded-xl">
-                    {hasIndustryData && (
-                      <SelectItem value="industry" className="rounded-lg">
-                        <div className="flex items-center gap-2 text-xs capitalize">
-                          <span className="flex h-3 w-3 shrink-0 rounded-sm bg-chart-2" />
-                          {industry}
-                        </div>
-                      </SelectItem>
-                    )}
+                    <SelectItem 
+                      value="industry" 
+                      className="rounded-lg" 
+                      disabled={!hasIndustryData}
+                    >
+                      <div className="flex items-center gap-2 text-xs capitalize">
+                        <span className={`flex h-3 w-3 shrink-0 rounded-sm ${hasIndustryData ? 'bg-chart-2' : 'bg-muted'}`} />
+                        {industry}
+                        {!hasIndustryData && (
+                          <span className="text-xs text-muted-foreground ml-1">(No data)</span>
+                        )}
+                      </div>
+                    </SelectItem>
                     <SelectItem value="global" className="rounded-lg">
                       <div className="flex items-center gap-2 text-xs">
                         <span className="flex h-3 w-3 shrink-0 rounded-sm bg-chart-3" />
