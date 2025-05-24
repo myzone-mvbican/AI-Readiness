@@ -1,4 +1,5 @@
 import { Switch, Route, useLocation } from "wouter";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { queryClient } from "./lib/queryClient";
 // Provides
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -33,6 +34,9 @@ import AccountSettingsPage from "./pages/account-settings";
 function Router() {
   const [location] = useLocation();
   const isDashboardRoute = location.startsWith("/dashboard");
+  
+  // Initialize dynamic page titles
+  usePageTitle();
 
   // If we're on a dashboard route, don't show the normal layout
   if (isDashboardRoute) {
