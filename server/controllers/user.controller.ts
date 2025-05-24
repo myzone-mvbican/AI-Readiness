@@ -1,9 +1,6 @@
 import { Request, Response } from "express";
-import { db } from "../db";
 import { UserModel } from "../models/user.model";
-import { TeamModel } from "../models/team.model";
 import { UserService } from "../services/user.service";
-import { users } from "@shared/schema";
 import { updateUserSchema } from "@shared/validation/schemas";
 
 export class UserController {
@@ -13,8 +10,8 @@ export class UserController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       const search = req.query.search as string;
-      const sortBy = (req.query.sortBy as string) || 'createdAt';
-      const sortOrder = (req.query.sortOrder as string) || 'desc';
+      const sortBy = (req.query.sortBy as string) || "createdAt";
+      const sortOrder = (req.query.sortOrder as string) || "desc";
 
       // Validate pagination parameters
       if (page < 1) {
@@ -31,14 +28,14 @@ export class UserController {
         });
       }
 
-      if (sortBy !== 'createdAt') {
+      if (sortBy !== "createdAt") {
         return res.status(400).json({
           success: false,
           message: "sortBy must be 'createdAt'",
         });
       }
 
-      if (!['asc', 'desc'].includes(sortOrder)) {
+      if (!["asc", "desc"].includes(sortOrder)) {
         return res.status(400).json({
           success: false,
           message: "sortOrder must be 'asc' or 'desc'",
@@ -50,8 +47,8 @@ export class UserController {
         page,
         limit,
         search,
-        sortBy: sortBy as 'createdAt',
-        sortOrder: sortOrder as 'asc' | 'desc',
+        sortBy: sortBy as "createdAt",
+        sortOrder: sortOrder as "asc" | "desc",
       });
 
       return res.status(200).json({

@@ -1,6 +1,12 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Loader2, ShieldCheck, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Search,
+  Loader2,
+  ShieldCheck,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { DashboardLayout } from "@/components/layout/dashboard";
 import { Input } from "@/components/ui/input";
@@ -49,12 +55,12 @@ export default function UsersPage() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  
+
   // State for server-side pagination and search
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState("");
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // State for editing users
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -72,24 +78,24 @@ export default function UsersPage() {
         const params = new URLSearchParams({
           page: page.toString(),
           limit: pageSize.toString(),
-          sortBy: 'createdAt',
+          sortBy: "createdAt",
           sortOrder: sortOrder,
         });
-        
+
         if (search.trim()) {
-          params.append('search', search.trim());
+          params.append("search", search.trim());
         }
-        
+
         const response = await fetch(`/api/admin/users?${params}`, {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
-        
+
         if (!response.ok) {
-          throw new Error('Failed to fetch users');
+          throw new Error("Failed to fetch users");
         }
-        
+
         return response.json();
       },
       retry: false,
@@ -136,26 +142,15 @@ export default function UsersPage() {
 
   // Server-side search with debounce
   const [searchInput, setSearchInput] = useState("");
-  
+
   useMemo(() => {
     const timeoutId = setTimeout(() => {
       setSearch(searchInput);
       setPage(1); // Reset to first page when searching
     }, 500);
-    
+
     return () => clearTimeout(timeoutId);
   }, [searchInput]);
-
-  // Loading state
-  if (isLoadingUsers) {
-    return (
-      <DashboardLayout title="Users">
-        <div className="flex items-center justify-center h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </DashboardLayout>
-    );
-  }
 
   return (
     <DashboardLayout title="Manage Users">
@@ -187,10 +182,13 @@ export default function UsersPage() {
           </div>
           <div className="flex items-center space-x-2">
             <span className="text-sm text-muted-foreground">Page size:</span>
-            <Select value={pageSize.toString()} onValueChange={(value) => {
-              setPageSize(parseInt(value));
-              setPage(1);
-            }}>
+            <Select
+              value={pageSize.toString()}
+              onValueChange={(value) => {
+                setPageSize(parseInt(value));
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="w-20">
                 <SelectValue />
               </SelectTrigger>
@@ -222,7 +220,13 @@ export default function UsersPage() {
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows?.length ? (
+              {isLoadingUsers ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center">
+                    Loading users...
+                  </TableCell>
+                </TableRow>
+              ) : table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
@@ -251,21 +255,25 @@ export default function UsersPage() {
             </TableBody>
           </Table>
         </div>
-        
+
         {/* Server-side Pagination */}
         <div className="flex items-center justify-between py-4">
           <div className="text-sm text-muted-foreground">
             {usersData?.pagination && (
               <>
-                Showing {((usersData.pagination.page - 1) * usersData.pagination.limit) + 1} to{' '}
+                Showing{" "}
+                {(usersData.pagination.page - 1) * usersData.pagination.limit +
+                  1}{" "}
+                to{" "}
                 {Math.min(
                   usersData.pagination.page * usersData.pagination.limit,
-                  usersData.pagination.total
-                )} of {usersData.pagination.total} users
+                  usersData.pagination.total,
+                )}{" "}
+                of {usersData.pagination.total} users
               </>
             )}
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <Button
               variant="outline"
@@ -276,13 +284,14 @@ export default function UsersPage() {
               <ChevronLeft className="h-4 w-4 mr-1" />
               Previous
             </Button>
-            
+
             <div className="flex items-center space-x-1">
               <span className="text-sm text-muted-foreground">
-                Page {usersData?.pagination?.page || 1} of {usersData?.pagination?.totalPages || 1}
+                Page {usersData?.pagination?.page || 1} of{" "}
+                {usersData?.pagination?.totalPages || 1}
               </span>
             </div>
-            
+
             <Button
               variant="outline"
               size="sm"
