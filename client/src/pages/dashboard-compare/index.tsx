@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { TrendingUp, Building2 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/dashboard";
-import { Bar, BarChart, CartesianGrid, XAxis, LabelList } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, LabelList } from "recharts";
 import {
   Card,
   CardHeader,
@@ -228,27 +228,18 @@ export default function DashboardCompare() {
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-7">
-              {/* Left-aligned Scale Legend */}
-              <div className="md:col-span-1 flex flex-col justify-center items-center pr-4">
-                <div className="text-xs text-muted-foreground mb-2 transform -rotate-90 whitespace-nowrap">
-                  Score (0-10)
-                </div>
-                <div className="flex flex-col space-y-2 text-xs text-muted-foreground">
-                  <div>10</div>
-                  <div>8</div>
-                  <div>6</div>
-                  <div>4</div>
-                  <div>2</div>
-                  <div>0</div>
-                </div>
-              </div>
-              
-              <div className="md:col-span-4">
+              <div className="md:col-span-5">
                 {/* Chart */}
                 <ChartContainer config={chartConfig}>
                   <BarChart accessibilityLayer data={chartData}>
                     <CartesianGrid vertical={false} />
                     <XAxis dataKey="name" tickMargin={10} fontSize={9} />
+                    <YAxis 
+                      domain={[0, 10]}
+                      tickCount={6}
+                      fontSize={11}
+                      label={{ value: 'Score (0-10)', angle: -90, position: 'insideLeft' }}
+                    />
                     <ChartTooltip
                       cursor={false}
                       content={<ChartTooltipContent indicator="dashed" />}
