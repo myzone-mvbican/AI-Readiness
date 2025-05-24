@@ -206,7 +206,41 @@ export default function DashboardCompare() {
     };
   });
 
-  const { company = "Your company", industry = "Industry" } = user;
+  const { company = "Your company", industry = "Industry" } = user || {};
+
+  // Prepare pie chart data
+  const pieChartData = data.categories.map((category, index) => {
+    const colors = [
+      "hsl(var(--chart-1))",
+      "hsl(var(--chart-2))",
+      "hsl(var(--chart-3))",
+      "hsl(var(--chart-4))",
+      "hsl(var(--chart-5))",
+      "hsl(var(--chart-6))",
+      "hsl(var(--chart-7))",
+      "hsl(var(--chart-8))",
+    ];
+    
+    let value = 0;
+    if (activeView === "yourScore") {
+      value = category.userScore;
+    } else if (activeView === "industry" && category.industryAverage) {
+      value = category.industryAverage;
+    } else if (activeView === "global") {
+      value = category.globalAverage || 0;
+    }
+    
+    return {
+      category: category.name,
+      value: Math.round(value) / 10,
+      fill: colors[index % colors.length],
+    };
+  });
+
+  const pieChartId = "pie-interactive";
+  
+  // Calculate total score for pie chart center
+  const totalScore = pieChartData.reduce((sum, item) => sum + item.value, 0) / pieChartData.length;
 
   // Chart configuration
   const chartConfig = {
@@ -220,6 +254,16 @@ export default function DashboardCompare() {
       color: "hsl(var(--chart-2))",
     },
   } satisfies ChartConfig;
+
+  // Pie chart configuration
+  const pieChartConfig = pieChartData.reduce((config, item, index) => {
+    const key = item.category.toLowerCase().replace(/[^a-z0-9]/g, '');
+    config[key] = {
+      label: item.category,
+      color: item.fill,
+    };
+    return config;
+  }, {} as ChartConfig);
 
   return (
     <DashboardLayout>
@@ -250,57 +294,104 @@ export default function DashboardCompare() {
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-7">
-              <div className="md:col-span-2 p-3 lg:p-6 bg-muted rounded-lg">
-                {/* Switcher */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="grid gap-2">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <div className="h-3 w-3 rounded-full bg-chart-1" />
-                      Your Score
+              {/* Interactive Pie Chart */}
+              <div className="md:col-span-3">
+                <Card data-chart={pieChartId} className="flex flex-col">
+                  <ChartStyle id={pieChartId} config={pieChartConfig} />
+                  <CardHeader className="flex-row items-start space-y-0 pb-0">
+                    <div className="grid gap-1">
+                      <CardTitle className="text-lg">AI Readiness Breakdown</CardTitle>
                     </div>
-                    <div className="text-2xl font-bold">
-                      {userTotal.toFixed(1)}
-                    </div>
-                  </div>
-
-                  {hasIndustryData && industryTotal && (
-                    <div
-                      className={`grid gap-2 cursor-pointer rounded-lg p-2 transition-colors ${
-                        activeChart === "industry"
-                          ? "bg-white"
-                          : "hover:bg-white/50"
-                      }`}
-                      onClick={() => setActiveChart("industry")}
+                    <Select value={activeView} onValueChange={(value: "yourScore" | "industry" | "global") => {
+                      setActiveView(value);
+                      if (value !== "yourScore") {
+                        setActiveChart(value);
+                      }
+                    }}>
+                      <SelectTrigger
+                        className="ml-auto h-7 w-[130px] rounded-lg pl-2.5"
+                        aria-label="Select view"
+                      >
+                        <SelectValue placeholder="Select view" />
+                      </SelectTrigger>
+                      <SelectContent align="end" className="rounded-xl">
+                        <SelectItem value="yourScore" className="rounded-lg">
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="flex h-3 w-3 shrink-0 rounded-sm bg-chart-1" />
+                            Your Score
+                          </div>
+                        </SelectItem>
+                        {hasIndustryData && (
+                          <SelectItem value="industry" className="rounded-lg">
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="flex h-3 w-3 shrink-0 rounded-sm bg-chart-2" />
+                              Industry
+                            </div>
+                          </SelectItem>
+                        )}
+                        <SelectItem value="global" className="rounded-lg">
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="flex h-3 w-3 shrink-0 rounded-sm bg-chart-3" />
+                            Global
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </CardHeader>
+                  <CardContent className="flex flex-1 justify-center pb-0">
+                    <ChartContainer
+                      id={pieChartId}
+                      config={pieChartConfig}
+                      className="mx-auto aspect-square w-full max-w-[300px]"
                     >
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <div className="h-3 w-3 rounded-full bg-chart-2" />
-                        {industry}
-                      </div>
-                      <div className="text-2xl font-bold">
-                        {industryTotal.toFixed(1)}
-                      </div>
-                    </div>
-                  )}
-
-                  <div
-                    className={`grid gap-2 cursor-pointer rounded-lg p-2 transition-colors ${
-                      activeChart === "global"
-                        ? "bg-white"
-                        : "hover:bg-white/50"
-                    }`}
-                    onClick={() => setActiveChart("global")}
-                  >
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <div className="h-3 w-3 rounded-full bg-chart-2" />
-                      Global
-                    </div>
-                    <div className="text-2xl font-bold">
-                      {globalTotal.toFixed(1)}
-                    </div>
-                  </div>
-                </div>
+                      <PieChart>
+                        <ChartTooltip
+                          cursor={false}
+                          content={<ChartTooltipContent hideLabel />}
+                        />
+                        <Pie
+                          data={pieChartData}
+                          dataKey="value"
+                          nameKey="category"
+                          innerRadius={60}
+                          strokeWidth={5}
+                        >
+                          <Label
+                            content={({ viewBox }) => {
+                              if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                                return (
+                                  <text
+                                    x={viewBox.cx}
+                                    y={viewBox.cy}
+                                    textAnchor="middle"
+                                    dominantBaseline="middle"
+                                  >
+                                    <tspan
+                                      x={viewBox.cx}
+                                      y={viewBox.cy}
+                                      className="fill-foreground text-3xl font-bold"
+                                    >
+                                      {totalScore.toFixed(1)}
+                                    </tspan>
+                                    <tspan
+                                      x={viewBox.cx}
+                                      y={(viewBox.cy || 0) + 24}
+                                      className="fill-muted-foreground"
+                                    >
+                                      Average Score
+                                    </tspan>
+                                  </text>
+                                )
+                              }
+                            }}
+                          />
+                        </Pie>
+                      </PieChart>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
               </div>
-              <div className="md:col-span-5">
+              <div className="md:col-span-4">
                 {/* Chart */}
                 <ChartContainer config={chartConfig}>
                   <BarChart accessibilityLayer data={chartData}>
