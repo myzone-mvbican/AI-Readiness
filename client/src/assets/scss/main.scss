@@ -1,4 +1,4 @@
-@import 'variables';
+@use 'variables' as vars;
 
 :root {
   --background: 0 0% 100%;
@@ -80,7 +80,7 @@
   }
 
   &.btn-secondary {
-    background-color: $secondary-color;
+    background-color: vars.$secondary-color;
     color: white;
 
     &:hover {
