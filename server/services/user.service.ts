@@ -1,6 +1,6 @@
 import { db } from "../db";
 import { users } from "@shared/schema";
-import { or, ilike, desc, asc, sql, count } from "drizzle-orm";
+import { or, ilike, desc, asc, sql } from "drizzle-orm";
 import { TeamModel } from "../models/team.model";
 
 interface PaginationParams {
@@ -87,11 +87,11 @@ export class UserService {
     );
 
     // Get total count for pagination metadata
-    let totalCount;
+    let totalCount: number;
     if (search && search.trim()) {
       const searchTerm = `%${search.trim()}%`;
       const countResult = await db
-        .select({ count: sql<number>`count(*)` })
+        .select({ count: sql<number>`cast(count(*) as integer)` })
         .from(users)
         .where(
           or(
@@ -102,7 +102,7 @@ export class UserService {
       totalCount = countResult[0].count;
     } else {
       const countResult = await db
-        .select({ count: sql<number>`count(*)` })
+        .select({ count: sql<number>`cast(count(*) as integer)` })
         .from(users);
       totalCount = countResult[0].count;
     }

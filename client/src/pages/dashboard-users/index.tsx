@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Loader2, ShieldCheck } from "lucide-react";
+import { Search, Loader2, ShieldCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { DashboardLayout } from "@/components/layout/dashboard";
 import { Input } from "@/components/ui/input";
@@ -20,13 +20,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   ColumnFiltersState,
   SortingState,
   VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
@@ -39,11 +45,16 @@ import { UserDeleteDialog } from "./user-delete-dialog";
 export default function UsersPage() {
   const { user: currentUser } = useAuth();
 
-  // State for sorting and filtering
+  // State for sorting and filtering (client-side)
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [globalFilter, setGlobalFilter] = useState("");
+  
+  // State for server-side pagination and search
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [search, setSearch] = useState("");
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // State for editing users
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -53,10 +64,34 @@ export default function UsersPage() {
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  // Fetch users
+  // Fetch users with server-side pagination
   const { data: usersData, isLoading: isLoadingUsers } =
     useQuery<UsersResponse>({
-      queryKey: ["/api/admin/users"],
+      queryKey: ["/api/admin/users", page, pageSize, search, sortOrder],
+      queryFn: async () => {
+        const params = new URLSearchParams({
+          page: page.toString(),
+          limit: pageSize.toString(),
+          sortBy: 'createdAt',
+          sortOrder: sortOrder,
+        });
+        
+        if (search.trim()) {
+          params.append('search', search.trim());
+        }
+        
+        const response = await fetch(`/api/admin/users?${params}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch users');
+        }
+        
+        return response.json();
+      },
       retry: false,
     });
 

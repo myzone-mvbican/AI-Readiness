@@ -52,6 +52,14 @@ export type UserFormValues = z.infer<typeof userFormSchema>;
 export type UsersResponse = {
   success: boolean;
   users: User[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
 };
 
 export type TeamsResponse = {
