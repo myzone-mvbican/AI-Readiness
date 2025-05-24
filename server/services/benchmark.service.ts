@@ -4,7 +4,6 @@ import { eq, and, gte, lte, isNull, isNotNull, sql } from "drizzle-orm";
 
 interface BenchmarkData {
   quarter: string;
-  surveyTemplateId: number;
   industry: string;
   categories: {
     name: string;

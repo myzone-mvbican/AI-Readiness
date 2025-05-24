@@ -50,8 +50,6 @@ export function PerformanceSummaryCard() {
         new Date(b.completedOn!).getTime() - new Date(a.completedOn!).getTime(),
     )?.[0];
 
-  console.log(latestCompletedAssessment);
-
   const {
     data: benchmarkData,
     isLoading,
@@ -60,7 +58,7 @@ export function PerformanceSummaryCard() {
     success: boolean;
     data: BenchmarkData;
   }>({
-    queryKey: [`/api/surveys/benchmark/${latestCompletedAssessment?.id}`],
+    queryKey: [`/api/assessments/${latestCompletedAssessment?.id}/benchmark`],
     enabled: !!latestCompletedAssessment?.id,
   });
 
@@ -148,12 +146,7 @@ export function PerformanceSummaryCard() {
           <div className="flex justify-center">
             <Badge
               variant={
-                performanceIndicator === "above" ? "default" : "secondary"
-              }
-              className={
-                performanceIndicator === "above"
-                  ? "bg-green-100 text-green-800 border-green-200"
-                  : ""
+                performanceIndicator === "above" ? "success" : "destructive"
               }
             >
               {performanceIndicator === "above"

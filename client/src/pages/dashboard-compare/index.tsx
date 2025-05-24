@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { TrendingUp, Building2 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/dashboard";
+import { Badge } from "@/components/ui/badge";
 import {
   Bar,
   BarChart,
@@ -12,10 +13,8 @@ import {
   LabelList,
   Pie,
   PieChart,
-  Sector,
   Label,
 } from "recharts";
-import { PieSectorDataItem } from "recharts/types/polar/Pie";
 import {
   Card,
   CardHeader,
@@ -57,9 +56,7 @@ export default function DashboardCompare() {
   const [activeChart, setActiveChart] = useState<"industry" | "global">(
     "global",
   );
-  const [activeView, setActiveView] = useState<
-    "yourScore" | "industry" | "global"
-  >("yourScore");
+  const [activeView, setActiveView] = useState<"industry" | "global">("global");
 
   // Fetch user's completed assessments
   const { data: assessments } = useQuery<{
@@ -99,7 +96,7 @@ export default function DashboardCompare() {
   if (!latestCompletedAssessment) {
     return (
       <DashboardLayout>
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 lg:p-8 pt-6">
           <div className="flex items-center justify-between space-y-2">
             <h2 className="text-3xl font-bold tracking-tight">
               Benchmark Comparison
@@ -124,7 +121,7 @@ export default function DashboardCompare() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 lg:p-8 pt-6">
           <div className="flex items-center justify-between space-y-2">
             <h2 className="text-3xl font-bold tracking-tight">
               Benchmark Comparison
@@ -145,7 +142,7 @@ export default function DashboardCompare() {
   if (error || !benchmarkData?.success || !benchmarkData?.data) {
     return (
       <DashboardLayout>
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 lg:p-8 pt-6">
           <div className="flex items-center justify-between space-y-2">
             <h2 className="text-3xl font-bold tracking-tight">
               Benchmark Comparison
@@ -168,30 +165,36 @@ export default function DashboardCompare() {
   }
 
   const { data } = benchmarkData;
+  const { company = "Your company", industry = "Industry" } = user || {};
 
   // Calculate statistics
   const hasIndustryData = data.categories.some(
     (c) => c.industryAverage !== null,
   );
+
   const avgUserScore =
     data.categories.reduce((sum, c) => sum + c.userScore, 0) /
     data.categories.length;
+
   const avgIndustryScore = hasIndustryData
     ? data.categories
         .filter((c) => c.industryAverage !== null)
         .reduce((sum, c) => sum + (c.industryAverage || 0), 0) /
       data.categories.filter((c) => c.industryAverage !== null).length
     : null;
+
   const avgGlobalScore =
     data.categories.reduce((sum, c) => sum + (c.globalAverage || 0), 0) /
     data.categories.length;
 
   // Calculate total averages for the switcher display
   const userTotal = Math.round(avgUserScore) / 10;
+
   const industryTotal =
     hasIndustryData && avgIndustryScore
       ? Math.round(avgIndustryScore) / 10
       : null;
+
   const globalTotal = Math.round(avgGlobalScore) / 10;
 
   // Prepare chart data based on active comparison
@@ -208,23 +211,25 @@ export default function DashboardCompare() {
     };
   });
 
-  const { company = "Your company", industry = "Industry" } = user || {};
-
   // Prepare pie chart data for company/industry/global comparison
   const pieChartData = [
     {
       type: "company",
-      value: userTotal * 10, // Convert back to 0-10 scale for display
+      value: userTotal,
       fill: "hsl(var(--chart-1))",
     },
-    ...(hasIndustryData && industryTotal ? [{
-      type: "industry", 
-      value: industryTotal * 10,
-      fill: "hsl(var(--chart-2))",
-    }] : []),
+    ...(hasIndustryData && industryTotal
+      ? [
+          {
+            type: "industry",
+            value: industryTotal,
+            fill: "hsl(var(--chart-2))",
+          },
+        ]
+      : []),
     {
       type: "global",
-      value: globalTotal * 10,
+      value: globalTotal,
       fill: "hsl(var(--chart-3))",
     },
   ];
@@ -232,11 +237,11 @@ export default function DashboardCompare() {
   const pieChartId = "pie-interactive";
 
   // Get the selected score for pie chart center
-  let selectedScore = userTotal * 10;
+  let selectedScore = userTotal;
   if (activeView === "industry" && industryTotal) {
-    selectedScore = industryTotal * 10;
+    selectedScore = industryTotal;
   } else if (activeView === "global") {
-    selectedScore = globalTotal * 10;
+    selectedScore = globalTotal;
   }
 
   // Chart configuration
@@ -246,8 +251,13 @@ export default function DashboardCompare() {
       color: "hsl(var(--chart-1))",
     },
     benchmark: {
-      label:
-        activeChart === "industry" ? `${industry} average` : "Global average",
+      label: (
+        <span className="capitalize">
+          {activeChart === "industry"
+            ? `${industry} average`
+            : "Global average"}
+        </span>
+      ),
       color: "hsl(var(--chart-2))",
     },
   } satisfies ChartConfig;
@@ -259,7 +269,7 @@ export default function DashboardCompare() {
       color: "hsl(var(--chart-1))",
     },
     industry: {
-      label: industry,
+      label: <span className="capitalize">{industry}</span>,
       color: "hsl(var(--chart-2))",
     },
     global: {
@@ -268,10 +278,16 @@ export default function DashboardCompare() {
     },
   } satisfies ChartConfig;
 
+  const performanceIndicator = avgIndustryScore
+    ? avgUserScore > avgIndustryScore
+      ? "above"
+      : "below"
+    : null;
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 space-y-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 space-y-3">
           <div className="col-span-1">
             <div className="col-span-1 flex items-center space-x-2">
               <TrendingUp className="h-6 w-6 text-foreground" />
@@ -289,33 +305,29 @@ export default function DashboardCompare() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-medium">
+            <CardTitle className="text-sm lg:text-lg font-medium">
               {activeChart === "industry"
                 ? `Benchmark comparison with ${industry} average`
                 : "Benchmark comparison with global average"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-7">
+            <div className="grid lg:grid-cols-7">
               {/* Interactive Pie Chart */}
-              <div className="md:col-span-2">
+              <div className="lg:col-span-2">
                 <Card data-chart={pieChartId} className="flex flex-col">
                   <ChartStyle id={pieChartId} config={pieChartConfig} />
-                  <CardHeader className="flex-row items-start space-y-0 pb-0">
+                  <CardHeader className="flex-row items-start space-y-0">
                     <div className="grid gap-1">
-                      <CardTitle className="text-lg">
-                        AI Readiness Breakdown
+                      <CardTitle className="text-sm lg:text-lg">
+                        Compare against:
                       </CardTitle>
                     </div>
                     <Select
                       value={activeView}
-                      onValueChange={(
-                        value: "yourScore" | "industry" | "global",
-                      ) => {
+                      onValueChange={(value: "industry" | "global") => {
                         setActiveView(value);
-                        if (value !== "yourScore") {
-                          setActiveChart(value);
-                        }
+                        setActiveChart(value);
                       }}
                     >
                       <SelectTrigger
@@ -325,17 +337,11 @@ export default function DashboardCompare() {
                         <SelectValue placeholder="Select view" />
                       </SelectTrigger>
                       <SelectContent align="end" className="rounded-xl">
-                        <SelectItem value="yourScore" className="rounded-lg">
-                          <div className="flex items-center gap-2 text-xs">
-                            <span className="flex h-3 w-3 shrink-0 rounded-sm bg-chart-1" />
-                            Your Score
-                          </div>
-                        </SelectItem>
                         {hasIndustryData && (
                           <SelectItem value="industry" className="rounded-lg">
-                            <div className="flex items-center gap-2 text-xs">
+                            <div className="flex items-center gap-2 text-xs capitalize">
                               <span className="flex h-3 w-3 shrink-0 rounded-sm bg-chart-2" />
-                              Industry
+                              {industry}
                             </div>
                           </SelectItem>
                         )}
@@ -348,7 +354,26 @@ export default function DashboardCompare() {
                       </SelectContent>
                     </Select>
                   </CardHeader>
-                  <CardContent className="flex flex-1 justify-center pb-0">
+                  <CardContent className="pt-5 border-t border-border">
+                    {/* Performance Indicator */}
+                    {performanceIndicator && (
+                      <div className="flex flex-col gap-3 items-center justify-center">
+                        <p className="text-muted-foreground">
+                          {company} scored {(avgUserScore / 10).toFixed(1)}
+                        </p>
+                        <Badge
+                          variant={
+                            performanceIndicator === "above"
+                              ? "success"
+                              : "destructive"
+                          }
+                        >
+                          {performanceIndicator === "above"
+                            ? "Above Average"
+                            : "Below Average"}
+                        </Badge>
+                      </div>
+                    )}
                     <ChartContainer
                       id={pieChartId}
                       config={pieChartConfig}
@@ -392,8 +417,9 @@ export default function DashboardCompare() {
                                       y={(viewBox.cy || 0) + 24}
                                       className="fill-muted-foreground"
                                     >
-                                      {activeView === "yourScore" ? "Your Score" : 
-                                       activeView === "industry" ? "Industry Avg" : "Global Avg"}
+                                      {activeView === "industry"
+                                        ? "Industry Avg"
+                                        : "Global Avg"}
                                     </tspan>
                                   </text>
                                 );
@@ -404,9 +430,16 @@ export default function DashboardCompare() {
                       </PieChart>
                     </ChartContainer>
                   </CardContent>
+                  <CardFooter className="pt-5 border-t border-border">
+                    <p className="text-xs lg:text-[1rem] text-muted-foreground">
+                      {activeChart === "industry"
+                        ? `Based on ${data.industry} submissions in ${data.quarter}`
+                        : `Based on global submissions in ${data.quarter}`}
+                    </p>
+                  </CardFooter>
                 </Card>
               </div>
-              <div className="md:col-span-5">
+              <div className="lg:col-span-5 hidden lg:block">
                 {/* Chart */}
                 <ChartContainer config={chartConfig}>
                   <BarChart accessibilityLayer data={chartData}>
@@ -462,13 +495,6 @@ export default function DashboardCompare() {
               </div>
             </div>
           </CardContent>
-          <CardFooter className="text-xs text-muted-foreground pt-4 border-t border-border">
-            <p className="text-xs text-muted-foreground">
-              {activeChart === "industry"
-                ? `Based on ${data.industry} submissions in ${data.quarter}`
-                : `Based on global submissions in ${data.quarter}`}
-            </p>
-          </CardFooter>
         </Card>
       </div>
     </DashboardLayout>

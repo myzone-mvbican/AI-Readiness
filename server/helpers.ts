@@ -100,7 +100,7 @@ export class CsvParser {
       const questions = parsedData.data
         .filter((row: any) => row["Question Summary"]?.trim())
         .map((row: any, index: number) => ({
-          id: row["Question number"] || index + 1,
+          id: row["Question Number"] || index + 1,
           question: row["Question Summary"],
           category: row["Category"],
           details: row["Question Details"],
