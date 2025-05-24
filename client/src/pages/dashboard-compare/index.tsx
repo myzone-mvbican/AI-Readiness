@@ -57,7 +57,9 @@ export default function DashboardCompare() {
   const [activeChart, setActiveChart] = useState<"industry" | "global">(
     "global",
   );
-  const [activeView, setActiveView] = useState<"yourScore" | "industry" | "global">("yourScore");
+  const [activeView, setActiveView] = useState<
+    "yourScore" | "industry" | "global"
+  >("yourScore");
 
   // Fetch user's completed assessments
   const { data: assessments } = useQuery<{
@@ -208,39 +210,34 @@ export default function DashboardCompare() {
 
   const { company = "Your company", industry = "Industry" } = user || {};
 
-  // Prepare pie chart data
-  const pieChartData = data.categories.map((category, index) => {
-    const colors = [
-      "hsl(var(--chart-1))",
-      "hsl(var(--chart-2))",
-      "hsl(var(--chart-3))",
-      "hsl(var(--chart-4))",
-      "hsl(var(--chart-5))",
-      "hsl(var(--chart-6))",
-      "hsl(var(--chart-7))",
-      "hsl(var(--chart-8))",
-    ];
-    
-    let value = 0;
-    if (activeView === "yourScore") {
-      value = category.userScore;
-    } else if (activeView === "industry" && category.industryAverage) {
-      value = category.industryAverage;
-    } else if (activeView === "global") {
-      value = category.globalAverage || 0;
-    }
-    
-    return {
-      category: category.name,
-      value: Math.round(value) / 10,
-      fill: colors[index % colors.length],
-    };
-  });
+  // Prepare pie chart data for company/industry/global comparison
+  const pieChartData = [
+    {
+      type: "company",
+      value: userTotal * 10, // Convert back to 0-10 scale for display
+      fill: "hsl(var(--chart-1))",
+    },
+    ...(hasIndustryData && industryTotal ? [{
+      type: "industry", 
+      value: industryTotal * 10,
+      fill: "hsl(var(--chart-2))",
+    }] : []),
+    {
+      type: "global",
+      value: globalTotal * 10,
+      fill: "hsl(var(--chart-3))",
+    },
+  ];
 
   const pieChartId = "pie-interactive";
-  
-  // Calculate total score for pie chart center
-  const totalScore = pieChartData.reduce((sum, item) => sum + item.value, 0) / pieChartData.length;
+
+  // Get the selected score for pie chart center
+  let selectedScore = userTotal * 10;
+  if (activeView === "industry" && industryTotal) {
+    selectedScore = industryTotal * 10;
+  } else if (activeView === "global") {
+    selectedScore = globalTotal * 10;
+  }
 
   // Chart configuration
   const chartConfig = {
@@ -256,14 +253,20 @@ export default function DashboardCompare() {
   } satisfies ChartConfig;
 
   // Pie chart configuration
-  const pieChartConfig = pieChartData.reduce((config, item, index) => {
-    const key = item.category.toLowerCase().replace(/[^a-z0-9]/g, '');
-    config[key] = {
-      label: item.category,
-      color: item.fill,
-    };
-    return config;
-  }, {} as ChartConfig);
+  const pieChartConfig = {
+    company: {
+      label: company,
+      color: "hsl(var(--chart-1))",
+    },
+    industry: {
+      label: industry,
+      color: "hsl(var(--chart-2))",
+    },
+    global: {
+      label: "Global",
+      color: "hsl(var(--chart-3))",
+    },
+  } satisfies ChartConfig;
 
   return (
     <DashboardLayout>
@@ -295,19 +298,26 @@ export default function DashboardCompare() {
           <CardContent>
             <div className="grid md:grid-cols-7">
               {/* Interactive Pie Chart */}
-              <div className="md:col-span-3">
+              <div className="md:col-span-2">
                 <Card data-chart={pieChartId} className="flex flex-col">
                   <ChartStyle id={pieChartId} config={pieChartConfig} />
                   <CardHeader className="flex-row items-start space-y-0 pb-0">
                     <div className="grid gap-1">
-                      <CardTitle className="text-lg">AI Readiness Breakdown</CardTitle>
+                      <CardTitle className="text-lg">
+                        AI Readiness Breakdown
+                      </CardTitle>
                     </div>
-                    <Select value={activeView} onValueChange={(value: "yourScore" | "industry" | "global") => {
-                      setActiveView(value);
-                      if (value !== "yourScore") {
-                        setActiveChart(value);
-                      }
-                    }}>
+                    <Select
+                      value={activeView}
+                      onValueChange={(
+                        value: "yourScore" | "industry" | "global",
+                      ) => {
+                        setActiveView(value);
+                        if (value !== "yourScore") {
+                          setActiveChart(value);
+                        }
+                      }}
+                    >
                       <SelectTrigger
                         className="ml-auto h-7 w-[130px] rounded-lg pl-2.5"
                         aria-label="Select view"
@@ -352,13 +362,17 @@ export default function DashboardCompare() {
                         <Pie
                           data={pieChartData}
                           dataKey="value"
-                          nameKey="category"
+                          nameKey="type"
                           innerRadius={60}
                           strokeWidth={5}
                         >
                           <Label
                             content={({ viewBox }) => {
-                              if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                              if (
+                                viewBox &&
+                                "cx" in viewBox &&
+                                "cy" in viewBox
+                              ) {
                                 return (
                                   <text
                                     x={viewBox.cx}
@@ -371,7 +385,7 @@ export default function DashboardCompare() {
                                       y={viewBox.cy}
                                       className="fill-foreground text-3xl font-bold"
                                     >
-                                      {totalScore.toFixed(1)}
+                                      {selectedScore.toFixed(1)}
                                     </tspan>
                                     <tspan
                                       x={viewBox.cx}
@@ -381,7 +395,7 @@ export default function DashboardCompare() {
                                       Average Score
                                     </tspan>
                                   </text>
-                                )
+                                );
                               }
                             }}
                           />
@@ -391,7 +405,7 @@ export default function DashboardCompare() {
                   </CardContent>
                 </Card>
               </div>
-              <div className="md:col-span-4">
+              <div className="md:col-span-5">
                 {/* Chart */}
                 <ChartContainer config={chartConfig}>
                   <BarChart accessibilityLayer data={chartData}>
