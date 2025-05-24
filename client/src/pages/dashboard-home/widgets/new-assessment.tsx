@@ -4,6 +4,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
+  CardFooter,
   CardTitle,
 } from "@/components/ui/card";
 import { PlusCircle } from "lucide-react";
@@ -13,7 +14,7 @@ export function NewAssessmentCard() {
   const assessmentCreateModal = useAssessmentCreateModal();
 
   return (
-    <Card className="col-span-1">
+    <Card className="col-span-1 flex flex-col">
       <CardHeader className="pb-2">
         <CardTitle className="text-center text-lg font-medium">
           Start New Assessment
@@ -23,7 +24,7 @@ export function NewAssessmentCard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col items-center justify-center text-center py-4">
+        <div className="flex flex-col items-center justify-center text-center pt-4">
           <div className="rounded-full bg-primary/10 p-3 mb-3">
             <PlusCircle className="h-8 w-8 text-primary" />
           </div>
@@ -31,12 +32,14 @@ export function NewAssessmentCard() {
             Complete the latest assessment to measure your organization's AI
             readiness (and compare with industry averages - soon).
           </p>
-          <Button className="w-full" onClick={assessmentCreateModal.onOpen}>
-            <PlusCircle />
-            Start New Assessment
-          </Button>
         </div>
       </CardContent>
+      <CardFooter className="text-xs text-muted-foreground pt-5 mt-auto border-t border-border">
+        <Button className="w-full" onClick={assessmentCreateModal.onOpen}>
+          <PlusCircle />
+          Start New Assessment
+        </Button>
+      </CardFooter>
     </Card>
   );
 }
