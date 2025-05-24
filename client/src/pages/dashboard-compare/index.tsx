@@ -3,7 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { TrendingUp, Building2 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/dashboard";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, LabelList } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  LabelList,
+} from "recharts";
 import {
   Card,
   CardHeader,
@@ -209,10 +216,9 @@ export default function DashboardCompare() {
               </h2>
             </div>
             <p className="text-muted-foreground mt-2">
-              {activeChart === "industry" 
-                ? "Your AI Readiness vs Industry Benchmarks." 
-                : "Your AI Readiness vs Global Benchmarks."
-              }
+              {activeChart === "industry"
+                ? "Your AI Readiness vs Industry Benchmarks."
+                : "Your AI Readiness vs Global Benchmarks."}
             </p>
           </div>
         </div>
@@ -220,65 +226,14 @@ export default function DashboardCompare() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg font-medium">
-              {activeChart === "industry" 
-                ? "Benchmark Comparison with Industry Average" 
-                : "Benchmark Comparison with Global Average"
-              }
+              {activeChart === "industry"
+                ? "Benchmark Comparison with Industry Average"
+                : "Benchmark Comparison with Global Average"}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-7">
-              <div className="md:col-span-5">
-                {/* Chart */}
-                <ChartContainer config={chartConfig}>
-                  <BarChart accessibilityLayer data={chartData}>
-                    <CartesianGrid vertical={false} />
-                    <XAxis dataKey="name" tickMargin={10} fontSize={9} />
-                    <YAxis 
-                      domain={[0, 10]}
-                      tickCount={6}
-                      fontSize={11}
-                      label={{ value: 'Score (0-10)', angle: -90, position: 'insideLeft' }}
-                    />
-                    <ChartTooltip
-                      cursor={false}
-                      content={<ChartTooltipContent indicator="dashed" />}
-                    />
-                    <ChartLegend content={<ChartLegendContent />} />
-                    <Bar
-                      dataKey="userScore"
-                      fill="var(--color-userScore)"
-                      radius={4}
-                    >
-                      <LabelList
-                        dataKey="userScore"
-                        position="insideTop"
-                        className="fill-background"
-                        fontSize={12}
-                        formatter={(value: number) =>
-                          value > 0 ? `${value.toFixed(1)}` : ""
-                        }
-                      />
-                    </Bar>
-                    <Bar
-                      dataKey="benchmark"
-                      fill="var(--color-benchmark)"
-                      radius={4}
-                    >
-                      <LabelList
-                        dataKey="benchmark"
-                        position="insideTop"
-                        className="fill-background"
-                        fontSize={12}
-                        formatter={(value: number) =>
-                          value > 0 ? `${value.toFixed(1)}` : ""
-                        }
-                      />
-                    </Bar>
-                  </BarChart>
-                </ChartContainer>
-              </div>
-              <div className="md:col-span-2 p-3 bg-muted rounded-lg">
+              <div className="md:col-span-2 p-3 lg:p-6 bg-muted rounded-lg">
                 {/* Interactive Switcher Header */}
                 <div className="flex flex-col sm:flex-row gap-6 mb-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -330,14 +285,67 @@ export default function DashboardCompare() {
                   </div>
                 </div>
               </div>
+              <div className="md:col-span-5">
+                {/* Chart */}
+                <ChartContainer config={chartConfig}>
+                  <BarChart accessibilityLayer data={chartData}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="name" tickMargin={10} fontSize={9} />
+                    <YAxis
+                      domain={[0, 10]}
+                      tickCount={6}
+                      fontSize={11}
+                      label={{
+                        value: "Score (0-10)",
+                        angle: -90,
+                        position: "insideLeft",
+                      }}
+                    />
+                    <ChartTooltip
+                      cursor={false}
+                      content={<ChartTooltipContent indicator="dashed" />}
+                    />
+                    <ChartLegend content={<ChartLegendContent />} />
+                    <Bar
+                      dataKey="userScore"
+                      fill="var(--color-userScore)"
+                      radius={4}
+                    >
+                      <LabelList
+                        dataKey="userScore"
+                        position="insideTop"
+                        className="fill-background"
+                        fontSize={12}
+                        formatter={(value: number) =>
+                          value > 0 ? `${value.toFixed(1)}` : ""
+                        }
+                      />
+                    </Bar>
+                    <Bar
+                      dataKey="benchmark"
+                      fill="var(--color-benchmark)"
+                      radius={4}
+                    >
+                      <LabelList
+                        dataKey="benchmark"
+                        position="insideTop"
+                        className="fill-background"
+                        fontSize={12}
+                        formatter={(value: number) =>
+                          value > 0 ? `${value.toFixed(1)}` : ""
+                        }
+                      />
+                    </Bar>
+                  </BarChart>
+                </ChartContainer>
+              </div>
             </div>
           </CardContent>
           <CardFooter className="text-xs text-muted-foreground pt-4 border-t border-border">
             <p className="text-xs text-muted-foreground">
-              {activeChart === "industry" 
+              {activeChart === "industry"
                 ? `Based on ${data.industry} submissions in ${data.quarter}`
-                : `Based on global submissions in ${data.quarter}`
-              }
+                : `Based on global submissions in ${data.quarter}`}
             </p>
           </CardFooter>
         </Card>
