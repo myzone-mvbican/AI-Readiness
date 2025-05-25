@@ -22,6 +22,7 @@ export function NavMain({
     url: string;
     icon?: LucideIcon;
     isActive?: boolean;
+    disabled?: boolean;
   }[];
   adminItems?: {
     title: string;
@@ -38,13 +39,18 @@ export function NavMain({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.url}>
-              <SidebarMenuButton tooltip={item.title} asChild>
+              <SidebarMenuButton
+                tooltip={item.title}
+                disabled={item.disabled}
+                asChild
+              >
                 <Link
                   href={item.url}
                   className={cn(
                     "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
                     isRouteActive(item.url) && "bg-accent",
                   )}
+                  aria-disabled={item.disabled}
                 >
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
@@ -54,7 +60,7 @@ export function NavMain({
           ))}
         </SidebarMenu>
       </SidebarGroup>
-      
+
       {/* Only render admin tools section if there are admin items */}
       {adminItems && adminItems.length > 0 && (
         <SidebarGroup>

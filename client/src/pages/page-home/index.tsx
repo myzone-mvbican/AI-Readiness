@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, ArrowRight } from "lucide-react";
-import { useAssessmentCreateModal } from "@/hooks/use-assessment-create-modal";
+import { useAssessment } from "@/hooks/use-assessment";
 import { useAuth } from "@/hooks/use-auth";
 import { GuestAssessment } from "./assessment";
 import {
@@ -15,7 +15,7 @@ import {
 
 export default function Home() {
   const { user } = useAuth();
-  const assessmentCreateModal = useAssessmentCreateModal();
+  const assessmentCreateModal = useAssessment();
   const [showGuestAssessment, setShowGuestAssessment] = useState(false);
   const [showGuestDialog, setShowGuestDialog] = useState(false);
 

@@ -5,11 +5,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAssessmentCreateModal } from "@/hooks/use-assessment-create-modal";
+import { useAssessment } from "@/hooks/use-assessment";
 import {
   Dialog,
   DialogContent,
@@ -60,8 +59,8 @@ const createAssessmentFormSchema = z.object({
 
 type CreateAssessmentFormValues = z.infer<typeof createAssessmentFormSchema>;
 
-export function AssessmentCreateModal() {
-  const assessmentCreateModal = useAssessmentCreateModal();
+export function Assessment() {
+  const assessmentCreateModal = useAssessment();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [, navigate] = useLocation();

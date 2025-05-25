@@ -7,7 +7,7 @@ import { NavUser } from "./nav-user";
 import { TeamSwitcher } from "./team-switcher";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { useAssessmentCreateModal } from "@/hooks/use-assessment-create-modal";
+import { useAssessment } from "@/hooks/use-assessment";
 import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
@@ -40,7 +40,7 @@ const defaultUser = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [location] = useLocation();
   const { user } = useAuth();
-  const assessmentCreateModal = useAssessmentCreateModal();
+  const assessmentCreateModal = useAssessment();
 
   // Get the currently selected team from localStorage
   const [selectedTeam, setSelectedTeam] = React.useState<{
@@ -77,9 +77,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: ClipboardCheck,
     },
     {
-      title: "Compare",
-      url: "/dashboard/compare",
+      title: "Track Progress",
+      url: "/dashboard/progress",
       icon: TrendingUp,
+      disabled: true,
     },
   ];
 
