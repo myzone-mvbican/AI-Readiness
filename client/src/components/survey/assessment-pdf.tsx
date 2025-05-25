@@ -12,7 +12,7 @@ import {
   Polygon,
 } from "@react-pdf/renderer";
 import { Download } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { formatDate, getRadarChartData } from "@/lib/utils";
 import { Assessment, CsvQuestion } from "@shared/types";
 import logoPath from "@/assets/logo-myzone-ai.png";
 
@@ -656,16 +656,9 @@ const RadarChartPDF = ({
 };
 
 // PDF Document
-const AssessmentPDF = ({
-  assessment,
-  questions,
-  chartData,
-}: {
-  assessment: Assessment;
-  questions: CsvQuestion[];
-  chartData: Array<{ name: string; score: number; fullMark: number }>;
-}) => {
-  const { answers = [], survey: { title: surveyTitle } = {} } = assessment;
+const AssessmentPDF = ({ assessment }: { assessment: Assessment }) => {
+  const { answers = [], survey: { title: surveyTitle, questions = [] } = {} } =
+    assessment;
   const score = assessment.score || 0;
 
   // Determine readiness level
@@ -678,6 +671,8 @@ const AssessmentPDF = ({
   // Calculate total pages: Cover + Results + Recommendations + Responses
   const answerPages = Math.ceil(answers.length / 10);
   const totalPages = 2 + (assessment.recommendations ? 5 : 1) + answerPages;
+
+  const chartData = getRadarChartData(assessment);
 
   return (
     <Document>
@@ -694,7 +689,7 @@ const AssessmentPDF = ({
           )}
 
           <View style={styles.contentBox}>
-            <Text style={styles.scoreText}>Score: {score} / 100</Text>
+            <Text style={styles.scoreText}>Score: {score / 10} / 10</Text>
             <View style={styles.divider} />
             <Text style={styles.dateText}>
               Report generated on: {formatDate(today)}
@@ -781,8 +776,8 @@ const AssessmentPDF = ({
                 Personalized AI Recommendations
               </Text>
               <Text style={styles.sectionSubtitle}>
-                Based on your assessment score of {score}/100 and insights from
-                "MyZone AI Blueprint"
+                Based on your assessment score of {score / 10}/10 and insights
+                from "MyZone AI Blueprint"
               </Text>
 
               {/* Using the RecommendationsContent component for each page */}
@@ -809,7 +804,7 @@ const AssessmentPDF = ({
 
               <Text style={styles.sectionTitle}>Recommendations</Text>
               <Text style={styles.sectionSubtitle}>
-                Based on your assessment score of {score}/100
+                Based on your assessment score of {score / 10}/10
               </Text>
 
               <View style={styles.recommendationBox}>
@@ -868,7 +863,9 @@ const AssessmentPDF = ({
 
             {pageAnswers.map((answer, index) => {
               const actualIndex = pageIndex * 10 + index;
-              const question = questions.find((q) => q.id === answer.q);
+              const question = questions.find(
+                (q: CsvQuestion) => Number(q.id) === answer.q,
+              );
               const { text: answerText, style: answerStyle } = getAnswerText(
                 answer.a,
               );
@@ -907,12 +904,8 @@ const AssessmentPDF = ({
 // Download Button Component
 export const AssessmentPDFDownloadButton = ({
   assessment,
-  questions,
-  chartData,
 }: {
   assessment: Assessment;
-  questions: CsvQuestion[];
-  chartData: Array<{ name: string; score: number; fullMark: number }>;
 }) => {
   const today = new Date();
   const year = today.getFullYear();
@@ -920,13 +913,7 @@ export const AssessmentPDFDownloadButton = ({
 
   return (
     <PDFDownloadLink
-      document={
-        <AssessmentPDF
-          assessment={assessment}
-          questions={questions}
-          chartData={chartData}
-        />
-      }
+      document={<AssessmentPDF assessment={assessment} />}
       fileName={filename}
       className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"
       style={{ textDecoration: "none" }}
