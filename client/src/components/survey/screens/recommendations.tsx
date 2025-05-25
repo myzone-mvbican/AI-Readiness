@@ -5,7 +5,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ToastAction } from "@/components/ui/toast";
 import { navigate } from "wouter/use-browser-location";
 import { Survey, Assessment } from "@shared/types";
-import { getCategoryScores } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -45,12 +44,10 @@ export default function ScreenRecommendations({
     RecommendationPayload
   >({
     mutationFn: async (data) => {
-      // Determine which endpoint to use based on authentication status
       const endpoint = isAuthenticated
         ? `/api/assessments/${assessment.id}`
         : `/api/public/assessments/${assessment.id}`;
 
-      // For authenticated users, we don't need to include email
       const payload = { recommendations: data.recommendations };
 
       const response = await apiRequest("PATCH", endpoint, payload);
@@ -98,55 +95,27 @@ export default function ScreenRecommendations({
       try {
         setIsLoading(true);
 
-        const categoryScores = getCategoryScores(assessment);
-        if (!categoryScores.length) {
-          throw new Error("No category scores available");
-        }
-
-        // Get company data from assessment
-        let companyData = null;
-        if (isAuthenticated) {
-          const { company, employeeCount, industry } = user || {};
-          companyData = {
-            name: company,
-            employeeCount: employeeCount,
-            industry: industry,
-          };
-        } else if (assessment.guest) {
-          try {
-            const guestData = JSON.parse(assessment.guest);
-            companyData = {
-              name: guestData.company || "",
-              employeeCount: guestData.employeeCount || "",
-              industry: guestData.industry || "",
-            };
-          } catch (error) {
-            console.error("Error parsing guest data:", error);
-          }
-        }
-
         // Same AI suggestions endpoint for both user types
         const response = await apiRequest("POST", "/api/ai-suggestions", {
-          categories: categoryScores,
-          ...(companyData && { company: companyData }),
+          assessment: assessment,
         });
 
         const result = await response.json();
-        if (!result.success || !result.content) {
+        if (!result.success || !result.recommendations) {
           throw new Error("Failed to generate recommendations");
         }
 
         // Create payload for saving recommendations
         const payload: RecommendationPayload = {
-          recommendations: result.content,
+          recommendations: result.recommendations,
         };
 
         // Save recommendations
         await saveRecommendationsMutation.mutateAsync(payload);
 
         // Manually update assessment in local memory to prevent refetch
-        if (assessment && result.content) {
-          assessment.recommendations = result.content;
+        if (assessment && result.recommendations) {
+          assessment.recommendations = result.recommendations;
         }
 
         toast({

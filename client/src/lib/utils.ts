@@ -46,6 +46,8 @@ export function getScore(answers: AssessmentAnswer[]) {
 interface CategoryScore {
     name: string;
     score: number;
+    previousScore: number | null;
+    benchmark: number | null;
 }
 
 export function getCategoryScores(
@@ -96,6 +98,8 @@ export function getCategoryScores(
             return {
                 name,
                 score: avgScore,
+                previousScore: null,
+                benchmark: null,
             };
         },
     );

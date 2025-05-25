@@ -1,10 +1,7 @@
-import { Request, Response } from "express";
-import { db } from "../db";
-import { eq, and, isNull } from "drizzle-orm";
+import { Request, Response } from "express"; 
 import { UserModel } from "../models/user.model";
 import { TeamModel } from "../models/team.model";
-import { AssessmentModel } from "../models/assessment.model";
-import { assessments } from "@shared/schema";
+import { AssessmentModel } from "../models/assessment.model"; 
 import {
   loginSchema,
   insertUserSchema,
