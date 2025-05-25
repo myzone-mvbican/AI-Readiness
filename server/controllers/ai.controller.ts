@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import OpenAI from "openai";
 import { UserModel } from "../models/user.model";
 import { getCategoryScores } from "@/lib/utils";
-import { Assessment } from "@shared/types";
+import { Assessment, AssessmentAnswer, CsvQuestion } from "@shared/types";
 
 // Define interface for request body
 interface AIRequestBody {
@@ -23,17 +23,25 @@ export class AIController {
     try {
       const { assessment } = req.body as AIRequestBody;
 
-      const { guest, userId, answers, survey: { questions } } = assessment;
+      const {
+        guest,
+        userId,
+        answers,
+        survey: { questions },
+      } = assessment;
 
       // Map answers to question text
-      const responses = answers.map((answer: any) => {
-        const question = questions.find((q: any) => Number(q.id) === answer.q);
+      const responses = answers.map((answer: AssessmentAnswer) => {
+        const question = questions.find(
+          (q: CsvQuestion) => Number(q.id) === answer.q,
+        );
         return {
           q: question?.question || `Question ${answer.q}`,
-          a: answer.a
+          a: answer.a,
         };
       });
 
+      // Parse guest data if available
       let company = null;
       if (guest) {
         try {
@@ -121,7 +129,7 @@ export class AIController {
 // Repeat this block for each category
 ## {{emoji}} {{category.name}}
 
-*Generate a 3–4-sentence summary, tailored recommendations, and identify patterns or outliers. If scores show critical issues, highlight them with urgency and suggest corrective actions or resources. All suggestions should be practical, data-driven, and context-aware.*
+*Generate a 4–5-sentence summary, tailored recommendations, and identify patterns or outliers. If scores show critical issues, highlight them with urgency and suggest corrective actions or resources. All suggestions should be practical, data-driven, and context-aware.*
 
 **How You Performed**
 
@@ -167,7 +175,8 @@ _Rationale:_ {{rock.rationale}}
 Inputs:
 - JSON object with:
 -- categories, each with name, score, previousScore, and benchmark.
--- with company data: name, employeeCount, industry.
+-- company data: name, employeeCount, industry.
+-- responses, each with question text and answer (-2 to 2 scale, where -2 is strongly disagree, 0 is neutral and 2 is strongly agree).
 Output/Ensure:
 - Do not create a title for the report - just start with the first category.
 - Do not output "usual" lines between categories.
