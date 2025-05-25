@@ -1,6 +1,7 @@
 import { db } from "../db";
 import { assessments, surveyStats, users, surveys } from "@shared/schema";
-import { eq, and, gte, lte, isNull, isNotNull, sql } from "drizzle-orm";
+import { CsvQuestion } from "@shared/types";
+import { eq, and, gte, lte, isNotNull } from "drizzle-orm";
 
 interface BenchmarkData {
   quarter: string;
@@ -131,23 +132,29 @@ export class BenchmarkService {
       }
 
       // For now, use the categories visible in your actual assessment results
-      const realCategories = [
-        "Strategy & Vision",
-        "Financial & Resources",
-        "Culture & Change Readiness",
-        "Governance, Ethics & Risk",
-        "Skills & Literacy",
-        "Process & Operations",
-        "Data & Information",
-        "Technology & Integration",
-      ];
+      const questions = survey[0].questions;
+      // Group questions by category
+      const categoryMap = new Map<string, number[]>();
 
+      questions.forEach((question: CsvQuestion, index: number) => {
+        const category = question.category;
+        if (!category) {
+          return;
+        }
+
+        if (!categoryMap.has(category)) {
+          categoryMap.set(category, []);
+        }
+
+        // Add this question's index to the category
+        categoryMap.get(category)?.push(index);
+      });
+
+      const categories = Array.from(categoryMap.entries());
       const categoryScores: Record<string, number> = {};
-      const answersPerCategory = Math.ceil(
-        answers.length / realCategories.length,
-      );
+      const answersPerCategory = Math.ceil(answers.length / categories.length);
 
-      realCategories.forEach((category, index) => {
+      categories.forEach((category, index) => {
         const startIndex = index * answersPerCategory;
         const endIndex = Math.min(
           (index + 1) * answersPerCategory,
@@ -167,7 +174,7 @@ export class BenchmarkService {
             ((rawScore + categoryAnswers.length * 2) /
               (categoryAnswers.length * 4)) *
             100;
-          categoryScores[category] = Math.round(adjustedScore); // Keep as 0-100 scale rounded
+          categoryScores[category[0]] = Math.round(adjustedScore); // Keep as 0-100 scale rounded
         }
       });
 
