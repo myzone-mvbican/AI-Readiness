@@ -221,183 +221,138 @@ export default function AssessmentCompare({ assessmentId }: AssessmentComparePro
           ? `Benchmark comparison with ${industry} average`
           : "Benchmark comparison with global average"}
       </p>
-      <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
-        {/* Interactive Pie Chart */}
-        <div className="lg:col-span-2">
-          <Card data-chart={pieChartId} className="flex flex-col">
-            <ChartStyle id={pieChartId} config={pieChartConfig} />
-            <CardHeader className="flex-row items-start space-y-0">
-              <div className="grid gap-1">
-                <CardTitle className="text-sm lg:text-lg">
-                  Compare against:
-                </CardTitle>
-              </div>
-              <Select
-                value={activeView}
-                onValueChange={(value: "industry" | "global") => {
-                  setActiveView(value);
-                  setActiveChart(value);
-                }}
-              >
-                <SelectTrigger
-                  className="ml-auto h-7 w-[130px] rounded-lg pl-2.5"
-                  aria-label="Select view"
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Side: Compare against selector and Pie Chart */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Compare against:</span>
+            <Select
+              value={activeView}
+              onValueChange={(value: "industry" | "global") => {
+                setActiveView(value);
+                setActiveChart(value);
+              }}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Select view" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem 
+                  value="industry" 
+                  disabled={!hasIndustryData}
                 >
-                  <SelectValue placeholder="Select view" />
-                </SelectTrigger>
-                <SelectContent align="end" className="rounded-xl">
-                  <SelectItem 
-                    value="industry" 
-                    className="rounded-lg" 
-                    disabled={!hasIndustryData}
-                  >
-                    <div className="flex items-center gap-2 text-xs capitalize">
-                      <span className={`flex h-3 w-3 shrink-0 rounded-sm ${hasIndustryData ? 'bg-chart-2' : 'bg-muted'}`} />
-                      {industry}
-                      {!hasIndustryData && (
-                        <span className="text-xs text-muted-foreground ml-1">(No data)</span>
-                      )}
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="global" className="rounded-lg">
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="flex h-3 w-3 shrink-0 rounded-sm bg-chart-3" />
-                      Global
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </CardHeader>
-            <CardContent className="pt-5 border-t border-border">
-              {/* Performance Indicator */}
-              <div className="mx-auto aspect-square w-full max-w-[250px]">
-                <ChartContainer
-                  config={pieChartConfig}
-                  className="mx-auto aspect-square w-full max-w-[250px]"
-                >
-                  <PieChart>
-                    <ChartTooltip
-                      cursor={false}
-                      content={<ChartTooltipContent hideLabel />}
-                    />
-                    <Pie
-                      data={pieData}
-                      dataKey="value"
-                      nameKey="type"
-                      innerRadius={60}
-                      strokeWidth={5}
-                      activeIndex={
-                        activeView === "industry" && hasIndustryData ? 1 : 
-                        activeView === "global" ? (hasIndustryData ? 2 : 1) : 0
-                      }
-                      activeShape={({
-                        outerRadius = 0,
-                        ...props
-                      }: any) => (
-                        <Sector {...props} outerRadius={outerRadius + 10} />
-                      )}
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                      <LabelList
-                        dataKey="value"
-                        className="fill-background"
-                        stroke="none"
-                        fontSize={12}
-                        formatter={(value: keyof typeof pieChartConfig) =>
-                          pieChartConfig[value as keyof typeof pieChartConfig]?.label
-                        }
-                      />
-                    </Pie>
-                  </PieChart>
-                </ChartContainer>
-              </div>
-              <div className="text-center mt-4">
-                <div className="text-2xl font-bold">{selectedScore}</div>
-                <div className="text-sm text-muted-foreground">
-                  {activeView === "industry" && hasIndustryData
-                    ? `${industry} Average`
-                    : "Global Average"}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                  <span className="capitalize">
+                    {industry}
+                    {!hasIndustryData && " (No data)"}
+                  </span>
+                </SelectItem>
+                <SelectItem value="global">Global</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        {/* Category Comparison Chart */}
-        <div className="lg:col-span-5">
-          <Card>
-            <CardHeader>
-              <CardTitle>Category Breakdown</CardTitle>
-              <CardDescription>
-                Compare your scores across different AI readiness categories
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer config={chartConfig}>
-                <BarChart
-                  accessibilityLayer
-                  data={chartData}
-                  layout="vertical"
-                  margin={{
-                    right: 16,
-                  }}
-                >
-                  <CartesianGrid horizontal={false} />
-                  <YAxis
-                    dataKey="name"
-                    type="category"
-                    tickLine={false}
-                    tickMargin={10}
-                    axisLine={false}
-                    tickFormatter={(value) => value.slice(0, 3)}
-                    hide
-                  />
-                  <XAxis dataKey="userScore" type="number" hide />
+          {/* Pie Chart */}
+          <div className="flex flex-col items-center">
+            <div className="w-64 h-64">
+              <ChartContainer
+                config={pieChartConfig}
+                className="w-full h-full"
+              >
+                <PieChart>
                   <ChartTooltip
                     cursor={false}
-                    content={<ChartTooltipContent indicator="line" />}
+                    content={<ChartTooltipContent hideLabel />}
                   />
-                  <Bar
-                    dataKey="userScore"
-                    layout="horizontal"
-                    fill="var(--color-userScore)"
-                    radius={4}
+                  <Pie
+                    data={pieData}
+                    dataKey="value"
+                    nameKey="type"
+                    innerRadius={60}
+                    outerRadius={120}
+                    strokeWidth={2}
                   >
-                    <LabelList
-                      dataKey="name"
-                      position="insideLeft"
-                      offset={8}
-                      className="fill-[--color-label]"
-                      fontSize={12}
-                    />
-                    <LabelList
-                      dataKey="userScore"
-                      position="right"
-                      offset={8}
-                      className="fill-foreground"
-                      fontSize={12}
-                    />
-                  </Bar>
-                  <Bar
-                    dataKey="benchmark"
-                    layout="horizontal"
-                    fill="var(--color-benchmark)"
-                    radius={4}
-                  >
-                    <LabelList
-                      dataKey="benchmark"
-                      position="right"
-                      offset={8}
-                      className="fill-foreground"
-                      fontSize={12}
-                    />
-                  </Bar>
-                </BarChart>
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                </PieChart>
               </ChartContainer>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="text-center mt-4">
+              <div className="text-2xl font-bold">{selectedScore}</div>
+              <div className="text-sm text-muted-foreground">
+                {activeView === "industry" && hasIndustryData
+                  ? `${industry} Average`
+                  : "Global Average"}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side: Category Breakdown */}
+        <div>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold">Category Breakdown</h3>
+            <p className="text-sm text-muted-foreground">
+              Compare your scores across different AI readiness categories
+            </p>
+          </div>
+          
+          <ChartContainer config={chartConfig}>
+            <BarChart
+              accessibilityLayer
+              data={chartData}
+              layout="vertical"
+              margin={{
+                left: 20,
+                right: 16,
+              }}
+            >
+              <CartesianGrid horizontal={false} />
+              <YAxis
+                dataKey="name"
+                type="category"
+                tickLine={false}
+                tickMargin={10}
+                axisLine={false}
+                tickFormatter={(value: string) => value.slice(0, 20)}
+                width={150}
+              />
+              <XAxis dataKey="userScore" type="number" hide />
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent indicator="line" />}
+              />
+              <Bar
+                dataKey="userScore"
+                layout="horizontal"
+                fill="var(--color-userScore)"
+                radius={4}
+              >
+                <LabelList
+                  dataKey="userScore"
+                  position="right"
+                  offset={8}
+                  className="fill-foreground"
+                  fontSize={12}
+                />
+              </Bar>
+              <Bar
+                dataKey="benchmark"
+                layout="horizontal"
+                fill="var(--color-benchmark)"
+                radius={4}
+              >
+                <LabelList
+                  dataKey="benchmark"
+                  position="right"
+                  offset={8}
+                  className="fill-foreground"
+                  fontSize={12}
+                />
+              </Bar>
+            </BarChart>
+          </ChartContainer>
         </div>
       </div>
 
