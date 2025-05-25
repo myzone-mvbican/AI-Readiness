@@ -34,7 +34,6 @@ import { navigate } from "wouter/use-browser-location";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ReactMarkdown from "react-markdown";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { CsvQuestion, Assessment } from "@shared/types";
 import { AssessmentPDFDownloadButton } from "./assessment-pdf";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -43,6 +42,8 @@ import { formatDate } from "@/lib/utils";
 import { getCategoryScores } from "@/lib/generateRecommendations";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+// Screens
+import ScreenAnswers from "./screens/answers";
 import ScreenCompare from "./screens/compare";
 
 interface SurveyCompletedProps {
@@ -64,8 +65,6 @@ export default function SurveyCompleted({
   additionalActions,
 }: SurveyCompletedProps) {
   const { toast } = useToast();
-  const { answers = [] } = assessment;
-  const responsesRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<HTMLDivElement>(null);
 
   // State for PDF generation and tracking recommendations request
@@ -230,18 +229,6 @@ export default function SurveyCompleted({
       subject: category.name,
       fullMark: 10,
     }));
-  };
-
-  // Helper function to find question text by ID
-  const getQuestionTextById = (
-    questionId: number | null | undefined,
-  ): string => {
-    if (questionId === null || questionId === undefined) {
-      return `Unknown Question`;
-    }
-    // Find the matching question by number
-    const question = questions.find((q: CsvQuestion) => q.id === questionId);
-    return question?.question || `Question ${questionId}`;
   };
 
   return (
@@ -451,46 +438,7 @@ export default function SurveyCompleted({
         </TabsContent>
 
         <TabsContent value="responses">
-          <ScrollArea className="h-[calc(100dvh-330px)] rounded-md border p-4">
-            <div ref={responsesRef}>
-              {answers.map((answer: any, index: number) => (
-                <div key={`answer-${index}`}>
-                  <div className="flex items-start gap-2">
-                    <h3 className="text-sm text-foreground md:text-base font-medium flex-1">
-                      Question {index + 1}: {getQuestionTextById(answer.q)}
-                    </h3>
-                    {questions.find((q) => q.id === answer.q)?.details && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <InfoIcon className="h-4 w-4 dark:text-white flex-shrink-0 mt-1" />
-                        </TooltipTrigger>
-                        <TooltipContent className="p-2 max-w-[400px]">
-                          {questions.find((q) => q.id === answer.q)?.details}
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Your answer:{" "}
-                    <span className="font-medium">
-                      {answer.a === 2
-                        ? "Strongly Agree"
-                        : answer.a === 1
-                          ? "Agree"
-                          : answer.a === 0
-                            ? "Neutral"
-                            : answer.a === -1
-                              ? "Disagree"
-                              : answer.a === -2
-                                ? "Strongly Disagree"
-                                : "Not answered"}
-                    </span>
-                  </p>
-                  <Separator className="my-4" />
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
+          <ScreenAnswers assessment={assessment} />
         </TabsContent>
 
         <TabsContent value="suggestions">
@@ -521,10 +469,7 @@ export default function SurveyCompleted({
         </TabsContent>
 
         <TabsContent value="compare">
-          <ScreenCompare
-            assessmentId={assessment.id}
-            isAuthenticated={isAuthenticated}
-          />
+          <ScreenCompare assessment={assessment} />
         </TabsContent>
       </Tabs>
     </div>
