@@ -17,6 +17,40 @@ import SurveyLoading from "./loading";
 import SurveyCompleted from "@/components/survey/survey-completed";
 import SurveyTemplate from "@/components/survey/survey-template";
 
+const validatedAnswers = ({questions, answers}: {
+  questions: Array<CsvQuestion>;
+  answers: Array<AssessmentAnswer>
+}) => answers.map((answer, index) => {
+  // Make sure q field is always properly set and is a number
+  if (answer.q === null || answer.q === undefined) {
+    // If q is missing, get it from the survey questions
+    const questionNumber = questions[index]?.id || index + 1;
+    return {
+      ...answer,
+      q: Number(questionNumber),
+    };
+  }
+  return {
+    ...answer,
+    q: typeof answer.q === "string" ? Number(answer.q) : answer.q,
+  };
+});
+
+const AdditionalActions = () => {
+  const [, navigate] = useLocation();
+
+  return (
+    <Button
+      variant="outline"
+      onClick={() => {
+        navigate("/dashboard/assessments");
+      }}
+    >
+      Return to Assessments
+    </Button>
+  );
+};
+
 export default function AssessmentDetailPage() {
   const { toast } = useToast();
   const [, params] = useRoute("/dashboard/assessments/:id");
@@ -145,27 +179,9 @@ export default function AssessmentDetailPage() {
   const handleSave = () => {
     setIsSubmitting(true);
 
-    // Ensure all answers have proper question numbers
-    const validatedAnswers = answers.map((answer, index) => {
-      // Make sure q field is always properly set and is a number
-      if (answer.q === null || answer.q === undefined) {
-        // If q is missing, get it from the survey questions
-        const questionNumber = questions[index]?.id || index + 1;
-        return {
-          ...answer,
-          q: Number(questionNumber),
-        };
-      }
-
-      return {
-        ...answer,
-        q: typeof answer.q === "string" ? Number(answer.q) : answer.q,
-      };
-    });
-
     updateAssessmentMutation.mutate({
       status: "in-progress",
-      answers: validatedAnswers,
+      answers: validatedAnswers({ questions, answers }),
     });
   };
 
@@ -176,28 +192,11 @@ export default function AssessmentDetailPage() {
 
   // Confirm assessment completion
   const confirmComplete = () => {
-    setIsSubmitting(true);
-
-    // Ensure all answers have proper question numbers before completing
-    const validatedAnswers = answers.map((answer, index) => {
-      // Make sure q field is always properly set and is a number
-      if (answer.q === null || answer.q === undefined) {
-        // If q is missing, get it from the survey questions
-        const questionNumber = questions[index]?.id || index + 1;
-        return {
-          ...answer,
-          q: Number(questionNumber),
-        };
-      }
-      return {
-        ...answer,
-        q: typeof answer.q === "string" ? Number(answer.q) : answer.q,
-      };
-    });
+    setIsSubmitting(true); 
 
     updateAssessmentMutation.mutate({
       status: "completed",
-      answers: validatedAnswers,
+      answers: validatedAnswers({ questions, answers }),
     });
   };
 
@@ -234,19 +233,6 @@ export default function AssessmentDetailPage() {
   if (error || !assessment) {
     return <SurveyError />;
   }
-
-  const AdditionalActions = () => {
-    return (
-      <Button
-        variant="outline"
-        onClick={() => {
-          navigate("/dashboard/assessments");
-        }}
-      >
-        Return to Assessments
-      </Button>
-    );
-  };
 
   return (
     <DashboardLayout title={assessment.title}>

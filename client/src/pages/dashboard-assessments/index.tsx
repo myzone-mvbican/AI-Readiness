@@ -67,17 +67,6 @@ export default function AssessmentsPage() {
     },
   });
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <DashboardLayout title="Your Assessments">
-        <div className="flex items-center justify-center h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
   return (
     <DashboardLayout title="Your Assessments">
       <div className="space-y-6">
@@ -104,7 +93,11 @@ export default function AssessmentsPage() {
           </div>
         </div>
 
-        {error ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center h-[400px]">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : error ? (
           // Error state
           <div className="text-center py-8 text-red-500">
             <p>Failed to load assessments. Please try again.</p>

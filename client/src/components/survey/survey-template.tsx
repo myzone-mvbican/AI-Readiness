@@ -25,18 +25,20 @@ import {
   ArrowRight,
   CheckCircle2,
 } from "lucide-react";
-import { CsvQuestion, Assessment, AssessmentAnswer } from "@shared/types";
+import {
+  CsvQuestion,
+  Assessment,
+  AssessmentAnswer,
+  Survey,
+} from "@shared/types";
 
 import SurveyQuestion from "@/components/survey/survey-question";
 import AlertCompleted from "@/components/survey/alert-completed";
 
 interface SurveyTemplateProps {
   // Assessment data
-  assessment: Partial<Assessment> & {
-    survey?: { title: string };
-    title?: string;
-    status?: string;
-    updatedAt?: string;
+  assessment: Assessment & {
+    survey?: Survey;
   };
   surveyTitle?: string; // For guest mode where data might not have nested survey property
 

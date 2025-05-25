@@ -36,6 +36,7 @@ import { formatDate } from "@/lib/utils";
 import { getCategoryScores } from "@/lib/generateRecommendations";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import AssessmentCompare from "./assessment-compare";
 
 interface SurveyCompletedProps {
   assessment: Assessment;
@@ -149,19 +150,19 @@ export default function SurveyCompleted({
           try {
             const guestData = JSON.parse(assessment.guest);
             companyData = {
-              name: guestData.company || '',
-              employeeCount: guestData.employeeCount || '',
-              industry: guestData.industry || ''
+              name: guestData.company || "",
+              employeeCount: guestData.employeeCount || "",
+              industry: guestData.industry || "",
             };
           } catch (error) {
-            console.error('Error parsing guest data:', error);
+            console.error("Error parsing guest data:", error);
           }
         }
 
         // Same AI suggestions endpoint for both user types
         const response = await apiRequest("POST", "/api/ai-suggestions", {
           categories: categoryScores,
-          ...(companyData && { company: companyData })
+          ...(companyData && { company: companyData }),
         });
 
         const result = await response.json();
@@ -285,10 +286,11 @@ export default function SurveyCompleted({
       </div>
 
       <Tabs defaultValue="results" className="mt-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="results">Results</TabsTrigger>
           <TabsTrigger value="responses">Your Responses</TabsTrigger>
           <TabsTrigger value="suggestions">AI Suggestions</TabsTrigger>
+          <TabsTrigger value="compare">Compare</TabsTrigger>
         </TabsList>
 
         <TabsContent value="results">

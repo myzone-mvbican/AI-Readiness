@@ -26,7 +26,7 @@ export function Loading({ type }: { type: string }) {
           body: "Please try again later or contact support",
         });
         break;
-      case "none": 
+      case "none":
         setText({
           head: "No completed assessments found",
           body: "Complete an assessment to see benchmark comparisons",
@@ -37,16 +37,18 @@ export function Loading({ type }: { type: string }) {
 
   return (
     <DashboardLayout title="Loading Benchmark">
-      <div className="grid grid-cols-1 space-y-3">
-        <div className="col-span-1 flex items-center space-x-2">
-          <TrendingUp className="h-6 w-6 text-foreground" />
-          <h2 className="text-xl text-foreground font-semibold">
-            Your Assessments
-          </h2>
+      <div className="grid grid-cols-1 space-y-6">
+        <div className="grid grid-cols-1 space-y-3">
+          <div className="col-span-1 flex items-center space-x-2">
+            <TrendingUp className="h-6 w-6 text-foreground" />
+            <h2 className="text-xl text-foreground font-semibold">
+              Your Assessments
+            </h2>
+          </div>
+          <p className="text-muted-foreground mt-2">
+            Your company AI Readiness vs global benchmarks.
+          </p>
         </div>
-        <p className="text-muted-foreground mt-2">
-          Your company AI Readiness vs global benchmarks.
-        </p>
         <Card>
           <CardContent className="p-6">
             <div className="text-center text-muted-foreground">

@@ -160,7 +160,7 @@
   }
 
   p {
-    @apply text-gray-800;
+    @apply text-muted-foreground;
 
     + :is(ol, ul) {
       margin-top: .5rem;
@@ -169,7 +169,7 @@
 
   ol,
   ul {
-    @apply text-gray-800;
+    @apply text-muted-foreground;
     padding-left: 1.1em;
     line-height: 1.5;
   }

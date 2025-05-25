@@ -256,7 +256,7 @@ export default function DashboardCompare() {
               : `${company}'s AI Readiness vs global benchmarks.`}
           </p>
         </div>
-        <p className="text-sm lg:text-lg font-medium">
+        <p className="text-sm lg:text-lg text-foreground font-medium">
           {activeChart === "industry"
             ? `Benchmark comparison with ${industry} average`
             : "Benchmark comparison with global average"}

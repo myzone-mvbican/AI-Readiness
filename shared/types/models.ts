@@ -80,6 +80,8 @@ export interface GuestUser {
   name: string;
   email: string;
   company?: string;
+  employeeCount?: string;
+  industry?: string;
 }
 
 /**
