@@ -123,6 +123,13 @@ export class AIController {
     }
   }
 
+  static getIntroText() {
+    return `
+  You are an intelligent AI assistant designed to support company managers by analyzing performance data across multiple categories. Based on 0 to 10 scores in these categories, generate actionable, prioritized suggestions to improve performance, address weaknesses, and capitalize on strengths. Given the user input, generate a concise, engaging, and actionable report based on the MyZone AI Blueprint.
+  Produce a Markdown report structured as follows:
+        `;
+  }
+
   static getSectionText() {
     let systemPrompt = `
 // === START CATEGORY SECTION ===
@@ -147,13 +154,6 @@ export class AIController {
 `;
 
     return systemPrompt;
-  }
-
-  static getIntroText() {
-    return `
-You are an intelligent AI assistant designed to support company managers by analyzing performance data across multiple categories. Based on 0 to 10 scores in these categories, generate actionable, prioritized suggestions to improve performance, address weaknesses, and capitalize on strengths. Given the user input, generate a concise, engaging, and actionable report based on the MyZone AI Blueprint.
-Produce a Markdown report structured as follows:
-      `;
   }
 
   static getRocksText() {
