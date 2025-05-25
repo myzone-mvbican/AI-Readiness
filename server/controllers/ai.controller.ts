@@ -25,6 +25,15 @@ export class AIController {
 
       const { guest, userId, answers, survey: { questions } } = assessment;
 
+      // Map answers to question text
+      const responses = answers.map((answer: any) => {
+        const question = questions.find((q: any) => Number(q.id) === answer.q);
+        return {
+          q: question?.question || `Question ${answer.q}`,
+          a: answer.a
+        };
+      });
+
       let company = null;
       if (guest) {
         try {
