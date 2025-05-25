@@ -97,6 +97,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: "/dashboard/admin/users",
           icon: Users,
         },
+        {
+          title: "Settings",
+          url: "/dashboard/admin/settings",
+          icon: Settings,
+        },
       ]
     : [];
 

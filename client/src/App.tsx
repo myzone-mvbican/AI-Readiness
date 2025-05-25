@@ -28,6 +28,7 @@ import AssessmentDetailPage from "@/pages/dashboard-assessments/[id]";
 // Admin pages
 import AdminSurveysPage from "@/pages/dashboard-surveys";
 import AdminUsersPage from "@/pages/dashboard-users";
+import AdminSettingsPage from "@/pages/dashboard-admin/settings";
 // Account settings page
 import AccountSettingsPage from "./pages/account-settings";
 
@@ -66,6 +67,10 @@ function Router() {
         <AdminProtectedRoute
           path="/dashboard/admin/users"
           component={AdminUsersPage}
+        />
+        <AdminProtectedRoute
+          path="/dashboard/admin/settings"
+          component={AdminSettingsPage}
         />
         <ProtectedRoute path="/dashboard/:rest*" component={DashboardHome} />
         <Route component={NotFound} />

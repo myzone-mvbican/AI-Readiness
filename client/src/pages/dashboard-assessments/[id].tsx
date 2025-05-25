@@ -66,6 +66,12 @@ export default function AssessmentDetailPage() {
   const [questions, setQuestions] = useState<Array<CsvQuestion>>([]);
   const [answers, setAnswers] = useState<Array<AssessmentAnswer>>([]);
 
+  // const datas = async () => {
+  //   return await apiRequest("POST", "/api/admin/benchmark/recalculate");
+  // };
+
+  // datas();
+
   // Fetch assessment data
   const { data, isLoading, error } = useQuery<
     AssessmentResponse & { survey: Survey }
