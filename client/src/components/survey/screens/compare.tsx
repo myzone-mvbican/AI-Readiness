@@ -14,7 +14,9 @@ import {
   Pie,
   PieChart,
   Label,
+  Sector,
 } from "recharts";
+import { PieSectorDataItem } from "recharts/types/polar/Pie";
 import {
   Card,
   CardHeader,
@@ -214,12 +216,14 @@ export default function ScreenCompare({ assessment }: ScreenCompare) {
   // Chart configuration
   const chartConfig = {
     userScore: {
-      label: `${company} score`,
+      label: (
+        <span className="text-foreground capitalize">{company} score</span>
+      ),
       color: "hsl(var(--chart-1))",
     },
     benchmark: {
       label: (
-        <span className="capitalize">
+        <span className="text-foreground capitalize">
           {activeView === "industry" ? `${industry} average` : "Global average"}
         </span>
       ),
@@ -230,7 +234,7 @@ export default function ScreenCompare({ assessment }: ScreenCompare) {
   // Pie chart configuration
   const pieChartConfig = {
     company: {
-      label: company,
+      label: <span className="capitalize">{company}</span>,
       color: "hsl(var(--chart-1))",
     },
     industry: {
@@ -339,6 +343,20 @@ export default function ScreenCompare({ assessment }: ScreenCompare) {
                   nameKey="type"
                   innerRadius={60}
                   strokeWidth={5}
+                  activeIndex={0}
+                  activeShape={({
+                    outerRadius = 0,
+                    ...props
+                  }: PieSectorDataItem) => (
+                    <g>
+                      <Sector {...props} outerRadius={outerRadius + 10} />
+                      <Sector
+                        {...props}
+                        outerRadius={outerRadius + 25}
+                        innerRadius={outerRadius + 12}
+                      />
+                    </g>
+                  )}
                 >
                   <Label
                     content={({ viewBox }) => {

@@ -2,12 +2,12 @@ import React from "react";
 import { InfoIcon } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Survey, Assessment, CsvQuestion } from "@shared/types";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Survey, Assessment, CsvQuestion } from "@shared/types";
 
 interface ScreenAnswers {
   assessment: Assessment & { survey?: Survey };

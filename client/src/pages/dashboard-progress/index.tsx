@@ -201,12 +201,14 @@ export default function DashboardCompare() {
   // Chart configuration
   const chartConfig = {
     userScore: {
-      label: `${company} score`,
+      label: (
+        <span className="text-foreground capitalize">{company} score</span>
+      ),
       color: "hsl(var(--chart-1))",
     },
     benchmark: {
       label: (
-        <span className="capitalize">
+        <span className="text-foreground capitalize">
           {activeChart === "industry"
             ? `${industry} average`
             : "Global average"}
