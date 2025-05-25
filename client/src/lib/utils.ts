@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { format } from "date-fns";
+import { Assessment, Survey, CsvQuestion } from "@shared/types";
 import { AssessmentAnswer } from "@shared/types/models";
 
 export function cn(...inputs: ClassValue[]) {
@@ -38,6 +39,87 @@ export function getScore(answers: AssessmentAnswer[]) {
 
     return score;
 }
+
+/**
+ * Calculate category scores based on assessment answers
+ */
+interface CategoryScore {
+    name: string;
+    score: number;
+}
+
+export function getCategoryScores(
+    assessment: Assessment & { survey: Survey },
+): CategoryScore[] {
+    const {
+        answers = [],
+        survey: { questions = [] },
+    } = assessment;
+
+    // Group questions by category
+    const categoryMap = new Map<string, number[]>();
+
+    questions.forEach((question: CsvQuestion, index: number) => {
+        const category = question.category;
+        if (!category) {
+            return;
+        }
+
+        if (!categoryMap.has(category)) {
+            categoryMap.set(category, []);
+        }
+
+        // Add this question's index to the category
+        categoryMap.get(category)?.push(index);
+    });
+
+    // Calculate average score for each category
+    const categoryScores = Array.from(categoryMap.entries()).map(
+        ([name, questionIndices]) => {
+            // Get answers for this category's questions
+            const categoryAnswers = questionIndices
+                .map((idx: number) => answers[idx])
+                .filter((a: any) => a && a.a !== null);
+
+            // Calculate average score
+            const sum = categoryAnswers.reduce((acc: number, ans: any) => {
+                // Convert from -2 to +2 scale to 0 to 10 scale
+                const score = ((ans.a || 0) + 2) * 2.5;
+                return acc + score;
+            }, 0);
+
+            const avgScore =
+                categoryAnswers.length > 0
+                    ? Math.round((sum / categoryAnswers.length) * 10) / 10
+                    : 0;
+
+            return {
+                name,
+                score: avgScore,
+            };
+        },
+    );
+
+    return categoryScores;
+}
+
+// Define radar chart data type
+interface RadarChartData {
+    name: string;
+    score: number;
+    fullMark: number;
+}
+
+// Function to prepare data for radar chart
+export const getRadarChartData = (
+    assessment: Assessment & { survey: Survey },
+): RadarChartData[] => {
+    return getCategoryScores(assessment).map((category) => ({
+        ...category,
+        subject: category.name,
+        fullMark: 10,
+    }));
+};
 
 export function getInitials(name: string) {
     if (!name || typeof name !== "string") return "";
