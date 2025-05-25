@@ -1,453 +1,61 @@
-import React, { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/use-auth";
-import { TrendingUp, Building2 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/dashboard";
-import { Badge } from "@/components/ui/badge";
-import { Loading } from "./loading";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  LabelList,
-  Pie,
-  PieChart,
-  Label,
-} from "recharts";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
-  ChartStyle,
-} from "@/components/ui/chart";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-interface BenchmarkData {
-  quarter: string;
-  surveyTemplateId: number;
-  industry: string;
-  categories: {
-    name: string;
-    userScore: number;
-    industryAverage: number | null;
-    globalAverage: number | null;
-  }[];
-}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, ArrowRight, BarChart3 } from "lucide-react";
+import { Link } from "wouter";
 
 export default function DashboardCompare() {
-  const { user } = useAuth();
-  const [activeChart, setActiveChart] = useState<"industry" | "global">(
-    "global",
-  );
-  const [activeView, setActiveView] = useState<"industry" | "global">("global");
-
-  // Fetch user's completed assessments
-  const { data: assessments } = useQuery<{
-    success: boolean;
-    assessments: Array<{
-      id: number;
-      title: string;
-      status: string;
-      completedOn: string | null;
-      score: number | null;
-    }>;
-  }>({
-    queryKey: ["/api/assessments"],
-    enabled: !!user,
-  });
-
-  // Find the most recent completed assessment
-  const latestCompletedAssessment = assessments?.assessments
-    ?.filter((a) => a.status === "completed" && a.completedOn)
-    ?.sort(
-      (a, b) =>
-        new Date(b.completedOn!).getTime() - new Date(a.completedOn!).getTime(),
-    )?.[0];
-
-  const {
-    data: benchmarkData,
-    isLoading,
-    error,
-  } = useQuery<{
-    success: boolean;
-    data: BenchmarkData;
-  }>({
-    queryKey: [`/api/assessments/${latestCompletedAssessment?.id}/benchmark`],
-    enabled: !!latestCompletedAssessment?.id,
-  });
-
-  // Auto-select Global when user's industry has no data (must be before conditional returns)
-  useEffect(() => {
-    if (
-      benchmarkData?.data &&
-      !benchmarkData.data.categories.some((c) => c.industryAverage !== null) &&
-      activeChart === "industry"
-    ) {
-      setActiveChart("global");
-      setActiveView("global");
-    }
-  }, [benchmarkData, activeChart]);
-
-  if (!latestCompletedAssessment) {
-    return <Loading type="none" />;
-  }
-
-  if (isLoading) {
-    return <Loading type="loading" />;
-  }
-
-  if (error || !benchmarkData?.success || !benchmarkData?.data) {
-    return <Loading type="error" />;
-  }
-
-  const { data } = benchmarkData;
-  const { company = "Your company", industry = "Industry" } = user || {};
-
-  // Calculate statistics
-  const hasIndustryData = data.categories.some(
-    (c) => c.industryAverage !== null,
-  );
-
-  const avgUserScore =
-    data.categories.reduce((sum, c) => sum + c.userScore, 0) /
-    data.categories.length;
-
-  const avgIndustryScore = hasIndustryData
-    ? data.categories
-        .filter((c) => c.industryAverage !== null)
-        .reduce((sum, c) => sum + (c.industryAverage || 0), 0) /
-      data.categories.filter((c) => c.industryAverage !== null).length
-    : null;
-
-  const avgGlobalScore =
-    data.categories.reduce((sum, c) => sum + (c.globalAverage || 0), 0) /
-    data.categories.length;
-
-  // Calculate total averages for the switcher display
-  const userTotal = Math.round(avgUserScore) / 10;
-
-  const industryTotal =
-    hasIndustryData && avgIndustryScore
-      ? Math.round(avgIndustryScore) / 10
-      : null;
-
-  const globalTotal = Math.round(avgGlobalScore) / 10;
-
-  // Prepare chart data based on active comparison
-  const chartData = data.categories.map((category) => {
-    const benchmarkValue =
-      activeChart === "industry"
-        ? category.industryAverage
-        : category.globalAverage;
-
-    return {
-      name: category.name.replace(/ & /g, " &\n"),
-      userScore: Math.round(category.userScore) / 10,
-      benchmark: benchmarkValue ? Math.round(benchmarkValue) / 10 : null,
-    };
-  });
-
-  // Prepare pie chart data for company/industry/global comparison
-  const pieChartData = [
-    {
-      type: "company",
-      value: userTotal,
-      fill: "hsl(var(--chart-1))",
-    },
-    ...(hasIndustryData && industryTotal
-      ? [
-          {
-            type: "industry",
-            value: industryTotal,
-            fill: "hsl(var(--chart-2))",
-          },
-        ]
-      : []),
-    {
-      type: "global",
-      value: globalTotal,
-      fill: "hsl(var(--chart-3))",
-    },
-  ];
-
-  const pieChartId = "pie-interactive";
-
-  // Get the selected score for pie chart center
-  let selectedScore = userTotal;
-  if (activeView === "industry" && industryTotal) {
-    selectedScore = industryTotal;
-  } else if (activeView === "global") {
-    selectedScore = globalTotal;
-  }
-
-  // Chart configuration
-  const chartConfig = {
-    userScore: {
-      label: `${company} score`,
-      color: "hsl(var(--chart-1))",
-    },
-    benchmark: {
-      label: (
-        <span className="capitalize">
-          {activeChart === "industry"
-            ? `${industry} average`
-            : "Global average"}
-        </span>
-      ),
-      color: "hsl(var(--chart-2))",
-    },
-  } satisfies ChartConfig;
-
-  // Pie chart configuration
-  const pieChartConfig = {
-    company: {
-      label: company,
-      color: "hsl(var(--chart-1))",
-    },
-    industry: {
-      label: <span className="capitalize">{industry}</span>,
-      color: "hsl(var(--chart-2))",
-    },
-    global: {
-      label: "Global",
-      color: "hsl(var(--chart-3))",
-    },
-  } satisfies ChartConfig;
-
-  const performanceIndicator = avgIndustryScore
-    ? avgUserScore > avgIndustryScore
-      ? "above"
-      : "below"
-    : avgUserScore > avgGlobalScore
-      ? "above"
-      : "below";
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="grid grid-cols-1 space-y-3">
-          <div className="col-span-1 flex items-center space-x-2">
-            <TrendingUp className="h-6 w-6 text-foreground" />
-            <h2 className="text-xl text-foreground font-semibold">
-              Your Assessments
-            </h2>
-          </div>
-          <p className="text-muted-foreground mt-2">
-            {activeChart === "industry"
-              ? `${company}'s AI Readiness vs ${industry} benchmarks.`
-              : `${company}'s AI Readiness vs global benchmarks.`}
-          </p>
-        </div>
-        <p className="text-sm lg:text-lg text-foreground font-medium">
-          {activeChart === "industry"
-            ? `Benchmark comparison with ${industry} average`
-            : "Benchmark comparison with global average"}
-        </p>
-        <div className="grid grid-cols-1 lg:grid-cols-7">
-          {/* Interactive Pie Chart */}
-          <div className="lg:col-span-2">
-            <Card data-chart={pieChartId} className="flex flex-col">
-              <ChartStyle id={pieChartId} config={pieChartConfig} />
-              <CardHeader className="flex-row items-start space-y-0">
-                <div className="grid gap-1">
-                  <CardTitle className="text-sm lg:text-lg">
-                    Compare against:
-                  </CardTitle>
-                </div>
-                <Select
-                  value={activeView}
-                  onValueChange={(value: "industry" | "global") => {
-                    setActiveView(value);
-                    setActiveChart(value);
-                  }}
-                >
-                  <SelectTrigger
-                    className="ml-auto h-7 w-[130px] rounded-lg pl-2.5"
-                    aria-label="Select view"
-                  >
-                    <SelectValue placeholder="Select view" />
-                  </SelectTrigger>
-                  <SelectContent align="end" className="rounded-xl">
-                    <SelectItem
-                      value="industry"
-                      className="rounded-lg"
-                      disabled={!hasIndustryData}
-                    >
-                      <div className="flex items-center gap-2 text-xs capitalize">
-                        <span
-                          className={`flex h-3 w-3 shrink-0 rounded-sm ${hasIndustryData ? "bg-chart-2" : "bg-muted"}`}
-                        />
-                        {industry}
-                        {!hasIndustryData && (
-                          <span className="text-xs text-muted-foreground ml-1">
-                            (No data)
-                          </span>
-                        )}
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="global" className="rounded-lg">
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className="flex h-3 w-3 shrink-0 rounded-sm bg-chart-3" />
-                        Global
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </CardHeader>
-              <CardContent className="pt-5 border-t border-border">
-                {/* Performance Indicator */}
-                {performanceIndicator && (
-                  <div className="flex flex-col gap-3 items-center justify-center">
-                    <p className="text-muted-foreground">
-                      {company} scored {(avgUserScore / 10).toFixed(1)}
-                    </p>
-                    <Badge
-                      variant={
-                        performanceIndicator === "above"
-                          ? "success"
-                          : "destructive"
-                      }
-                    >
-                      {performanceIndicator === "above"
-                        ? "Above Average"
-                        : "Below Average"}
-                    </Badge>
-                  </div>
-                )}
-                <ChartContainer
-                  id={pieChartId}
-                  config={pieChartConfig}
-                  className="mx-auto aspect-square w-full max-w-[300px]"
-                >
-                  <PieChart>
-                    <ChartTooltip
-                      cursor={false}
-                      content={<ChartTooltipContent hideLabel />}
-                    />
-                    <Pie
-                      data={pieChartData}
-                      dataKey="value"
-                      nameKey="type"
-                      innerRadius={60}
-                      strokeWidth={5}
-                    >
-                      <Label
-                        content={({ viewBox }) => {
-                          if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                            return (
-                              <text
-                                x={viewBox.cx}
-                                y={viewBox.cy}
-                                textAnchor="middle"
-                                dominantBaseline="middle"
-                              >
-                                <tspan
-                                  x={viewBox.cx}
-                                  y={viewBox.cy}
-                                  className="fill-foreground text-3xl font-bold"
-                                >
-                                  {selectedScore.toFixed(1)}
-                                </tspan>
-                                <tspan
-                                  x={viewBox.cx}
-                                  y={(viewBox.cy || 0) + 24}
-                                  className="fill-muted-foreground"
-                                >
-                                  {activeView === "industry"
-                                    ? "Industry Avg"
-                                    : "Global Avg"}
-                                </tspan>
-                              </text>
-                            );
-                          }
-                        }}
-                      />
-                    </Pie>
-                  </PieChart>
-                </ChartContainer>
-              </CardContent>
-              <CardFooter className="pt-5 border-t border-border">
-                <p className="text-xs lg:text-[1rem] text-muted-foreground">
-                  {activeChart === "industry"
-                    ? `Based on ${data.industry} submissions in ${data.quarter}`
-                    : `Based on global submissions in ${data.quarter}`}
-                </p>
-              </CardFooter>
-            </Card>
-          </div>
-          <div className="lg:col-span-5 hidden lg:block">
-            {/* Chart */}
-            <ChartContainer config={chartConfig}>
-              <BarChart accessibilityLayer data={chartData}>
-                <CartesianGrid vertical={false} />
-                <XAxis dataKey="name" tickMargin={10} fontSize={9} />
-                <YAxis
-                  domain={[0, 10]}
-                  tickCount={6}
-                  fontSize={11}
-                  label={{
-                    value: "Score (0-10)",
-                    angle: -90,
-                    position: "insideCenter",
-                  }}
-                />
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent indicator="dot" />}
-                />
-                <ChartLegend content={<ChartLegendContent />} />
-                <Bar
-                  dataKey="userScore"
-                  fill="var(--color-userScore)"
-                  radius={4}
-                >
-                  <LabelList
-                    dataKey="userScore"
-                    position="insideTop"
-                    className="fill-background"
-                    fontSize={12}
-                    formatter={(value: number) =>
-                      value > 0 ? `${value.toFixed(1)}` : ""
-                    }
-                  />
-                </Bar>
-                <Bar
-                  dataKey="benchmark"
-                  fill="var(--color-benchmark)"
-                  radius={4}
-                >
-                  <LabelList
-                    dataKey="benchmark"
-                    position="insideTop"
-                    className="fill-background"
-                    fontSize={12}
-                    formatter={(value: number) =>
-                      value > 0 ? `${value.toFixed(1)}` : ""
-                    }
-                  />
-                </Bar>
-              </BarChart>
-            </ChartContainer>
+        <div className="grid grid-cols-1 lg:grid-cols-2 space-y-3">
+          <div className="col-span-1">
+            <div className="col-span-1 flex items-center space-x-2">
+              <TrendingUp className="h-6 w-6 text-foreground" />
+              <h2 className="text-xl text-foreground font-semibold">
+                Benchmark Comparison
+              </h2>
+            </div>
+            <p className="text-muted-foreground mt-2">
+              Assessment comparisons have moved to individual assessment pages for a better experience.
+            </p>
           </div>
         </div>
+
+        <Card className="mx-auto max-w-2xl">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
+              <BarChart3 className="h-8 w-8 text-blue-600" />
+            </div>
+            <CardTitle className="text-2xl">Feature Moved</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center space-y-6">
+            <div className="space-y-3">
+              <p className="text-muted-foreground">
+                Benchmark comparisons are now available directly within each completed assessment.
+              </p>
+              <p className="text-muted-foreground">
+                This provides more detailed, assessment-specific insights and better contextual analysis.
+              </p>
+            </div>
+
+            <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4">
+              <h3 className="font-semibold text-sm mb-2">How to access comparisons:</h3>
+              <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                <li>Go to your Assessments page</li>
+                <li>Click on any completed assessment</li>
+                <li>Navigate to the "Compare" tab</li>
+              </ol>
+            </div>
+
+            <Link href="/dashboard/assessments">
+              <Button size="lg" className="w-full sm:w-auto">
+                View Your Assessments
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );

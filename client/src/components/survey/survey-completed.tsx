@@ -460,6 +460,10 @@ export default function SurveyCompleted({
             </ScrollArea>
           )}
         </TabsContent>
+
+        <TabsContent value="compare">
+          <AssessmentCompare assessmentId={assessment.id} />
+        </TabsContent>
       </Tabs>
     </div>
   );
