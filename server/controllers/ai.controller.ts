@@ -1,47 +1,52 @@
 import { Request, Response } from "express";
 import OpenAI from "openai";
-
-// Define interface for category in request
-interface Category {
-  name: string;
-  score: number;
-  previousScore: number | null;
-  benchmark: number | null;
-}
-
-// Define interface for company data
-interface CompanyData {
-  name: string;
-  employeeCount: string;
-  industry: string;
-}
+import { UserModel } from "../models/user.model";
+import { getCategoryScores } from "@/lib/utils";
+import { Assessment } from "@shared/types";
 
 // Define interface for request body
 interface AIRequestBody {
-  categories: Category[];
-  company?: CompanyData;
+  assessment: Assessment;
 }
 
 export class AIController {
   static async generateSuggestions(req: Request, res: Response) {
+    // Check if OpenAI API key is set
+    if (!process.env.OPENAI_API_KEY) {
+      console.error("OpenAI API key not set");
+      return res.status(500).json({
+        success: false,
+        error: "OpenAI API key not configured",
+      });
+    }
+
     try {
-      const { categories, company } = req.body as AIRequestBody;
+      const { assessment } = req.body as AIRequestBody;
 
-      // Validate request
-      if (!categories || !categories.length) {
-        return res.status(400).json({
-          success: false,
-          error: "Invalid request. Missing required fields.",
-        });
-      }
+      const { guest, userId, answers, survey: { questions } } = assessment;
 
-      // Check if OpenAI API key is set
-      if (!process.env.OPENAI_API_KEY) {
-        console.error("OpenAI API key not set");
-        return res.status(500).json({
-          success: false,
-          error: "OpenAI API key not configured",
-        });
+      let company = null;
+      if (guest) {
+        try {
+          const guestData = JSON.parse(guest);
+          company = {
+            name: guestData.company || "",
+            employeeCount: guestData.employeeCount || "",
+            industry: guestData.industry || "",
+          };
+        } catch (error) {
+          console.error("Error parsing guest data:", error);
+        }
+      } else if (userId) {
+        // Get user from database with a fresh query
+        const user = await UserModel.getById(userId);
+        const { company: companyName, employeeCount, industry } = user || {};
+
+        company = {
+          name: companyName,
+          employeeCount: employeeCount,
+          industry: industry,
+        };
       }
 
       // Initialize OpenAI client
@@ -61,7 +66,8 @@ export class AIController {
 
       // Create user payload as JSON string
       const userPayload = JSON.stringify({
-        categories,
+        categories: getCategoryScores(assessment),
+        ...(responses && { responses }),
         ...(company && { company }),
       });
 
@@ -89,7 +95,7 @@ export class AIController {
       // Return the AI-generated content
       return res.status(200).json({
         success: true,
-        content,
+        recommendations: content,
       });
     } catch (error: any) {
       console.error("Error generating AI suggestions:", error);

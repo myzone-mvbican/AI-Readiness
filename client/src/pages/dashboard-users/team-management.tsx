@@ -129,7 +129,7 @@ export function TeamManagement({
 
   return (
     <div
-      className={`relative min-w-[210px] flex flex-wrap gap-1 items-center w-full h-full p-2 -ml-2 ${isCurrentUser ? "" : "hover:bg-accent cursor-pointer"}`}
+      className={`relative min-w-[150px] flex flex-wrap gap-1 items-center w-full h-full py-4 px-2 -ml-2 ${isCurrentUser ? "" : "hover:bg-accent cursor-pointer"}`}
       onClick={(e) => {
         if (!isCurrentUser) {
           e.preventDefault();
