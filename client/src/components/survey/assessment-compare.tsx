@@ -316,7 +316,7 @@ export default function AssessmentCompare({ assessmentId }: AssessmentComparePro
               <div className="text-center mt-4">
                 <div className="text-2xl font-bold">{selectedScore}</div>
                 <div className="text-sm text-muted-foreground">
-                  {activeView === "industry"
+                  {activeView === "industry" && hasIndustryData
                     ? `${industry} Average`
                     : "Global Average"}
                 </div>
