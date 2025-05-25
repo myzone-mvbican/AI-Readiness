@@ -30,9 +30,10 @@ export function QuickActionsCard() {
             </Button>
           </Link>
           <Link href="/dashboard/compare/" asChild>
-            <Button variant="outline" className="justify-start">
+            <Button variant="outline" className="justify-start" disabled>
               <TrendingUp className="mr-2 h-4 w-4" />
-              <span>Compare with Industry</span>
+              <span>Track Progress</span>
+              <Badge className="ms-auto">Soon</Badge>
             </Button>
           </Link>
           <Button variant="outline" className="justify-start" disabled>

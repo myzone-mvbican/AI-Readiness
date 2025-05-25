@@ -166,49 +166,53 @@ export default function GuestAssessmentForm({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="company"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Your organization" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="employeeCount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company Size</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="company"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select company size" />
-                        </SelectTrigger>
+                        <Input placeholder="Your organization" {...field} />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="1-9">1-9 employees</SelectItem>
-                        <SelectItem value="10-49">10-49 employees</SelectItem>
-                        <SelectItem value="50-249">50-249 employees</SelectItem>
-                        <SelectItem value="250-999">
-                          250-999 employees
-                        </SelectItem>
-                        <SelectItem value="1000+">1000+ employees</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="employeeCount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company Size</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select company size" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="1-9">1-9 employees</SelectItem>
+                          <SelectItem value="10-49">10-49 employees</SelectItem>
+                          <SelectItem value="50-249">
+                            50-249 employees
+                          </SelectItem>
+                          <SelectItem value="250-999">
+                            250-999 employees
+                          </SelectItem>
+                          <SelectItem value="1000+">1000+ employees</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <FormField
                 control={form.control}

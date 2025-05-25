@@ -3,7 +3,7 @@ import { DashboardLayout } from "@/components/layout/dashboard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusCircle, Search, Loader2, FileBarChart2 } from "lucide-react";
-import { useAssessmentCreateModal } from "@/hooks/use-assessment-create-modal";
+import { useAssessment } from "@/hooks/use-assessment";
 import {
   Table,
   TableHeader,
@@ -28,7 +28,7 @@ import { getColumns } from "./columns";
 import { AssessmentsResponse } from "./types";
 
 export default function AssessmentsPage() {
-  const assessmentCreateModal = useAssessmentCreateModal();
+  const assessmentCreateModal = useAssessment();
 
   // State for sorting and filtering
   const [sorting, setSorting] = useState<SortingState>([]);

@@ -128,7 +128,11 @@ export function PerformanceSummaryCard() {
     ? avgUserScore > avgIndustryScore
       ? "above"
       : "below"
-    : null;
+    : avgUserScore > avgGlobalScore
+      ? "above"
+      : "below";
+
+  const { company = "Your organization" } = user || {};
 
   return (
     <Card className="col-span-1 flex flex-col">
@@ -137,7 +141,7 @@ export function PerformanceSummaryCard() {
           Performance Summary
         </CardTitle>
         <CardDescription className="text-center">
-          Your organization's AI readiness performance
+          {company}'s AI readiness performance
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

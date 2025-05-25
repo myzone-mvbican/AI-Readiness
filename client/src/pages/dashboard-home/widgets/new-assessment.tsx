@@ -8,10 +8,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PlusCircle } from "lucide-react";
-import { useAssessmentCreateModal } from "@/hooks/use-assessment-create-modal";
+import { useAssessment } from "@/hooks/use-assessment";
 
 export function NewAssessmentCard() {
-  const assessmentCreateModal = useAssessmentCreateModal();
+  const assessmentCreateModal = useAssessment();
 
   return (
     <Card className="col-span-1 flex flex-col">

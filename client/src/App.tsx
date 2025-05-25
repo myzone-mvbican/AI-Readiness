@@ -8,7 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { GoogleAuthProvider } from "@/components/google-auth-provider";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/components/theme-provider";
-import { AssessmentCreateModalProvider } from "@/components/assessment/assessment-create-modal-provider";
+import { AssessmentProvider } from "@/components/assessment/assessment-provider";
 // Protected routes
 import { ProtectedRoute } from "@/components/protected-route";
 import { AdminProtectedRoute } from "@/components/protected-admin-route";
@@ -22,7 +22,7 @@ import PageAuth from "@/pages/page-auth";
 import PageAbout from "@/pages/page-about";
 // Dashboard pages
 import DashboardHome from "@/pages/dashboard-home";
-import DashboardCompare from "@/pages/dashboard-compare";
+import DashboardProgress from "@/pages/dashboard-progress";
 import AssessmentsPage from "@/pages/dashboard-assessments";
 import AssessmentDetailPage from "@/pages/dashboard-assessments/[id]";
 // Admin pages
@@ -34,7 +34,7 @@ import AccountSettingsPage from "./pages/account-settings";
 function Router() {
   const [location] = useLocation();
   const isDashboardRoute = location.startsWith("/dashboard");
-  
+
   // Initialize dynamic page titles
   usePageTitle();
 
@@ -52,8 +52,8 @@ function Router() {
           component={AssessmentsPage}
         />
         <ProtectedRoute
-          path="/dashboard/compare"
-          component={DashboardCompare}
+          path="/dashboard/progress"
+          component={DashboardProgress}
         />
         <ProtectedRoute
           path="/dashboard/account/settings"
@@ -98,9 +98,9 @@ function App() {
           <GoogleAuthProvider>
             <AuthProvider>
               <Toaster />
-              <AssessmentCreateModalProvider>
+              <AssessmentProvider>
                 <Router />
-              </AssessmentCreateModalProvider>
+              </AssessmentProvider>
             </AuthProvider>
           </GoogleAuthProvider>
         </TooltipProvider>

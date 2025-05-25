@@ -19,12 +19,19 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  CheckCircle2,
+  Loader2,
+  InfoIcon,
+  GitCompare,
+  FileBarChart2,
+  ListTodo,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ToastAction } from "@/components/ui/toast";
 import { ChartContainer } from "@/components/ui/chart";
 import { navigate } from "wouter/use-browser-location";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, Loader2, InfoIcon } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -36,7 +43,7 @@ import { formatDate } from "@/lib/utils";
 import { getCategoryScores } from "@/lib/generateRecommendations";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import AssessmentCompare from "./assessment-compare";
+import ScreenCompare from "./screens/compare";
 
 interface SurveyCompletedProps {
   assessment: Assessment;
@@ -74,7 +81,6 @@ export default function SurveyCompleted({
   // Define payload type for the mutation
   type RecommendationPayload = {
     recommendations: string;
-    email?: string;
   };
 
   // Mutation for saving recommendations to the assessment
@@ -90,9 +96,7 @@ export default function SurveyCompleted({
         : `/api/public/assessments/${assessment.id}`;
 
       // For authenticated users, we don't need to include email
-      const payload = isAuthenticated
-        ? { recommendations: data.recommendations }
-        : { recommendations: data.recommendations, email: data.email };
+      const payload = { recommendations: data.recommendations };
 
       const response = await apiRequest("PATCH", endpoint, payload);
 
@@ -146,7 +150,14 @@ export default function SurveyCompleted({
 
         // Get company data from assessment
         let companyData = null;
-        if (assessment.guest) {
+        if (isAuthenticated) {
+          const { company, employeeCount, industry } = user || {};
+          companyData = {
+            name: company,
+            employeeCount: employeeCount,
+            industry: industry,
+          };
+        } else if (assessment.guest) {
           try {
             const guestData = JSON.parse(assessment.guest);
             companyData = {
@@ -286,11 +297,59 @@ export default function SurveyCompleted({
       </div>
 
       <Tabs defaultValue="results" className="mt-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="results">Results</TabsTrigger>
-          <TabsTrigger value="responses">Your Responses</TabsTrigger>
-          <TabsTrigger value="suggestions">AI Suggestions</TabsTrigger>
-          <TabsTrigger value="compare">Compare</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 h-auto">
+          <TabsTrigger value="results">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="w-full flex flex-col md:flex-row items-center justify-center gap-1 md:gap-4">
+                  <GitCompare className="size-4" />
+                  <span className="text-[8px] md:text-sm">Results</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="p-2">
+                View the overall assessment results.
+              </TooltipContent>
+            </Tooltip>
+          </TabsTrigger>
+          <TabsTrigger value="responses">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="w-full flex flex-col md:flex-row items-center justify-center gap-1 md:gap-4">
+                  <ListTodo className="size-4" />
+                  <span className="text-[8px] md:text-sm">Responses</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="p-2">
+                See all your responses from the assessment.
+              </TooltipContent>
+            </Tooltip>
+          </TabsTrigger>
+          <TabsTrigger value="suggestions">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="w-full flex flex-col md:flex-row items-center justify-center gap-1 md:gap-4">
+                  <InfoIcon className="size-4" />
+                  <span className="text-[8px] md:text-sm">Recommendations</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="p-2">
+                Review AI-generated improvement suggestions.
+              </TooltipContent>
+            </Tooltip>
+          </TabsTrigger>
+          <TabsTrigger value="compare">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="w-full flex flex-col md:flex-row items-center justify-center gap-1 md:gap-4">
+                  <FileBarChart2 className="size-4" />
+                  <span className="text-[8px] md:text-sm">Compare</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="p-2">
+                Compare your assessment with others.
+              </TooltipContent>
+            </Tooltip>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="results">
@@ -462,7 +521,10 @@ export default function SurveyCompleted({
         </TabsContent>
 
         <TabsContent value="compare">
-          <AssessmentCompare assessmentId={assessment.id} />
+          <ScreenCompare
+            assessmentId={assessment.id}
+            isAuthenticated={isAuthenticated}
+          />
         </TabsContent>
       </Tabs>
     </div>
