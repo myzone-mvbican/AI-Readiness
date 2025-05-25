@@ -8,17 +8,16 @@ export class BenchmarkController {
    */
   static async getBenchmark(req: Request, res: Response) {
     try {
-      const assessmentId = parseInt(req.params.id);
+      const id = parseInt(req.params.id);
 
-      if (isNaN(assessmentId)) {
+      if (isNaN(id)) {
         return res.status(400).json({
           success: false,
           message: "Invalid assessment ID",
         });
       }
 
-      const benchmarkData =
-        await BenchmarkService.getBenchmarkData(assessmentId);
+      const benchmarkData = await BenchmarkService.getBenchmarkData(id);
 
       if (!benchmarkData) {
         return res.status(404).json({

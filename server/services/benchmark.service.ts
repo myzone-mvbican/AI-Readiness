@@ -1,6 +1,5 @@
 import { db } from "../db";
 import { assessments, surveyStats, users, surveys } from "@shared/schema";
-import { CsvQuestion } from "@shared/types";
 import { eq, and, gte, lte, isNotNull } from "drizzle-orm";
 
 interface BenchmarkData {
@@ -49,18 +48,20 @@ export class BenchmarkService {
   static shouldExcludeAssessment(assessment: any): boolean {
     if (!assessment.answers || !assessment.completedOn) return true;
 
-    try {
-      const answers = JSON.parse(assessment.answers);
+    return false;
 
-      // Exclude if all answers are the same (indicates dummy/test data)
-      const uniqueValues = new Set(answers.map((a: any) => a.value));
-      if (uniqueValues.size === 1) return true;
+    // try {
+    //   const answers = JSON.parse(assessment.answers);
 
-      return false;
-    } catch (error) {
-      console.error("Error parsing assessment answers:", error);
-      return true;
-    }
+    //   // Exclude if all answers are the same (indicates dummy/test data)
+    //   const uniqueValues = new Set(answers.map((a: any) => a.value));
+    //   if (uniqueValues.size === 1) return true;
+
+    //   return false;
+    // } catch (error) {
+    //   console.error("Error parsing assessment answers:", error);
+    //   return true;
+    // }
   }
 
   /**
@@ -132,29 +133,23 @@ export class BenchmarkService {
       }
 
       // For now, use the categories visible in your actual assessment results
-      const questions = survey[0].questions;
-      // Group questions by category
-      const categoryMap = new Map<string, number[]>();
+      const realCategories = [
+        "Strategy & Vision",
+        "Financial & Resources",
+        "Culture & Change-Readiness",
+        "Governance, Ethics & Risk",
+        "Skills & Literacy",
+        "Process & Operations",
+        "Data & Information",
+        "Technology & Integration",
+      ];
 
-      questions.forEach((question: CsvQuestion, index: number) => {
-        const category = question.category;
-        if (!category) {
-          return;
-        }
-
-        if (!categoryMap.has(category)) {
-          categoryMap.set(category, []);
-        }
-
-        // Add this question's index to the category
-        categoryMap.get(category)?.push(index);
-      });
-
-      const categories = Array.from(categoryMap.entries());
       const categoryScores: Record<string, number> = {};
-      const answersPerCategory = Math.ceil(answers.length / categories.length);
+      const answersPerCategory = Math.ceil(
+        answers.length / realCategories.length,
+      );
 
-      categories.forEach((category, index) => {
+      realCategories.forEach((category, index) => {
         const startIndex = index * answersPerCategory;
         const endIndex = Math.min(
           (index + 1) * answersPerCategory,
@@ -174,7 +169,7 @@ export class BenchmarkService {
             ((rawScore + categoryAnswers.length * 2) /
               (categoryAnswers.length * 4)) *
             100;
-          categoryScores[category[0]] = Math.round(adjustedScore); // Keep as 0-100 scale rounded
+          categoryScores[category] = Math.round(adjustedScore); // Keep as 0-100 scale rounded
         }
       });
 
