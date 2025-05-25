@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
-import { TrendingUp, Building2 } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Assessment } from "@shared/types";
 import {
   Bar,
   BarChart,
@@ -51,16 +52,15 @@ interface BenchmarkData {
 }
 
 interface ScreenCompare {
-  assessmentId: number;
-  isAuthenticated: boolean;
+  assessment: Assessment;
 }
 
-export default function ScreenCompare({
-  assessmentId,
-  isAuthenticated,
-}: ScreenCompare) {
+export default function ScreenCompare({ assessment }: ScreenCompare) {
   const { user } = useAuth();
-  const [activeView, setActiveView] = useState<"industry" | "global">("global");
+  const isAuthenticated = !!user;
+  const [activeView, setActiveView] = useState<"industry" | "global">(
+    "industry",
+  );
 
   const {
     data: benchmarkData,
@@ -70,8 +70,8 @@ export default function ScreenCompare({
     success: boolean;
     data: BenchmarkData;
   }>({
-    queryKey: [`/api/assessments/${assessmentId}/benchmark`],
-    enabled: isAuthenticated && !!assessmentId,
+    queryKey: [`/api/assessments/${assessment?.id}/benchmark`],
+    enabled: isAuthenticated && !!assessment?.id,
   });
 
   // Auto-select Global when user's industry has no data (must be before conditional returns)
