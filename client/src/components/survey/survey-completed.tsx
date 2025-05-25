@@ -87,7 +87,7 @@ export default function SurveyCompleted({
                   <span className="text-[8px] md:text-sm">Results</span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent className="p-2">
+              <TooltipContent className="text-xs">
                 View the overall assessment results.
               </TooltipContent>
             </Tooltip>
@@ -100,7 +100,7 @@ export default function SurveyCompleted({
                   <span className="text-[8px] md:text-sm">Responses</span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent className="p-2">
+              <TooltipContent className="text-xs">
                 See all your responses from the assessment.
               </TooltipContent>
             </Tooltip>
@@ -113,7 +113,7 @@ export default function SurveyCompleted({
                   <span className="text-[8px] md:text-sm">Recommendations</span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent className="p-2">
+              <TooltipContent className="text-xs">
                 Review AI-generated improvement suggestions.
               </TooltipContent>
             </Tooltip>
@@ -126,7 +126,7 @@ export default function SurveyCompleted({
                   <span className="text-[8px] md:text-sm">Compare</span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent className="p-2">
+              <TooltipContent className="text-xs">
                 Compare your assessment with others.
               </TooltipContent>
             </Tooltip>

@@ -242,7 +242,6 @@ export default function AssessmentDetailPage() {
       {isCompleted ? (
         <SurveyCompleted
           assessment={assessment}
-          questions={questions}
           additionalActions={<AdditionalActions />}
         />
       ) : (

@@ -4,14 +4,10 @@ export default function SurveyQuestion({
   value,
   onChange,
   disabled,
-  question,
-  questionDescription,
 }: {
   value: number | null | undefined;
   onChange: (value: number) => void;
   disabled: boolean;
-  question: string;
-  questionDescription?: string;
 }) {
   const options = [
     { value: -2, label: "Strongly Disagree" },
