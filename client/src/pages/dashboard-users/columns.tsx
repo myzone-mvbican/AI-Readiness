@@ -43,7 +43,7 @@ export function getColumns({
           <span className="text-sm font-medium text-foreground">
             {row.getValue("name")}
           </span>
-          <span className="text-xs text-muted-foreground"></span>
+          <span className="text-xs text-muted-foreground">{row.original.email}</span>
         </div>
       ),
     },
