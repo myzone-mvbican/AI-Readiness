@@ -26,6 +26,7 @@ import {
   ScrollText,
   FileSpreadsheet,
   Users,
+  Settings,
 } from "lucide-react";
 
 import profileImage from "@/assets/mvbican.jpg";
@@ -98,7 +99,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           icon: Users,
         },
         {
-          title: "Settings",
+          title: "Settings / Tools",
           url: "/dashboard/admin/settings",
           icon: Settings,
         },

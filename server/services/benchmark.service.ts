@@ -48,20 +48,18 @@ export class BenchmarkService {
   static shouldExcludeAssessment(assessment: any): boolean {
     if (!assessment.answers || !assessment.completedOn) return true;
 
-    return false;
+    try {
+      const answers = JSON.parse(assessment.answers);
 
-    // try {
-    //   const answers = JSON.parse(assessment.answers);
+      // Exclude if all answers are the same (indicates dummy/test data)
+      const uniqueValues = new Set(answers.map((a: any) => a.a));
+      if (uniqueValues.size === 1) return true;
 
-    //   // Exclude if all answers are the same (indicates dummy/test data)
-    //   const uniqueValues = new Set(answers.map((a: any) => a.value));
-    //   if (uniqueValues.size === 1) return true;
-
-    //   return false;
-    // } catch (error) {
-    //   console.error("Error parsing assessment answers:", error);
-    //   return true;
-    // }
+      return false;
+    } catch (error) {
+      console.error("Error parsing assessment answers:", error);
+      return true;
+    }
   }
 
   /**

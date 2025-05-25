@@ -6,6 +6,7 @@ import {
   integer,
   boolean,
   uniqueIndex,
+  unique,
 } from "drizzle-orm/pg-core";
 
 // Database schema definition
@@ -115,7 +116,7 @@ export const surveyStats = pgTable("survey_stats", {
 }, (table) => {
   return {
     // Unique constraint to prevent duplicate stats for same industry/category/quarter
-    unq: uniqueIndex("survey_stats_unq").on(
+    industryQuarterUnique: unique("survey_stats_industry_category_quarter_unq").on(
       table.industry, 
       table.category, 
       table.quarter
