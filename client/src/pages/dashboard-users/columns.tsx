@@ -39,7 +39,12 @@ export function getColumns({
         );
       },
       cell: ({ row }) => (
-        <div className="p-2 dark:text-white">{row.getValue("name")}</div>
+        <div className="flex flex-col p-2 dark:text-white">
+          <span className="text-sm font-medium text-foreground">
+            {row.getValue("name")}
+          </span>
+          <span className="text-xs text-muted-foreground"></span>
+        </div>
       ),
     },
     {

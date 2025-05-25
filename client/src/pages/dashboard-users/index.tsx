@@ -222,7 +222,10 @@ export default function UsersPage() {
             <TableBody>
               {isLoadingUsers ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
+                  <TableCell
+                    colSpan={5}
+                    className="h-24 text-center text-foreground"
+                  >
                     Loading users...
                   </TableCell>
                 </TableRow>
