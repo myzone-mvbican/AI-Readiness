@@ -13,7 +13,7 @@ interface GetColumnsProps {
 // Format score for display
 const formatScore = (score: number | null) => {
   if (score === null) return "-";
-  return `${score}/100`;
+  return `${score / 10}/10`;
 };
 
 // Status badge component
@@ -168,7 +168,7 @@ export function getColumns({
 
         return (
           <div className="flex justify-end p-1">
-            <Link href={`/dashboard/assessments/${assessment.id}`}>
+            <Link href={`/dashboard/assessments/${assessment.id}`} asChild>
               <Button
                 variant="ghost"
                 size="icon"
