@@ -312,7 +312,7 @@ export class BenchmarkService {
         industry,
         category,
         quarter,
-        averageScore: Math.round(averageScore * 100), // Store as integer (score * 100)
+        averageScore: Math.round(averageScore), // Store as 0-100 range integer
         completedCount: stats.count,
       });
     }
