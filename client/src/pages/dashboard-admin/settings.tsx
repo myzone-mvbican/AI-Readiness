@@ -128,7 +128,7 @@ export default function AdminSettings() {
       case "warning":
         return "text-yellow-700 dark:text-yellow-400";
       default:
-        return "text-foreground";
+        return "text-muted-foreground";
     }
   };
 
@@ -149,101 +149,108 @@ export default function AdminSettings() {
           </div>
         </div>
 
-        {/* Benchmark Statistics Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <RefreshCw className="h-5 w-5" />
-              <span>Benchmark Statistics</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-sm font-medium">Recalculate Statistics</p>
-                <p className="text-sm text-muted-foreground">
-                  Recalculate benchmark statistics for all surveys and
-                  assessments. This process may take several minutes.
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Benchmark Statistics Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <RefreshCw className="h-5 w-5" />
+                <span>Benchmark Statistics</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Recalculate Statistics</p>
+                  <p className="text-sm text-muted-foreground">
+                    Recalculate benchmark statistics for all surveys and
+                    assessments.
+                    <br />
+                    This process may take several minutes.
+                  </p>
+                </div>
+                <Button
+                  onClick={handleRecalculateStats}
+                  disabled={isRecalculating}
+                  variant={isRecalculating ? "secondary" : "default"}
+                >
+                  {isRecalculating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Recalculating...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Recalculate
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Real-time Logs */}
+              {logs.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium">Process Logs</h4>
+                    <div className="flex items-center space-x-2">
+                      <Badge
+                        variant={isRecalculating ? "secondary" : "outline"}
+                      >
+                        {isRecalculating ? "Running" : "Completed"}
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={clearLogs}
+                        disabled={isRecalculating}
+                        className="h-5 py-0.5 text-xs"
+                      >
+                        Clear Logs
+                      </Button>
+                    </div>
+                  </div>
+
+                  <Card className="bg-slate-950 border-slate-800">
+                    <CardContent className="p-4">
+                      <ScrollArea className="h-64 w-full">
+                        <div className="space-y-1 font-mono text-xs">
+                          {logs.map((log, index) => (
+                            <div
+                              key={index}
+                              className="flex items-start space-x-2"
+                            >
+                              {getLogIcon(log.type)}
+                              <span className="text-slate-400 shrink-0 w-20">
+                                {log.timestamp}
+                              </span>
+                              <span className={getLogTextColor(log.type)}>
+                                {log.message}
+                              </span>
+                            </div>
+                          ))}
+                          <div ref={logsEndRef} />
+                        </div>
+                      </ScrollArea>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Placeholder for future admin tools */}
+          <Card className="border-dashed">
+            <CardContent className="pt-6">
+              <div className="text-center text-muted-foreground">
+                <Settings className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="text-sm">
+                  Additional admin tools will be added here
                 </p>
               </div>
-              <Button
-                onClick={handleRecalculateStats}
-                disabled={isRecalculating}
-                variant={isRecalculating ? "secondary" : "default"}
-              >
-                {isRecalculating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Recalculating...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Recalculate
-                  </>
-                )}
-              </Button>
-            </div>
-
-            {/* Real-time Logs */}
-            {logs.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-medium">Process Logs</h4>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant={isRecalculating ? "secondary" : "outline"}>
-                      {isRecalculating ? "Running" : "Completed"}
-                    </Badge>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={clearLogs}
-                      disabled={isRecalculating}
-                    >
-                      Clear Logs
-                    </Button>
-                  </div>
-                </div>
-
-                <Card className="bg-slate-950 border-slate-800">
-                  <CardContent className="p-4">
-                    <ScrollArea className="h-64 w-full">
-                      <div className="space-y-1 font-mono text-xs">
-                        {logs.map((log, index) => (
-                          <div
-                            key={index}
-                            className="flex items-start space-x-2"
-                          >
-                            {getLogIcon(log.type)}
-                            <span className="text-slate-400 shrink-0 w-20">
-                              {log.timestamp}
-                            </span>
-                            <span className={getLogTextColor(log.type)}>
-                              {log.message}
-                            </span>
-                          </div>
-                        ))}
-                        <div ref={logsEndRef} />
-                      </div>
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Placeholder for future admin tools */}
-        <Card className="border-dashed">
-          <CardContent className="pt-6">
-            <div className="text-center text-muted-foreground">
-              <Settings className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-sm">
-                Additional admin tools will be added here
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </DashboardLayout>
   );
