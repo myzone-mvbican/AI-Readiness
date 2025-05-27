@@ -219,7 +219,7 @@ export class AssessmentController {
       }
 
       // Delete the assessment
-      const deleted = await AssessmentModel.getById(assessmentId);
+      const deleted = await AssessmentModel.delete(assessmentId);
 
       if (!deleted) {
         return res.status(500).json({
