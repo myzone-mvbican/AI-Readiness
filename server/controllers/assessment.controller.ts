@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { AssessmentModel } from "../models/assessment.model";
 import { SurveyModel } from "../models/survey.model";
+import { CompletionService } from "../services/completion.service";
 import { getScore, formatDate } from "@/lib/utils";
 
 export class AssessmentController {
@@ -78,6 +79,20 @@ export class AssessmentController {
         return res.status(404).json({
           success: false,
           message: "Survey template not found",
+        });
+      }
+
+      // Check completion limits before creating assessment
+      const completionCheck = await CompletionService.canUserTakeSurvey(
+        parseInt(surveyTemplateId),
+        req.user!.id,
+        undefined
+      );
+
+      if (!completionCheck.canTake) {
+        return res.status(400).json({
+          success: false,
+          message: completionCheck.message || "You have reached the completion limit for this survey",
         });
       }
 
@@ -278,6 +293,23 @@ export class AssessmentController {
           success: false,
           message: "Survey template not found",
         });
+      }
+
+      // Check completion limits for guest users
+      const guestEmail = guestData?.email;
+      if (guestEmail) {
+        const completionCheck = await CompletionService.canUserTakeSurvey(
+          surveyTemplateId,
+          undefined,
+          guestEmail
+        );
+
+        if (!completionCheck.canTake) {
+          return res.status(400).json({
+            success: false,
+            message: completionCheck.message || "You have reached the completion limit for this survey",
+          });
+        }
       }
 
       // Create a guest assessment
