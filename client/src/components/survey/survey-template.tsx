@@ -172,19 +172,12 @@ export default function SurveyTemplate({
       onAnswerChange(index, randomValue);
     });
 
-    // Use setTimeout to ensure all state updates are processed before jumping to the end
-    setTimeout(() => {
-      setCurrentStep(questions.length - 1);
-    }, 100);
+    // Jump to the last question immediately - no need for setTimeout
+    setCurrentStep(questions.length - 1);
   };
 
   // Check if user is admin
   const isAdmin = user?.role === 'admin';
-  
-  // Debug logging
-  console.log('User object:', user);
-  console.log('User role:', user?.role);
-  console.log('Is admin:', isAdmin);
 
   // Get assessment title and survey title
   const assessmentTitle = assessment?.title || "Assessment";
