@@ -48,6 +48,7 @@ interface SurveyTemplateProps {
   questions: CsvQuestion[];
   answers: AssessmentAnswer[];
   onAnswerChange: (index: number, value: number) => void;
+  onBulkAnswerChange?: (newAnswers: AssessmentAnswer[]) => void; // For random completion
 
   // UI state
   isSubmitting?: boolean;
@@ -70,6 +71,7 @@ export default function SurveyTemplate({
   questions = [],
   answers = [],
   onAnswerChange,
+  onBulkAnswerChange,
   isSubmitting = false,
   showSaveButton = true,
   onCancel,
@@ -166,13 +168,27 @@ export default function SurveyTemplate({
 
   // Handle random completion (admin only)
   const handleRandomCompletion = () => {
-    // Generate random answers for all questions (-2 to 2)
-    questions.forEach((question, index) => {
-      const randomValue = Math.floor(Math.random() * 5) - 2; // Random number from -2 to 2
-      onAnswerChange(index, randomValue);
-    });
+    if (onBulkAnswerChange) {
+      // Generate random answers for all questions (-2 to 2)
+      const randomAnswers = questions.map((question, index) => {
+        const randomValue = Math.floor(Math.random() * 5) - 2;
+        return {
+          q: question.id || index + 1,
+          a: randomValue as -2 | -1 | 0 | 1 | 2, // Random number from -2 to 2
+        };
+      });
 
-    // Jump to the last question immediately - no need for setTimeout
+      // Update all answers at once using bulk update
+      onBulkAnswerChange(randomAnswers);
+    } else {
+      // Fallback to individual updates if bulk update not available
+      questions.forEach((question, index) => {
+        const randomValue = Math.floor(Math.random() * 5) - 2;
+        onAnswerChange(index, randomValue);
+      });
+    }
+
+    // Jump to the last question
     setCurrentStep(questions.length - 1);
   };
 
