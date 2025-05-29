@@ -33,6 +33,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Survey {
   id: number;
@@ -363,12 +369,45 @@ export function Assessment() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  Start Assessment
-                </Button>
+                {(() => {
+                  const selectedSurveyId = form.watch("surveyTemplateId");
+                  const selectedSurvey = surveys.find((s: Survey) => s.id.toString() === selectedSurveyId);
+                  const status = (completionData as any)?.data?.[selectedSurvey?.id];
+                  const canTake = !selectedSurvey || status?.canTake !== false;
+                  const isLimitReached = selectedSurvey && selectedSurvey.completionLimit && !canTake;
+                  const completionCount = status?.completionCount || 0;
+
+                  if (isLimitReached) {
+                    return (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div>
+                              <Button type="submit" disabled={true}>
+                                {isLoading && (
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                )}
+                                Start Assessment
+                              </Button>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>You have reached the completion limit for this survey ({completionCount}/{selectedSurvey.completionLimit})</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    );
+                  }
+
+                  return (
+                    <Button type="submit" disabled={isLoading || !selectedSurveyId}>
+                      {isLoading && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      Start Assessment
+                    </Button>
+                  );
+                })()}
               </DialogFooter>
             </form>
           </Form>

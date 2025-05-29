@@ -76,6 +76,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // User-facing survey routes
 
+  // Survey completion status endpoint (must come before parameterized routes)
+  app.get(
+    "/api/surveys/completion-status",
+    auth,
+    SurveyController.getCompletionStatus,
+  );
   // Get surveys for current user's selected team
   app.get("/api/surveys/:teamId", auth, SurveyController.getByTeamForUser);
   // Original protected survey endpoint
@@ -156,13 +162,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // AI Suggestions endpoint
   app.post("/api/ai-suggestions", AIController.generateSuggestions);
-
-  // Survey completion status endpoint
-  app.get(
-    "/api/surveys/completion-status",
-    auth,
-    SurveyController.getCompletionStatus,
-  );
 
   app.post(
     "/api/admin/benchmark/recalculate",
