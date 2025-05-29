@@ -92,7 +92,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to submit assessment. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to submit assessment. Please try again.",
         variant: "destructive",
       });
     } finally {

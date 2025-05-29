@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Assessment, Survey } from "@shared/types";
+import { Assessment, CsvQuestion, Survey } from "@shared/types";
 import { formatDate } from "@/lib/utils";
 import { AssessmentPDFDownloadButton } from "./assessment-pdf";
 // Screens
@@ -24,11 +24,13 @@ import ScreenRecommendations from "./screens/recommendations";
 
 interface SurveyCompletedProps {
   assessment: Assessment & { survey?: Survey };
+  questions: CsvQuestion[];
   additionalActions?: React.ReactNode;
 }
 
 export default function SurveyCompleted({
   assessment,
+  questions,
   additionalActions,
 }: SurveyCompletedProps) {
   return (

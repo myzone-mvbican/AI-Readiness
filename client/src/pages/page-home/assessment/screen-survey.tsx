@@ -56,26 +56,25 @@ export default function GuestSurvey({
       staleTime: 1000 * 60 * 5, // 5 minutes
     });
 
-  // Load saved answers from localStorage when available
-  useEffect(() => {
-    if (hasSavedAnswers) {
-      const savedData = getGuestAssessmentData(surveyId);
-      if (savedData?.answers?.length) {
-        setAnswers(savedData.answers);
-        if (savedData.currentStep !== undefined) {
-          setCurrentStep(savedData.currentStep);
-        }
-      }
-    }
-  }, [hasSavedAnswers]);
-
   // Format questions when data is loaded
   useEffect(() => {
     const { survey, success } = surveyData || {};
     if (success && survey.questions) {
       setQuestions(survey.questions);
 
-      // Initialize answers if none exist
+      // Load saved answers first if available
+      if (hasSavedAnswers) {
+        const savedData = getGuestAssessmentData(surveyId);
+        if (savedData?.answers?.length) {
+          setAnswers(savedData.answers);
+          if (savedData.currentStep !== undefined) {
+            setCurrentStep(savedData.currentStep);
+          }
+          return; // Don't initialize new answers if we have saved ones
+        }
+      }
+
+      // Initialize answers only if none exist and no saved data
       if (answers.length === 0) {
         const initialAnswers = survey.questions.map(
           (question: CsvQuestion) => ({
@@ -87,7 +86,7 @@ export default function GuestSurvey({
         setAnswers(initialAnswers);
       }
     }
-  }, [surveyData, answers.length]);
+  }, [surveyData, hasSavedAnswers, surveyId]);
 
   // Handle answer changes
   const handleAnswerChange = (index: number, value: number) => {
