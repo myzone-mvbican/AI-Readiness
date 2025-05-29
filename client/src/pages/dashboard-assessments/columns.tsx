@@ -47,6 +47,8 @@ const DeleteAssessmentButton = ({ assessment }: { assessment: Assessment }) => {
       });
       // Invalidate and refetch assessments list
       queryClient.invalidateQueries({ queryKey: ["/api/assessments"] });
+      // Invalidate completion status to update survey availability
+      queryClient.invalidateQueries({ queryKey: ["/api/surveys/completion-status"] });
       setIsOpen(false);
     },
     onError: (error: Error) => {

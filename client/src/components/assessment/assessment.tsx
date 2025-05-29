@@ -221,6 +221,8 @@ export function Assessment() {
 
       // Invalidate assessments query to refresh the list
       queryClient.invalidateQueries({ queryKey: ["/api/assessments"] });
+      // Invalidate completion status to update survey availability
+      queryClient.invalidateQueries({ queryKey: ["/api/surveys/completion-status"] });
 
       // Close the modal
       assessmentCreateModal.onClose();

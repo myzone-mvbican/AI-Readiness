@@ -169,6 +169,10 @@ export default function AssessmentDetailPage() {
       queryClient.invalidateQueries({
         queryKey: ["/api/assessments"],
       });
+      // Invalidate completion status when assessment is completed
+      if (variables.status === "completed") {
+        queryClient.invalidateQueries({ queryKey: ["/api/surveys/completion-status"] });
+      }
     },
     onError: (error) => {
       toast({
