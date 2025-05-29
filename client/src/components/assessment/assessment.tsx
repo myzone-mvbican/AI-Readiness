@@ -140,6 +140,24 @@ export function Assessment() {
     enabled: assessmentCreateModal.isOpen,
   });
 
+  // Process the surveys data to get public surveys first
+  const publicSurveys =
+    (surveysData as any)?.success &&
+    Array.isArray((surveysData as any)?.surveys)
+      ? (surveysData as any).surveys.filter(
+          (survey: Survey) => survey.status === "public",
+        )
+      : [];
+
+  // Set surveys state - this allows the component to use the same variable name as before
+  const surveys = publicSurveys;
+
+  // Fetch completion status for surveys
+  const { data: completionData } = useQuery({
+    queryKey: ["/api/surveys/completion-status"],
+    enabled: assessmentCreateModal.isOpen && surveys.length > 0,
+  });
+
   // Handle survey error fallback
   useEffect(() => {
     // Check if we have a token (are logged in)
@@ -167,17 +185,7 @@ export function Assessment() {
     }
   }, [surveysData, isSurveysLoading, teamId, queryClient, toast]);
 
-  // Process the surveys data to get public surveys
-  const publicSurveys =
-    (surveysData as any)?.success &&
-    Array.isArray((surveysData as any)?.surveys)
-      ? (surveysData as any).surveys.filter(
-          (survey: Survey) => survey.status === "public",
-        )
-      : [];
 
-  // Set surveys state - this allows the component to use the same variable name as before
-  const surveys = publicSurveys;
 
   const onSubmit = async (values: CreateAssessmentFormValues) => {
     setIsLoading(true);
