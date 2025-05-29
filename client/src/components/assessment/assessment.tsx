@@ -40,6 +40,7 @@ interface Survey {
   description: string;
   status: string;
   version: string;
+  completionLimit: number | null;
 }
 
 // Type definition for selected team
@@ -320,7 +321,7 @@ export function Assessment() {
                           const status = (completionData as any)?.data?.[survey.id];
                           const canTake = status?.canTake !== false;
                           const isLimited = survey.completionLimit !== null;
-                          const completionsUsed = status?.completionsUsed || 0;
+                          const completionsUsed = status?.completionCount || 0;
                           
                           return (
                             <SelectItem
