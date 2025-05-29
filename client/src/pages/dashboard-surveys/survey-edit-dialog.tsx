@@ -63,6 +63,8 @@ const editSurveySchema = z.object({
     .default("global"),
   selectedTeams: z.array(z.number()).optional(),
   status: z.enum(["draft", "public"]).default("draft"),
+  completionType: z.enum(["unlimited", "limited"]).default("unlimited"),
+  completionLimit: z.number().min(1, "Completion limit must be at least 1").optional(),
 });
 
 type EditSurveyFormValues = z.infer<typeof editSurveySchema>;
@@ -91,7 +93,7 @@ export default function SurveyEditDialog({
     retry: false,
   });
 
-  const teams = teamsData?.teams || [];
+  const teams = (teamsData as any)?.teams || [];
 
   // Get team IDs directly from the survey.teams array
   const surveyTeamIds = (survey.teams || []).map((team) => team.id);
@@ -123,6 +125,8 @@ export default function SurveyEditDialog({
           survey.status === "draft" || survey.status === "public"
             ? survey.status
             : "draft",
+        completionType: survey.completionLimit ? "limited" : "unlimited",
+        completionLimit: survey.completionLimit || undefined,
       };
 
       // Initialize the form once with setTimeout to prevent infinite loops
@@ -249,6 +253,13 @@ export default function SurveyEditDialog({
     const formData = new FormData();
     formData.append("title", data.title);
     formData.append("status", data.status);
+
+    // Add completion limit if limited type is selected
+    if (data.completionType === "limited" && data.completionLimit) {
+      formData.append("completionLimit", data.completionLimit.toString());
+    } else {
+      formData.append("completionLimit", ""); // Send empty string for unlimited
+    }
 
     // Add teamIds if visibility is "teams"
     if (
@@ -454,6 +465,65 @@ export default function SurveyEditDialog({
                 )}
               />
             )}
+
+            {/* Completion Limit Section */}
+            <div className="space-y-4">
+              <FormField
+                control={form.control}
+                name="completionType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Completion Limit</FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={(value: "unlimited" | "limited") => {
+                        field.onChange(value);
+                        if (value === "unlimited") {
+                          form.setValue("completionLimit", undefined);
+                        }
+                      }}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select completion type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="unlimited">Unlimited - Users can take this survey multiple times</SelectItem>
+                        <SelectItem value="limited">Limited - Restrict number of completions per user</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {form.watch("completionType") === "limited" && (
+                <FormField
+                  control={form.control}
+                  name="completionLimit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Maximum Completions</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1"
+                          placeholder="Enter number (e.g., 1, 3, 5)"
+                          {...field}
+                          value={field.value || ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            field.onChange(value ? parseInt(value, 10) : undefined);
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
 
             <div className="grid gap-2">
               <FormLabel htmlFor="file">Replace CSV File (Optional)</FormLabel>
