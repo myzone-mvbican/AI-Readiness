@@ -59,6 +59,7 @@ export const surveys = pgTable("surveys", {
   // We keep it as a nullable field for backward compatibility
   teamId: integer("team_id").references(() => teams.id),
   status: text("status").default("draft").notNull(),
+  completionLimit: integer("completion_limit"), // null = unlimited, number = max completions allowed
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

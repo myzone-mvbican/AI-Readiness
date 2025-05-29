@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { SurveyModel } from "../models/survey.model";
 import { TeamModel } from "../models/team.model";
+import { CompletionService } from "../services/completion.service";
 import fs from "fs";
 
 export class SurveyController {
@@ -246,12 +247,28 @@ export class SurveyController {
         }
       }
 
+      // Handle completion limit
+      let completionLimitNum = null;
+      if (req.body.completionLimit) {
+        completionLimitNum = parseInt(req.body.completionLimit);
+        if (isNaN(completionLimitNum) || completionLimitNum < 1) {
+          if (req.file && req.file.path) {
+            fs.unlinkSync(req.file.path);
+          }
+          return res.status(400).json({
+            success: false,
+            message: "Completion limit must be a positive number or null for unlimited.",
+          });
+        }
+      }
+
       const surveyData = {
         title,
         questionsCount: questionsCountNum,
         status: status || "draft",
         fileReference: req.file.path,
         authorId: req.user!.id,
+        completionLimit: completionLimitNum,
       };
 
       const newSurvey = await SurveyModel.create(surveyData);
@@ -322,6 +339,25 @@ export class SurveyController {
       // Update status if provided
       if (req.body.status) {
         updateData.status = req.body.status;
+      }
+
+      // Update completion limit if provided
+      if (req.body.completionLimit !== undefined) {
+        if (req.body.completionLimit === null || req.body.completionLimit === "") {
+          updateData.completionLimit = null;
+        } else {
+          const completionLimitNum = parseInt(req.body.completionLimit);
+          if (isNaN(completionLimitNum) || completionLimitNum < 1) {
+            if (req.file && req.file.path) {
+              fs.unlinkSync(req.file.path);
+            }
+            return res.status(400).json({
+              success: false,
+              message: "Completion limit must be a positive number or null for unlimited.",
+            });
+          }
+          updateData.completionLimit = completionLimitNum;
+        }
       }
 
       // Process team selection
