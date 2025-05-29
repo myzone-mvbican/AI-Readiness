@@ -579,4 +579,48 @@ export class SurveyController {
       });
     }
   }
+
+  /**
+   * Get completion status for all surveys that the user can see
+   */
+  static async getCompletionStatus(req: Request, res: Response) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: "User not authenticated",
+        });
+      }
+
+      // Get all public surveys that the user can access
+      const surveys = await SurveyModel.getAll(0); // Get global surveys
+      const completionStatus: { [surveyId: number]: { canTake: boolean; completionCount: number; completionLimit: number | null } } = {};
+
+      for (const survey of surveys) {
+        const result = await CompletionService.canUserTakeSurvey(
+          survey.id,
+          userId,
+          undefined
+        );
+        
+        completionStatus[survey.id] = {
+          canTake: result.canTake,
+          completionCount: result.completionCount,
+          completionLimit: survey.completionLimit,
+        };
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: completionStatus,
+      });
+    } catch (error) {
+      console.error("Error getting completion status:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to get completion status",
+      });
+    }
+  }
 }

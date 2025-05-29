@@ -157,6 +157,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Suggestions endpoint
   app.post("/api/ai-suggestions", AIController.generateSuggestions);
 
+  // Survey completion status endpoint
+  app.get(
+    "/api/surveys/completion-status",
+    auth,
+    SurveyController.getCompletionStatus,
+  );
+
   app.post(
     "/api/admin/benchmark/recalculate",
     auth,

@@ -316,14 +316,32 @@ export function Assessment() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {surveys.map((survey: Survey) => (
-                          <SelectItem
-                            key={survey.id}
-                            value={survey.id.toString()}
-                          >
-                            {survey.title}
-                          </SelectItem>
-                        ))}
+                        {surveys.map((survey: Survey) => {
+                          const status = (completionData as any)?.data?.[survey.id];
+                          const canTake = status?.canTake !== false;
+                          const isLimited = survey.completionLimit !== null;
+                          const completionsUsed = status?.completionsUsed || 0;
+                          
+                          return (
+                            <SelectItem
+                              key={survey.id}
+                              value={survey.id.toString()}
+                              disabled={!canTake}
+                            >
+                              <div className="flex flex-col">
+                                <span>{survey.title}</span>
+                                {isLimited && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {canTake 
+                                      ? `${completionsUsed}/${survey.completionLimit} completions used`
+                                      : `Limit reached (${survey.completionLimit}/${survey.completionLimit})`
+                                    }
+                                  </span>
+                                )}
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                     <FormDescription>
