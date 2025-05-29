@@ -70,6 +70,7 @@ export default function GuestAssessmentCompleted({
       <div className="w-full space-y-6">
         <SurveyCompleted
           assessment={assessment}
+          questions={questions}
           additionalActions={<AdditionalActions />}
         />
       </div>

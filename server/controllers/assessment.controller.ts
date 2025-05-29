@@ -86,13 +86,15 @@ export class AssessmentController {
       const completionCheck = await CompletionService.canUserTakeSurvey(
         parseInt(surveyTemplateId),
         req.user!.id,
-        undefined
+        undefined,
       );
 
       if (!completionCheck.canTake) {
         return res.status(400).json({
           success: false,
-          message: completionCheck.message || "You have reached the completion limit for this survey",
+          message:
+            completionCheck.message ||
+            "You have reached the completion limit for this survey",
         });
       }
 
@@ -301,13 +303,15 @@ export class AssessmentController {
         const completionCheck = await CompletionService.canUserTakeSurvey(
           surveyTemplateId,
           undefined,
-          guestEmail
+          guestEmail,
         );
 
         if (!completionCheck.canTake) {
           return res.status(400).json({
             success: false,
-            message: completionCheck.message || "You have reached the completion limit for this survey",
+            message:
+              completionCheck.message ||
+              "You have reached the completion limit for this survey",
           });
         }
       }
@@ -325,6 +329,10 @@ export class AssessmentController {
       };
 
       const assessment = await AssessmentModel.create(assessmentData);
+
+      if (assessment) {
+        assessment.survey = survey;
+      }
 
       return res.status(201).json({
         success: true,
@@ -368,7 +376,8 @@ export class AssessmentController {
       }
 
       // 3. Get existing assessment
-      const existingAssessment = await AssessmentModel.getById(assessmentId);
+      const existingAssessment =
+        await AssessmentModel.getWithSurveyInfo(assessmentId);
       if (!existingAssessment) {
         return res.status(404).json({
           success: false,
