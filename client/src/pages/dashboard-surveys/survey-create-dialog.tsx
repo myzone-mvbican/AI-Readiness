@@ -65,6 +65,8 @@ const createSurveySchema = z.object({
     .default("global"),
   selectedTeams: z.array(z.number()).optional(),
   status: z.enum(["draft", "public"]).default("draft"),
+  completionType: z.enum(["unlimited", "limited"]).default("unlimited"),
+  completionLimit: z.number().min(1, "Completion limit must be at least 1").optional(),
 });
 
 type CreateSurveyFormValues = z.infer<typeof createSurveySchema>;
@@ -102,6 +104,8 @@ export default function SurveyCreateDialog({
       visibility: "global",
       selectedTeams: [],
       status: "draft",
+      completionType: "unlimited",
+      completionLimit: 1,
     },
   });
 
@@ -111,6 +115,8 @@ export default function SurveyCreateDialog({
       visibility: "global",
       selectedTeams: [],
       status: "draft",
+      completionType: "unlimited",
+      completionLimit: 1,
     });
     setCsvFile(null);
     setQuestionsCount(0);
@@ -248,6 +254,11 @@ export default function SurveyCreateDialog({
     formData.append("file", csvFile);
     formData.append("questionsCount", questionsCount.toString());
     formData.append("status", data.status);
+
+    // Add completion limit if limited type is selected
+    if (data.completionType === "limited" && data.completionLimit) {
+      formData.append("completionLimit", data.completionLimit.toString());
+    }
 
     // Add teamIds if visibility is "teams"
     if (
