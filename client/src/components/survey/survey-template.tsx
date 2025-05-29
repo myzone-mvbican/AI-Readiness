@@ -167,22 +167,24 @@ export default function SurveyTemplate({
   // Handle random completion (admin only)
   const handleRandomCompletion = () => {
     // Generate random answers for all questions (-2 to 2)
-    const randomAnswers = questions.map((question, index) => ({
-      q: question.id || index + 1,
-      a: Math.floor(Math.random() * 5) - 2, // Random number from -2 to 2
-    }));
-
-    // Update all answers
-    randomAnswers.forEach((answer, index) => {
-      onAnswerChange(index, answer.a);
+    questions.forEach((question, index) => {
+      const randomValue = Math.floor(Math.random() * 5) - 2; // Random number from -2 to 2
+      onAnswerChange(index, randomValue);
     });
 
-    // Jump to the last question
-    setCurrentStep(questions.length - 1);
+    // Use setTimeout to ensure all state updates are processed before jumping to the end
+    setTimeout(() => {
+      setCurrentStep(questions.length - 1);
+    }, 100);
   };
 
   // Check if user is admin
   const isAdmin = user?.role === 'admin';
+  
+  // Debug logging
+  console.log('User object:', user);
+  console.log('User role:', user?.role);
+  console.log('Is admin:', isAdmin);
 
   // Get assessment title and survey title
   const assessmentTitle = assessment?.title || "Assessment";
