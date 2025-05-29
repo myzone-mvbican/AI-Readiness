@@ -80,6 +80,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/surveys/:teamId", auth, SurveyController.getByTeamForUser);
   // Original protected survey endpoint
   app.get("/api/surveys/detail/:id", auth, SurveyController.getByIdForUser);
+  // Check completion eligibility for a survey
+  app.post("/api/surveys/:surveyId/completion-check", SurveyController.checkCompletionEligibility);
 
   // Survey Administration routes (admin only)
 

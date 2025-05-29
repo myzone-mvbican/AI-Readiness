@@ -5,6 +5,40 @@ import { CompletionService } from "../services/completion.service";
 import fs from "fs";
 
 export class SurveyController {
+  /**
+   * Check if user can take a survey based on completion limits
+   */
+  static async checkCompletionEligibility(req: Request, res: Response) {
+    try {
+      const surveyId = parseInt(req.params.surveyId);
+      if (isNaN(surveyId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid survey ID",
+        });
+      }
+
+      const userId = req.user?.id;
+      const guestEmail = req.body.guestEmail;
+
+      const result = await CompletionService.canUserTakeSurvey(
+        surveyId,
+        userId,
+        guestEmail
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      console.error("Error checking completion eligibility:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to check completion eligibility",
+      });
+    }
+  }
   static async getAll(req: Request, res: Response) {
     try {
       const teamId = parseInt(req.params.teamId);
