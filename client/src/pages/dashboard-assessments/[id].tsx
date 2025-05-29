@@ -238,6 +238,11 @@ export default function AssessmentDetailPage() {
     setAnswers(newAnswers);
   };
 
+  // Handle bulk answer updates (for random completion)
+  const updateBulkAnswers = (newAnswers: AssessmentAnswer[]) => {
+    setAnswers(newAnswers);
+  };
+
   if (isLoading) {
     return <SurveyLoading />;
   }
@@ -260,6 +265,7 @@ export default function AssessmentDetailPage() {
           questions={questions}
           answers={answers}
           onAnswerChange={updateAnswer}
+          onBulkAnswerChange={updateBulkAnswers}
           isSubmitting={isSubmitting}
           showSaveButton={true}
           onCancel={handleCancel}
