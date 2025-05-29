@@ -24,6 +24,7 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
+  Shuffle,
 } from "lucide-react";
 import {
   CsvQuestion,
@@ -34,6 +35,7 @@ import {
 
 import SurveyQuestion from "@/components/survey/survey-question";
 import AlertCompleted from "@/components/survey/alert-completed";
+import { useAuth } from "@/hooks/use-auth";
 
 interface SurveyTemplateProps {
   // Assessment data
@@ -77,6 +79,8 @@ export default function SurveyTemplate({
   currentStep: externalCurrentStep,
   setCurrentStep: externalSetCurrentStep,
 }: SurveyTemplateProps) {
+  const { user } = useAuth();
+  
   // Use either externally controlled step state or internal state
   const [internalCurrentStep, setInternalCurrentStep] = useState(0);
 
@@ -159,6 +163,26 @@ export default function SurveyTemplate({
       onSave();
     }
   };
+
+  // Handle random completion (admin only)
+  const handleRandomCompletion = () => {
+    // Generate random answers for all questions (-2 to 2)
+    const randomAnswers = questions.map((question, index) => ({
+      q: question.id || index + 1,
+      a: Math.floor(Math.random() * 5) - 2, // Random number from -2 to 2
+    }));
+
+    // Update all answers
+    randomAnswers.forEach((answer, index) => {
+      onAnswerChange(index, answer.a);
+    });
+
+    // Jump to the last question
+    setCurrentStep(questions.length - 1);
+  };
+
+  // Check if user is admin
+  const isAdmin = user?.role === 'admin';
 
   // Get assessment title and survey title
   const assessmentTitle = assessment?.title || "Assessment";
@@ -262,7 +286,6 @@ export default function SurveyTemplate({
 
           <CardContent className="pt-6">
             <SurveyQuestion
-              question={questions[currentStep]?.question || ""}
               value={answers[currentStep]?.a}
               onChange={(value) => updateAnswer(currentStep, value)}
               disabled={isSubmitting}
@@ -309,6 +332,25 @@ export default function SurveyTemplate({
         </Button>
 
         <div className="flex gap-2">
+          {isAdmin && !isGuestMode && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={handleRandomCompletion}
+                  disabled={isSubmitting}
+                  className="text-purple-600 border-purple-200 hover:bg-purple-50"
+                >
+                  <Shuffle className="h-4 w-4" />
+                  <div className="hidden md:block ms-2">Random</div>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="p-2">
+                Admin only: Fill all questions with random answers (-2 to 2)
+              </TooltipContent>
+            </Tooltip>
+          )}
+          
           {showSaveButton && (
             <Button
               variant="outline"
