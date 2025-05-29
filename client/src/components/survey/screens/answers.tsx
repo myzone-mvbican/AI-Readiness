@@ -10,14 +10,12 @@ import {
 } from "@/components/ui/tooltip";
 
 interface ScreenAnswers {
-  assessment: Assessment & { survey?: Survey };
+  assessment: Assessment & { survey?: Survey & { questions?: CsvQuestion[] } };
 }
 
 export default function ScreenAnswers({ assessment }: ScreenAnswers) {
-  const {
-    answers = [],
-    survey: { questions = [] },
-  } = assessment;
+  const answers = assessment.answers || [];
+  const questions = assessment.survey?.questions || [];
 
   // Helper function to find question text by ID
   const getQuestionTextById = (
