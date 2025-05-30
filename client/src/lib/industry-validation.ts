@@ -1,28 +1,51 @@
 import { z } from "zod";
 
-// Industry data - same as used in the IndustrySelect component
-const industriesData = [
-  { code: "541511", name: "Technology / Software" },
-  { code: "621111", name: "Healthcare" },
-  { code: "524210", name: "Finance / Insurance" },
-  { code: "454110", name: "Retail / E-commerce" },
-  { code: "31-33", name: "Manufacturing" },
-  { code: "611310", name: "Education" },
-  { code: "921190", name: "Government" },
-  { code: "221118", name: "Energy / Utilities" },
-  { code: "484121", name: "Transportation / Logistics" },
-  { code: "999999", name: "Other" },
-];
+// Industry data interface
+export interface Industry {
+  code: string;
+  name: string;
+}
 
-// Extract industry codes dynamically
-const industryCodes = industriesData.map(industry => industry.code) as [string, ...string[]];
+// Function to load and create validation schema from JSON file
+export const createIndustryValidation = async () => {
+  try {
+    const response = await fetch('/industries.json');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const industriesData: Industry[] = await response.json();
+    
+    // Extract codes from loaded data
+    const industryCodes = industriesData.map(industry => industry.code) as [string, ...string[]];
+    
+    // Create schema from loaded data
+    const industrySchema = z.enum(industryCodes, {
+      errorMap: () => ({ message: "Please select an industry" }),
+    });
+    
+    return {
+      industriesData,
+      industrySchema,
+      industryCodes
+    };
+  } catch (error) {
+    console.error('Failed to load industries data:', error);
+    throw error;
+  }
+};
 
-// NAICS industry codes validation schema - now dynamic
-export const industrySchema = z.enum(industryCodes, {
-  errorMap: () => ({ message: "Please select an industry" }),
-});
+// Simple validation function for runtime checks
+export const validateIndustryCode = async (code: string): Promise<boolean> => {
+  try {
+    const response = await fetch('/industries.json');
+    const industriesData: Industry[] = await response.json();
+    return industriesData.some(industry => industry.code === code);
+  } catch (error) {
+    console.error('Failed to validate industry code:', error);
+    return false;
+  }
+};
 
-export type IndustryCode = z.infer<typeof industrySchema>;
-
-// Export industries data for use in components
-export { industriesData };
+// For now, export a basic schema that will be replaced by form validation hooks
+export const industrySchema = z.string().min(1, "Please select an industry");
+export type IndustryCode = string;
