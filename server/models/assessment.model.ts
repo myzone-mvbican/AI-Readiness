@@ -141,15 +141,10 @@ export class AssessmentModel {
 
   static async delete(id: number): Promise<boolean> {
     try {
-      console.log(`Attempting to delete assessment with ID: ${id}`);
-      
       const result = await db
         .delete(assessments)
         .where(eq(assessments.id, id))
         .returning({ id: assessments.id });
-
-      console.log(`Delete operation result:`, result);
-      console.log(`Number of deleted rows: ${result.length}`);
 
       return result.length > 0;
     } catch (error) {

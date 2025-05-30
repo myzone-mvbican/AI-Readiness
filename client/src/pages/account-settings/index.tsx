@@ -85,8 +85,7 @@ export default function SettingsPage() {
   // Load user data when available
   useEffect(() => {
     if (user) {
-      console.log("Account Settings - Loading user data:", user);
-      console.log("User industry value:", user.industry);
+
       
       const formData = {
         name: user.name || "",
@@ -97,7 +96,7 @@ export default function SettingsPage() {
         confirmPassword: "",
       };
 
-      console.log("Account Settings - Form data being set:", formData);
+
 
       // Set initial form data for dirty check comparison
       setInitialFormData(formData);

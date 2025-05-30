@@ -110,7 +110,7 @@ export function TeamSwitcher({}: TeamSwitcherProps) {
       if (!savedTeamExists) {
         setSelectedTeam(teams.teams[0]);
         localStorage.setItem("selectedTeam", JSON.stringify(teams.teams[0]));
-        console.log("Auto-selecting team:", teams.teams[0].name);
+
       }
     }
 
@@ -200,9 +200,7 @@ export function TeamSwitcher({}: TeamSwitcherProps) {
 
     // If actually changing teams, clear all survey-related queries to prevent stale data
     if (isTeamChange) {
-      console.log(
-        `Switching teams from ${selectedTeam?.name || "none"} to ${team.name}`,
-      );
+
 
       // Invalidate all survey-related queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ["/api/surveys"] });
