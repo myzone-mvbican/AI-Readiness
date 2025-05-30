@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { IndustrySelect } from "@/components/industries";
+import { convertLegacyIndustryToNAICS, convertNAICSToSimple } from "@/lib/industry-validation";
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -89,7 +90,7 @@ export default function SettingsPage() {
         name: user.name || "",
         company: user.company || "",
         employeeCount: (user.employeeCount as any) || undefined,
-        industry: (user.industry as any) || undefined,
+        industry: user.industry ? convertLegacyIndustryToNAICS(user.industry) : undefined,
         password: "",
         confirmPassword: "",
       };
@@ -127,7 +128,7 @@ export default function SettingsPage() {
       if (data.employeeCount !== initialFormData?.employeeCount)
         updateData.employeeCount = data.employeeCount;
       if (data.industry !== initialFormData?.industry)
-        updateData.industry = data.industry;
+        updateData.industry = data.industry ? convertNAICSToSimple(data.industry) : null;
 
       // Only include password if it's not empty
       if (data.password) updateData.password = data.password;
@@ -148,7 +149,7 @@ export default function SettingsPage() {
           name: updatedUser.name || "",
           company: updatedUser.company || "",
           employeeCount: (updatedUser.employeeCount as any) || undefined,
-          industry: (updatedUser.industry as any) || undefined,
+          industry: updatedUser.industry ? convertLegacyIndustryToNAICS(updatedUser.industry) : undefined,
           password: "",
           confirmPassword: "",
         };
