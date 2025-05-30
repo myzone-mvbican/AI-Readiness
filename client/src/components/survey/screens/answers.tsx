@@ -19,7 +19,7 @@ export default function ScreenAnswers({
   questions,
 }: ScreenAnswers) {
   const answers = assessment.answers || [];
-  const questionsData = assessment.survey?.questions || questions || [];
+  const questionsData = assessment?.survey?.questions || questions || [];
 
   // Helper function to find question text by ID
   const getQuestionTextById = (
@@ -28,10 +28,12 @@ export default function ScreenAnswers({
     if (questionId === null || questionId === undefined) {
       return `Unknown Question`;
     }
+
     // Find the matching question by number
     const question = questionsData.find(
-      (q: CsvQuestion) => Number(q.id) === questionId,
+      (q: CsvQuestion) => Number(q.id) === Number(questionId),
     );
+
     return question?.question || `Question ${questionId}`;
   };
 
@@ -44,8 +46,9 @@ export default function ScreenAnswers({
               <h3 className="text-sm text-foreground md:text-base font-medium flex-1">
                 Question {index + 1}: {getQuestionTextById(answer.q)}
               </h3>
-              {questionsData.find((q: CsvQuestion) => Number(q.id) === answer.q)
-                ?.details && (
+              {questionsData.find(
+                (q: CsvQuestion) => Number(q.id) === Number(answer.q),
+              )?.details && (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <InfoIcon className="h-4 w-4 dark:text-white flex-shrink-0 mt-1" />
@@ -53,7 +56,7 @@ export default function ScreenAnswers({
                   <TooltipContent className="p-2 max-w-[400px]">
                     {
                       questionsData.find(
-                        (q: CsvQuestion) => Number(q.id) === answer.q,
+                        (q: CsvQuestion) => Number(q.id) === Number(answer.q),
                       )?.details
                     }
                   </TooltipContent>
