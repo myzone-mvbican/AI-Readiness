@@ -11,6 +11,7 @@ import { BenchmarkController } from "./controllers/benchmark.controller";
 // Import middleware if needed for protected routes
 import { auth, requireAdmin } from "./middleware/auth";
 import { upload } from "./middleware/upload";
+import { ApiResponseUtil } from "./utils/api-response";
 import cors from "cors";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -20,6 +21,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API routes - path prefixed with /api
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", message: "Server is healthy" });
+  });
+
+  // Demonstration endpoint showing API response standardization
+  app.get("/api/demo/validation", (req, res) => {
+    try {
+      // Example of new standardized API response format
+      const demoData = {
+        validationSchemas: [
+          "authSchemas.login", 
+          "authSchemas.register", 
+          "surveySchemas.create"
+        ],
+        consolidatedValidators: [
+          "email", "password", "industry", "employeeCount"
+        ],
+        formUtils: [
+          "getIndustryOptions", "validateCsvFile", "transformIndustryForSubmission"
+        ]
+      };
+      
+      return ApiResponseUtil.legacy.dataSuccess(res, demoData, "Form validation consolidation active");
+    } catch (error) {
+      return ApiResponseUtil.legacy.error(res, "Failed to load validation demo", 500);
+    }
   });
 
   // Authentication routes
