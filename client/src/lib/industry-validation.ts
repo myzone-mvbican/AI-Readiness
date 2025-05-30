@@ -25,3 +25,9 @@ export type IndustryCode = z.infer<typeof industrySchema>;
 export const validateIndustryCode = (code: string): code is IndustryCode => {
   return industrySchema.safeParse(code).success;
 };
+
+// Get industry display name from code
+export const getIndustryDisplayName = (code: string): string => {
+  const industry = industriesData.find(industry => industry.code === code);
+  return industry?.name || code;
+};
