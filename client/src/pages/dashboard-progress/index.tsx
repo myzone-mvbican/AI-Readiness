@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
-import { useIndustryName } from "@/components/industries";
 import { getIndustryDisplayName } from "@/lib/industry-validation";
 import { TrendingUp } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/dashboard";
@@ -121,8 +120,9 @@ export default function DashboardCompare() {
   }
 
   const { data } = benchmarkData;
-  const { company = "Your company", industry: industryCode = "Industry" } = user || {};
-  
+  const { company = "Your company", industry: industryCode = "Industry" } =
+    user || {};
+
   // Get proper industry display name from the code
   const industry = getIndustryDisplayName(data.industry);
 
