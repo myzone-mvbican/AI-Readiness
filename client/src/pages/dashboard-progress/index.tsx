@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { useIndustryName } from "@/components/industries";
 import { TrendingUp } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/dashboard";
 import { Badge } from "@/components/ui/badge";
