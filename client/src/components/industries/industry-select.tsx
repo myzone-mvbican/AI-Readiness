@@ -70,7 +70,7 @@ export function IndustrySelect({
 
   const selectElement = (
     <Select
-      value={currentValue || undefined}
+      value={currentValue}
       onValueChange={handleChange}
       disabled={disabled || isLoading}
     >
