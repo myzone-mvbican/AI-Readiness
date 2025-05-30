@@ -5,40 +5,6 @@ import { CompletionService } from "../services/completion.service";
 import fs from "fs";
 
 export class SurveyController {
-  /**
-   * Check if user can take a survey based on completion limits
-   */
-  static async checkCompletionEligibility(req: Request, res: Response) {
-    try {
-      const surveyId = parseInt(req.params.surveyId);
-      if (isNaN(surveyId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid survey ID",
-        });
-      }
-
-      const userId = req.user?.id;
-      const guestEmail = req.body.guestEmail;
-
-      const result = await CompletionService.canUserTakeSurvey(
-        surveyId,
-        userId,
-        guestEmail
-      );
-
-      return res.status(200).json({
-        success: true,
-        data: result,
-      });
-    } catch (error) {
-      console.error("Error checking completion eligibility:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to check completion eligibility",
-      });
-    }
-  }
   static async getAll(req: Request, res: Response) {
     try {
       const teamId = parseInt(req.params.teamId);
@@ -291,7 +257,8 @@ export class SurveyController {
           }
           return res.status(400).json({
             success: false,
-            message: "Completion limit must be a positive number or null for unlimited.",
+            message:
+              "Completion limit must be a positive number or null for unlimited.",
           });
         }
       }
@@ -377,7 +344,10 @@ export class SurveyController {
 
       // Update completion limit if provided
       if (req.body.completionLimit !== undefined) {
-        if (req.body.completionLimit === null || req.body.completionLimit === "") {
+        if (
+          req.body.completionLimit === null ||
+          req.body.completionLimit === ""
+        ) {
           updateData.completionLimit = null;
         } else {
           const completionLimitNum = parseInt(req.body.completionLimit);
@@ -387,7 +357,8 @@ export class SurveyController {
             }
             return res.status(400).json({
               success: false,
-              message: "Completion limit must be a positive number or null for unlimited.",
+              message:
+                "Completion limit must be a positive number or null for unlimited.",
             });
           }
           updateData.completionLimit = completionLimitNum;
@@ -581,6 +552,41 @@ export class SurveyController {
   }
 
   /**
+   * Check if user can take a survey based on completion limits
+   */
+  static async checkCompletionEligibility(req: Request, res: Response) {
+    try {
+      const surveyId = parseInt(req.params.surveyId);
+      if (isNaN(surveyId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid survey ID",
+        });
+      }
+
+      const userId = req.user?.id;
+      const guestEmail = req.body.guestEmail;
+
+      const result = await CompletionService.canUserTakeSurvey(
+        surveyId,
+        userId,
+        guestEmail,
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      console.error("Error checking completion eligibility:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to check completion eligibility",
+      });
+    }
+  }
+
+  /**
    * Get completion status for all surveys that the user can see
    */
   static async getCompletionStatus(req: Request, res: Response) {
@@ -595,15 +601,21 @@ export class SurveyController {
 
       // Get all public surveys that the user can access
       const surveys = await SurveyModel.getAll(0); // Get global surveys
-      const completionStatus: { [surveyId: number]: { canTake: boolean; completionCount: number; completionLimit: number | null } } = {};
+      const completionStatus: {
+        [surveyId: number]: {
+          canTake: boolean;
+          completionCount: number;
+          completionLimit: number | null;
+        };
+      } = {};
 
       for (const survey of surveys) {
         const result = await CompletionService.canUserTakeSurvey(
           survey.id,
           userId,
-          undefined
+          undefined,
         );
-        
+
         completionStatus[survey.id] = {
           canTake: result.canTake,
           completionCount: result.completionCount,
