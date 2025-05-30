@@ -22,7 +22,7 @@ interface IndustrySelectProps {
   error?: boolean;
   // For react-hook-form compatibility
   field?: {
-    value: string;
+    value: string | undefined;
     onChange: (value: string) => void;
   };
   // For Controller usage
@@ -65,7 +65,7 @@ export function IndustrySelect({
   }, []);
 
   // Handle react-hook-form field prop
-  const currentValue = field?.value || value;
+  const currentValue = field?.value || value || "";
   const handleChange = field?.onChange || onValueChange;
 
   const selectElement = (

@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { IndustrySelect } from "@/components/industries";
 import { useAuth } from "@/hooks/use-auth";
 import {
   loginSchema,
@@ -429,41 +430,11 @@ export default function AuthPage() {
                       control={control}
                       name="industry"
                       render={({ field }) => (
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <SelectTrigger
-                            id="signup-industry"
-                            className={
-                              signupErrors.industry ? "border-red-500" : ""
-                            }
-                          >
-                            <SelectValue placeholder="Select industry" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="technology">
-                              Technology
-                            </SelectItem>
-                            <SelectItem value="healthcare">
-                              Healthcare
-                            </SelectItem>
-                            <SelectItem value="finance">Finance</SelectItem>
-                            <SelectItem value="retail">Retail</SelectItem>
-                            <SelectItem value="manufacturing">
-                              Manufacturing
-                            </SelectItem>
-                            <SelectItem value="education">Education</SelectItem>
-                            <SelectItem value="government">
-                              Government
-                            </SelectItem>
-                            <SelectItem value="energy">Energy</SelectItem>
-                            <SelectItem value="transportation">
-                              Transportation
-                            </SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <IndustrySelect
+                          field={field}
+                          error={!!signupErrors.industry}
+                          className={signupErrors.industry ? "border-red-500" : ""}
+                        />
                       )}
                     />
                     {signupErrors.industry && (
