@@ -227,11 +227,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: (data: LoginResponse) => {
+      console.log("Login response data:", data);
       if (data.success && data.token) {
         // Save token to state and localStorage
         setToken(data.token);
 
-        // Cache user data in query client and localStorage
+        // Cache user data in query client and localStorage - store only user object
+        console.log("Storing user object:", data.user);
         queryClient.setQueryData(["/api/user"], data.user);
         localStorage.setItem("userData", JSON.stringify(data.user));
 
