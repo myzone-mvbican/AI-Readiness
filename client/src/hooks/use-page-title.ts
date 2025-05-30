@@ -15,7 +15,7 @@ const getTitleForRoute = (path: string): string => {
 
   // Static route mappings
   const routeTitles: Record<string, string> = {
-    "/": "Welcome to the future",
+    "/": "Ready for the future",
     "/auth": "Sign In",
     "/assessment": "Take Assessment",
     "/assessment/guest": "Guest Assessment",
