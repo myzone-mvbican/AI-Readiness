@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { Building2 } from "lucide-react";
+import { getIndustryDisplayName } from "@/lib/industry-validation";
 import { Badge } from "@/components/ui/badge";
 import { Assessment } from "@shared/types";
 import {
@@ -134,7 +135,10 @@ export default function ScreenCompare({ assessment }: ScreenCompare) {
   }
 
   const { data } = benchmarkData;
-  const { company = "Your company", industry = "Industry" } = user || {};
+  const { company = "Your company", industry: industryCode = "Industry" } = user || {};
+  
+  // Get proper industry display name from the code
+  const industry = getIndustryDisplayName(data.industry);
 
   // Calculate statistics
   const hasIndustryData = data.categories.some(
