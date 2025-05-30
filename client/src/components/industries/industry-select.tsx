@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { ControllerRenderProps } from "react-hook-form";
 import {
   Select,
@@ -8,7 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FormControl } from "@/components/ui/form";
-import type { Industry } from "@/lib/industry-validation";
+import { industriesData } from "@/lib/industry-validation";
 
 interface IndustrySelectProps {
   field: ControllerRenderProps<any, any>;
@@ -17,37 +16,15 @@ interface IndustrySelectProps {
 }
 
 export function IndustrySelect({ field, formControl = false, placeholder = "Select industry" }: IndustrySelectProps) {
-  const [industries, setIndustries] = useState<Industry[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadIndustries = async () => {
-      try {
-        const response = await fetch('/industries.json');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        setIndustries(data);
-      } catch (error) {
-        console.error('Failed to load industries:', error);
-        setIndustries([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadIndustries();
-  }, []);
+  const industries = industriesData;
 
   const selectElement = (
     <Select
       onValueChange={field.onChange}
       value={field.value}
-      disabled={loading}
     >
       <SelectTrigger>
-        <SelectValue placeholder={loading ? "Loading industries..." : placeholder} />
+        <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
         {industries.map((industry) => (
