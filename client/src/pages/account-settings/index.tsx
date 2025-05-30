@@ -145,9 +145,12 @@ export default function SettingsPage() {
         // Update with the latest user data returned from the server
         const updatedUser = result.user;
 
+        // Update localStorage cache with fresh data
+        localStorage.setItem("userData", JSON.stringify(updatedUser));
+        
         // Force refresh user data from server to ensure consistency
+        queryClient.setQueryData(["/api/user"], updatedUser);
         await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-        await queryClient.refetchQueries({ queryKey: ["/api/user"] });
 
         // Create a new form data object from the updated user
         const updatedFormData = {
