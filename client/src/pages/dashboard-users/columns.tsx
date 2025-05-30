@@ -122,7 +122,7 @@ export function getColumns({
 
         return (
           <div className="flex justify-end p-1">
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0">
                   <MoreHorizontal className="h-4 w-4 dark:text-white" />
