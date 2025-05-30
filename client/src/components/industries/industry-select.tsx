@@ -39,7 +39,7 @@ export function IndustrySelect({ field, formControl = false, placeholder = "Sele
   const selectElement = (
     <Select
       onValueChange={field.onChange}
-      defaultValue={field.value}
+      value={field.value}
     >
       <SelectTrigger>
         <SelectValue placeholder={placeholder} />
