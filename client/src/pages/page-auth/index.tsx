@@ -85,8 +85,10 @@ export default function AuthPage() {
         password: data.password,
       });
 
-      // Force redirect to dashboard after successful login
-      setLocation("/dashboard");
+      // Wait a moment for auth state to update, then redirect
+      setTimeout(() => {
+        setLocation("/dashboard");
+      }, 100);
     } catch (error) {
       console.error("Error submitting login form:", error);
       // Error handling is done in the mutation
