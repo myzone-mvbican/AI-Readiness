@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { industrySchema } from "@/lib/industry-validation";
 
 export const signupSchema = z
   .object({
@@ -11,23 +12,7 @@ export const signupSchema = z
     employeeCount: z.enum(["1-9", "10-49", "50-249", "250-999", "1000+"], {
       errorMap: () => ({ message: "Please select your company size" }),
     }),
-    industry: z.enum(
-      [
-        "technology",
-        "healthcare",
-        "finance",
-        "retail",
-        "manufacturing",
-        "education",
-        "government",
-        "energy",
-        "transportation",
-        "other",
-      ],
-      {
-        errorMap: () => ({ message: "Please select your industry" }),
-      },
-    ),
+    industry: industrySchema,
     password: z
       .string()
       .min(8, { message: "Password must be at least 8 characters" })
@@ -64,20 +49,7 @@ export const settingsSchema = z
       .enum(["1-9", "10-49", "50-249", "250-999", "1000+"])
       .optional(),
 
-    industry: z
-      .enum([
-        "technology",
-        "healthcare",
-        "finance",
-        "retail",
-        "manufacturing",
-        "education",
-        "government",
-        "energy",
-        "transportation",
-        "other",
-      ])
-      .optional(),
+    industry: industrySchema.optional(),
 
     password: z
       .string()
@@ -106,23 +78,7 @@ export const guestAssessmentFormSchema = z.object({
   employeeCount: z.enum(["1-9", "10-49", "50-249", "250-999", "1000+"], {
     errorMap: () => ({ message: "Please select your company size" }),
   }),
-  industry: z.enum(
-    [
-      "technology",
-      "healthcare",
-      "finance",
-      "retail",
-      "manufacturing",
-      "education",
-      "government",
-      "energy",
-      "transportation",
-      "other",
-    ],
-    {
-      errorMap: () => ({ message: "Please select your industry" }),
-    },
-  ),
+  industry: industrySchema,
 });
 
 export type GuestAssessmentFormValues = z.infer<

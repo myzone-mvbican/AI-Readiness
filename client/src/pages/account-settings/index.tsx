@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { IndustrySelect } from "@/components/industries";
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -400,45 +401,11 @@ export default function SettingsPage() {
                       name="industry"
                       control={control}
                       render={({ field }) => (
-                        <Select
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <SelectTrigger
-                            id="industry"
-                            className={errors.industry ? "border-red-500" : ""}
-                          >
-                            <SelectValue placeholder="Select industry" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="technology">
-                              Technology / Software
-                            </SelectItem>
-                            <SelectItem value="healthcare">
-                              Healthcare
-                            </SelectItem>
-                            <SelectItem value="finance">
-                              Finance / Insurance
-                            </SelectItem>
-                            <SelectItem value="retail">
-                              Retail / E-commerce
-                            </SelectItem>
-                            <SelectItem value="manufacturing">
-                              Manufacturing
-                            </SelectItem>
-                            <SelectItem value="education">Education</SelectItem>
-                            <SelectItem value="government">
-                              Government
-                            </SelectItem>
-                            <SelectItem value="energy">
-                              Energy / Utilities
-                            </SelectItem>
-                            <SelectItem value="transportation">
-                              Transportation / Logistics
-                            </SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <IndustrySelect
+                          field={field}
+                          error={!!errors.industry}
+                          className={errors.industry ? "border-red-500" : ""}
+                        />
                       )}
                     />
                     {errors.industry && (
