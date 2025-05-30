@@ -20,7 +20,11 @@ import {
 import { User, UseAuthReturn, AuthError } from "@shared/types";
 import { useToast } from "@/hooks/use-toast";
 import { clearGuestAssessmentData, clearAuthData } from "@/lib/localStorage";
-import { createQueryKey, invalidateQueries, getQueryConfig } from "@/lib/query-cache";
+import {
+  createQueryKey,
+  invalidateQueries,
+  getQueryConfig,
+} from "@/lib/query-cache";
 
 type AuthContextType = {
   user: User | null;
@@ -48,7 +52,17 @@ type RegisterData = {
   email: string;
   company: string;
   employeeCount: "1-9" | "10-49" | "50-249" | "250-999" | "1000+";
-  industry: "technology" | "healthcare" | "finance" | "retail" | "manufacturing" | "education" | "government" | "energy" | "transportation" | "other";
+  industry:
+    | "technology"
+    | "healthcare"
+    | "finance"
+    | "retail"
+    | "manufacturing"
+    | "education"
+    | "government"
+    | "energy"
+    | "transportation"
+    | "other";
   password: string;
   confirmPassword?: string;
 };
@@ -177,15 +191,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authError, setAuthError] = useState<AuthError | null>(null);
 
   // Helper function to convert regular errors to AuthError
-  const createAuthError = (error: Error | string, code: AuthError['code'] = 'SERVER_ERROR'): AuthError => {
-    if (typeof error === 'string') {
+  const createAuthError = (
+    error: Error | string,
+    code: AuthError["code"] = "SERVER_ERROR",
+  ): AuthError => {
+    if (typeof error === "string") {
       return { code, message: error, timestamp: new Date() };
     }
-    return { 
-      code, 
-      message: error.message || 'An unexpected error occurred',
+    return {
+      code,
+      message: error.message || "An unexpected error occurred",
       timestamp: new Date(),
-      details: { originalError: error.name }
+      details: { originalError: error.name },
     };
   };
 
@@ -194,7 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Use standard query key for user data to match login mutation
   const userQueryKey = ["/api/user"];
-  const userQueryConfig = getQueryConfig('users');
+  const userQueryConfig = getQueryConfig("users");
 
   const {
     data: user,
@@ -203,11 +220,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refetch: refetchUser,
   } = useQuery<User | null, Error>({
     queryKey: userQueryKey,
-    queryFn: getQueryFn({
-      on401: "returnNull",
-      forcedToken: getTokenForQuery(),
-      requiresAuth: true,
-    }),
+    queryFn: async () => {
+      const token = getTokenForQuery();
+      if (!token) return null;
+      
+      const res = await fetch("/api/user", {
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
+      });
+      
+      if (res.status === 401) return null;
+      if (!res.ok) throw new Error(`Failed to fetch user: ${res.status}`);
+      
+      const data = await res.json();
+      return data.user; // Extract just the user object
+    },
     enabled: !!token || !!getCachedUser(),
     ...userQueryConfig,
     initialData: cachedUser,
@@ -227,19 +254,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: (data: LoginResponse) => {
-      console.log("Login response data:", data);
       if (data.success && data.token) {
         // Save token to state and localStorage
         setToken(data.token);
 
         // Cache user data in query client and localStorage - store only user object
-        console.log("Storing user object:", data.user);
         queryClient.setQueryData(["/api/user"], data.user);
         localStorage.setItem("userData", JSON.stringify(data.user));
 
         // Force refetch user data to ensure state is updated
         queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-        
+
         // Invalidate teams query to ensure we get fresh data
         queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
 
