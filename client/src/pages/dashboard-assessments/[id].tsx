@@ -171,7 +171,9 @@ export default function AssessmentDetailPage() {
       });
       // Invalidate completion status when assessment is completed
       if (variables.status === "completed") {
-        queryClient.invalidateQueries({ queryKey: ["/api/surveys/completion-status"] });
+        queryClient.invalidateQueries({
+          queryKey: ["/api/surveys/completion-status"],
+        });
       }
     },
     onError: (error) => {
@@ -257,6 +259,7 @@ export default function AssessmentDetailPage() {
       {isCompleted ? (
         <SurveyCompleted
           assessment={assessment}
+          questions={questions}
           additionalActions={<AdditionalActions />}
         />
       ) : (

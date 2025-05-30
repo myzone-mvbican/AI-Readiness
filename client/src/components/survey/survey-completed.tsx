@@ -140,7 +140,7 @@ export default function SurveyCompleted({
         </TabsContent>
 
         <TabsContent value="responses">
-          <ScreenAnswers assessment={assessment} />
+          <ScreenAnswers assessment={assessment} questions={questions} />
         </TabsContent>
 
         <TabsContent value="suggestions">
