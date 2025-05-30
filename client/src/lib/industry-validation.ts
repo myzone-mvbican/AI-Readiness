@@ -1,4 +1,6 @@
 import { z } from "zod";
+// Static import of JSON data - works with Vite's build system
+import industriesJson from "../assets/industries.json" assert { type: "json" };
 
 // Industry data interface
 export interface Industry {
@@ -6,25 +8,13 @@ export interface Industry {
   name: string;
 }
 
-// Define industries data directly from the JSON file structure
-// This ensures the validation schema matches exactly what's in industries.json
-export const industriesData: Industry[] = [
-  { code: "541511", name: "Technology / Software" },
-  { code: "621111", name: "Healthcare" },
-  { code: "524210", name: "Finance / Insurance" },
-  { code: "454110", name: "Retail / E-commerce" },
-  { code: "31-33", name: "Manufacturing" },
-  { code: "611310", name: "Education" },
-  { code: "921190", name: "Government" },
-  { code: "221118", name: "Energy / Utilities" },
-  { code: "484121", name: "Transportation / Logistics" },
-  { code: "999999", name: "Other" },
-];
+// Use the imported JSON data directly
+export const industriesData: Industry[] = industriesJson;
 
-// Extract industry codes dynamically from data
+// Extract industry codes dynamically from JSON data
 const industryCodes = industriesData.map(industry => industry.code) as [string, ...string[]];
 
-// Create validation schema from the data
+// Create validation schema dynamically from JSON data
 export const industrySchema = z.enum(industryCodes, {
   errorMap: () => ({ message: "Please select an industry" }),
 });
