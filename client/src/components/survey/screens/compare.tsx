@@ -135,8 +135,9 @@ export default function ScreenCompare({ assessment }: ScreenCompare) {
   }
 
   const { data } = benchmarkData;
-  const { company = "Your company", industry: industryCode = "Industry" } = user || {};
-  
+  const { company = "Your company", industry: industryCode = "Industry" } =
+    user || {};
+
   // Get proper industry display name from the code
   const industry = getIndustryDisplayName(data.industry);
 
@@ -278,7 +279,7 @@ export default function ScreenCompare({ assessment }: ScreenCompare) {
               }}
             >
               <SelectTrigger
-                className="ml-auto h-7 w-[130px] rounded-lg pl-2.5"
+                className="ml-auto h-7 w-[180px] rounded-lg pl-2.5"
                 aria-label="Select view"
               >
                 <SelectValue placeholder="Select view" />
@@ -400,7 +401,7 @@ export default function ScreenCompare({ assessment }: ScreenCompare) {
           <CardFooter className="pt-5 border-t border-border">
             <p className="text-xs xl:text-[1rem] text-muted-foreground">
               {activeView === "industry"
-                ? `Based on ${data.industry} submissions in ${data.quarter}`
+                ? `Based on ${industry} submissions in ${data.quarter}`
                 : `Based on global submissions in ${data.quarter}`}
             </p>
           </CardFooter>

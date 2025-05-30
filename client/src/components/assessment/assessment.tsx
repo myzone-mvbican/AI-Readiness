@@ -192,8 +192,6 @@ export function Assessment() {
     }
   }, [surveysData, isSurveysLoading, teamId, queryClient, toast]);
 
-
-
   const onSubmit = async (values: CreateAssessmentFormValues) => {
     setIsLoading(true);
 
@@ -222,7 +220,9 @@ export function Assessment() {
       // Invalidate assessments query to refresh the list
       queryClient.invalidateQueries({ queryKey: ["/api/assessments"] });
       // Invalidate completion status to update survey availability
-      queryClient.invalidateQueries({ queryKey: ["/api/surveys/completion-status"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/surveys/completion-status"],
+      });
 
       // Close the modal
       assessmentCreateModal.onClose();
@@ -326,25 +326,26 @@ export function Assessment() {
                       </FormControl>
                       <SelectContent>
                         {surveys.map((survey: Survey) => {
-                          const status = (completionData as any)?.data?.[survey.id];
+                          const status = (completionData as any)?.data?.[
+                            survey.id
+                          ];
                           const canTake = status?.canTake !== false;
                           const isLimited = survey.completionLimit !== null;
                           const completionsUsed = status?.completionCount || 0;
-                          
+
                           return (
                             <SelectItem
                               key={survey.id}
                               value={survey.id.toString()}
                               disabled={!canTake}
                             >
-                              <div className="flex flex-col">
+                              <div className="flex flex-col items-start">
                                 <span>{survey.title}</span>
                                 {isLimited && (
                                   <span className="text-xs text-muted-foreground">
-                                    {canTake 
+                                    {canTake
                                       ? `${completionsUsed}/${survey.completionLimit} completions used`
-                                      : `Limit reached (${survey.completionLimit}/${survey.completionLimit})`
-                                    }
+                                      : `Limit reached (${survey.completionLimit}/${survey.completionLimit})`}
                                   </span>
                                 )}
                               </div>
@@ -373,10 +374,17 @@ export function Assessment() {
                 </Button>
                 {(() => {
                   const selectedSurveyId = form.watch("surveyTemplateId");
-                  const selectedSurvey = surveys.find((s: Survey) => s.id.toString() === selectedSurveyId);
-                  const status = (completionData as any)?.data?.[selectedSurvey?.id];
+                  const selectedSurvey = surveys.find(
+                    (s: Survey) => s.id.toString() === selectedSurveyId,
+                  );
+                  const status = (completionData as any)?.data?.[
+                    selectedSurvey?.id
+                  ];
                   const canTake = !selectedSurvey || status?.canTake !== false;
-                  const isLimitReached = selectedSurvey && selectedSurvey.completionLimit && !canTake;
+                  const isLimitReached =
+                    selectedSurvey &&
+                    selectedSurvey.completionLimit &&
+                    !canTake;
                   const completionCount = status?.completionCount || 0;
 
                   if (isLimitReached) {
@@ -394,7 +402,11 @@ export function Assessment() {
                             </div>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>You have reached the completion limit for this survey ({completionCount}/{selectedSurvey.completionLimit})</p>
+                            <p>
+                              You have reached the completion limit for this
+                              survey ({completionCount}/
+                              {selectedSurvey.completionLimit})
+                            </p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -402,7 +414,10 @@ export function Assessment() {
                   }
 
                   return (
-                    <Button type="submit" disabled={isLoading || !selectedSurveyId}>
+                    <Button
+                      type="submit"
+                      disabled={isLoading || !selectedSurveyId}
+                    >
                       {isLoading && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       )}
