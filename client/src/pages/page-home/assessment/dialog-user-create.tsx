@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IndustrySelect } from "@/components/industries";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -54,25 +61,8 @@ export default function DialogUserExists({
       name: guestUser?.name || "",
       email: guestUser?.email || "",
       company: guestUser?.company || "",
-      employeeCount:
-        (guestUser?.employeeCount as
-          | "10-49"
-          | "1-9"
-          | "50-249"
-          | "250-999"
-          | "1000+") || "10-49",
-      industry:
-        (guestUser?.industry as
-          | "technology"
-          | "healthcare"
-          | "finance"
-          | "retail"
-          | "manufacturing"
-          | "education"
-          | "government"
-          | "energy"
-          | "transportation"
-          | "other") || "technology",
+      employeeCount: (guestUser?.employeeCount as "1-9" | "10-49" | "50-249" | "250-999" | "1000+") || "10-49",
+      industry: (guestUser?.industry as "541511" | "621111" | "524210" | "454110" | "31-33" | "611310" | "921190" | "221118" | "484121" | "999999") || "541511",
       password: "",
       confirmPassword: "",
     },
@@ -84,8 +74,8 @@ export default function DialogUserExists({
       form.setValue("name", guestUser.name || "");
       form.setValue("email", guestUser.email || "");
       form.setValue("company", guestUser.company || "");
-      form.setValue("employeeCount", guestUser.employeeCount || "10-49");
-      form.setValue("industry", guestUser.industry || "technology");
+      form.setValue("employeeCount", (guestUser.employeeCount as "1-9" | "10-49" | "50-249" | "250-999" | "1000+") || "10-49");
+      form.setValue("industry", (guestUser.industry as "541511" | "621111" | "524210" | "454110" | "31-33" | "611310" | "921190" | "221118" | "484121" | "999999") || "541511");
     }
   }, [guestUser, form, open]);
 
@@ -155,7 +145,7 @@ export default function DialogUserExists({
 
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(handleRegistration)}
+            onSubmit={form.handleSubmit(handleRegistration as any)}
             className="space-y-4 py-2"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
