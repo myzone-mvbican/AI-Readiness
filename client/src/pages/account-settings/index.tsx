@@ -403,8 +403,6 @@ export default function SettingsPage() {
                       render={({ field }) => (
                         <IndustrySelect
                           field={field}
-                          error={!!errors.industry}
-                          className={errors.industry ? "border-red-500" : ""}
                         />
                       )}
                     />

@@ -1,12 +1,42 @@
-{
-  "541511": "Technology / Software",
-  "621111": "Healthcare",
-  "524210": "Finance / Insurance",
-  "454110": "Retail / E-commerce",
-  "31-33": "Manufacturing",
-  "611310": "Education",
-  "921190": "Government",
-  "221118": "Energy / Utilities",
-  "484121": "Transportation / Logistics",
-  "999999": "Other"
-}
+[
+  {
+    "code": "541511",
+    "name": "Technology / Software"
+  },
+  {
+    "code": "621111", 
+    "name": "Healthcare"
+  },
+  {
+    "code": "524210",
+    "name": "Finance / Insurance"
+  },
+  {
+    "code": "454110",
+    "name": "Retail / E-commerce"
+  },
+  {
+    "code": "31-33",
+    "name": "Manufacturing"
+  },
+  {
+    "code": "611310",
+    "name": "Education"
+  },
+  {
+    "code": "921190",
+    "name": "Government"
+  },
+  {
+    "code": "221118",
+    "name": "Energy / Utilities"
+  },
+  {
+    "code": "484121",
+    "name": "Transportation / Logistics"
+  },
+  {
+    "code": "999999",
+    "name": "Other"
+  }
+]
