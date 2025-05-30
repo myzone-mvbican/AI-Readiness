@@ -17,14 +17,12 @@ import {
   queryClient,
   UNAUTHORIZED_EVENT,
 } from "@/lib/queryClient";
-import { User } from "@shared/types";
+import { User, UseAuthReturn, AuthError } from "@shared/types";
 import { useToast } from "@/hooks/use-toast";
 import { clearGuestAssessmentData, clearAuthData } from "@/lib/localStorage";
+import { createQueryKey, invalidateQueries, getQueryConfig } from "@/lib/query-cache";
 
-type AuthContextType = {
-  user: User | null;
-  isLoading: boolean;
-  error: Error | null;
+type AuthContextType = UseAuthReturn & {
   loginMutation: UseMutationResult<LoginResponse, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<RegisterResponse, Error, RegisterData>;
