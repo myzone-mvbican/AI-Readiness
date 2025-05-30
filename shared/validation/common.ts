@@ -7,28 +7,8 @@
 
 import { z } from "zod";
 
-/**
- * Industry validation with dynamic import support
- */
-export const createIndustrySchema = () => {
-  // Industry codes as used in the database (NAICS format)
-  const industryOptions = [
-    "541511", // Technology / Software
-    "621111", // Healthcare
-    "524210", // Finance / Insurance  
-    "454110", // Retail
-    "31-33",   // Manufacturing
-    "611310", // Education
-    "921190", // Government
-    "221118", // Energy / Utilities
-    "484121", // Transportation
-    "999999"  // Other
-  ] as const;
-
-  return z.enum(industryOptions, {
-    errorMap: () => ({ message: "Please select a valid industry" })
-  });
-};
+// Note: industrySchema should be imported from client/src/lib/industry-validation.ts
+// For now, we'll create a compatible schema that can be replaced with the actual import
 
 /**
  * Common field validators used across multiple forms
@@ -68,7 +48,7 @@ export const commonValidators = {
     errorMap: () => ({ message: "Please select an employee count range" })
   }),
 
-  industry: createIndustrySchema(),
+  industry: z.string().min(1, { message: "Please select an industry" }),
 
   // Survey/assessment fields
   surveyTitle: z
@@ -211,54 +191,6 @@ export type ProfileFormValues = z.infer<typeof settingsSchemas.profile>;
 export type ChangePasswordFormValues = z.infer<typeof settingsSchemas.changePassword>;
 
 /**
- * Validation utilities
+ * Note: Industry validation utilities should use client/src/lib/industry-validation.ts
+ * These utilities are maintained there to avoid duplication.
  */
-export const validationUtils = {
-  // Transform industry display name to code for database storage
-  industryNameToCode: (displayName: string): string => {
-    const mapping: Record<string, string> = {
-      "Technology / Software": "541511",
-      "Healthcare": "621111", 
-      "Finance / Insurance": "524210",
-      "Retail": "454110",
-      "Manufacturing": "31-33",
-      "Education": "611310",
-      "Government": "921190",
-      "Energy / Utilities": "221118",
-      "Transportation": "484121",
-      "Other": "999999"
-    };
-    return mapping[displayName] || displayName;
-  },
-
-  // Transform industry code to display name for UI
-  industryCodeToName: (code: string): string => {
-    const mapping: Record<string, string> = {
-      "541511": "Technology / Software",
-      "621111": "Healthcare",
-      "524210": "Finance / Insurance", 
-      "454110": "Retail",
-      "31-33": "Manufacturing",
-      "611310": "Education",
-      "921190": "Government",
-      "221118": "Energy / Utilities",
-      "484121": "Transportation",
-      "999999": "Other"
-    };
-    return mapping[code] || code;
-  },
-
-  // Get industry options for dropdowns
-  getIndustryOptions: () => [
-    { value: "541511", label: "Technology / Software" },
-    { value: "621111", label: "Healthcare" },
-    { value: "524210", label: "Finance / Insurance" },
-    { value: "454110", label: "Retail" },
-    { value: "31-33", label: "Manufacturing" },
-    { value: "611310", label: "Education" },
-    { value: "921190", label: "Government" },
-    { value: "221118", label: "Energy / Utilities" },
-    { value: "484121", label: "Transportation" },
-    { value: "999999", label: "Other" }
-  ]
-};
