@@ -19,3 +19,13 @@ export * from './requests';
 export * from './responses';
 export * from './hooks';
 export * from './performance';
+// Explicitly re-export API types to avoid naming conflicts
+export type {
+  ApiResponse as StandardApiResponse,
+  ApiListResponse,
+  ApiErrorResponse,
+  ApiSuccessResponse,
+  ApiMutationResponse,
+  LegacyApiResponse,
+  createApiResponse
+} from './api';
