@@ -35,7 +35,9 @@ export default function AuthPage() {
 
   // Redirect if user is already authenticated
   useEffect(() => {
+    console.log("Auth page - user state changed:", user);
     if (user) {
+      console.log("Auth page - redirecting to dashboard");
       setLocation("/dashboard");
     }
   }, [user, setLocation]);
@@ -83,7 +85,8 @@ export default function AuthPage() {
         password: data.password,
       });
 
-      // Redirect happens automatically in useEffect when user is set
+      // Force redirect to dashboard after successful login
+      setLocation("/dashboard");
     } catch (error) {
       console.error("Error submitting login form:", error);
       // Error handling is done in the mutation
