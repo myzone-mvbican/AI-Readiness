@@ -1,6 +1,6 @@
 import { z } from "zod";
-// Static import of JSON data - works with Vite's build system
-import industriesJson from "../assets/industries.json" assert { type: "json" };
+// Direct import of JSON file - now properly typed with module declaration
+import industriesJson from "../assets/industries.json";
 
 // Industry data interface
 export interface Industry {
