@@ -11,6 +11,7 @@ import {
   CardContent,
   CardDescription,
 } from "@/components/ui/card";
+import { getIndustryDisplayName } from "@/lib/industry-validation";
 
 interface BenchmarkData {
   quarter: string;
@@ -197,7 +198,7 @@ export function PerformanceSummaryCard() {
       </CardContent>
       <CardFooter className="text-xs text-muted-foreground pt-4 border-t border-border">
         {hasIndustryData
-          ? `Based on ${data.industry} submissions in ${data.quarter}`
+          ? `Based on ${getIndustryDisplayName(data.industry)} submissions in ${data.quarter}`
           : "Using global benchmarks (insufficient industry data)"}
       </CardFooter>
     </Card>
