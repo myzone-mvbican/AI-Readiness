@@ -8,19 +8,7 @@ import {
 } from "@/components/ui/select";
 import { FormControl } from "@/components/ui/form";
 import type { IndustryCode } from "@/lib/industry-validation";
-// Import industries data directly
-const industriesData = [
-  { code: "541511", name: "Technology / Software" },
-  { code: "621111", name: "Healthcare" },
-  { code: "524210", name: "Finance / Insurance" },
-  { code: "454110", name: "Retail / E-commerce" },
-  { code: "31-33", name: "Manufacturing" },
-  { code: "611310", name: "Education" },
-  { code: "921190", name: "Government" },
-  { code: "221118", name: "Energy / Utilities" },
-  { code: "484121", name: "Transportation / Logistics" },
-  { code: "999999", name: "Other" },
-];
+import { industriesData } from "@/lib/industry-validation";
 
 interface Industry {
   code: string;
