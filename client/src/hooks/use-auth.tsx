@@ -22,7 +22,10 @@ import { useToast } from "@/hooks/use-toast";
 import { clearGuestAssessmentData, clearAuthData } from "@/lib/localStorage";
 import { createQueryKey, invalidateQueries, getQueryConfig } from "@/lib/query-cache";
 
-type AuthContextType = UseAuthReturn & {
+type AuthContextType = {
+  user: User | null;
+  isLoading: boolean;
+  error: Error | null;
   loginMutation: UseMutationResult<LoginResponse, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<RegisterResponse, Error, RegisterData>;
@@ -171,9 +174,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Initial cached user data
   const [cachedUser, setCachedUser] = useState<User | null>(getCachedUser());
+  const [authError, setAuthError] = useState<AuthError | null>(null);
+
+  // Helper function to convert regular errors to AuthError
+  const createAuthError = (error: Error | string, code: AuthError['code'] = 'SERVER_ERROR'): AuthError => {
+    if (typeof error === 'string') {
+      return { code, message: error, timestamp: new Date() };
+    }
+    return { 
+      code, 
+      message: error.message || 'An unexpected error occurred',
+      timestamp: new Date(),
+      details: { originalError: error.name }
+    };
+  };
 
   // Get the latest token before each query execution
   const getTokenForQuery = () => localStorage.getItem("token");
+
+  // Create optimized query key for user data
+  const userQueryKey = createQueryKey({ entity: 'users', id: 'current' });
+  const userQueryConfig = getQueryConfig('users');
 
   const {
     data: user,
@@ -181,21 +202,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     refetch: refetchUser,
   } = useQuery<User | null, Error>({
-    queryKey: ["/api/user"],
+    queryKey: userQueryKey,
     queryFn: getQueryFn({
       on401: "returnNull",
       forcedToken: getTokenForQuery(),
       requiresAuth: true,
     }),
-    enabled: !!token || !!getCachedUser(), // Enable if token exists OR we have cached user data
-    staleTime: 1000 * 60 * 15, // Consider data fresh for 15 minutes
-    gcTime: 1000 * 60 * 60, // Keep in cache for 1 hour
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false, // Disable periodic refetching
-    refetchIntervalInBackground: false, // Disable background refetching
-    initialData: cachedUser, // Use cached data as initial data
-    retry: false, // Don't retry failed requests
+    enabled: !!token || !!getCachedUser(),
+    ...userQueryConfig,
+    initialData: cachedUser,
+    retry: false,
   });
 
   // Update localStorage when user data changes
@@ -482,6 +498,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
   });
+
+  // Helper functions for the new type-safe interface
+  const clearError = () => setAuthError(null);
 
   return (
     <AuthContext.Provider

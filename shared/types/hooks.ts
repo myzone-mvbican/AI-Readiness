@@ -30,6 +30,7 @@ export type UseAuthReturn = AuthState & AuthActions;
 export interface AuthError {
   code: 'INVALID_CREDENTIALS' | 'NETWORK_ERROR' | 'SERVER_ERROR' | 'VALIDATION_ERROR';
   message: string;
+  timestamp: Date;
   details?: Record<string, any>;
 }
 
