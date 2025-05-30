@@ -19,16 +19,11 @@ import {
 import { IndustrySelect } from "@/components/industries";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  authSchemas,
+  loginSchema,
+  signupSchema,
   type LoginFormValues,
-  type RegisterFormValues,
-  validationUtils,
-} from "@shared/validation/common";
-
-// Maintain backward compatibility
-const loginSchema = authSchemas.login;
-const signupSchema = authSchemas.register;
-type SignupFormValues = RegisterFormValues;
+  type SignupFormValues,
+} from "@/schemas/validation-schemas";
 
 export default function AuthPage() {
   const { toast } = useToast();

@@ -31,10 +31,7 @@ import {
 import { GuestUser, clearGuestAssessmentData } from "@/lib/localStorage";
 import { AssessmentStage } from ".";
 import DialogUserExists from "./dialog-user-exists";
-import { authSchemas, type GuestAssessmentFormValues, validationUtils } from "@shared/validation/common";
-
-// Use consolidated validation schema
-const guestAssessmentFormSchema = authSchemas.guestAssessment;
+import { guestAssessmentFormSchema, GuestAssessmentFormValues } from "@/schemas/validation-schemas";
 
 // Use the validation schema from the centralized schemas file
 
