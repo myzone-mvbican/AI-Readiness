@@ -31,35 +31,9 @@ import {
 import { GuestUser, clearGuestAssessmentData } from "@/lib/localStorage";
 import { AssessmentStage } from ".";
 import DialogUserExists from "./dialog-user-exists";
+import { guestAssessmentFormSchema, GuestAssessmentFormValues } from "@/schemas/validation-schemas";
 
-// Form validation schema
-const guestAssessmentFormSchema = z.object({
-  name: z.string().min(3, { message: "Name must be at least 3 characters" }),
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  company: z.string().min(1, { message: "Company name is required" }),
-  employeeCount: z.enum(["1-9", "10-49", "50-249", "250-999", "1000+"], {
-    errorMap: () => ({ message: "Please select your company size" }),
-  }),
-  industry: z.enum(
-    [
-      "technology",
-      "healthcare",
-      "finance",
-      "retail",
-      "manufacturing",
-      "education",
-      "government",
-      "energy",
-      "transportation",
-      "other",
-    ],
-    {
-      errorMap: () => ({ message: "Please select your industry" }),
-    },
-  ),
-});
-
-type GuestAssessmentFormValues = z.infer<typeof guestAssessmentFormSchema>;
+// Use the validation schema from the centralized schemas file
 
 interface GuestAssessmentFormProps {
   saveGuestUser: (values: Omit<GuestUser, "id">) => GuestUser;

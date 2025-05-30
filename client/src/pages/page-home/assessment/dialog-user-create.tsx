@@ -35,6 +35,7 @@ import {
   clearGuestAssessmentData,
 } from "@/lib/localStorage";
 import { SignupFormValues, signupSchema } from "@/schemas/validation-schemas";
+import { IndustryCode } from "@/lib/industry-validation";
 import { navigate } from "wouter/use-browser-location";
 
 interface DialogUserCreateProps {
@@ -62,7 +63,7 @@ export default function DialogUserExists({
       email: guestUser?.email || "",
       company: guestUser?.company || "",
       employeeCount: (guestUser?.employeeCount as "1-9" | "10-49" | "50-249" | "250-999" | "1000+") || "10-49",
-      industry: (guestUser?.industry as "541511" | "621111" | "524210" | "454110" | "31-33" | "611310" | "921190" | "221118" | "484121" | "999999") || "541511",
+      industry: (guestUser?.industry as IndustryCode) || "541511",
       password: "",
       confirmPassword: "",
     },
@@ -75,7 +76,7 @@ export default function DialogUserExists({
       form.setValue("email", guestUser.email || "");
       form.setValue("company", guestUser.company || "");
       form.setValue("employeeCount", (guestUser.employeeCount as "1-9" | "10-49" | "50-249" | "250-999" | "1000+") || "10-49");
-      form.setValue("industry", (guestUser.industry as "541511" | "621111" | "524210" | "454110" | "31-33" | "611310" | "921190" | "221118" | "484121" | "999999") || "541511");
+      form.setValue("industry", (guestUser.industry as IndustryCode) || "541511");
     }
   }, [guestUser, form, open]);
 
