@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ControllerRenderProps } from "react-hook-form";
 import {
   Select,
   SelectContent,
@@ -7,79 +8,60 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FormControl } from "@/components/ui/form";
+import type { IndustryCode } from "@/lib/industry-validation";
 
-interface IndustryOption {
+interface Industry {
   code: string;
   name: string;
 }
 
 interface IndustrySelectProps {
-  value?: string;
-  onValueChange?: (value: string) => void;
-  placeholder?: string;
-  className?: string;
-  disabled?: boolean;
-  error?: boolean;
-  // For react-hook-form compatibility
-  field?: {
-    value: string | undefined;
-    onChange: (value: string) => void;
-  };
-  // For Controller usage
+  field: ControllerRenderProps<any, any>;
   formControl?: boolean;
+  placeholder?: string;
 }
 
-export function IndustrySelect({
-  value,
-  onValueChange,
-  placeholder = "Select industry",
-  className,
-  disabled = false,
-  error = false,
-  field,
-  formControl = false,
-}: IndustrySelectProps) {
-  const [industries, setIndustries] = useState<IndustryOption[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export function IndustrySelect({ field, formControl = false, placeholder = "Select industry" }: IndustrySelectProps) {
+  const [industries, setIndustries] = useState<Industry[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadIndustries = async () => {
       try {
-        const response = await fetch("/industries.json");
+        const response = await fetch('/industries.json');
         const data = await response.json();
-        
-        const industriesArray = Object.entries(data).map(([code, name]) => ({
-          code,
-          name: name as string,
-        }));
-        
-        setIndustries(industriesArray);
+        setIndustries(data);
       } catch (error) {
-        console.error("Failed to load industries:", error);
+        console.error('Failed to load industries:', error);
+        // Fallback industries if file can't be loaded
+        setIndustries([
+          { code: "541511", name: "Technology / Software" },
+          { code: "621111", name: "Healthcare" },
+          { code: "524210", name: "Finance / Insurance" },
+          { code: "454110", name: "Retail / E-commerce" },
+          { code: "31-33", name: "Manufacturing" },
+          { code: "611310", name: "Education" },
+          { code: "921190", name: "Government" },
+          { code: "221118", name: "Energy / Utilities" },
+          { code: "484121", name: "Transportation / Logistics" },
+          { code: "999999", name: "Other" },
+        ]);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
     loadIndustries();
   }, []);
 
-  // Handle react-hook-form field prop
-  const currentValue = field?.value || value || "";
-  const handleChange = field?.onChange || onValueChange;
-
   const selectElement = (
     <Select
-      value={currentValue}
-      onValueChange={handleChange}
-      disabled={disabled || isLoading}
+      onValueChange={field.onChange}
+      defaultValue={field.value}
+      disabled={loading}
     >
-      <SelectTrigger
-        className={`${className || ""} ${error ? "border-red-500" : ""}`}
-      >
-        <SelectValue 
-          placeholder={isLoading ? "Loading industries..." : placeholder} 
-        />
+      <SelectTrigger>
+        <SelectValue placeholder={loading ? "Loading..." : placeholder} />
       </SelectTrigger>
       <SelectContent>
         {industries.map((industry) => (
@@ -92,41 +74,10 @@ export function IndustrySelect({
   );
 
   return formControl ? (
-    <FormControl>{selectElement}</FormControl>
+    <FormControl>
+      {selectElement}
+    </FormControl>
   ) : (
     selectElement
   );
-}
-
-// Helper hook to get industry name by code
-export function useIndustryName(code?: string): string {
-  const [industries, setIndustries] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    const loadIndustries = async () => {
-      try {
-        const response = await fetch("/industries.json");
-        const data = await response.json();
-        setIndustries(data);
-      } catch (error) {
-        console.error("Failed to load industries:", error);
-      }
-    };
-
-    loadIndustries();
-  }, []);
-
-  return code && industries[code] ? industries[code] : code || "";
-}
-
-// Utility function to get all industries (for validation schemas)
-export async function getIndustryCodes(): Promise<string[]> {
-  try {
-    const response = await fetch("/industries.json");
-    const data = await response.json();
-    return Object.keys(data);
-  } catch (error) {
-    console.error("Failed to load industry codes:", error);
-    return [];
-  }
 }
