@@ -235,6 +235,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         queryClient.setQueryData(["/api/user"], data.user);
         localStorage.setItem("userData", JSON.stringify(data.user));
 
+        // Force refetch user data to ensure state is updated
+        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        
         // Invalidate teams query to ensure we get fresh data
         queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
 
