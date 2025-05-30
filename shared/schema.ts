@@ -25,7 +25,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   company: text("company"),
   employeeCount: text("employee_count"),
-  industry: text("industry"),
+  industry: text("industry"), // Now stores NAICS codes like "541511", "31-33", etc.
   password: text("password").notNull(),
   role: text("role").default("client"),
   googleId: text("google_id").unique(),
@@ -106,7 +106,7 @@ export const assessments = pgTable("assessments", {
 // Survey Statistics for benchmarking
 export const surveyStats = pgTable("survey_stats", {
   id: serial("id").primaryKey(),
-  industry: text("industry").notNull(), // e.g., "Healthcare", "Technology", or "global"
+  industry: text("industry").notNull(), // Now uses NAICS codes like "541511", "31-33", or "global"
   category: text("category").notNull(), // e.g., "Strategy", "Data & Analytics"
   quarter: text("quarter").notNull(), // e.g., "2025-Q2"
   averageScore: integer("average_score").notNull(), // Average score for this category/industry/quarter
