@@ -192,8 +192,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Get the latest token before each query execution
   const getTokenForQuery = () => localStorage.getItem("token");
 
-  // Create optimized query key for user data
-  const userQueryKey = createQueryKey({ entity: 'users', id: 'current' });
+  // Use standard query key for user data to match login mutation
+  const userQueryKey = ["/api/user"];
   const userQueryConfig = getQueryConfig('users');
 
   const {
