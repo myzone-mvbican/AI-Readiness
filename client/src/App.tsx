@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { GoogleAuthProvider } from "@/components/google-auth-provider";
 import { AuthProvider } from "@/hooks/use-auth";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/components/theme/provider";
 import { AssessmentProvider } from "@/components/assessment/assessment-provider";
 // Protected routes
 import { ProtectedRoute } from "@/components/protected-route";

@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle } from "@/components/theme/toggle";
 import logoPath from "@/assets/logo-myzone-ai-black.svg";
 
 export default function Header() {

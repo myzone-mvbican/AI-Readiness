@@ -1,5 +1,5 @@
 import { AppSidebar } from "./dashboard/sidebar";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle } from "@/components/theme/toggle";
 import { Separator } from "@/components/ui/separator";
 import { useMemo } from "react";
 import { Link, useLocation } from "wouter";
