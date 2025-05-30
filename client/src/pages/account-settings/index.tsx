@@ -85,6 +85,9 @@ export default function SettingsPage() {
   // Load user data when available
   useEffect(() => {
     if (user) {
+      console.log("Account Settings - Loading user data:", user);
+      console.log("User industry value:", user.industry);
+      
       const formData = {
         name: user.name || "",
         company: user.company || "",
@@ -93,6 +96,8 @@ export default function SettingsPage() {
         password: "",
         confirmPassword: "",
       };
+
+      console.log("Account Settings - Form data being set:", formData);
 
       // Set initial form data for dirty check comparison
       setInitialFormData(formData);
@@ -140,8 +145,9 @@ export default function SettingsPage() {
         // Update with the latest user data returned from the server
         const updatedUser = result.user;
 
-        // Update the user data in the auth context
-        queryClient.setQueryData(["/api/user"], updatedUser);
+        // Force refresh user data from server to ensure consistency
+        await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        await queryClient.refetchQueries({ queryKey: ["/api/user"] });
 
         // Create a new form data object from the updated user
         const updatedFormData = {
