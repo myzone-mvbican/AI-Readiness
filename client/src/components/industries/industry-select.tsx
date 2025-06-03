@@ -13,17 +13,20 @@ interface IndustrySelectProps {
   field: ControllerRenderProps<any, any>;
   formControl?: boolean;
   placeholder?: string;
+  className?: string;
 }
 
-export function IndustrySelect({ field, formControl = false, placeholder = "Select industry" }: IndustrySelectProps) {
+export function IndustrySelect({
+  field,
+  formControl = false,
+  placeholder = "Select industry",
+  className,
+}: IndustrySelectProps) {
   const industries = industriesData;
 
   const selectElement = (
-    <Select
-      onValueChange={field.onChange}
-      value={field.value}
-    >
-      <SelectTrigger>
+    <Select onValueChange={field.onChange} value={field.value}>
+      <SelectTrigger className={className}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
@@ -37,9 +40,7 @@ export function IndustrySelect({ field, formControl = false, placeholder = "Sele
   );
 
   return formControl ? (
-    <FormControl>
-      {selectElement}
-    </FormControl>
+    <FormControl className={className}>{selectElement}</FormControl>
   ) : (
     selectElement
   );
