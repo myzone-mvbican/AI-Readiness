@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { industrySchema } from "@/lib/industry-validation";
 
 // Team data type
 export type Team = {
@@ -31,7 +32,7 @@ export const userFormSchema = z.object({
   }).readonly(),
   company: z.string().nullable().optional(),
   employeeCount: z.string().nullable().optional(),
-  industry: z.string().nullable().optional(),
+  industry: industrySchema.nullable().optional(),
   password: z.string().min(8, {
     message: "Password must be at least 8 characters.",
   }).optional().or(z.literal("")),
