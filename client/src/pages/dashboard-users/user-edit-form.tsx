@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { IndustrySelect } from "@/components/industries/industry-select";
 import { User, UserFormValues, userFormSchema } from "./types";
 
 interface UserEditFormProps {
@@ -227,27 +228,12 @@ export function UserEditForm({ editingUser, onClose }: UserEditFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Industry</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value || ""}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select industry" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="technology">Technology</SelectItem>
-                      <SelectItem value="finance">Finance</SelectItem>
-                      <SelectItem value="healthcare">Healthcare</SelectItem>
-                      <SelectItem value="education">Education</SelectItem>
-                      <SelectItem value="manufacturing">
-                        Manufacturing
-                      </SelectItem>
-                      <SelectItem value="retail">Retail</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <IndustrySelect
+                      field={field}
+                      className="w-full"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
