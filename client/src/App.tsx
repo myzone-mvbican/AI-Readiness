@@ -20,6 +20,8 @@ import NotFound from "@/pages/page-404";
 import PageHome from "@/pages/page-home";
 import PageAuth from "@/pages/page-auth";
 import PageAbout from "@/pages/page-about";
+import ForgotPasswordPage from "@/pages/forgot-password";
+import ResetPasswordPage from "@/pages/reset-password";
 // Dashboard pages
 import DashboardHome from "@/pages/dashboard-home";
 import DashboardProgress from "@/pages/dashboard-progress";
@@ -86,6 +88,9 @@ function Router() {
         <Switch>
           <Route path="/" component={PageHome} />
           <Route path="/auth" component={PageAuth} />
+          <Route path="/login" component={PageAuth} />
+          <Route path="/forgot-password" component={ForgotPasswordPage} />
+          <Route path="/reset-password" component={ResetPasswordPage} />
           <Route path="/about" component={PageAbout} />
           <Route component={NotFound} />
         </Switch>
