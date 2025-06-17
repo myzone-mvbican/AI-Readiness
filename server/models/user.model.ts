@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import fetch from "node-fetch";
+import crypto from "crypto";
 import { User, GoogleUserPayload } from "@shared/types";
 import { users, userTeams, surveys } from "@shared/schema";
 import { InsertUser, UpdateUser } from "@shared/types/requests";
@@ -224,7 +225,7 @@ export class UserModel {
       if (!user) return null;
 
       // Generate a secure random token
-      const token = require('crypto').randomBytes(32).toString('hex');
+      const token = crypto.randomBytes(32).toString('hex');
       const expiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes from now
 
       await db
