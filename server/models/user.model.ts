@@ -216,4 +216,92 @@ export class UserModel {
   static isAdmin(email: string): boolean {
     return ADMIN_EMAILS.includes(email.toLowerCase());
   }
+
+  // Password reset methods
+  static async generateResetToken(email: string): Promise<string | null> {
+    try {
+      const user = await this.getByEmail(email);
+      if (!user) return null;
+
+      // Generate a secure random token
+      const token = require('crypto').randomBytes(32).toString('hex');
+      const expiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes from now
+
+      await db
+        .update(users)
+        .set({ 
+          resetToken: token, 
+          resetTokenExpiry: expiry,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, user.id));
+
+      return token;
+    } catch (error) {
+      console.error("Error generating reset token:", error);
+      return null;
+    }
+  }
+
+  static async validateResetToken(token: string): Promise<User | null> {
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.resetToken, token));
+
+      if (!user || !user.resetTokenExpiry) return null;
+
+      // Check if token is expired
+      if (new Date() > user.resetTokenExpiry) {
+        // Clean up expired token
+        await this.clearResetToken(user.id);
+        return null;
+      }
+
+      return user;
+    } catch (error) {
+      console.error("Error validating reset token:", error);
+      return null;
+    }
+  }
+
+  static async resetPassword(token: string, newPassword: string): Promise<boolean> {
+    try {
+      const user = await this.validateResetToken(token);
+      if (!user) return false;
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      await db
+        .update(users)
+        .set({ 
+          password: hashedPassword,
+          resetToken: null,
+          resetTokenExpiry: null,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, user.id));
+
+      return true;
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      return false;
+    }
+  }
+
+  static async clearResetToken(userId: number): Promise<void> {
+    try {
+      await db
+        .update(users)
+        .set({ 
+          resetToken: null, 
+          resetTokenExpiry: null,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId));
+    } catch (error) {
+      console.error("Error clearing reset token:", error);
+    }
+  }
 }
