@@ -1,9 +1,8 @@
 import React from "react";
-import { InfoIcon } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Survey, Assessment, CsvQuestion } from "@shared/types";
-import { QuestionDetailsModal } from "../question-details-modal";
+import { QuestionDetails } from "../question-details";
 
 interface ScreenAnswers {
   assessment: Assessment & { survey?: Survey & { questions?: CsvQuestion[] } };
@@ -46,7 +45,7 @@ export default function ScreenAnswers({
                 (q: CsvQuestion) => Number(q.id) === Number(answer.q),
               )?.details && (
                 <div className="flex-shrink-0 mt-1">
-                  <QuestionDetailsModal
+                  <QuestionDetails
                     details={
                       questionsData.find(
                         (q: CsvQuestion) => Number(q.id) === Number(answer.q),

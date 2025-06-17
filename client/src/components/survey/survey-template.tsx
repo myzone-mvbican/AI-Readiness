@@ -16,11 +16,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { QuestionDetailsModal } from "./question-details-modal";
+import { QuestionDetails } from "./question-details";
 import {
   Loader2,
   Save,
-  InfoIcon,
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
@@ -83,7 +82,7 @@ export default function SurveyTemplate({
   setCurrentStep: externalSetCurrentStep,
 }: SurveyTemplateProps) {
   const { user } = useAuth();
-  
+
   // Use either externally controlled step state or internal state
   const [internalCurrentStep, setInternalCurrentStep] = useState(0);
 
@@ -194,7 +193,7 @@ export default function SurveyTemplate({
   };
 
   // Check if user is admin
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === "admin";
 
   // Get assessment title and survey title
   const assessmentTitle = assessment?.title || "Assessment";
@@ -276,7 +275,7 @@ export default function SurveyTemplate({
                 Question {currentStep + 1} of {questions.length}
               </h3>
               {questions[currentStep]?.details && (
-                <QuestionDetailsModal
+                <QuestionDetails
                   details={questions[currentStep].details}
                   questionNumber={currentStep + 1}
                 />
@@ -358,7 +357,7 @@ export default function SurveyTemplate({
               </TooltipContent>
             </Tooltip>
           )}
-          
+
           {showSaveButton && (
             <Button
               variant="outline"
