@@ -16,6 +16,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { QuestionDetailsModal } from "./question-details-modal";
 import {
   Loader2,
   Save,
@@ -275,14 +276,10 @@ export default function SurveyTemplate({
                 Question {currentStep + 1} of {questions.length}
               </h3>
               {questions[currentStep]?.details && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <InfoIcon className="h-4 w-4" />
-                  </TooltipTrigger>
-                  <TooltipContent className="p-2 max-w-[400px]">
-                    {questions[currentStep]?.details}
-                  </TooltipContent>
-                </Tooltip>
+                <QuestionDetailsModal
+                  details={questions[currentStep].details}
+                  questionNumber={currentStep + 1}
+                />
               )}
             </CardTitle>
             <CardDescription className="text-sm md:text-lg md:text-xl text-foreground font-bold">
