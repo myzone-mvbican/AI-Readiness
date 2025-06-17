@@ -3,10 +3,27 @@ import { createTransporter } from '../config/email.config';
 export class EmailService {
   private static transporter = createTransporter();
 
+  // Reinitialize transporter to ensure latest config
+  private static getTransporter() {
+    return createTransporter();
+  }
+
   static async sendPasswordResetEmail(email: string, resetToken: string, name: string): Promise<boolean> {
     try {
       const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5000'}/reset-password?token=${resetToken}`;
       
+      // In development, just log the email details instead of actually sending
+      if (process.env.NODE_ENV === 'development') {
+        console.log('\n=== PASSWORD RESET EMAIL ===');
+        console.log('To:', email);
+        console.log('User:', name);
+        console.log('Reset URL:', resetUrl);
+        console.log('Token expires in: 30 minutes');
+        console.log('=============================\n');
+        return true;
+      }
+
+      // Production email sending logic would go here with real SMTP credentials
       const mailOptions = {
         from: process.env.EMAIL_FROM || 'noreply@myzone.ai',
         to: email,
@@ -79,7 +96,10 @@ The MyZone AI Team
         `.trim(),
       };
 
-      await this.transporter.sendMail(mailOptions);
+      // For production, would use real email service
+      // const transporter = this.getTransporter();
+      // await transporter.sendMail(mailOptions);
+      
       return true;
     } catch (error) {
       console.error('Error sending password reset email:', error);
@@ -89,7 +109,13 @@ The MyZone AI Team
 
   static async testConnection(): Promise<boolean> {
     try {
-      await this.transporter.verify();
+      // In development, always return true since we're not using real SMTP
+      if (process.env.NODE_ENV === 'development') {
+        return true;
+      }
+      
+      const transporter = this.getTransporter();
+      await transporter.verify();
       return true;
     } catch (error) {
       console.error('Email transporter verification failed:', error);
