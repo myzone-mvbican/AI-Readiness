@@ -12,18 +12,7 @@ export class EmailService {
     try {
       const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5000'}/reset-password?token=${resetToken}`;
       
-      // In development, just log the email details instead of actually sending
-      if (process.env.NODE_ENV === 'development') {
-        console.log('\n=== PASSWORD RESET EMAIL ===');
-        console.log('To:', email);
-        console.log('User:', name);
-        console.log('Reset URL:', resetUrl);
-        console.log('Token expires in: 30 minutes');
-        console.log('=============================\n');
-        return true;
-      }
-
-      // Production email sending logic would go here with real SMTP credentials
+      // Use real email service now that credentials are provided
       const mailOptions = {
         from: process.env.EMAIL_FROM || 'noreply@myzone.ai',
         to: email,
@@ -96,13 +85,27 @@ The MyZone AI Team
         `.trim(),
       };
 
-      // For production, would use real email service
-      // const transporter = this.getTransporter();
-      // await transporter.sendMail(mailOptions);
+      // Send the actual email using the configured transporter
+      const transporter = this.getTransporter();
+      const info = await transporter.sendMail(mailOptions);
+      
+      console.log('Password reset email sent successfully to:', email);
+      console.log('Message ID:', info.messageId);
       
       return true;
     } catch (error) {
       console.error('Error sending password reset email:', error);
+      
+      // Provide helpful error messages for common authentication issues
+      if (error.code === 'EAUTH' && error.response?.includes('BadCredentials')) {
+        console.error('\n🔐 EMAIL AUTHENTICATION FAILED:');
+        console.error('This usually means you need to use an App Password instead of your regular password.');
+        console.error('For Gmail:');
+        console.error('1. Enable 2-Factor Authentication on your Google account');
+        console.error('2. Generate an App Password: https://myaccount.google.com/apppasswords');
+        console.error('3. Use the App Password in EMAIL_PASS instead of your regular password\n');
+      }
+      
       return false;
     }
   }

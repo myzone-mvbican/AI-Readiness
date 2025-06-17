@@ -82,25 +82,27 @@ export default function ResetPasswordPage() {
   // Loading state
   if (!token) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-              <XCircle className="h-6 w-6 text-red-600" />
-            </div>
-            <CardTitle className="text-2xl">Invalid Reset Link</CardTitle>
-            <CardDescription>
-              This password reset link is invalid or missing.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center">
-              <Link href="/forgot-password">
-                <Button className="w-full">Request New Reset Link</Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grow bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="container">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <XCircle className="h-6 w-6 text-red-600" />
+              </div>
+              <CardTitle className="text-2xl">Invalid Reset Link</CardTitle>
+              <CardDescription>
+                This password reset link is invalid or missing.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center">
+                <Link href="/forgot-password">
+                  <Button className="w-full">Request New Reset Link</Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -108,7 +110,7 @@ export default function ResetPasswordPage() {
   // Token validation loading
   if (tokenValidation.isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="grow bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <div className="text-center">
