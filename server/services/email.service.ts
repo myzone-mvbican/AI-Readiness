@@ -1,4 +1,3 @@
-import nodemailer from 'nodemailer';
 import { createTransporter } from '../config/email.config';
 
 export class EmailService {
@@ -6,42 +5,78 @@ export class EmailService {
 
   static async sendPasswordResetEmail(email: string, resetToken: string, name: string): Promise<boolean> {
     try {
-      const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5000'}/auth/reset?token=${resetToken}`;
+      const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5000'}/reset-password?token=${resetToken}`;
       
       const mailOptions = {
         from: process.env.EMAIL_FROM || 'noreply@myzone.ai',
         to: email,
-        subject: 'Password Reset - MyZone AI Platform',
+        subject: 'Reset Your MyZone AI Password',
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #333;">Password Reset Request</h2>
-            <p>Hello ${name},</p>
-            <p>You have requested to reset your password for your MyZone AI account. Click the button below to reset your password:</p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetUrl}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Reset Password</a>
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Reset Your Password</title>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+              .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+              .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0; }
+              .footer { text-align: center; margin-top: 30px; font-size: 14px; color: #666; }
+              .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 6px; margin: 20px 0; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>Reset Your Password</h1>
             </div>
-            <p>If the button doesn't work, copy and paste this link into your browser:</p>
-            <p style="word-break: break-all; color: #666;">${resetUrl}</p>
-            <p><strong>This link will expire in 30 minutes.</strong></p>
-            <p>If you didn't request this password reset, please ignore this email and your password will remain unchanged.</p>
-            <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-            <p style="color: #666; font-size: 12px;">This is an automated message from MyZone AI Platform. Please do not reply to this email.</p>
-          </div>
+            <div class="content">
+              <p>Hello ${name},</p>
+              
+              <p>We received a request to reset your password for your MyZone AI account. If you didn't make this request, you can safely ignore this email.</p>
+              
+              <p>To reset your password, click the button below:</p>
+              
+              <p style="text-align: center;">
+                <a href="${resetUrl}" class="button">Reset Your Password</a>
+              </p>
+              
+              <p>Or copy and paste this link into your browser:</p>
+              <p style="word-break: break-all; background: #e9ecef; padding: 10px; border-radius: 4px; font-family: monospace;">
+                ${resetUrl}
+              </p>
+              
+              <div class="warning">
+                <strong>Important:</strong> This reset link will expire in 30 minutes for security reasons. If you need to reset your password after this time, please request a new reset link.
+              </div>
+              
+              <p>If you're having trouble clicking the button, you can also visit our website and use the "Forgot Password" option.</p>
+              
+              <p>Best regards,<br>The MyZone AI Team</p>
+            </div>
+            <div class="footer">
+              <p>This is an automated email. Please do not reply to this message.</p>
+              <p>If you have questions, please contact our support team.</p>
+            </div>
+          </body>
+          </html>
         `,
         text: `
 Hello ${name},
 
-You have requested to reset your password for your MyZone AI account.
+We received a request to reset your password for your MyZone AI account.
 
-Please visit the following link to reset your password:
+To reset your password, please visit the following link:
 ${resetUrl}
 
-This link will expire in 30 minutes.
+This link will expire in 30 minutes for security reasons.
 
-If you didn't request this password reset, please ignore this email and your password will remain unchanged.
+If you didn't request this password reset, you can safely ignore this email.
 
-MyZone AI Platform
-        `
+Best regards,
+The MyZone AI Team
+        `.trim(),
       };
 
       await this.transporter.sendMail(mailOptions);
@@ -57,7 +92,7 @@ MyZone AI Platform
       await this.transporter.verify();
       return true;
     } catch (error) {
-      console.error('Email service connection failed:', error);
+      console.error('Email transporter verification failed:', error);
       return false;
     }
   }

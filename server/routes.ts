@@ -7,6 +7,7 @@ import { SurveyController } from "./controllers/survey.controller";
 import { AssessmentController } from "./controllers/assessment.controller";
 import { AIController } from "./controllers/ai.controller";
 import { BenchmarkController } from "./controllers/benchmark.controller";
+import { PasswordResetController } from "./controllers/password-reset.controller";
 
 // Import middleware if needed for protected routes
 import { auth, requireAdmin } from "./middleware/auth";
@@ -55,6 +56,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/login", AuthController.login);
   // Google OAuth login/signup endpoint
   app.post("/api/auth/google/login", AuthController.loginGoogle);
+
+  // Password reset endpoints
+  app.post("/api/password/reset-request", PasswordResetController.requestReset);
+  app.post("/api/password/reset-confirm", PasswordResetController.confirmReset);
+  app.get("/api/password/validate-token", PasswordResetController.validateToken);
 
   // User profile endpoints (protected routes)
 
