@@ -3,11 +3,7 @@ import { InfoIcon } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Survey, Assessment, CsvQuestion } from "@shared/types";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { QuestionDetailsModal } from "../question-details-modal";
 
 interface ScreenAnswers {
   assessment: Assessment & { survey?: Survey & { questions?: CsvQuestion[] } };
@@ -49,18 +45,16 @@ export default function ScreenAnswers({
               {questionsData.find(
                 (q: CsvQuestion) => Number(q.id) === Number(answer.q),
               )?.details && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <InfoIcon className="h-4 w-4 dark:text-white flex-shrink-0 mt-1" />
-                  </TooltipTrigger>
-                  <TooltipContent className="p-2 max-w-[400px]">
-                    {
+                <div className="flex-shrink-0 mt-1">
+                  <QuestionDetailsModal
+                    details={
                       questionsData.find(
                         (q: CsvQuestion) => Number(q.id) === Number(answer.q),
-                      )?.details
+                      )?.details || ""
                     }
-                  </TooltipContent>
-                </Tooltip>
+                    questionNumber={index + 1}
+                  />
+                </div>
               )}
             </div>
             <p className="text-sm text-muted-foreground mt-2">
