@@ -89,8 +89,8 @@ function Router() {
           <Route path="/" component={PageHome} />
           <Route path="/auth" component={PageAuth} />
           <Route path="/login" component={PageAuth} />
-          <Route path="/forgot-password" component={ForgotPasswordPage} />
-          <Route path="/reset-password" component={ResetPasswordPage} />
+          <Route path="/auth/forgot" component={ForgotPasswordPage} />
+          <Route path="/auth/reset" component={ResetPasswordPage} />
           <Route path="/about" component={PageAbout} />
           <Route component={NotFound} />
         </Switch>

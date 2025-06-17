@@ -264,7 +264,7 @@ export default function AuthPage() {
                       >
                         Password
                       </Label>
-                      <Link href="/forgot-password">
+                      <Link href="/auth/forgot">
                         <a className="text-sm text-blue-600 hover:underline">
                           Forgot password?
                         </a>
@@ -435,7 +435,9 @@ export default function AuthPage() {
                         <IndustrySelect
                           field={field}
                           error={!!signupErrors.industry}
-                          className={signupErrors.industry ? "border-red-500" : ""}
+                          className={
+                            signupErrors.industry ? "border-red-500" : ""
+                          }
                         />
                       )}
                     />
