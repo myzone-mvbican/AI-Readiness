@@ -15,14 +15,10 @@ export function createTransporter() {
     });
   }
 
-  // For development - create a test account
+  // For development - use a console logger instead of real email
   return nodemailer.createTransport({
-    host: 'smtp.ethereal.email',
-    port: 587,
-    secure: false,
-    auth: {
-      user: 'ethereal.user@ethereal.email',
-      pass: 'ethereal.pass',
-    },
+    streamTransport: true,
+    newline: 'unix',
+    buffer: true
   });
 }
