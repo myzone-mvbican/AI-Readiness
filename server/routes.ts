@@ -14,10 +14,14 @@ import { auth, requireAdmin } from "./middleware/auth";
 import { upload } from "./middleware/upload";
 import { ApiResponseUtil } from "./utils/api-response";
 import cors from "cors";
+import { ssrMiddleware } from "./middleware/ssr";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Enable CORS
   app.use(cors());
+
+  // Add SSR middleware for homepage
+  app.use(ssrMiddleware);
 
   // SSR API endpoint to get meta tags and initial data
   app.get("/api/ssr/meta", async (req, res) => {
