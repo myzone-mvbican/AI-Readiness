@@ -208,26 +208,26 @@ function generateStructuredData(): string {
 }
 
 export function ssrMiddleware(req: Request, res: Response, next: NextFunction) {
-  // Only apply SSR to homepage requests
+  // Only apply SEO enhancements to homepage requests, not full SSR
   if (req.path !== '/' && req.path !== '') {
     return next();
   }
 
-  console.log('SSR Middleware: Processing homepage request');
+  console.log('SEO Middleware: Processing homepage request for SEO enhancements');
 
   // Store original send and end methods
   const originalSend = res.send.bind(res);
   const originalEnd = res.end.bind(res);
 
-  // Override send method to inject SSR content
+  // Override send method to inject SEO content only
   res.send = function(html: any) {
-    return processSSR(html, req, originalSend);
+    return processSEO(html, req, originalSend);
   };
 
-  // Override end method to inject SSR content
+  // Override end method to inject SEO content only
   res.end = function(chunk?: any, encoding?: any) {
     if (typeof chunk === 'string' && chunk.includes('<div id="root">')) {
-      const processedHtml = processSSR(chunk, req, (html) => html);
+      const processedHtml = processSEO(chunk, req, (html: string) => html);
       return originalEnd(processedHtml, encoding);
     }
     return originalEnd(chunk, encoding);
@@ -236,20 +236,19 @@ export function ssrMiddleware(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-function processSSR(html: any, req: Request, callback: (html: string) => any) {
+function processSEO(html: any, req: Request, callback: (html: string) => any) {
   if (typeof html === 'string' && html.includes('<div id="root">')) {
     try {
       const user = (req as any).user || null;
       
-      console.log('SSR: Processing HTML for user:', user ? 'authenticated' : 'guest');
+      console.log('SEO: Processing HTML for enhanced meta tags and critical CSS');
       
-      // Generate complete page SSR content with critical CSS
+      // Generate SEO enhancements with critical CSS only
       const criticalCSS = getCriticalCSS();
-      const ssrHtml = generateCompletePageSSR(user);
       const metaTags = generateMetaTags(user, req.originalUrl);
       const structuredData = generateStructuredData();
       
-      // Replace placeholders with SSR content
+      // Replace placeholders with SEO content only - no content injection
       let processedHtml = html.replace(
         '<!-- SSR_META_TAGS_PLACEHOLDER -->',
         `${metaTags}\n    <style>${criticalCSS}</style>`
@@ -262,18 +261,15 @@ function processSSR(html: any, req: Request, callback: (html: string) => any) {
       
       processedHtml = processedHtml.replace(
         '<!-- SSR_HYDRATION_DATA_PLACEHOLDER -->',
-        `<script>window.__SSR_DATA__ = ${JSON.stringify({ user, url: req.originalUrl })};</script>`
+        `<script>window.__SEO_DATA__ = ${JSON.stringify({ user, url: req.originalUrl })};</script>`
       );
       
-      processedHtml = processedHtml.replace(
-        '<div id="root"></div>',
-        `<div id="root">${ssrHtml}</div>`
-      );
+      // DO NOT replace div content - let React handle rendering to avoid hydration errors
       
-      console.log('SSR: Successfully applied server-side rendering');
+      console.log('SEO: Successfully applied SEO enhancements and critical CSS');
       return callback(processedHtml);
     } catch (error) {
-      console.error('SSR Error:', error);
+      console.error('SEO Error:', error);
     }
   }
   
