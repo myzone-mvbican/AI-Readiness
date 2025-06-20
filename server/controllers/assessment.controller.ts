@@ -192,15 +192,17 @@ export class AssessmentController {
         if (survey && survey.completionLimit) {
           const completionCheck = await CompletionService.canUserTakeSurvey(
             existingAssessment.surveyTemplateId,
-            req.user?.id
+            req.user?.id,
+            undefined,
+            assessmentId // Exclude current assessment from count since it's changing status
           );
 
-          // Since the current assessment is changing from draft/in-progress to completed,
-          // we need to check if completing it would exceed the limit
-          if (completionCheck.completionCount >= survey.completionLimit) {
+          // Check if completing this assessment would exceed the limit
+          // Add 1 to account for this assessment becoming completed
+          if (completionCheck.completionCount + 1 > survey.completionLimit) {
             return res.status(400).json({
               success: false,
-              message: `You have reached the completion limit for this survey (${completionCheck.completionCount}/${survey.completionLimit})`,
+              message: `You have reached the completion limit for this survey (${completionCheck.completionCount + 1}/${survey.completionLimit})`,
             });
           }
         }
@@ -355,10 +357,6 @@ export class AssessmentController {
       };
 
       const assessment = await AssessmentModel.create(assessmentData);
-
-      if (assessment) {
-        assessment.survey = survey;
-      }
 
       return res.status(201).json({
         success: true,

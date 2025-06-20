@@ -9,7 +9,8 @@ export class CompletionService {
   static async canUserTakeSurvey(
     surveyId: number,
     userId?: number,
-    guestEmail?: string
+    guestEmail?: string,
+    excludeAssessmentId?: number
   ): Promise<{
     canTake: boolean;
     completionCount: number;
@@ -57,10 +58,12 @@ export class CompletionService {
           );
         
         // Count completed assessments + assessments that could be completed (draft/in-progress)
+        // Exclude specific assessment if provided (for update scenarios)
         completionCount = allUserAssessments.filter(assessment => 
-          assessment.status === "completed" || 
-          assessment.status === "draft" || 
-          assessment.status === "in-progress"
+          (assessment.status === "completed" || 
+           assessment.status === "draft" || 
+           assessment.status === "in-progress") &&
+          (!excludeAssessmentId || assessment.id !== excludeAssessmentId)
         ).length;
       } else if (guestEmail) {
         // For guest users - check by email in guest field (all statuses)
