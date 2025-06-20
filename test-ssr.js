@@ -12,7 +12,9 @@ async function testSSR() {
     
     // Test 1: Check if server-rendered content exists
     const hasSSRContent = html.includes('MyZone AI Readiness Survey') && 
-                          html.includes('style="font-size: 3rem');
+                          html.includes('class="min-h-screen flex flex-col"') &&
+                          html.includes('header class="bg-white') &&
+                          html.includes('footer class="bg-gray-100');
     console.log(`   Server-rendered homepage content: ${hasSSRContent ? '✅ PASS' : '❌ FAIL'}`);
     
     // Test 2: Check meta tags
