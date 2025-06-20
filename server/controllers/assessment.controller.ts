@@ -180,6 +180,25 @@ export class AssessmentController {
         });
       }
 
+      // Check completion limits when trying to complete an assessment
+      if (
+        !isUpdatingOnlyRecommendations &&
+        req.body.status === "completed" &&
+        existingAssessment.status !== "completed"
+      ) {
+        const completionCheck = await CompletionService.canUserTakeSurvey(
+          existingAssessment.surveyTemplateId,
+          req.user?.id
+        );
+
+        if (!completionCheck.canTake) {
+          return res.status(400).json({
+            success: false,
+            message: completionCheck.message || "You have reached the completion limit for this survey",
+          });
+        }
+      }
+
       // Calculate score if completing only
       let score = null;
       if (
