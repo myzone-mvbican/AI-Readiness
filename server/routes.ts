@@ -14,38 +14,10 @@ import { auth, requireAdmin } from "./middleware/auth";
 import { upload } from "./middleware/upload";
 import { ApiResponseUtil } from "./utils/api-response";
 import cors from "cors";
-import { ssrMiddleware } from "./middleware/ssr";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Enable CORS
   app.use(cors());
-
-  // Add SSR middleware for homepage
-  app.use(ssrMiddleware);
-
-  // SSR API endpoint to get meta tags and initial data
-  app.get("/api/ssr/meta", async (req, res) => {
-    try {
-      const { renderPage, generateMetaTags, generateStructuredData } = await import('./ssr.js');
-      
-      const user = (req as any).user || null;
-      const url = req.query.url as string || '/';
-      const ssrContext = { url, user };
-      
-      const metaTags = generateMetaTags(ssrContext);
-      const structuredData = generateStructuredData(ssrContext);
-      
-      res.json({
-        metaTags,
-        structuredData,
-        user,
-        ssrHtml: renderPage(ssrContext)
-      });
-    } catch (error) {
-      console.error('SSR Meta Error:', error);
-      res.status(500).json({ error: 'Failed to generate SSR meta data' });
-    }
-  });
 
   // API routes - path prefixed with /api
   app.get("/api/health", (req, res) => {
