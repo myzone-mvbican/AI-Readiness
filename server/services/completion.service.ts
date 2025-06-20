@@ -45,34 +45,36 @@ export class CompletionService {
       let completionCount = 0;
 
       if (userId) {
-        // For authenticated users
-        const completedAssessments = await db
+        // For authenticated users - count completed assessments AND draft/in-progress that could be completed
+        const allUserAssessments = await db
           .select()
           .from(assessments)
           .where(
             and(
               eq(assessments.surveyTemplateId, surveyId),
-              eq(assessments.userId, userId),
-              eq(assessments.status, "completed"),
-              isNotNull(assessments.score)
+              eq(assessments.userId, userId)
             )
           );
-        completionCount = completedAssessments.length;
+        
+        // Count completed assessments + assessments that could be completed (draft/in-progress)
+        completionCount = allUserAssessments.filter(assessment => 
+          assessment.status === "completed" || 
+          assessment.status === "draft" || 
+          assessment.status === "in-progress"
+        ).length;
       } else if (guestEmail) {
-        // For guest users - check by email in guest field
+        // For guest users - check by email in guest field (all statuses)
         const allGuestAssessments = await db
           .select()
           .from(assessments)
           .where(
             and(
               eq(assessments.surveyTemplateId, surveyId),
-              eq(assessments.status, "completed"),
-              isNotNull(assessments.score),
               isNotNull(assessments.guest)
             )
           );
 
-        // Filter by email from guest JSON data
+        // Filter by email from guest JSON data and count all assessments (not just completed)
         completionCount = allGuestAssessments.filter(assessment => {
           if (!assessment.guest) return false;
           try {

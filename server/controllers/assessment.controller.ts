@@ -186,16 +186,23 @@ export class AssessmentController {
         req.body.status === "completed" &&
         existingAssessment.status !== "completed"
       ) {
-        const completionCheck = await CompletionService.canUserTakeSurvey(
-          existingAssessment.surveyTemplateId,
-          req.user?.id
-        );
+        // Get survey to check if it has completion limits
+        const survey = await SurveyModel.getById(existingAssessment.surveyTemplateId);
+        
+        if (survey && survey.completionLimit) {
+          const completionCheck = await CompletionService.canUserTakeSurvey(
+            existingAssessment.surveyTemplateId,
+            req.user?.id
+          );
 
-        if (!completionCheck.canTake) {
-          return res.status(400).json({
-            success: false,
-            message: completionCheck.message || "You have reached the completion limit for this survey",
-          });
+          // Since the current assessment is changing from draft/in-progress to completed,
+          // we need to check if completing it would exceed the limit
+          if (completionCheck.completionCount >= survey.completionLimit) {
+            return res.status(400).json({
+              success: false,
+              message: `You have reached the completion limit for this survey (${completionCheck.completionCount}/${survey.completionLimit})`,
+            });
+          }
         }
       }
 
