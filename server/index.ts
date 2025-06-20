@@ -53,8 +53,7 @@ app.use((req, res, next) => {
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
-    const { serveStaticWithSSR } = await import("./ssr-production.js");
-    serveStaticWithSSR(app);
+    serveStatic(app);
   }
 
   // ALWAYS serve the app on port 5000
