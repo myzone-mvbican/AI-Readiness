@@ -7,31 +7,105 @@ export interface SSRContext {
   initialData?: Record<string, any>;
 }
 
-// Simple homepage component for SSR
+// Simple homepage component for SSR with inline styles
 function SSRHomePage({ user }: { user?: any }) {
+  const heroStyle: React.CSSProperties = {
+    background: 'linear-gradient(to bottom right, #eff6ff, #ffffff, #eff6ff)',
+    padding: '4rem 0',
+    minHeight: '80vh',
+    display: 'flex',
+    alignItems: 'center'
+  };
+
+  const containerStyle: React.CSSProperties = {
+    maxWidth: '1200px',
+    margin: '0 auto',
+    padding: '0 1rem'
+  };
+
+  const contentStyle: React.CSSProperties = {
+    maxWidth: '48rem',
+    margin: '0 auto',
+    textAlign: 'center'
+  };
+
+  const titleStyle: React.CSSProperties = {
+    fontSize: '3rem',
+    fontWeight: '800',
+    color: '#1d4ed8',
+    marginBottom: '1.5rem',
+    lineHeight: '1.1'
+  };
+
+  const descriptionStyle: React.CSSProperties = {
+    fontSize: '1.25rem',
+    color: '#6b7280',
+    marginBottom: '2rem',
+    lineHeight: '1.6'
+  };
+
+  const buttonContainerStyle: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+    alignItems: 'center'
+  };
+
+  const primaryButtonStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '0.375rem',
+    fontSize: '0.875rem',
+    fontWeight: '500',
+    backgroundColor: '#2563eb',
+    color: 'white',
+    padding: '0.75rem 1.5rem',
+    border: 'none',
+    cursor: 'pointer',
+    textDecoration: 'none',
+    transition: 'background-color 0.2s'
+  };
+
+  const secondaryButtonStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '0.375rem',
+    fontSize: '0.875rem',
+    fontWeight: '500',
+    border: '1px solid #d1d5db',
+    backgroundColor: 'white',
+    color: '#374151',
+    padding: '0.75rem 1.5rem',
+    cursor: 'pointer',
+    textDecoration: 'none',
+    transition: 'background-color 0.2s'
+  };
+
   return (
-    <div className="bg-gradient-to-br from-blue-50 via-white to-blue-50 dark:from-gray-900 py-16 md:py-24">
-      <div className="container">
-        <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-blue-700 mb-6">
+    <div style={heroStyle}>
+      <div style={containerStyle}>
+        <div style={contentStyle}>
+          <h1 style={titleStyle}>
             MyZone AI Readiness Survey
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground mb-8">
+          <p style={descriptionStyle}>
             Welcome! This AI Readiness Assessment should be completed
             quarterly as one of your foundational AI KPIs (Key Performance
             Indicators). It takes approximately 10 minutes to complete.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-blue-600 text-white px-6 py-3 hover:bg-blue-700">
+          <div style={buttonContainerStyle}>
+            <a href={user ? "/dashboard" : "#start-assessment"} style={primaryButtonStyle}>
               {user ? 'Continue Assessment' : 'Start Assessment'}
-              <svg className="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg style={{marginLeft: '0.5rem', width: '1rem', height: '1rem'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
-            </button>
+            </a>
             {!user && (
-              <button className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-gray-300 bg-white px-6 py-3 hover:bg-gray-50">
+              <a href="/auth" style={secondaryButtonStyle}>
                 Sign In
-              </button>
+              </a>
             )}
           </div>
         </div>
