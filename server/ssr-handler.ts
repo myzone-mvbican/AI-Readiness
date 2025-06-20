@@ -1,4 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
+import fs from 'fs';
+import path from 'path';
 
 // Inline SSR functions for immediate availability
 function generateHomepageSSR(user: any): string {
@@ -91,74 +93,48 @@ function generateStructuredData(): string {
   return `<script type="application/ld+json">${JSON.stringify(structuredData)}</script>`;
 }
 
-export function ssrMiddleware(req: Request, res: Response, next: NextFunction) {
-  // Only apply SSR to homepage requests
-  if (req.path !== '/' && req.path !== '') {
-    return next();
+export async function handleSSRHomepage(req: Request, res: Response): Promise<void> {
+  try {
+    console.log('SSR Handler: Processing homepage request');
+    
+    // Read the base HTML template
+    const templatePath = path.resolve(process.cwd(), "client", "index.html");
+    let template = await fs.promises.readFile(templatePath, "utf-8");
+    
+    const user = (req as any).user || null;
+    
+    // Generate SSR content
+    const ssrHtml = generateHomepageSSR(user);
+    const metaTags = generateMetaTags(user, req.originalUrl);
+    const structuredData = generateStructuredData();
+    
+    // Replace placeholders with SSR content
+    template = template.replace(
+      '<!-- SSR_META_TAGS_PLACEHOLDER -->',
+      metaTags
+    );
+    
+    template = template.replace(
+      '<!-- SSR_STRUCTURED_DATA_PLACEHOLDER -->',
+      structuredData
+    );
+    
+    template = template.replace(
+      '<!-- SSR_HYDRATION_DATA_PLACEHOLDER -->',
+      `<script>window.__SSR_DATA__ = ${JSON.stringify({ user, url: req.originalUrl })};</script>`
+    );
+    
+    template = template.replace(
+      '<div id="root"></div>',
+      `<div id="root">${ssrHtml}</div>`
+    );
+    
+    console.log('SSR Handler: Successfully applied server-side rendering');
+    
+    res.setHeader('Content-Type', 'text/html');
+    res.send(template);
+  } catch (error) {
+    console.error('SSR Handler Error:', error);
+    res.status(500).send('Internal Server Error');
   }
-
-  console.log('SSR Middleware: Processing homepage request');
-
-  // Store original send and end methods
-  const originalSend = res.send.bind(res);
-  const originalEnd = res.end.bind(res);
-
-  // Override send method to inject SSR content
-  res.send = function(html: any) {
-    return processSSR(html, req, originalSend);
-  };
-
-  // Override end method to inject SSR content
-  res.end = function(chunk?: any, encoding?: any) {
-    if (typeof chunk === 'string' && chunk.includes('<div id="root">')) {
-      const processedHtml = processSSR(chunk, req, (html) => html);
-      return originalEnd(processedHtml, encoding);
-    }
-    return originalEnd(chunk, encoding);
-  };
-
-  next();
-}
-
-function processSSR(html: any, req: Request, callback: (html: string) => any) {
-  if (typeof html === 'string' && html.includes('<div id="root">')) {
-    try {
-      const user = (req as any).user || null;
-      
-      console.log('SSR: Processing HTML for user:', user ? 'authenticated' : 'guest');
-      
-      // Generate SSR content
-      const ssrHtml = generateHomepageSSR(user);
-      const metaTags = generateMetaTags(user, req.originalUrl);
-      const structuredData = generateStructuredData();
-      
-      // Replace placeholders with SSR content
-      let processedHtml = html.replace(
-        '<!-- SSR_META_TAGS_PLACEHOLDER -->',
-        metaTags
-      );
-      
-      processedHtml = processedHtml.replace(
-        '<!-- SSR_STRUCTURED_DATA_PLACEHOLDER -->',
-        structuredData
-      );
-      
-      processedHtml = processedHtml.replace(
-        '<!-- SSR_HYDRATION_DATA_PLACEHOLDER -->',
-        `<script>window.__SSR_DATA__ = ${JSON.stringify({ user, url: req.originalUrl })};</script>`
-      );
-      
-      processedHtml = processedHtml.replace(
-        '<div id="root"></div>',
-        `<div id="root">${ssrHtml}</div>`
-      );
-      
-      console.log('SSR: Successfully applied server-side rendering');
-      return callback(processedHtml);
-    } catch (error) {
-      console.error('SSR Error:', error);
-    }
-  }
-  
-  return callback(html);
 }
