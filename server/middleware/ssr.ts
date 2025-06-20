@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { getCriticalCSS } from '../css-extractor';
 
 // Complete page SSR renderer that matches React app structure
 function generateCompletePageSSR(user: any): string {
@@ -242,7 +243,8 @@ function processSSR(html: any, req: Request, callback: (html: string) => any) {
       
       console.log('SSR: Processing HTML for user:', user ? 'authenticated' : 'guest');
       
-      // Generate complete page SSR content
+      // Generate complete page SSR content with critical CSS
+      const criticalCSS = getCriticalCSS();
       const ssrHtml = generateCompletePageSSR(user);
       const metaTags = generateMetaTags(user, req.originalUrl);
       const structuredData = generateStructuredData();
@@ -250,7 +252,7 @@ function processSSR(html: any, req: Request, callback: (html: string) => any) {
       // Replace placeholders with SSR content
       let processedHtml = html.replace(
         '<!-- SSR_META_TAGS_PLACEHOLDER -->',
-        metaTags
+        `${metaTags}\n    <style>${criticalCSS}</style>`
       );
       
       processedHtml = processedHtml.replace(
