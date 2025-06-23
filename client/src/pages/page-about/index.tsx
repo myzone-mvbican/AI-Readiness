@@ -1,6 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
 
 export default function SurveyPage() {
+  const [, setLocation] = useLocation();
+  
   return (
     <div className="container py-12">
       <div className="text-center mb-10">
@@ -11,6 +15,13 @@ export default function SurveyPage() {
           Complete the following questions to evaluate your organization's AI
           readiness
         </p>
+        
+        <Button
+          className="mt-5 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          onClick={() => setLocation('/#start')}
+        >
+          Ready to take the survey?
+        </Button>
       </div>
 
       <div className="grid gap-8">

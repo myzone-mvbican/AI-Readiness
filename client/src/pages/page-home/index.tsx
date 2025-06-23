@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, ArrowRight } from "lucide-react";
@@ -18,6 +18,7 @@ export default function Home() {
   const assessmentCreateModal = useAssessment();
   const [showGuestAssessment, setShowGuestAssessment] = useState(false);
   const [showGuestDialog, setShowGuestDialog] = useState(false);
+  const [hash, setHash] = useState(window.location.hash);
 
   const handleAssessmentStart = () => {
     if (user) {
@@ -28,6 +29,17 @@ export default function Home() {
       setShowGuestDialog(true);
     }
   };
+
+  useEffect(() => {
+    // Function to handle hash change
+    const handleHashChange = () => {
+      if (hash) {
+        handleAssessmentStart();
+      }
+    };
+
+    handleHashChange();
+  }, [hash]);
 
   return (
     <>
