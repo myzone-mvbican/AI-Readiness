@@ -241,7 +241,7 @@ export default function SurveyTemplate({
           <h2 className="text-xl font-bold text-foreground text-center md:text-start">
             {questions[currentStep]?.category || "Assessment questions"}
           </h2>
-          <div className="flex justify-center md:justify-end items-center gap-2">
+          {/* <div className="flex justify-center md:justify-end items-center gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -265,12 +265,12 @@ export default function SurveyTemplate({
               Next
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
-          </div>
+          </div> */}
         </div>
 
         <Card className="border-2 border-muted">
           <CardHeader className="bg-muted">
-            <CardTitle className="flex items-center space-x-3">
+            <CardTitle className="flex items-center justify-between md:justify-start space-x-3">
               <h3 className="text-xs md:text-sm text-muted-foreground">
                 Question {currentStep + 1} of {questions.length}
               </h3>
@@ -305,8 +305,8 @@ export default function SurveyTemplate({
               onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
               disabled={currentStep === 0}
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Previous
+              <ArrowLeft className="size-4 md:mr-2" />
+              <span className="hidden md:block">Previous</span>
             </Button>
             <Button
               onClick={() =>
@@ -314,8 +314,8 @@ export default function SurveyTemplate({
               }
               disabled={currentStep === questions.length - 1}
             >
-              Next
-              <ArrowRight className="h-4 w-4 ml-2" />
+              <span className="hidden md:block">Next</span>
+              <ArrowRight className="size-4 md:ml-2" />
             </Button>
           </CardFooter>
         </Card>
@@ -324,7 +324,7 @@ export default function SurveyTemplate({
           <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5 mr-3 flex-shrink-0" />
           <div>
             <h4 className="font-medium text-yellow-800">Important Note</h4>
-            <p className="text-sm text-yellow-700 mt-1">
+            <p className="text-xs md:text-sm text-yellow-700 mt-1">
               {isGuestMode
                 ? "Your answers are auto-saved as you go. To finalize your assessment, answer all questions and click 'Complete Assessment'. You can create an account after completion to track your progress over time."
                 : "Your answers are saved when you click 'Save Progress'. To finalize your assessment, answer all questions and click 'Complete Assessment'. Completed assessments cannot be modified."}

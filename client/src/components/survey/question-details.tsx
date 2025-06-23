@@ -31,17 +31,22 @@ export function QuestionDetails({
 
   const content = <div className="text-sm leading-relaxed">{details}</div>;
 
+  const OpenButton = () => {
+    return(
+      <Button
+        variant="link" 
+        onClick={() => setOpen(true)}
+        className="p-0 text-xs lg:text-base"
+      >
+        <InfoIcon className="size-4" /> Why is this important?
+      </Button>
+    );
+  }
+
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={setOpen}>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setOpen(true)}
-          className="h-6 w-6 p-0"
-        >
-          <InfoIcon className="h-4 w-4" />
-        </Button>
+        <OpenButton />
         <DialogContent className="max-w-md">
           <DialogHeader>
             <div className="flex items-center justify-between">
@@ -58,14 +63,7 @@ export function QuestionDetails({
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setOpen(true)}
-        className="h-6 w-6 p-0"
-      >
-        <InfoIcon className="h-4 w-4" />
-      </Button>
+      <OpenButton />
       <DrawerContent>
         <DrawerHeader className="text-left">
           <div className="flex items-center justify-between">

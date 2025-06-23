@@ -909,7 +909,8 @@ export const AssessmentPDFDownloadButton = ({
 }) => {
   const today = new Date();
   const year = today.getFullYear();
-  const filename = `myzoneai-readiness-report-${year}.pdf`;
+  const completed = new Date(assessment.completedOn || today);
+  const filename = `myzoneai-readiness-report-${completed.toLocaleDateString()}.pdf`;
 
   return (
     <PDFDownloadLink

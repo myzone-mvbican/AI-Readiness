@@ -37,14 +37,14 @@ export default function ScreenAnswers({
       <div>
         {answers.map((answer: any, index: number) => (
           <div key={`answer-${index}`}>
-            <div className="flex items-start gap-2">
+            <div className="flex flex-col lg:flex-row items-start gap-2">
               <h3 className="text-sm text-foreground md:text-base font-medium flex-1">
                 Question {index + 1}: {getQuestionTextById(answer.q)}
               </h3>
               {questionsData.find(
                 (q: CsvQuestion) => Number(q.id) === Number(answer.q),
               )?.details && (
-                <div className="flex-shrink-0 mt-1">
+                <div className="flex-shrink-0">
                   <QuestionDetails
                     details={
                       questionsData.find(
