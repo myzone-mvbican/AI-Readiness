@@ -399,7 +399,7 @@ export default function ScreenCompare({ assessment }: ScreenCompare) {
             </ChartContainer>
           </CardContent>
           <CardFooter className="pt-5 border-t border-border">
-            <p className="text-xs xl:text-[1rem] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {activeView === "industry"
                 ? `Based on ${industry} submissions in ${data.quarter}`
                 : `Based on global submissions in ${data.quarter}`}
