@@ -1,0 +1,115 @@
+# MyZone AI - AI Readiness Assessment Platform
+
+## Overview
+
+MyZone AI is a comprehensive full-stack application designed to evaluate and benchmark organizations' AI readiness. The platform provides detailed assessments, industry benchmarking, and personalized recommendations to help businesses prepare for AI implementation. Built with modern TypeScript architecture, it features a React frontend with Express.js backend and PostgreSQL database.
+
+## System Architecture
+
+### Frontend Architecture
+- **Framework**: React 18 with TypeScript
+- **Build Tool**: Vite for fast development and optimized builds
+- **Styling**: Tailwind CSS with shadcn/ui component library
+- **State Management**: React Context API and TanStack Query for server state
+- **Routing**: Wouter for lightweight client-side routing
+- **Forms**: React Hook Form with Zod validation
+
+### Backend Architecture
+- **Runtime**: Node.js 20 with Express.js framework
+- **Language**: TypeScript with ESM modules
+- **API Design**: RESTful API with standardized response formats
+- **Authentication**: JWT tokens with bcrypt password hashing
+- **File Uploads**: Multer middleware for CSV survey uploads
+
+### Database Architecture
+- **Database**: PostgreSQL 16 with connection pooling
+- **ORM**: Drizzle ORM for type-safe database operations
+- **Migrations**: Automated schema migrations via drizzle-kit
+- **Connection**: Neon serverless driver with WebSocket support
+
+## Key Components
+
+### Authentication System
+- JWT-based authentication with secure token management
+- Google OAuth integration for social login
+- Password reset functionality with email notifications
+- Role-based access control (admin/client roles)
+- Guest assessment capabilities for unauthenticated users
+
+### Assessment Engine
+- Multi-stage assessment workflow with progress tracking
+- Support for multiple survey templates via CSV uploads
+- Real-time answer validation and storage
+- Resume functionality for incomplete assessments
+- Industry-specific question categorization
+
+### Benchmarking System
+- Quarterly industry benchmark calculations
+- Global and industry-specific score comparisons
+- Automated survey statistics generation
+- Configurable completion limits per survey
+
+### Data Management
+- Comprehensive database schema with proper relationships
+- Type-safe data validation using Zod schemas
+- Shared type definitions between frontend and backend
+- Audit trails for key system changes
+
+## Data Flow
+
+1. **User Registration/Login**: Users authenticate via email/password or Google OAuth
+2. **Assessment Creation**: Users select or are assigned survey templates
+3. **Question Delivery**: Frontend fetches questions and renders assessment UI
+4. **Answer Collection**: Responses are validated and stored incrementally
+5. **Score Calculation**: Category scores computed based on weighted responses
+6. **Benchmark Comparison**: User scores compared against industry averages
+7. **Report Generation**: Comprehensive results with recommendations delivered
+
+## External Dependencies
+
+### Core Dependencies
+- **@neondatabase/serverless**: PostgreSQL connection and query execution
+- **@tanstack/react-query**: Server state management and caching
+- **@radix-ui/**: Accessible UI component primitives
+- **OpenAI**: AI-powered recommendation generation
+- **SendGrid**: Email service for password resets and notifications
+- **Google OAuth**: Social authentication integration
+
+### Development Tools
+- **Drizzle Kit**: Database schema management and migrations
+- **Vite**: Frontend build tooling and development server
+- **TypeScript**: Static type checking across the stack
+- **Tailwind CSS**: Utility-first styling framework
+
+## Deployment Strategy
+
+### Environment Configuration
+- **Development**: Local development with hot reload via Vite
+- **Production**: Containerized deployment on Replit's autoscale infrastructure
+- **Database**: Managed PostgreSQL instance with environment-specific URLs
+- **Assets**: Static file serving through Express with proper caching headers
+
+### Build Process
+1. Frontend assets compiled and optimized via Vite
+2. Backend TypeScript transpiled to ESM using esbuild
+3. Database migrations applied automatically during deployment
+4. Environment variables validated for required services
+
+### Monitoring and Performance
+- Request/response logging with duration tracking
+- Error handling with structured logging
+- Query optimization through indexed database columns
+- Caching strategies for frequently accessed data
+
+## Changelog
+
+```
+Changelog:
+- June 24, 2025. Initial setup
+```
+
+## User Preferences
+
+```
+Preferred communication style: Simple, everyday language.
+```
