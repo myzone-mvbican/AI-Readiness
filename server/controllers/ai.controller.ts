@@ -898,4 +898,99 @@ The future is not written. It’s designed.
 Let’s build it—one system, one automation, one transformation at a time.
     `;
   }
+
+  static async analyzeIndustry(req: Request, res: Response) {
+    // Check if OpenAI API key is set
+    if (!process.env.OPENAI_API_KEY) {
+      console.error("OpenAI API key not set");
+      return res.status(500).json({
+        success: false,
+        message: "OpenAI API key not configured",
+      });
+    }
+
+    try {
+      const { url } = req.body;
+
+      if (!url) {
+        return res.status(400).json({
+          success: false,
+          message: "URL is required",
+        });
+      }
+
+      // Initialize OpenAI
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+
+      // System prompt for industry analysis
+      const systemPrompt = `You are an expert industry analyst. Your task is to analyze a website URL and determine the most appropriate NAICS (North American Industry Classification System) industry code.
+
+Guidelines:
+1. Analyze the website content, business model, primary products/services, and target market
+2. Return ONLY a valid NAICS industry code (6-digit number)
+3. Choose the most specific and accurate code that matches the primary business activity
+4. If the website is unclear or inaccessible, return "UNKNOWN"
+5. Do not include explanations, just the code
+
+Examples of valid responses:
+- 541511 (Custom Computer Programming Services)
+- 722513 (Limited-Service Restaurants)
+- 236220 (Commercial and Institutional Building Construction)
+- 523110 (Investment Banking and Securities Dealing)`;
+
+      const userPrompt = `Analyze this website and determine its NAICS industry code: ${url}
+
+Please visit the website (if accessible) and analyze:
+- Main business activities
+- Products or services offered
+- Target market and customers
+- Business model
+- Company description and about page
+
+Return only the 6-digit NAICS code that best represents this business.`;
+
+      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        max_tokens: 50,
+        temperature: 0.1,
+      });
+
+      const industryCode = completion.choices[0]?.message?.content?.trim();
+
+      if (!industryCode || industryCode === "UNKNOWN") {
+        return res.status(400).json({
+          success: false,
+          message: "Could not determine industry from the provided URL",
+        });
+      }
+
+      // Validate that the code is numeric and 6 digits
+      if (!/^\d{6}$/.test(industryCode)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid industry code format detected",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        industryCode: industryCode,
+        message: "Industry analysis completed successfully",
+      });
+
+    } catch (error) {
+      console.error("Error analyzing industry:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to analyze website industry",
+      });
+    }
+  }
 }
