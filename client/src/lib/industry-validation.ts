@@ -4,7 +4,7 @@ import industriesJson from "../assets/industries.json";
 
 // Industry data interface
 export interface Industry {
-  code: string;
+  code: string | number;
   name: string;
 }
 
