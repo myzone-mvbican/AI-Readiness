@@ -178,7 +178,7 @@ export function IndustrySelect({
           >
             {selectedIndustry ? (
               <span className="truncate font-normal">
-                {selectedIndustry.name}
+                {`${selectedIndustry.name} (${selectedIndustry.code})`}
               </span>
             ) : (
               <span className="text-muted-foreground font-normal">
