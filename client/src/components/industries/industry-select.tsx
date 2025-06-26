@@ -168,7 +168,7 @@ export function IndustrySelect({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[400px] p-0" align="start">
+        <PopoverContent className="w-full max-w-[calc(100%-40px-.5rem)] p-0" align="start">
           <div className="flex flex-col">
             <div className="p-3 border-b">
               <Input
