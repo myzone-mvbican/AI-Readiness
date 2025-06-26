@@ -1,18 +1,10 @@
 import { useState, useMemo } from "react";
 import { ControllerRenderProps } from "react-hook-form";
-import { Check, ChevronsUpDown, Search, Wand2, Loader2 } from "lucide-react";
+import { Check, ChevronsUpDown, Wand2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
@@ -176,45 +168,54 @@ export function IndustrySelect({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[--radix-popper-anchor-width] p-0" align="start">
-          <Command shouldFilter={false}>
-            <CommandInput
-              placeholder="Search by name or code..."
-              value={search}
-              onValueChange={setSearch}
-            />
-            <CommandList>
-              <CommandEmpty>
-                {search ? "No industries found." : "Start typing to search..."}
-              </CommandEmpty>
-              <CommandGroup>
-                {filteredIndustries.map((industry) => (
-                  <CommandItem
-                    key={String(industry.code)}
-                    value={String(industry.code)}
-                    onSelect={(currentValue) => {
-                      field.onChange(currentValue === field.value ? "" : currentValue);
-                      setOpen(false);
-                      setSearch("");
-                    }}
-                  >
-                    <Check
+        <PopoverContent className="w-[400px] p-0" align="start">
+          <div className="flex flex-col">
+            <div className="p-3 border-b">
+              <Input
+                placeholder="Search by name or code..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div className="max-h-[300px] overflow-y-auto">
+              {filteredIndustries.length === 0 ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  {search ? "No industries found." : "Start typing to search..."}
+                </div>
+              ) : (
+                <div className="p-1">
+                  {filteredIndustries.map((industry) => (
+                    <button
+                      key={String(industry.code)}
+                      onClick={() => {
+                        field.onChange(String(industry.code));
+                        setOpen(false);
+                        setSearch("");
+                      }}
                       className={cn(
-                        "mr-2 h-4 w-4",
-                        field.value === industry.code ? "opacity-100" : "opacity-0"
+                        "w-full flex items-center gap-2 p-2 text-left hover:bg-accent hover:text-accent-foreground rounded-sm",
+                        field.value === String(industry.code) && "bg-accent"
                       )}
-                    />
-                    <div className="flex flex-col">
-                      <span className="font-medium">{industry.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        Code: {industry.code}
-                      </span>
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
+                    >
+                      <Check
+                        className={cn(
+                          "h-4 w-4 shrink-0",
+                          field.value === String(industry.code) ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-medium truncate">{industry.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          Code: {industry.code}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </PopoverContent>
       </Popover>
       
