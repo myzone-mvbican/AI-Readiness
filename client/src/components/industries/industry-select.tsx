@@ -87,8 +87,8 @@ export function IndustrySelect({
           setUrlPopoverOpen(false);
           setUrl("");
           toast({
-            title: "Success",
-            description: `Industry detected: ${foundIndustry.name}`,
+            title: "Industry detected",
+            description: foundIndustry.name,
           });
         } else {
           toast({
@@ -123,7 +123,7 @@ export function IndustrySelect({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className={cn("flex-1 justify-between", className)}
+            className={cn("flex-1 justify-between max-w-[calc(100%-40px-.5rem)]", className)}
           >
             {selectedIndustry ? (
               <span className="truncate">
