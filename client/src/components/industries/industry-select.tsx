@@ -24,20 +24,18 @@ import { industriesData } from "@/lib/industry-validation";
 import { apiRequest } from "@/lib/queryClient";
 
 // Frontend URL validation schema
-const urlSchema = z.string()
+const urlSchema = z
+  .string()
   .min(1, "URL is required")
   .url("Please enter a valid URL")
-  .refine(
-    (url) => {
-      try {
-        const parsedUrl = new URL(url);
-        return ['http:', 'https:'].includes(parsedUrl.protocol);
-      } catch {
-        return false;
-      }
-    },
-    "URL must use HTTP or HTTPS protocol"
-  );
+  .refine((url) => {
+    try {
+      const parsedUrl = new URL(url);
+      return ["http:", "https:"].includes(parsedUrl.protocol);
+    } catch {
+      return false;
+    }
+  }, "URL must use HTTP or HTTPS protocol");
 
 interface IndustrySelectProps {
   field: ControllerRenderProps<any, any>;
@@ -58,7 +56,7 @@ export function IndustrySelect({
   const [url, setUrl] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [urlError, setUrlError] = useState<string | null>(null);
-  
+
   const { toast } = useToast();
   const industries = industriesData;
 
@@ -70,21 +68,28 @@ export function IndustrySelect({
   // Filter industries based on search
   const filteredIndustries = useMemo(() => {
     if (!search) return industries.slice(0, 50); // Show first 50 when no search
-    
+
     const searchLower = search.toLowerCase();
-    return industries.filter((industry) => 
-      industry.name.toLowerCase().includes(searchLower) ||
-      String(industry.code).toLowerCase().includes(searchLower)
-    ).slice(0, 100); // Limit to 100 results for performance
+    return industries
+      .filter(
+        (industry) =>
+          industry.name.toLowerCase().includes(searchLower) ||
+          String(industry.code).toLowerCase().includes(searchLower),
+      )
+      .slice(0, 100); // Limit to 100 results for performance
   }, [search, industries]);
 
   // URL validation and change handler
   const handleUrlChange = (value: string) => {
-    setUrl(value);
+    let formattedValue = value.trim();
+    if (formattedValue && !/^https?:\/\//i.test(formattedValue)) {
+      formattedValue = `https://${formattedValue}`;
+    }
+    setUrl(formattedValue);
     setUrlError(null);
-    
-    if (value.trim()) {
-      const validation = urlSchema.safeParse(value.trim());
+
+    if (formattedValue) {
+      const validation = urlSchema.safeParse(formattedValue);
       if (!validation.success) {
         setUrlError(validation.error.errors[0].message);
       }
@@ -94,10 +99,10 @@ export function IndustrySelect({
   // URL analysis function with frontend validation
   const analyzeUrl = async () => {
     const trimmedUrl = url.trim();
-    
+
     // Frontend validation using Zod
     const validation = urlSchema.safeParse(trimmedUrl);
-    
+
     if (!validation.success) {
       const errorMessage = validation.error.errors[0].message;
       setUrlError(errorMessage);
@@ -111,17 +116,19 @@ export function IndustrySelect({
 
     setUrlError(null);
     setIsAnalyzing(true);
-    
+
     try {
-      const response = await apiRequest("POST", "/api/analyze-industry", { url: trimmedUrl });
+      const response = await apiRequest("POST", "/api/analyze-industry", {
+        url: trimmedUrl,
+      });
       const result = await response.json();
-      
+
       if (result.success && result.industryCode) {
         // Validate that the returned code exists in our industries data
-        const foundIndustry = industries.find(industry => 
-          String(industry.code) === String(result.industryCode)
+        const foundIndustry = industries.find(
+          (industry) => String(industry.code) === String(result.industryCode),
         );
-        
+
         if (foundIndustry) {
           field.onChange(String(foundIndustry.code));
           setUrlPopoverOpen(false);
@@ -145,7 +152,7 @@ export function IndustrySelect({
           variant: "destructive",
         });
       }
-    } catch (error) { 
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to analyze website. Please try again.",
@@ -164,19 +171,27 @@ export function IndustrySelect({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className={cn("flex-1 justify-between max-w-[calc(100%-40px-.5rem)] px-3", className)}
+            className={cn(
+              "flex-1 justify-between max-w-[calc(100%-40px-.5rem)] px-3",
+              className,
+            )}
           >
             {selectedIndustry ? (
               <span className="truncate font-normal">
                 {selectedIndustry.name}
               </span>
             ) : (
-              <span className="text-muted-foreground font-normal">{placeholder}</span>
+              <span className="text-muted-foreground font-normal">
+                {placeholder}
+              </span>
             )}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[--radix-popper-anchor-width] p-0" align="start">
+        <PopoverContent
+          className="w-[--radix-popper-anchor-width] p-0"
+          align="start"
+        >
           <Command shouldFilter={false}>
             <CommandInput
               placeholder="Search by name or code..."
@@ -193,15 +208,19 @@ export function IndustrySelect({
                     key={String(industry.code)}
                     value={String(industry.code)}
                     onSelect={(currentValue) => {
-                      field.onChange(currentValue === field.value ? "" : currentValue);
+                      field.onChange(
+                        currentValue === field.value ? "" : currentValue,
+                      );
                       setOpen(false);
                       setSearch("");
                     }}
                   >
                     <Check
                       className={cn(
-                        "mr-2 h-4 w-4",
-                        field.value === industry.code ? "opacity-100" : "opacity-0"
+                        "mr-2 size-4",
+                        field.value === industry.code
+                          ? "opacity-100"
+                          : "opacity-0",
                       )}
                     />
                     <div className="flex flex-col">
@@ -217,7 +236,7 @@ export function IndustrySelect({
           </Command>
         </PopoverContent>
       </Popover>
-      
+
       <Popover open={urlPopoverOpen} onOpenChange={setUrlPopoverOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -232,9 +251,12 @@ export function IndustrySelect({
         <PopoverContent className="w-80" align="end">
           <div className="space-y-4">
             <div className="space-y-2">
-              <h4 className="font-medium leading-none">AI Industry Detection</h4>
+              <h4 className="font-medium leading-none">
+                AI Industry Detection
+              </h4>
               <p className="text-sm text-muted-foreground">
-                Enter a website URL to automatically detect the industry - it might take a couple of tries.
+                Enter a website URL to automatically detect the industry - it
+                might take a couple of tries.
               </p>
             </div>
             <div className="space-y-2">
@@ -254,8 +276,8 @@ export function IndustrySelect({
                   <p className="text-sm text-destructive">{urlError}</p>
                 )}
               </div>
-              <Button 
-                onClick={analyzeUrl} 
+              <Button
+                onClick={analyzeUrl}
                 disabled={isAnalyzing || !url.trim() || !!urlError}
                 className="w-full"
               >
