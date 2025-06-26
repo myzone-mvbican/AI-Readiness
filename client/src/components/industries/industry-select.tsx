@@ -128,8 +128,8 @@ export function IndustrySelect({
           setUrl("");
           setUrlError(null);
           toast({
-            title: "Success",
-            description: `Industry detected: ${foundIndustry.name}`,
+            title: "Industry detected",
+            description: foundIndustry.name,
           });
         } else {
           toast({
@@ -145,7 +145,7 @@ export function IndustrySelect({
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error) { 
       toast({
         title: "Error",
         description: "Failed to analyze website. Please try again.",
@@ -164,14 +164,14 @@ export function IndustrySelect({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className={cn("flex-1 justify-between max-w-[calc(100%-40px-.5rem)]", className)}
+            className={cn("flex-1 justify-between max-w-[calc(100%-40px-.5rem)] px-3", className)}
           >
             {selectedIndustry ? (
-              <span className="truncate">
+              <span className="truncate font-normal">
                 {selectedIndustry.name}
               </span>
             ) : (
-              <span className="text-muted-foreground">{placeholder}</span>
+              <span className="text-muted-foreground font-normal">{placeholder}</span>
             )}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -234,7 +234,7 @@ export function IndustrySelect({
             <div className="space-y-2">
               <h4 className="font-medium leading-none">AI Industry Detection</h4>
               <p className="text-sm text-muted-foreground">
-                Enter a website URL to automatically detect the industry
+                Enter a website URL to automatically detect the industry - it might take a couple of tries.
               </p>
             </div>
             <div className="space-y-2">
