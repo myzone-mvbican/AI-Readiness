@@ -105,6 +105,7 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
+- June 25, 2025. Enhanced industry selector with AI-powered URL analysis and Zod validation
 - June 24, 2025. Initial setup
 ```
 
