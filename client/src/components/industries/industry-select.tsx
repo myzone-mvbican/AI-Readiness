@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { ControllerRenderProps } from "react-hook-form";
 import { Check, ChevronsUpDown, Search, Wand2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,6 +23,22 @@ import { useToast } from "@/hooks/use-toast";
 import { industriesData } from "@/lib/industry-validation";
 import { apiRequest } from "@/lib/queryClient";
 
+// Frontend URL validation schema
+const urlSchema = z.string()
+  .min(1, "URL is required")
+  .url("Please enter a valid URL")
+  .refine(
+    (url) => {
+      try {
+        const parsedUrl = new URL(url);
+        return ['http:', 'https:'].includes(parsedUrl.protocol);
+      } catch {
+        return false;
+      }
+    },
+    "URL must use HTTP or HTTPS protocol"
+  );
+
 interface IndustrySelectProps {
   field: ControllerRenderProps<any, any>;
   formControl?: boolean;
@@ -40,6 +57,7 @@ export function IndustrySelect({
   const [urlPopoverOpen, setUrlPopoverOpen] = useState(false);
   const [url, setUrl] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [urlError, setUrlError] = useState<string | null>(null);
   
   const { toast } = useToast();
   const industries = industriesData;
@@ -60,20 +78,42 @@ export function IndustrySelect({
     ).slice(0, 100); // Limit to 100 results for performance
   }, [search, industries]);
 
-  // URL analysis function
+  // URL validation and change handler
+  const handleUrlChange = (value: string) => {
+    setUrl(value);
+    setUrlError(null);
+    
+    if (value.trim()) {
+      const validation = urlSchema.safeParse(value.trim());
+      if (!validation.success) {
+        setUrlError(validation.error.errors[0].message);
+      }
+    }
+  };
+
+  // URL analysis function with frontend validation
   const analyzeUrl = async () => {
-    if (!url.trim()) {
+    const trimmedUrl = url.trim();
+    
+    // Frontend validation using Zod
+    const validation = urlSchema.safeParse(trimmedUrl);
+    
+    if (!validation.success) {
+      const errorMessage = validation.error.errors[0].message;
+      setUrlError(errorMessage);
       toast({
-        title: "Error",
-        description: "Please enter a valid URL",
+        title: "Invalid URL",
+        description: errorMessage,
         variant: "destructive",
       });
       return;
     }
 
+    setUrlError(null);
     setIsAnalyzing(true);
+    
     try {
-      const response = await apiRequest("POST", "/api/analyze-industry", { url: url.trim() });
+      const response = await apiRequest("POST", "/api/analyze-industry", { url: trimmedUrl });
       const result = await response.json();
       
       if (result.success && result.industryCode) {
@@ -86,9 +126,10 @@ export function IndustrySelect({
           field.onChange(String(foundIndustry.code));
           setUrlPopoverOpen(false);
           setUrl("");
+          setUrlError(null);
           toast({
-            title: "Industry detected",
-            description: foundIndustry.name,
+            title: "Success",
+            description: `Industry detected: ${foundIndustry.name}`,
           });
         } else {
           toast({
@@ -197,19 +238,25 @@ export function IndustrySelect({
               </p>
             </div>
             <div className="space-y-2">
-              <Input
-                placeholder="https://example.com"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !isAnalyzing) {
-                    analyzeUrl();
-                  }
-                }}
-              />
+              <div className="space-y-1">
+                <Input
+                  placeholder="https://example.com"
+                  value={url}
+                  onChange={(e) => handleUrlChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !isAnalyzing && !urlError) {
+                      analyzeUrl();
+                    }
+                  }}
+                  className={urlError ? "border-destructive" : ""}
+                />
+                {urlError && (
+                  <p className="text-sm text-destructive">{urlError}</p>
+                )}
+              </div>
               <Button 
                 onClick={analyzeUrl} 
-                disabled={isAnalyzing || !url.trim()}
+                disabled={isAnalyzing || !url.trim() || !!urlError}
                 className="w-full"
               >
                 {isAnalyzing ? (
