@@ -35,7 +35,7 @@ export class EmailService {
       }
 
       // Render React Email template
-      const emailHtml = render(PasswordResetEmail({
+      const emailHtml = await render(PasswordResetEmail({
         userFirstName: name,
         resetUrl: resetUrl
       }));
@@ -68,9 +68,9 @@ The MyZone AI Team
       const transporter = this.getTransporter();
       const info = await transporter.sendMail(mailOptions);
 
-      console.log("✅ Password reset email sent successfully to:", email);
-      console.log("📧 Message ID:", info.messageId);
-      console.log("📤 Sent via:", process.env.BREVO_SMTP_PASSWORD ? "Brevo SMTP" : "Legacy SMTP");
+      console.log("Password reset email sent successfully to:", email);
+      console.log("Message ID:", info?.messageId);
+      console.log("Sent via:", process.env.BREVO_SMTP_PASSWORD ? "Brevo SMTP" : "Legacy SMTP");
 
       return true;
     } catch (error) {
@@ -141,7 +141,7 @@ The MyZone AI Team
       }
 
       // Render React Email template
-      const emailHtml = render(TestEmail({
+      const emailHtml = await render(TestEmail({
         recipientEmail: email
       }));
 
@@ -172,7 +172,7 @@ MyZone AI Team
       const info = await transporter.sendMail(mailOptions);
 
       console.log("Test email sent successfully to:", email);
-      console.log("Message ID:", info.messageId);
+      console.log("Message ID:", info?.messageId);
 
       return true;
     } catch (error) {
