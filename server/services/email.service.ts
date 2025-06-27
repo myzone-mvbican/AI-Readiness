@@ -17,7 +17,7 @@ export class EmailService {
     name: string,
   ): Promise<boolean> {
     try {
-      const resetUrl = `${process.env.FRONTEND_URL || "https://myzone-ai-readiness-assessment.replit.app"}/reset-password?token=${resetToken}`;
+      const resetUrl = `${process.env.FRONTEND_URL || "https://ready.myzone.ai/auth"}/reset-password?token=${resetToken}`;
 
       // Use real email service now that credentials are provided
       // For Brevo, we need to use a verified sender email from your account
