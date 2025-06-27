@@ -12,6 +12,13 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({
   children,
 }) => {
+  // Check if Google Client ID is configured
+  if (!GOOGLE_CLIENT_ID) {
+    console.warn("Google Client ID (VITE_GOOGLE_CLIENT_ID) is not configured. Google authentication will not work.");
+    // Still render children without GoogleOAuthProvider to avoid breaking the app
+    return <>{children}</>;
+  }
+
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       {children}
