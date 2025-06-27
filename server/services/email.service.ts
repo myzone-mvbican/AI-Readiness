@@ -17,7 +17,10 @@ export class EmailService {
       const resetUrl = `${process.env.FRONTEND_URL || "https://myzone-ai-readiness-assessment.replit.app"}/reset-password?token=${resetToken}`;
 
       // Use real email service now that credentials are provided
-      const fromEmail = process.env.BREVO_SMTP_PASSWORD ? "ready@myzone.ai" : (process.env.EMAIL_FROM || "noreply@myzone.ai");
+      // For Brevo, use the SMTP login email which is automatically verified
+      const fromEmail = process.env.BREVO_SMTP_PASSWORD 
+        ? '"MyZone AI" <90a593001@smtp-brevo.com>' 
+        : (process.env.EMAIL_FROM || "noreply@myzone.ai");
       const mailOptions = {
         from: fromEmail,
         to: email,
@@ -94,8 +97,9 @@ The MyZone AI Team
       const transporter = this.getTransporter();
       const info = await transporter.sendMail(mailOptions);
 
-      console.log("Password reset email sent successfully to:", email);
-      console.log("Message ID:", info.messageId);
+      console.log("✅ Password reset email sent successfully to:", email);
+      console.log("📧 Message ID:", info.messageId);
+      console.log("📤 Sent via:", process.env.BREVO_SMTP_PASSWORD ? "Brevo SMTP" : "Legacy SMTP");
 
       return true;
     } catch (error) {
@@ -155,7 +159,9 @@ The MyZone AI Team
 
   static async sendTestEmail(email: string): Promise<boolean> {
     try {
-      const fromEmail = process.env.BREVO_SMTP_PASSWORD ? "ready@myzone.ai" : (process.env.EMAIL_FROM || "noreply@myzone.ai");
+      const fromEmail = process.env.BREVO_SMTP_PASSWORD 
+        ? '"MyZone AI" <90a593001@smtp-brevo.com>' 
+        : (process.env.EMAIL_FROM || "noreply@myzone.ai");
       const mailOptions = {
         from: fromEmail,
         to: email,
