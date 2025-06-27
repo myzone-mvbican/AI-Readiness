@@ -1,7 +1,6 @@
 import { createTransporter, getEmailFromAddress } from "../config/email.config";
 import { render } from "@react-email/render";
-import { PasswordResetEmail } from "../emails/password-reset";
-import { TestEmail } from "../emails/test-email";
+import { PasswordResetEmail } from "../emails/password-reset"; 
 
 export class EmailService {
   private static transporter = createTransporter();

@@ -18,8 +18,6 @@ interface PasswordResetEmailProps {
   resetUrl?: string;
 }
 
-const baseUrl = process.env.FRONTEND_URL || "https://myzone-ai-readiness-assessment.replit.app";
-
 export const PasswordResetEmail = ({
   userFirstName = "User",
   resetUrl = "",
@@ -139,6 +137,7 @@ const button = {
   textDecoration: "none",
   textAlign: "center" as const,
   display: "block",
+  height: "40px",
   margin: "0 auto",
 };
 
