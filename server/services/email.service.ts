@@ -17,8 +17,9 @@ export class EmailService {
       const resetUrl = `${process.env.FRONTEND_URL || "https://myzone-ai-readiness-assessment.replit.app"}/reset-password?token=${resetToken}`;
 
       // Use real email service now that credentials are provided
+      const fromEmail = process.env.BREVO_SMTP_PASSWORD ? "ready@myzone.ai" : (process.env.EMAIL_FROM || "noreply@myzone.ai");
       const mailOptions = {
-        from: process.env.EMAIL_FROM || "noreply@myzone.ai",
+        from: fromEmail,
         to: email,
         subject: "Reset Your MyZone AI Password",
         html: `
@@ -102,8 +103,8 @@ The MyZone AI Team
 
       // Provide helpful error messages for common authentication issues
       if (
-        error.code === "EAUTH" &&
-        error.response?.includes("BadCredentials")
+        (error as any).code === "EAUTH" &&
+        (error as any).response?.includes("BadCredentials")
       ) {
         console.error("\n🔐 EMAIL AUTHENTICATION FAILED:");
         console.error(
@@ -127,16 +128,65 @@ The MyZone AI Team
 
   static async testConnection(): Promise<boolean> {
     try {
-      // In development, always return true since we're not using real SMTP
-      if (process.env.NODE_ENV === "development") {
+      // Test Brevo SMTP connection if configured
+      if (process.env.BREVO_SMTP_PASSWORD) {
+        const transporter = this.getTransporter();
+        await transporter.verify();
+        console.log("✅ Brevo SMTP connection verified successfully");
         return true;
       }
 
+      // Test legacy email configuration
+      if (process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+        const transporter = this.getTransporter();
+        await transporter.verify();
+        console.log("✅ Email SMTP connection verified successfully");
+        return true;
+      }
+
+      // No email configuration found
+      console.warn("⚠️ No email configuration found");
+      return false;
+    } catch (error) {
+      console.error("❌ Email transporter verification failed:", error);
+      return false;
+    }
+  }
+
+  static async sendTestEmail(email: string): Promise<boolean> {
+    try {
+      const fromEmail = process.env.BREVO_SMTP_PASSWORD ? "ready@myzone.ai" : (process.env.EMAIL_FROM || "noreply@myzone.ai");
+      const mailOptions = {
+        from: fromEmail,
+        to: email,
+        subject: "MyZone AI - Email Configuration Test",
+        html: `
+          <h2>Email Configuration Test</h2>
+          <p>This is a test email to verify that your Brevo email configuration is working correctly.</p>
+          <p>If you received this email, your email service is properly configured!</p>
+          <p>Best regards,<br>MyZone AI Team</p>
+        `,
+        text: `
+MyZone AI - Email Configuration Test
+
+This is a test email to verify that your Brevo email configuration is working correctly.
+
+If you received this email, your email service is properly configured!
+
+Best regards,
+MyZone AI Team
+        `.trim(),
+      };
+
       const transporter = this.getTransporter();
-      await transporter.verify();
+      const info = await transporter.sendMail(mailOptions);
+
+      console.log("Test email sent successfully to:", email);
+      console.log("Message ID:", info.messageId);
+
       return true;
     } catch (error) {
-      console.error("Email transporter verification failed:", error);
+      console.error("Error sending test email:", error);
       return false;
     }
   }
