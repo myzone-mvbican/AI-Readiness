@@ -1,4 +1,7 @@
 import { createTransporter } from "../config/email.config";
+import { render } from "@react-email/render";
+import { PasswordResetEmail } from "../emails/password-reset";
+import { TestEmail } from "../emails/test-email";
 
 export class EmailService {
   private static transporter = createTransporter();
@@ -21,71 +24,23 @@ export class EmailService {
       let fromEmail;
       if (process.env.BREVO_SMTP_PASSWORD) {
         fromEmail = process.env.BREVO_SENDER_EMAIL;
-        console.log("🔍 Using Brevo sender email:", fromEmail);
+        console.log("Using Brevo sender email:", fromEmail);
         
         if (!fromEmail) {
-          console.error("❌ BREVO_SENDER_EMAIL not configured!");
+          console.error("BREVO_SENDER_EMAIL not configured!");
           throw new Error("BREVO_SENDER_EMAIL environment variable is required for Brevo SMTP");
         }
       } else {
         fromEmail = process.env.EMAIL_FROM || "noreply@myzone.ai";
       }
-      const mailOptions = {
-        from: fromEmail,
-        to: email,
-        subject: "Reset Your MyZone AI Password",
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Reset Your Password</title>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-              .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
-              .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0; }
-              .footer { text-align: center; margin-top: 30px; font-size: 14px; color: #666; }
-              .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 6px; margin: 20px 0; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>Reset Your Password</h1>
-            </div>
-            <div class="content">
-              <p>Hello ${name},</p>
-              
-              <p>We received a request to reset your password for your MyZone AI account. If you didn't make this request, you can safely ignore this email.</p>
-              
-              <p>To reset your password, click the button below:</p>
-              
-              <p style="text-align: center;">
-                <a href="${resetUrl}" class="button">Reset Your Password</a>
-              </p>
-              
-              <p>Or copy and paste this link into your browser:</p>
-              <p style="word-break: break-all; background: #e9ecef; padding: 10px; border-radius: 4px; font-family: monospace;">
-                ${resetUrl}
-              </p>
-              
-              <div class="warning">
-                <strong>Important:</strong> This reset link will expire in 30 minutes for security reasons. If you need to reset your password after this time, please request a new reset link.
-              </div>
-              
-              <p>If you're having trouble clicking the button, you can also visit our website and use the "Forgot Password" option.</p>
-              
-              <p>Best regards,<br>The MyZone AI Team</p>
-            </div>
-            <div class="footer">
-              <p>This is an automated email. Please do not reply to this message.</p>
-              <p>If you have questions, please contact our support team.</p>
-            </div>
-          </body>
-          </html>
-        `,
-        text: `
+
+      // Render React Email template
+      const emailHtml = render(PasswordResetEmail({
+        userFirstName: name,
+        resetUrl: resetUrl
+      }));
+
+      const emailText = `
 Hello ${name},
 
 We received a request to reset your password for your MyZone AI account.
@@ -99,7 +54,14 @@ If you didn't request this password reset, you can safely ignore this email.
 
 Best regards,
 The MyZone AI Team
-        `.trim(),
+      `.trim();
+
+      const mailOptions = {
+        from: fromEmail,
+        to: email,
+        subject: "Reset Your MyZone AI Password",
+        html: emailHtml,
+        text: emailText,
       };
 
       // Send the actual email using the configured transporter
@@ -170,30 +132,40 @@ The MyZone AI Team
     try {
       let fromEmail;
       if (process.env.BREVO_SMTP_PASSWORD) {
-        fromEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@example.com';
+        fromEmail = process.env.BREVO_SENDER_EMAIL;
+        if (!fromEmail) {
+          throw new Error("BREVO_SENDER_EMAIL environment variable is required for Brevo SMTP");
+        }
       } else {
         fromEmail = process.env.EMAIL_FROM || "noreply@myzone.ai";
       }
-      const mailOptions = {
-        from: fromEmail,
-        to: email,
-        subject: "MyZone AI - Email Configuration Test",
-        html: `
-          <h2>Email Configuration Test</h2>
-          <p>This is a test email to verify that your Brevo email configuration is working correctly.</p>
-          <p>If you received this email, your email service is properly configured!</p>
-          <p>Best regards,<br>MyZone AI Team</p>
-        `,
-        text: `
+
+      // Render React Email template
+      const emailHtml = render(TestEmail({
+        recipientEmail: email
+      }));
+
+      const emailText = `
 MyZone AI - Email Configuration Test
 
 This is a test email to verify that your Brevo email configuration is working correctly.
 
-If you received this email, your email service is properly configured!
+If you received this email at ${email}, your email service is properly configured!
+
+✓ Email delivery successful
+✓ SMTP connection verified  
+✓ Sender authentication working
 
 Best regards,
 MyZone AI Team
-        `.trim(),
+      `.trim();
+
+      const mailOptions = {
+        from: fromEmail,
+        to: email,
+        subject: "MyZone AI - Email Configuration Test",
+        html: emailHtml,
+        text: emailText,
       };
 
       const transporter = this.getTransporter();
