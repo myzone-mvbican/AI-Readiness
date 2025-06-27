@@ -1,4 +1,4 @@
-import { createTransporter } from "../config/email.config";
+import { createTransporter, getEmailFromAddress } from "../config/email.config";
 import { render } from "@react-email/render";
 import { PasswordResetEmail } from "../emails/password-reset";
 import { TestEmail } from "../emails/test-email";
@@ -19,20 +19,8 @@ export class EmailService {
     try {
       const resetUrl = `${process.env.FRONTEND_URL || "https://ready.myzone.ai/auth"}/reset?token=${resetToken}`;
 
-      // Use real email service now that credentials are provided
-      // For Brevo, we need to use a verified sender email from your account
-      let fromEmail;
-      if (process.env.BREVO_SMTP_PASSWORD) {
-        fromEmail = process.env.BREVO_SENDER_EMAIL;
-        console.log("Using Brevo sender email:", fromEmail);
-        
-        if (!fromEmail) {
-          console.error("BREVO_SENDER_EMAIL not configured!");
-          throw new Error("BREVO_SENDER_EMAIL environment variable is required for Brevo SMTP");
-        }
-      } else {
-        fromEmail = process.env.EMAIL_FROM || "noreply@myzone.ai";
-      }
+      // Get formatted from address with name
+      const fromAddress = getEmailFromAddress();
 
       // Render React Email template
       const emailHtml = await render(PasswordResetEmail({
@@ -57,7 +45,7 @@ The MyZone AI Team
       `.trim();
 
       const mailOptions = {
-        from: fromEmail,
+        from: fromAddress,
         to: email,
         subject: "Reset Your MyZone AI Password",
         html: emailHtml,
