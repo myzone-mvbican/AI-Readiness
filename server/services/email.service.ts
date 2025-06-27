@@ -17,17 +17,11 @@ export class EmailService {
       const resetUrl = `${process.env.FRONTEND_URL || "https://myzone-ai-readiness-assessment.replit.app"}/reset-password?token=${resetToken}`;
 
       // Use real email service now that credentials are provided
-      // For Brevo, try verified sender emails in order of likelihood
+      // For Brevo, we need to use a verified sender email from your account
       let fromEmail;
       if (process.env.BREVO_SMTP_PASSWORD) {
-        // Try verified sender emails from most to least likely
-        const potentialSenders = [
-          'admin@myzone.ai',
-          'support@myzone.ai', 
-          'noreply@myzone.ai',
-          'info@myzone.ai'
-        ];
-        fromEmail = potentialSenders[0]; // Start with admin@myzone.ai
+        // Check for verified sender emails in environment or use fallback
+        fromEmail = process.env.BREVO_SENDER_EMAIL || process.env.EMAIL_FROM || 'noreply@example.com';
       } else {
         fromEmail = process.env.EMAIL_FROM || "noreply@myzone.ai";
       }
@@ -171,7 +165,7 @@ The MyZone AI Team
     try {
       let fromEmail;
       if (process.env.BREVO_SMTP_PASSWORD) {
-        fromEmail = 'admin@myzone.ai';
+        fromEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@example.com';
       } else {
         fromEmail = process.env.EMAIL_FROM || "noreply@myzone.ai";
       }
