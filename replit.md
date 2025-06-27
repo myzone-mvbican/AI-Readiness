@@ -105,6 +105,8 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
+- June 27, 2025. Fixed Google Auth client ID configuration - corrected environment variable from GOOGLE_CLIENT_ID to VITE_GOOGLE_CLIENT_ID for frontend access
+- June 27, 2025. Implemented complete frontend Zod validation for industry selector URL analysis with error states and user feedback
 - June 25, 2025. Enhanced industry selector with AI-powered URL analysis and Zod validation
 - June 24, 2025. Initial setup
 ```
