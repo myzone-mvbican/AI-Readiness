@@ -8,6 +8,7 @@ import { AssessmentController } from "./controllers/assessment.controller";
 import { AIController } from "./controllers/ai.controller";
 import { BenchmarkController } from "./controllers/benchmark.controller";
 import { PasswordResetController } from "./controllers/password-reset.controller";
+import { EmailService } from "./services/email.service";
 
 // Import middleware if needed for protected routes
 import { auth, requireAdmin } from "./middleware/auth";
