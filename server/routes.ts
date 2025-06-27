@@ -242,8 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI industry analysis endpoint
   app.post("/api/analyze-industry", AIController.analyzeIndustry);
 
-  app.post(
-    "/api/admin/benchmark/recalculate",
+  app.post( "/api/admin/benchmark/recalculate",
     auth,
     requireAdmin,
     BenchmarkController.recalculateStats,
