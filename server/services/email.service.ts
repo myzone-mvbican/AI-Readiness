@@ -20,8 +20,13 @@ export class EmailService {
       // For Brevo, we need to use a verified sender email from your account
       let fromEmail;
       if (process.env.BREVO_SMTP_PASSWORD) {
-        // Check for verified sender emails in environment or use fallback
-        fromEmail = process.env.BREVO_SENDER_EMAIL || process.env.EMAIL_FROM || 'noreply@example.com';
+        fromEmail = process.env.BREVO_SENDER_EMAIL;
+        console.log("🔍 Using Brevo sender email:", fromEmail);
+        
+        if (!fromEmail) {
+          console.error("❌ BREVO_SENDER_EMAIL not configured!");
+          throw new Error("BREVO_SENDER_EMAIL environment variable is required for Brevo SMTP");
+        }
       } else {
         fromEmail = process.env.EMAIL_FROM || "noreply@myzone.ai";
       }
