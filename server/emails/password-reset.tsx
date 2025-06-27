@@ -33,8 +33,9 @@ export const PasswordResetEmail = ({
         <Heading style={h2}>Reset Your Password</Heading>
         <Text style={text}>Hello {userFirstName},</Text>
         <Text style={text}>
-          We received a request to reset your password for your MyZone AI account. 
-          If you didn't make this request, you can safely ignore this email.
+          We received a request to reset your password for your MyZone AI
+          account. If you didn't make this request, you can safely ignore this
+          email.
         </Text>
         <Text style={text}>
           To reset your password, click the button below:
@@ -52,15 +53,18 @@ export const PasswordResetEmail = ({
         </Text>
         <Section style={warningBox}>
           <Text style={warningText}>
-            <strong>Important:</strong> This reset link will expire in 30 minutes for security reasons. 
-            If you need to reset your password after this time, please request a new reset link.
+            <strong>Important:</strong> This reset link will expire in 30
+            minutes for security reasons. If you need to reset your password
+            after this time, please request a new reset link.
           </Text>
         </Section>
         <Text style={text}>
-          If you're having trouble clicking the button, you can also visit our website and use the "Forgot Password" option.
+          If you're having trouble clicking the button, you can also visit our
+          website and use the "Forgot Password" option.
         </Text>
         <Text style={text}>
-          Best regards,<br />
+          Best regards,
+          <br />
           The MyZone AI Team
         </Text>
         <Section style={footer}>
@@ -85,9 +89,10 @@ const main = {
 };
 
 const container = {
+  maxWidth: "600px",
   backgroundColor: "#ffffff",
   margin: "0 auto",
-  padding: "20px 0 48px",
+  padding: "20px 0 20px",
   marginBottom: "64px",
 };
 
@@ -135,9 +140,11 @@ const button = {
   fontSize: "16px",
   fontWeight: "bold",
   textDecoration: "none",
+  lineHeight: "2",
   textAlign: "center" as const,
   display: "block",
   height: "40px",
+  maxWidth: "200px",
   margin: "0 auto",
 };
 
@@ -153,6 +160,7 @@ const warningBox = {
   borderRadius: "6px",
   margin: "20px 20px",
   padding: "15px",
+  width: "auto"
 };
 
 const warningText = {

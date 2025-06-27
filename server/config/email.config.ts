@@ -22,7 +22,7 @@ export function createTransporter() {
   }
 
   // Fallback for missing credentials
-  throw new Error('Email credentials not configured. Please provide Brevo SMTP password or EMAIL_HOST, EMAIL_USER, and EMAIL_PASS environment variables.');
+  throw new Error('Email credentials not configured. Please provide Brevo SMTP environment variables.');
 }
 
 export function getEmailFromAddress(): string {
