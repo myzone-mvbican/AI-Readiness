@@ -63,6 +63,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/password/reset-confirm", PasswordResetController.confirmReset);
   app.get("/api/password/validate-token", PasswordResetController.validateToken);
 
+  // Email test endpoint (admin only)
+  app.post("/api/admin/test-email", auth, requireAdmin, async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: "Email address is required"
+        });
+      }
+
+      // Test email connection first
+      const connectionTest = await EmailService.testConnection();
+      if (!connectionTest) {
+        return res.status(500).json({
+          success: false,
+          message: "Email service connection failed"
+        });
+      }
+
+      // Send test email
+      const emailSent = await EmailService.sendTestEmail(email);
+      
+      if (emailSent) {
+        return res.json({
+          success: true,
+          message: `Test email sent successfully to ${email}`
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to send test email"
+        });
+      }
+    } catch (error) {
+      console.error("Email test error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error while testing email"
+      });
+    }
+  });
+
   // User profile endpoints (protected routes)
 
   // Get current user profile endpoint (protected route)
