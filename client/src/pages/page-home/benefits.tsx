@@ -1,4 +1,38 @@
+
 import React from "react";
+
+interface BenefitCardProps {
+    title: string;
+    description: string;
+}
+
+const BenefitCard: React.FC<BenefitCardProps> = ({ title, description }) => {
+    return (
+        <div className="bg-blue-50 dark:bg-gray-900 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="text-foreground text-2xl font-semibold mb-3">
+                {title}
+            </div>
+            <p className="text-muted-foreground">
+                {description}
+            </p>
+        </div>
+    );
+};
+
+const benefitsData = [
+    {
+        title: "Benchmark",
+        description: "Compare your AI readiness with industry standards and competitors"
+    },
+    {
+        title: "Track Progress",
+        description: "Monitor your improvement over time with quarterly assessments"
+    },
+    {
+        title: "Get Insights",
+        description: "Receive tailored recommendations to improve your AI capabilities"
+    }
+];
 
 export const Benefits: React.FC = () => {
     return (
@@ -14,38 +48,13 @@ export const Benefits: React.FC = () => {
                     </p>
                 </div>
                 <div className="mt-12 grid gap-8 md:grid-cols-3">
-                    {/* Feature 1 */}
-                    <div className="bg-blue-50 dark:bg-gray-900 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="text-foreground text-2xl font-semibold mb-3">
-                            Benchmark
-                        </div>
-                        <p className="text-muted-foreground">
-                            Compare your AI readiness with industry standards
-                            and competitors
-                        </p>
-                    </div>
-
-                    {/* Feature 2 */}
-                    <div className="bg-blue-50 dark:bg-gray-900 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="text-foreground text-2xl font-semibold mb-3">
-                            Track Progress
-                        </div>
-                        <p className="text-muted-foreground">
-                            Monitor your improvement over time with quarterly
-                            assessments
-                        </p>
-                    </div>
-
-                    {/* Feature 3 */}
-                    <div className="bg-blue-50 dark:bg-gray-900 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="text-foreground text-2xl font-semibold mb-3">
-                            Get Insights
-                        </div>
-                        <p className="text-muted-foreground">
-                            Receive tailored recommendations to improve your AI
-                            capabilities
-                        </p>
-                    </div>
+                    {benefitsData.map((benefit, index) => (
+                        <BenefitCard
+                            key={index}
+                            title={benefit.title}
+                            description={benefit.description}
+                        />
+                    ))}
                 </div>
             </div>
         </div>
