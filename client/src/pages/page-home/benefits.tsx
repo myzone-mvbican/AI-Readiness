@@ -8,11 +8,11 @@ interface BenefitCardProps {
 
 const BenefitCard: React.FC<BenefitCardProps> = ({ title, description }) => {
     return (
-        <div className="bg-blue-50 dark:bg-gray-900 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div className="text-foreground text-2xl font-semibold mb-3">
+        <div className="bg-white dark:bg-gray-900 text-center rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="text-foreground text-xl lg:text-2xl font-bold mb-3">
                 {title}
             </div>
-            <p className="text-muted-foreground">
+            <p className="text-foreground">
                 {description}
             </p>
         </div>
