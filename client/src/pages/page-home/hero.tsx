@@ -1,15 +1,120 @@
-import React from "react";
+import React, { useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import Particles, { initParticlesEngine } from "@tsparticles/react";
+import { loadSlim } from "@tsparticles/slim";
+import { loadPolygonMaskPlugin } from "@tsparticles/plugin-polygon-mask";
+import type { Engine } from "@tsparticles/engine";
 
 interface HeroProps {
     onStartAssessment: () => void;
 }
 
-// Sample functional component
 export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
+    const [init, setInit] = React.useState(false);
+
+    useEffect(() => {
+        initParticlesEngine(async (engine: Engine) => {
+            await loadSlim(engine);
+            await loadPolygonMaskPlugin(engine);
+        }).then(() => {
+            setInit(true);
+        });
+    }, []);
+
+    const options = useMemo(
+        () => ({
+            fpsLimit: 60,
+            interactivity: {
+                events: {
+                    onHover: {
+                        enable: true,
+                        mode: "bubble"
+                    }
+                },
+                modes: {
+                    bubble: {
+                        distance: 40,
+                        duration: 2,
+                        opacity: 8,
+                        size: 6,
+                        speed: 3
+                    }
+                }
+            },
+            particles: {
+                color: {
+                    value: "#ff0000",
+                    animation: {
+                        enable: true,
+                        speed: 20,
+                        sync: true
+                    }
+                },
+                links: {
+                    blink: false,
+                    color: "random",
+                    consent: false,
+                    distance: 30,
+                    enable: true,
+                    opacity: 0.3,
+                    width: 0.5
+                },
+                move: {
+                    enable: true,
+                    outModes: "bounce",
+                    speed: { min: 0.5, max: 1 }
+                },
+                number: {
+                    value: 200
+                },
+                opacity: {
+                    animation: {
+                        enable: true,
+                        speed: 2,
+                        sync: false
+                    },
+                    random: false,
+                    value: { min: 0.05, max: 1 }
+                },
+                shape: {
+                    type: "circle"
+                },
+                size: {
+                    animation: {
+                        enable: false,
+                        speed: 40,
+                        sync: false
+                    },
+                    random: true,
+                    value: { min: 0.1, max: 1 }
+                }
+            },
+            polygon: {
+                draw: {
+                    enable: true,
+                    stroke: {
+                        color: "#fff",
+                        width: 0.3,
+                        opacity: 0.2
+                    }
+                },
+                move: {
+                    radius: 10
+                },
+                inline: {
+                    arrangement: "equidistant"
+                },
+                scale: 0.5,
+                type: "inline",
+                url: "https://particles.js.org/images/smalldeer.svg"
+            }
+        }),
+        [],
+    );
+
     return (
-        <div className="section-space-y bg-blue-800">
-            <div className="container">
+        <div className="section-space-y bg-blue-800 relative">
+            <div className="container relative z-10">
                 <div className="grid grid-cols-1 lg:grid-cols-2">
                     <div className="max-w-2xl space-y-6 lg:space-y-8 text-white">
                         <h1 className="section__title tracking-tight">
@@ -34,7 +139,21 @@ export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
                             Start Assessment
                         </Button>
                     </div>
+                    <div className="relative">
+                        {/* Particles background will be positioned absolutely */}
+                    </div>
                 </div>
+            </div>
+            
+            {/* Particles background */}
+            <div className="absolute inset-0 z-0">
+                {init && (
+                    <Particles
+                        id="tsparticles"
+                        options={options}
+                        className="w-full h-full"
+                    />
+                )}
             </div>
         </div>
     );
