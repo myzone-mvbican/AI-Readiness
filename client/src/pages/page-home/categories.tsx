@@ -1,13 +1,16 @@
-
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Target, DollarSign, Users, Shield, GraduationCap, Settings, Database, Zap } from "lucide-react";
+import {
+  Target,
+  DollarSign,
+  Users,
+  Shield,
+  GraduationCap,
+  Settings,
+  Database,
+  Zap,
+} from "lucide-react";
 
-interface AssessmentCategoriesProps {
-  onStartAssessment: () => void;
-}
-
-export const AssessmentCategories: React.FC<AssessmentCategoriesProps> = ({ onStartAssessment }) => {
+export const Categories: React.FC = () => {
   return (
     <div className="py-16 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
       <div className="container">
@@ -16,7 +19,8 @@ export const AssessmentCategories: React.FC<AssessmentCategoriesProps> = ({ onSt
             What You'll Evaluate
           </h2>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            Evaluate your organization across 8 critical dimensions that form the foundation of successful AI implementation
+            Evaluate your organization across 8 critical dimensions that form
+            the foundation of successful AI implementation
           </p>
         </div>
 
@@ -47,7 +51,8 @@ export const AssessmentCategories: React.FC<AssessmentCategoriesProps> = ({ onSt
               </h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              Evaluates the organizational culture and readiness for change in AI contexts.
+              Evaluates the organizational culture and readiness for change in
+              AI contexts.
             </p>
           </div>
 
@@ -62,7 +67,8 @@ export const AssessmentCategories: React.FC<AssessmentCategoriesProps> = ({ onSt
               </h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              Measures the knowledge and literacy levels of AI across the workforce.
+              Measures the knowledge and literacy levels of AI across the
+              workforce.
             </p>
           </div>
 
@@ -77,7 +83,8 @@ export const AssessmentCategories: React.FC<AssessmentCategoriesProps> = ({ onSt
               </h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              Assesses the management and utilization of data and information resources.
+              Assesses the management and utilization of data and information
+              resources.
             </p>
           </div>
 
@@ -92,7 +99,8 @@ export const AssessmentCategories: React.FC<AssessmentCategoriesProps> = ({ onSt
               </h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              Evaluates the technological systems and their integration with AI processes.
+              Evaluates the technological systems and their integration with AI
+              processes.
             </p>
           </div>
 
@@ -107,7 +115,8 @@ export const AssessmentCategories: React.FC<AssessmentCategoriesProps> = ({ onSt
               </h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              Reviews the efficiency and adaptability of operational processes with AI.
+              Reviews the efficiency and adaptability of operational processes
+              with AI.
             </p>
           </div>
 
@@ -122,7 +131,8 @@ export const AssessmentCategories: React.FC<AssessmentCategoriesProps> = ({ onSt
               </h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              Analyzes governance frameworks, ethical considerations, and risk management.
+              Analyzes governance frameworks, ethical considerations, and risk
+              management.
             </p>
           </div>
 
@@ -137,27 +147,14 @@ export const AssessmentCategories: React.FC<AssessmentCategoriesProps> = ({ onSt
               </h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              Assesses the availability and allocation of financial and resource supports.
+              Assesses the availability and allocation of financial and resource
+              supports.
             </p>
           </div>
-        </div>
-
-        <div className="text-center mt-12">
-          <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
-            Each category provides detailed insights and personalized recommendations, helping you understand exactly where your organization stands and what steps to take next on your AI journey.
-          </p>
-          <Button
-            size="lg"
-            onClick={onStartAssessment}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3"
-          >
-            Start Your Assessment
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
         </div>
       </div>
     </div>
   );
 };
 
-export default AssessmentCategories;
+export default Categories;
