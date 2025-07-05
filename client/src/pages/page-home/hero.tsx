@@ -4,14 +4,16 @@ import Particles, { initParticlesEngine } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
 import { loadPolygonMaskPlugin } from "@tsparticles/plugin-polygon-mask";
 import type { Engine } from "@tsparticles/engine";
+import homeTop from '@/assets/home-top.svg';
 
 interface HeroProps {
     onStartAssessment: () => void;
 }
 
+// Sample functional component
 export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
     const [init, setInit] = React.useState(false);
-
+    
     useEffect(() => {
         initParticlesEngine(async (engine: Engine) => {
             await loadSlim(engine);
@@ -24,12 +26,13 @@ export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
     const options = useMemo(
         () => ({
             fpsLimit: 60,
+            fullScreen: false,
             interactivity: {
                 events: {
                     onHover: {
                         enable: true,
-                        mode: "bubble"
-                    }
+                        mode: "bubble",
+                    },
                 },
                 modes: {
                     bubble: {
@@ -37,18 +40,18 @@ export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
                         duration: 2,
                         opacity: 8,
                         size: 6,
-                        speed: 3
-                    }
-                }
+                        speed: 3,
+                    },
+                },
             },
             particles: {
                 color: {
-                    value: "#ff0000",
+                    value: "#fff",
                     animation: {
                         enable: true,
                         speed: 20,
-                        sync: true
-                    }
+                        sync: true,
+                    },
                 },
                 links: {
                     blink: false,
@@ -57,37 +60,37 @@ export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
                     distance: 30,
                     enable: true,
                     opacity: 0.3,
-                    width: 0.5
+                    width: 0.5,
                 },
                 move: {
                     enable: true,
                     outModes: "bounce",
-                    speed: { min: 0.5, max: 1 }
+                    speed: { min: 0.5, max: 1 },
                 },
                 number: {
-                    value: 200
+                    value: 200,
                 },
                 opacity: {
                     animation: {
                         enable: true,
                         speed: 2,
-                        sync: false
+                        sync: false,
                     },
                     random: false,
-                    value: { min: 0.05, max: 1 }
+                    value: { min: 0.05, max: 1 },
                 },
                 shape: {
-                    type: "circle"
+                    type: "circle",
                 },
                 size: {
                     animation: {
                         enable: false,
                         speed: 40,
-                        sync: false
+                        sync: false,
                     },
                     random: true,
-                    value: { min: 0.1, max: 1 }
-                }
+                    value: { min: 0.1, max: 1 },
+                },
             },
             polygon: {
                 draw: {
@@ -95,28 +98,28 @@ export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
                     stroke: {
                         color: "#fff",
                         width: 0.3,
-                        opacity: 0.2
-                    }
+                        opacity: 0.2,
+                    },
                 },
                 move: {
-                    radius: 10
+                    radius: 10,
                 },
                 inline: {
-                    arrangement: "equidistant"
+                    arrangement: "equidistant",
                 },
                 scale: 0.5,
                 type: "inline",
-                url: "https://particles.js.org/images/smalldeer.svg"
-            }
+                url: homeTop,
+            },
         }),
         [],
     );
 
     return (
-        <div className="section-space-y bg-blue-800 relative">
-            <div className="container relative z-10">
+        <div className="bg-blue-800">
+            <div className="container">
                 <div className="grid grid-cols-1 lg:grid-cols-2">
-                    <div className="max-w-2xl space-y-6 lg:space-y-8 text-white">
+                    <div className="section-space-y max-w-2xl space-y-6 lg:space-y-8 text-white">
                         <h1 className="section__title tracking-tight">
                             MyZone AI <br />
                             Readiness Survey
@@ -140,20 +143,17 @@ export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
                         </Button>
                     </div>
                     <div className="relative">
-                        {/* Particles background will be positioned absolutely */}
+                        <div className="absolute inset-0 z-0">
+                            {init && (
+                                <Particles
+                                    id="tsparticles"
+                                    options={options}
+                                    className="w-full h-full relative"
+                                />
+                            )}
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            {/* Particles background */}
-            <div className="absolute inset-0 z-0">
-                {init && (
-                    <Particles
-                        id="tsparticles"
-                        options={options}
-                        className="w-full h-full"
-                    />
-                )}
             </div>
         </div>
     );
