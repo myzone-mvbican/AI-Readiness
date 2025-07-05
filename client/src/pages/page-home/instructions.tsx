@@ -12,7 +12,7 @@ export function Instructions({ onStartAssessment }: InstructionsProps) {
         <div className="grid lg:grid-cols-2 lg:space-x-12 items-stretch text-white">
           {/* Left Column - Survey Instructions */}
           <div className="section-space-y text-white">
-            <h2 className="text-3xl md:text-4xl font-extrabold mb-6">
+            <h2 className="section__title mb-6">
               Survey Instructions
             </h2>
             <p className="text-base lg:text-lg leading-relaxed mb-8">

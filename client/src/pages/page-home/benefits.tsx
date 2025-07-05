@@ -1,4 +1,4 @@
-import React from "react"; 
+import React from "react";
 
 import iconOne from "@/assets/icon-ai-readiness-1.svg";
 import iconTwo from "@/assets/icon-ai-readiness-2.svg";
@@ -16,9 +16,13 @@ const BenefitCard: React.FC<BenefitCardProps> = ({
     icon,
 }) => {
     return (
-        <div className="bg-white dark:bg-gray-900 text-center rounded-lg p-6 lg:py-10 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-900 text-center rounded-lg p-6 lg:py-10 shadow-[0_20px_50px_0px_#00000008]">
             <div className="flex justify-center mb-4 lg:mb-6">
-                <img src={icon} alt="AI Readiness Icon" className="size-16 lg:size-24" />
+                <img
+                    src={icon}
+                    alt="AI Readiness Icon"
+                    className="size-16 lg:size-24"
+                />
             </div>
             <div className="text-foreground text-xl lg:text-2xl font-bold mb-3">
                 {title}
@@ -54,7 +58,7 @@ export const Benefits: React.FC = () => {
         <div className="section-space-y bg-radial-gradient">
             <div className="container">
                 <div className="text-center">
-                    <h2 className="text-3xl md:text-4xl font-extrabold text-foreground">
+                    <h2 className="section__title text-foreground">
                         Benefits of the Assessment
                     </h2>
                     <p className="mt-4 text-lg text-muted-foreground">

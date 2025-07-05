@@ -9,6 +9,7 @@ import { Hero } from "./hero";
 import { Benefits } from "./benefits";
 import { Instructions } from "./instructions";
 import { Categories } from "./categories";
+import { Services } from "./services";
 import { Cta } from "./cta";
 import {
   Dialog,
@@ -59,6 +60,7 @@ export default function Home() {
           <Benefits />
           <Instructions onStartAssessment={handleAssessmentStart} />
           <Categories />
+          <Services />
           <Cta onStartAssessment={handleAssessmentStart} />
         </>
       )}

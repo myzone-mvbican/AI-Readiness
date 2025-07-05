@@ -11,7 +11,7 @@ interface CategoryCardProps {
 
 const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow border-t-4 border-t-blue-500">
+    <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-[0_20px_50px_0px_#00000008] border-t-4 border-t-blue-500">
       <h3 className="text-lg font-bold text-foreground mb-4">
         {category.title}
       </h3>
@@ -70,7 +70,7 @@ export const Categories: React.FC = () => {
     <div className="section-space-y bg-radial-gradient">
       <div className="container">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-foreground">
+          <h2 className="section__title text-foreground">
             What You'll Evaluate
           </h2>
         </div>
