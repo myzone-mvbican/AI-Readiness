@@ -16,6 +16,10 @@
     transform: scale(1);
   }
 
+  div:hover & {
+    --wp--rotate: 0deg;
+  }
+
   &.loaded {
     opacity: 1;
   }
@@ -84,11 +88,15 @@
 
 #tsparticles {
   position: absolute;
-  width: 100%;
-  height: 100%;
-  background-color: #323031;
-  background-image: url("");
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: 50% 50%;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  padding: 0;
+  margin: 0;
+  z-index: 0; /* if you use -1 you have to set to `"window"` the interactivity.detectsOn property */
+  
+  canvas {
+    position: absolute !important;
+  }
 }
