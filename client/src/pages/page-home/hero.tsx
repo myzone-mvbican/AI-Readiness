@@ -12,7 +12,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
             <div className="container">
                 <div className="grid grid-cols-1 lg:grid-cols-2">
                     <div className="max-w-2xl space-y-6 lg:space-y-8 text-white">
-                        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
+                        <h1 className="section__title tracking-tight">
                             MyZone AI <br />
                             Readiness Survey
                         </h1>
