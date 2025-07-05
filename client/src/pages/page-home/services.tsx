@@ -10,13 +10,12 @@ export function Services() {
       threshold: 0.5,
     };
 
-    const observerCallback = (entries) => {
+    const observerCallback = (entries: any) => {
       entries.forEach(({ isIntersecting }: any) => {
         if (isIntersecting) {
           targetElement?.classList.add("opened");
-          targetElement?.classList.remove("half");
         } else {
-          targetElement?.classList.add("half");
+          targetElement?.classList.remove("opened");
         }
       });
     };
