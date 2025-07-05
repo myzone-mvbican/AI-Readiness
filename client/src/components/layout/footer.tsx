@@ -3,7 +3,7 @@ import logoPath from "@/assets/logo-myzone-ai-black.svg";
 
 export default function Footer() {
   return (
-    <footer className="bg-white py-6 border-t border-gray-200 dark:border-gray-800">
+    <footer className="bg-white py-6">
       <div className="container">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <Link href="/">

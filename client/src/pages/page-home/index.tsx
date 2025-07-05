@@ -9,6 +9,7 @@ import { Hero } from "./hero";
 import { Benefits } from "./benefits";
 import { Instructions } from "./instructions";
 import { Categories } from "./categories";
+import { Cta } from "./cta";
 import {
   Dialog,
   DialogContent,
@@ -58,6 +59,7 @@ export default function Home() {
           <Benefits />
           <Instructions onStartAssessment={handleAssessmentStart} />
           <Categories />
+          <Cta onStartAssessment={handleAssessmentStart} />
         </>
       )}
 
