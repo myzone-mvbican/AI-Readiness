@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { GuestAssessment } from "./assessment";
 import { Hero } from "./hero";
 import { Benefits } from "./benefits";
-import { Categories } from "./categories";
+import { AssessmentCategories } from "./assessment-categories";
 import {
   Dialog,
   DialogContent,
@@ -55,7 +55,7 @@ export default function Home() {
         <>
           <Hero onStartAssessment={handleAssessmentStart} />
           <Benefits />
-          <Categories />
+          <AssessmentCategories />
         </>
       )}
 
