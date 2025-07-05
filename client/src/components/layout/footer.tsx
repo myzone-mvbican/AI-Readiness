@@ -1,20 +1,32 @@
+import { Link } from "wouter";
+import logoPath from "@/assets/logo-myzone-ai-black.svg";
+
 export default function Footer() {
   return (
-    <footer className="bg-gray-100 dark:bg-gray-900 text-gray-600 py-6 border-t border-gray-200 dark:border-gray-800">
+    <footer className="bg-white py-6 border-t border-gray-200 dark:border-gray-800">
       <div className="container">
-        <div className="text-center text-sm">
-          <p>
-            &copy; 2025{" "}
-            <a
-              href="https://myzone.ai"
-              className="text-primary-500 hover:text-primary-700 transition-colors"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              MyZone AI
-            </a>
-            . All rights reserved.
-          </p>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <Link href="/">
+            <img
+              src={logoPath}
+              alt="MyZone AI Logo"
+              className="h-8 w-auto dark:invert"
+            />
+          </Link>
+          <div className="text-center text-sm">
+            <p>
+              &copy; 2025{" "}
+              <a
+                href="https://myzone.ai"
+                className="text-primary-500 hover:text-primary-700 transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                MyZone AI
+              </a>
+              . All rights reserved.
+            </p>
+          </div>
         </div>
       </div>
     </footer>
