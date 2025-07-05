@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Target, DollarSign, Users, Shield, GraduationCap, Settings, Database, Zap } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useAssessment } from "@/hooks/use-assessment";
 import { useAuth } from "@/hooks/use-auth";
 import { GuestAssessment } from "./assessment";
 import { Hero } from "./hero";
 import { Benefits } from "./benefits";
-import { AssessmentCategories } from "./assessment-categories";
+import { Categories } from "./categories";
 import {
   Dialog,
   DialogContent,
@@ -53,9 +53,9 @@ export default function Home() {
         </div>
       ) : (
         <>
-          <Hero onStartAssessment={handleAssessmentStart}/>
+          <Hero onStartAssessment={handleAssessmentStart} />
           <Benefits />
-          <AssessmentCategories onStartAssessment={handleAssessmentStart} />
+          <Categories />
         </>
       )}
 
