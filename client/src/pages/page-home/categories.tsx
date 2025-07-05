@@ -12,10 +12,10 @@ interface CategoryCardProps {
 const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
   return (
     <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow border-t-4 border-t-blue-500">
-      <h3 className="text-lg font-semibold text-foreground mb-4">
+      <h3 className="text-lg font-bold text-foreground mb-4">
         {category.title}
       </h3>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm lg:text-base text-foreground">
         {category.description}
       </p>
     </div>
@@ -25,50 +25,54 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
 const categoriesData: Category[] = [
   {
     title: "Strategy & Vision",
-    description: "Compare your AI readiness with industry standards and competitors"
+    description:
+      "Compare your AI readiness with industry standards and competitors",
   },
   {
     title: "Change-Readiness & Culture",
-    description: "Evaluates the organizational culture and readiness for change in AI contexts."
+    description:
+      "Evaluates the organizational culture and readiness for change in AI contexts.",
   },
   {
     title: "Skills & Literacy",
-    description: "Measures the knowledge and literacy levels of AI across the workforce."
+    description:
+      "Measures the knowledge and literacy levels of AI across the workforce.",
   },
   {
     title: "Data & Information",
-    description: "Assesses the management and utilization of data and information resources."
+    description:
+      "Assesses the management and utilization of data and information resources.",
   },
   {
     title: "Technology & Integration",
-    description: "Evaluates the technological systems and their integration with AI processes."
+    description:
+      "Evaluates the technological systems and their integration with AI processes.",
   },
   {
     title: "Process & Operations",
-    description: "Reviews the efficiency and adaptability of operational processes with AI."
+    description:
+      "Reviews the efficiency and adaptability of operational processes with AI.",
   },
   {
     title: "Governance, Ethics & Risk",
-    description: "Analyzes governance frameworks, ethical considerations, and risk management."
+    description:
+      "Analyzes governance frameworks, ethical considerations, and risk management.",
   },
   {
     title: "Financial & Resources",
-    description: "Assesses the availability and allocation of financial and resource supports."
-  }
+    description:
+      "Assesses the availability and allocation of financial and resource supports.",
+  },
 ];
 
 export const Categories: React.FC = () => {
   return (
-    <div className="py-16 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+    <div className="section-space-y bg-radial-gradient">
       <div className="container">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-extrabold text-foreground mb-4">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-foreground">
             What You'll Evaluate
           </h2>
-          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            Evaluate your organization across 8 critical dimensions that form
-            the foundation of successful AI implementation
-          </p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

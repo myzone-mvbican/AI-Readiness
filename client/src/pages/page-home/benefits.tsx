@@ -1,27 +1,29 @@
+import React from "react"; 
 
-import React from "react";
-import { BarChart3, TrendingUp, Lightbulb } from "lucide-react";
+import iconOne from "@/assets/icon-ai-readiness-1.svg";
+import iconTwo from "@/assets/icon-ai-readiness-2.svg";
+import iconThree from "@/assets/icon-ai-readiness-3.svg";
 
 interface BenefitCardProps {
     title: string;
     description: string;
-    icon: React.ReactNode;
+    icon: string;
 }
 
-const BenefitCard: React.FC<BenefitCardProps> = ({ title, description, icon }) => {
+const BenefitCard: React.FC<BenefitCardProps> = ({
+    title,
+    description,
+    icon,
+}) => {
     return (
         <div className="bg-white dark:bg-gray-900 text-center rounded-lg p-6 lg:py-10 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex justify-center mb-4 lg:mb-6">
-                <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
-                    {icon}
-                </div>
+                <img src={icon} alt="AI Readiness Icon" className="size-16 lg:size-24" />
             </div>
             <div className="text-foreground text-xl lg:text-2xl font-bold mb-3">
                 {title}
             </div>
-            <p className="text-foreground">
-                {description}
-            </p>
+            <p className="text-foreground">{description}</p>
         </div>
     );
 };
@@ -29,24 +31,27 @@ const BenefitCard: React.FC<BenefitCardProps> = ({ title, description, icon }) =
 const benefitsData = [
     {
         title: "Benchmark",
-        description: "Compare your AI readiness with industry standards and competitors",
-        icon: <BarChart3 className="size-10 lg:size-16 text-blue-600 dark:text-blue-400" />
+        description:
+            "Compare your AI readiness with industry standards and competitors",
+        icon: iconOne,
     },
     {
         title: "Track Progress",
-        description: "Monitor your improvement over time with quarterly assessments",
-        icon: <TrendingUp className="size-10 lg:size-16 text-blue-600 dark:text-blue-400" />
+        description:
+            "Monitor your improvement over time with quarterly assessments",
+        icon: iconTwo,
     },
     {
         title: "Get Insights",
-        description: "Receive tailored recommendations to improve your AI capabilities",
-        icon: <Lightbulb className="size-10 lg:size-16 text-blue-600 dark:text-blue-400" />
-    }
+        description:
+            "Receive tailored recommendations to improve your AI capabilities",
+        icon: iconThree,
+    },
 ];
 
 export const Benefits: React.FC = () => {
     return (
-        <div className="bg-accent dark:bg-muted py-16 md:py-24 lg:py-32">
+        <div className="section-space-y bg-radial-gradient">
             <div className="container">
                 <div className="text-center">
                     <h2 className="text-3xl md:text-4xl font-extrabold text-foreground">
