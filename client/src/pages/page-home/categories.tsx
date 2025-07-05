@@ -3,6 +3,7 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
+  CarouselApi,
 } from "@/components/ui/carousel";
 
 interface Category {
@@ -71,6 +72,23 @@ const categoriesData: Category[] = [
 ];
 
 export const Categories: React.FC = () => {
+  const [api, setApi] = React.useState<CarouselApi>();
+  const [current, setCurrent] = React.useState(0);
+  const [count, setCount] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!api) {
+      return;
+    }
+
+    setCount(api.scrollSnapList().length);
+    setCurrent(api.selectedScrollSnap() + 1);
+
+    api.on("select", () => {
+      setCurrent(api.selectedScrollSnap() + 1);
+    });
+  }, [api]);
+
   return (
     <div className="section-space-y bg-radial-gradient">
       <div className="container">
@@ -82,7 +100,7 @@ export const Categories: React.FC = () => {
 
         {/* Mobile Carousel */}
         <div className="md:hidden">
-          <Carousel className="w-full max-w-sm mx-auto">
+          <Carousel setApi={setApi} className="w-full max-w-sm mx-auto">
             <CarouselContent>
               {categoriesData.map((category, index) => (
                 <CarouselItem key={index}>
@@ -91,6 +109,22 @@ export const Categories: React.FC = () => {
               ))}
             </CarouselContent>
           </Carousel>
+          
+          {/* Pagination Dots */}
+          <div className="flex justify-center mt-6 space-x-2">
+            {Array.from({ length: count }).map((_, index) => (
+              <button
+                key={index}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  index === current - 1
+                    ? "bg-blue-500 w-6"
+                    : "bg-gray-300 dark:bg-gray-600"
+                }`}
+                onClick={() => api?.scrollTo(index)}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
         </div>
 
         {/* Desktop Grid */}
