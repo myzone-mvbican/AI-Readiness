@@ -1,4 +1,11 @@
 import React from "react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface Category {
   title: string;
@@ -75,7 +82,23 @@ export const Categories: React.FC = () => {
           </h2>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {/* Mobile Carousel */}
+        <div className="md:hidden">
+          <Carousel className="w-full max-w-sm mx-auto">
+            <CarouselContent>
+              {categoriesData.map((category, index) => (
+                <CarouselItem key={index}>
+                  <CategoryCard category={category} />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        </div>
+
+        {/* Desktop Grid */}
+        <div className="hidden md:grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {categoriesData.map((category, index) => (
             <CategoryCard key={index} category={category} />
           ))}
