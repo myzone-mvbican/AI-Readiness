@@ -10,8 +10,8 @@ interface BenefitCardProps {
 
 const BenefitCard: React.FC<BenefitCardProps> = ({ title, description, icon }) => {
     return (
-        <div className="bg-white dark:bg-gray-900 text-center rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex justify-center mb-4">
+        <div className="bg-white dark:bg-gray-900 text-center rounded-lg p-6 lg:py-10 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex justify-center mb-4 lg:mb-6">
                 <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
                     {icon}
                 </div>
@@ -30,17 +30,17 @@ const benefitsData = [
     {
         title: "Benchmark",
         description: "Compare your AI readiness with industry standards and competitors",
-        icon: <BarChart3 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+        icon: <BarChart3 className="size-10 lg:size-16 text-blue-600 dark:text-blue-400" />
     },
     {
         title: "Track Progress",
         description: "Monitor your improvement over time with quarterly assessments",
-        icon: <TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+        icon: <TrendingUp className="size-10 lg:size-16 text-blue-600 dark:text-blue-400" />
     },
     {
         title: "Get Insights",
         description: "Receive tailored recommendations to improve your AI capabilities",
-        icon: <Lightbulb className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+        icon: <Lightbulb className="size-10 lg:size-16 text-blue-600 dark:text-blue-400" />
     }
 ];
 
@@ -57,7 +57,7 @@ export const Benefits: React.FC = () => {
                         actionable insights
                     </p>
                 </div>
-                <div className="mt-12 grid gap-8 md:grid-cols-3">
+                <div className="mt-12 lg:mt-16 grid gap-8 md:grid-cols-3">
                     {benefitsData.map((benefit, index) => (
                         <BenefitCard
                             key={index}
