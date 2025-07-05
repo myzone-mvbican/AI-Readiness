@@ -1,7 +1,5 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronRight } from "lucide-react";
-import { Link } from "wouter";
 
 interface HeroProps {
     onStartAssessment: () => void;
@@ -10,7 +8,7 @@ interface HeroProps {
 // Sample functional component
 export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
     return (
-        <div className="bg-blue-800 py-16 md:py-24 lg:py-32">
+        <div className="section-space-y bg-blue-800">
             <div className="container">
                 <div className="grid grid-cols-1 lg:grid-cols-2">
                     <div className="max-w-2xl space-y-6 lg:space-y-8 text-white">

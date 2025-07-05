@@ -71,6 +71,14 @@
   --sidebar-ring: 217.2 91.2% 59.8%;
 }
 
+.bg-radial-gradient {
+  background-image: radial-gradient(76.88% 120.64% at 52.26% 50.97%, #FFFFFF 0%, #DFEAFF 100%);
+}
+
+.section-space-y {
+  @apply py-16 md:py-24 lg:py-32;
+}
+
 // Custom button styles that extend Tailwind
 .btn-custom {
   @apply py-2 px-4 rounded transition-colors duration-200;
