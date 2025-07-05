@@ -1,0 +1,81 @@
+.mockup {
+  --wp--rotate: 90deg;
+  display: inline-block;
+  position: relative;
+  z-index: 3;
+  text-align: center;
+  font-size: 0;
+  perspective: 2400px;
+  perspective-origin: 50% 100%;
+  opacity: 0;
+  transition: opacity 500ms;
+
+  &.loaded {
+    opacity: 1;
+  }
+
+  &.opened {
+    --wp--rotate: 0deg;
+
+    &.half {
+      --wp--rotate: 87.5deg;
+    }
+  }
+
+  .part {
+    display: inline-block;
+    position: relative;
+    transform-style: preserve-3d;
+    transform-origin: 50% 100%;
+    transition: 500ms;
+
+    &.top {
+      transform: translate3d(0, 0, 0) rotateX(calc(-1 * var(--wp--rotate)));
+    }
+
+    &.bottom {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform: translate3d(0, 0, 0) rotateX(-90deg);
+    }
+
+    .top,
+    .bottom {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .top {
+      transform-origin: 50% 0;
+      transform: translate3d(0, 0, -10px) rotateX(var(--wp--rotate));
+    }
+
+    .bottom {
+      transform-origin: 50% 0;
+      transform: translate3d(0, 0, 0) rotateX(90deg);
+    }
+
+    .cover {
+      position: relative;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+      backface-visibility: hidden;
+    }
+
+    video {
+      display: block;
+      position: absolute;
+      top: 8%;
+      left: 4%;
+      width: 92%;
+      border-radius: 6px;
+      backface-visibility: hidden;
+      transform: translate3d(0, 0, 1px);
+    }
+  }
+}
