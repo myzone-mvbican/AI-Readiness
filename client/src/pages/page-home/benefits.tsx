@@ -1,14 +1,21 @@
 
 import React from "react";
+import { BarChart3, TrendingUp, Lightbulb } from "lucide-react";
 
 interface BenefitCardProps {
     title: string;
     description: string;
+    icon: React.ReactNode;
 }
 
-const BenefitCard: React.FC<BenefitCardProps> = ({ title, description }) => {
+const BenefitCard: React.FC<BenefitCardProps> = ({ title, description, icon }) => {
     return (
         <div className="bg-white dark:bg-gray-900 text-center rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex justify-center mb-4">
+                <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
+                    {icon}
+                </div>
+            </div>
             <div className="text-foreground text-xl lg:text-2xl font-bold mb-3">
                 {title}
             </div>
@@ -22,15 +29,18 @@ const BenefitCard: React.FC<BenefitCardProps> = ({ title, description }) => {
 const benefitsData = [
     {
         title: "Benchmark",
-        description: "Compare your AI readiness with industry standards and competitors"
+        description: "Compare your AI readiness with industry standards and competitors",
+        icon: <BarChart3 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
     },
     {
         title: "Track Progress",
-        description: "Monitor your improvement over time with quarterly assessments"
+        description: "Monitor your improvement over time with quarterly assessments",
+        icon: <TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
     },
     {
         title: "Get Insights",
-        description: "Receive tailored recommendations to improve your AI capabilities"
+        description: "Receive tailored recommendations to improve your AI capabilities",
+        icon: <Lightbulb className="h-6 w-6 text-blue-600 dark:text-blue-400" />
     }
 ];
 
@@ -53,6 +63,7 @@ export const Benefits: React.FC = () => {
                             key={index}
                             title={benefit.title}
                             description={benefit.description}
+                            icon={benefit.icon}
                         />
                     ))}
                 </div>
