@@ -16,10 +16,6 @@
 
   &.opened {
     --wp--rotate: 0deg;
-
-    &.half {
-      --wp--rotate: 87.5deg;
-    }
   }
 
   .part {
