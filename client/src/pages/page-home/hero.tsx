@@ -39,7 +39,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
                         distance: 40,
                         duration: 2,
                         opacity: 8,
-                        size: 6,
+                        size: 5,
                         speed: 3,
                     },
                 },
@@ -83,12 +83,12 @@ export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
                     type: "circle",
                 },
                 size: {
-                    animation: {
-                        enable: false,
-                        speed: 40,
-                        sync: false,
-                    },
                     random: true,
+                    animation: {
+                        enable: true,
+                        speed: 20,
+                        sync: false,
+                    }, 
                     value: { min: 0.1, max: 1 },
                 },
             },
@@ -107,9 +107,13 @@ export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
                 inline: {
                     arrangement: "equidistant",
                 },
-                scale: 0.5,
+                scale: .9,
                 type: "inline",
                 url: homeTop,
+                position: {
+                    x: 15,
+                    y: 1.5
+                }
             },
         }),
         [],
@@ -142,7 +146,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
                             Start Assessment
                         </Button>
                     </div>
-                    <div className="relative">
+                    <div className="relative hidden lg:block">
                         <div className="absolute inset-0 z-0">
                             {init && (
                                 <Particles

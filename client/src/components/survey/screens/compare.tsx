@@ -135,8 +135,7 @@ export default function ScreenCompare({ assessment }: ScreenCompare) {
   }
 
   const { data } = benchmarkData;
-  const { company = "Your company", industry: industryCode = "Industry" } =
-    user || {};
+  const { company = "Your company" } = user || {};
 
   // Get proper industry display name from the code
   const industry = getIndustryDisplayName(data.industry);
@@ -266,12 +265,7 @@ export default function ScreenCompare({ assessment }: ScreenCompare) {
         {/* Interactive Pie Chart */}
         <Card data-chart={pieChartId} className="flex flex-col">
           <ChartStyle id={pieChartId} config={pieChartConfig} />
-          <CardHeader className="flex-row items-start space-y-0">
-            <div className="grid gap-1">
-              <CardTitle className="text-sm lg:text-lg">
-                Compare against:
-              </CardTitle>
-            </div>
+          <CardHeader> 
             <Select
               value={activeView}
               onValueChange={(value: "industry" | "global") => {
@@ -279,7 +273,7 @@ export default function ScreenCompare({ assessment }: ScreenCompare) {
               }}
             >
               <SelectTrigger
-                className="ml-auto h-7 w-[180px] rounded-lg pl-2.5"
+                className="h-7 w-full rounded-lg pl-2.5"
                 aria-label="Select view"
               >
                 <SelectValue placeholder="Select view" />

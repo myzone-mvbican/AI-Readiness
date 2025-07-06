@@ -16,16 +16,16 @@ export default function Header() {
           </div>
         </Link>
         <div className="flex items-center"> 
-          <nav className="hidden md:flex items-center space-x-8 mx-6">
+          <nav className="flex items-center space-x-8">
             <Link href="/#start" asChild>
-              <Button>
+              <Button className="hidden md:block">
                 Start Assessment
               </Button>
             </Link>
-            <Link href="/dashboard">
-              <span className="text-dark hover:text-blue-600 dark:text-white font-medium cursor-pointer transition-colors">
+            <Link href="/dashboard" asChild>
+              <Button variant="link" className="text-dark hover:text-blue-600 dark:text-white font-bold">
                 Login
-              </span>
+              </Button>
             </Link>
           </nav>
         </div>
