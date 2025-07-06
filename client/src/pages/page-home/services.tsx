@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import recording from "@/assets/recording.mp4";
 
 export function Services() {
   useEffect(() => {
@@ -38,7 +39,7 @@ export function Services() {
   }, []);
 
   return (
-    <div className="py-20 bg-white dark:bg-slate-900 overflow-hidden">
+    <div className="py-20 bg-white hover overflow-hidden">
       <div className="container">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Column - Content */}
@@ -83,13 +84,9 @@ export function Services() {
                   src="https://d1xm195wioio0k.cloudfront.net/images/mockup/macbook-cover.svg"
                   alt=""
                   className="cover"
-                />
-
+                /> 
                 <video autoPlay={true} muted={true} loop={true}>
-                  <source
-                    src="https://d1xm195wioio0k.cloudfront.net/images/video/support.mp4"
-                    type="video/mp4"
-                  />
+                  <source src={recording} type="video/mp4" />
                 </video>
               </div>
               <div className="part bottom">

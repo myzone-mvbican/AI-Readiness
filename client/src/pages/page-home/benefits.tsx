@@ -61,7 +61,7 @@ export const Benefits: React.FC = () => {
                     <h2 className="section__title text-foreground">
                         Benefits of the Assessment
                     </h2>
-                    <p className="mt-4 text-lg text-muted-foreground">
+                    <p className="mt-4 text-base lg:text-lg text-muted-foreground">
                         Understand your organization&apos;s AI readiness and get
                         actionable insights
                     </p>

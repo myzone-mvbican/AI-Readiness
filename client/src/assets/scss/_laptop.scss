@@ -16,7 +16,7 @@
     transform: scale(1);
   }
 
-  div:hover & {
+  .hover:hover & {
     --wp--rotate: 0deg;
   }
 
@@ -76,7 +76,7 @@
     video {
       display: block;
       position: absolute;
-      top: 8%;
+      top: 10%;
       left: 4%;
       width: 92%;
       border-radius: 6px;
@@ -94,8 +94,9 @@
   right: 0;
   padding: 0;
   margin: 0;
-  z-index: 0; /* if you use -1 you have to set to `"window"` the interactivity.detectsOn property */
-  
+  z-index: 0;
+  /* if you use -1 you have to set to `"window"` the interactivity.detectsOn property */
+
   canvas {
     position: absolute !important;
   }

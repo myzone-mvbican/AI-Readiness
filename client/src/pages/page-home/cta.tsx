@@ -4,7 +4,7 @@ import Particles, { initParticlesEngine } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
 import { loadPolygonMaskPlugin } from "@tsparticles/plugin-polygon-mask";
 import type { Engine } from "@tsparticles/engine";
-import homeBottom from '@/assets/home-bottom.svg';
+import homeBottom from "@/assets/home-bottom-v2.svg";
 
 interface CtaProps {
   onStartAssessment: () => void;
@@ -12,7 +12,7 @@ interface CtaProps {
 
 export function Cta({ onStartAssessment }: CtaProps) {
   const [init, setInit] = React.useState(false);
-  
+
   useEffect(() => {
     initParticlesEngine(async (engine: Engine) => {
       await loadSlim(engine);
@@ -56,39 +56,39 @@ export function Cta({ onStartAssessment }: CtaProps) {
           blink: false,
           color: "random",
           consent: false,
-          distance: 30,
+          distance: 20,
           enable: true,
           opacity: 0.4,
-          width: 0.8,
+          width: 1.2,
         },
         move: {
           enable: true,
           outModes: "bounce",
-          speed: { min: 0.3, max: 0.8 },
+          speed: { min: 0.5, max: 1 },
         },
         number: {
           value: 150,
         },
         opacity: {
+          random: false,
           animation: {
             enable: true,
             speed: 1.5,
             sync: false,
           },
-          random: false,
           value: { min: 0.1, max: 0.8 },
         },
         shape: {
           type: "circle",
         },
         size: {
+          random: true,
           animation: {
-            enable: false,
-            speed: 40,
+            enable: true,
+            speed: 30,
             sync: false,
           },
-          random: true,
-          value: { min: 0.1, max: 1.2 },
+          value: { min: 0.2, max: 1 },
         },
       },
       polygon: {
@@ -106,9 +106,13 @@ export function Cta({ onStartAssessment }: CtaProps) {
         inline: {
           arrangement: "equidistant",
         },
-        scale: 0.6,
+        scale: 1,
         type: "inline",
         url: homeBottom,
+        position: {
+          x: 0,
+          y: 1,
+        },
       },
     }),
     [],
@@ -119,7 +123,7 @@ export function Cta({ onStartAssessment }: CtaProps) {
       <div className="container relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Column - Visual Space with tsParticles */}
-          <div className="hidden lg:block relative">
+          <div className="hidden lg:block relative aspect-[4/3.5] lg:scale-[1.2]">
             <div className="absolute inset-0 z-0">
               {init && (
                 <Particles
