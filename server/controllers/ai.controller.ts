@@ -297,7 +297,7 @@ Inputs:
 -- responses, each with question text and answer (-2 to 2 scale, where -2 is strongly disagree, 0 is neutral and 2 is strongly agree).
 Output/Ensure:
 - Do not create a title for the report - just start with the first category.
-- Do not output "usual" lines between categories.
+- Do not output lines or long dashes between categories.
 - Bulleted Markdown, ready for PDF conversion.  
 - If 'benchmark' is null, omit that line.
 - If 'previousScore' is null, say "First-time assessment" instead of trend.
