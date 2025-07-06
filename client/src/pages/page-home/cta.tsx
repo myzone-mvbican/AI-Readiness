@@ -123,7 +123,7 @@ export function Cta({ onStartAssessment }: CtaProps) {
       <div className="container relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Column - Visual Space with tsParticles */}
-          <div className="hidden lg:block relative aspect-[4/3.5] lg:scale-[1.2]">
+          <div className="hidden lg:block relative aspect-[4/3.5]">
             <div className="absolute inset-0 z-0">
               {init && (
                 <Particles
