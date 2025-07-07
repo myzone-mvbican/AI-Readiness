@@ -190,7 +190,6 @@ export default function AuthPage() {
                   text={activeTab === "login" ? "signin_with" : "signup_with"}
                   shape="rectangular"
                   auto_select={false}
-                  width="100%"
                 />
               </div>
 
