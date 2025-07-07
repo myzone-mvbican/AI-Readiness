@@ -108,12 +108,12 @@ export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
                 inline: {
                     arrangement: "equidistant",
                 },
-                scale: 0.9,
+                scale: 1,
                 type: "inline",
                 url: homeTop,
                 position: {
                     x: 15,
-                    y: 1.5,
+                    y: 0,
                 },
             },
         }),
@@ -142,29 +142,20 @@ export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
                         <Button
                             size="lg"
                             onClick={onStartAssessment}
-                            className="bg-white hover:bg-white text-blue-600 font-bold rounded-md shadow-md px-6"
+                            className="bg-white hover:bg-white text-blue-600 font-bold text-base"
                         >
                             Start Assessment
                         </Button>
                     </div>
                     <div className="relative hidden lg:block">
-                        <div
-                            className="absolute inset-0 z-0"
-                            style={{
-                                backgroundImage: `url(${homeTopImage})`,
-                                mixBlendMode: "screen",
-                                backgroundSize: "contain",
-                                backgroundPosition: "center right 60px",
-                                backgroundRepeat: "no-repeat"
-                            }}
-                        >
-                           {init && (
+                        <div className="absolute inset-0 z-0">
+                            {init && (
                                 <Particles
                                     id="tsparticles"
                                     options={options}
                                     className="w-full h-full relative"
                                 />
-                            )} 
+                            )}
                         </div>
                     </div>
                 </div>

@@ -23,7 +23,7 @@ export function Instructions({ onStartAssessment }: InstructionsProps) {
             <Button
               size="lg"
               variant="outline"
-              className="bg-white text-blue-600 border-white hover:bg-blue-50 hover:text-blue-700 font-bold px-8"
+              className="bg-white text-blue-600 border-white hover:bg-blue-50 hover:text-blue-700 font-bold text-base"
               onClick={onStartAssessment}
             >
               Start Assessment

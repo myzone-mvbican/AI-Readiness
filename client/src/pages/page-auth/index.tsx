@@ -206,11 +206,12 @@ export default function AuthPage() {
                   <GoogleLogin
                     onSuccess={handleGoogleSuccess}
                     onError={handleGoogleError}
-                    useOneTap
+                    useOneTap={false}
                     theme="outline"
                     size="large"
                     text="signin_with"
                     shape="rectangular"
+                    auto_select={false}
                   />
                 </div>
               </div>

@@ -21,12 +21,12 @@ export default function Header() {
           </div>
           <nav className="flex items-center justify-end space-x-8">
             <Link href="/#start" asChild>
-              <Button className="hidden sm:block">Start Assessment</Button>
+              <Button className="hidden sm:block font-bold text-base">Start Assessment</Button>
             </Link>
             <Link href="/dashboard" asChild>
               <Button
                 variant="link"
-                className="text-dark hover:text-blue-600 dark:text-white font-bold"
+                className="text-dark hover:text-blue-600 dark:text-white font-bold text-base"
               >
                 Login
               </Button>
