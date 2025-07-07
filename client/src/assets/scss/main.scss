@@ -1,4 +1,19 @@
-@use 'variables' as vars; 
+@use 'variables' as vars;
+
+// Font family and weights
+* {
+  font-family: 'Elza', 'Inter', sans-serif;
+}
+
+// Body text - font weight 400
+body, p, span, div, label, input, textarea, select {
+  font-weight: 400;
+}
+
+// Headings - font weight 700
+h1, h2, h3, h4, h5, h6, .section__title {
+  font-weight: 700;
+} 
 
 :root {
   --background: 0 0% 100%;
