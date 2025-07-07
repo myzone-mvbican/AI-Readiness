@@ -181,39 +181,17 @@ export default function AuthPage() {
             <CardContent className="pt-6">
               {/* Google Sign-In Option */}
               <div className="w-full mb-6">
-                <div
-                  className="w-full flex items-center justify-center border border-gray-300 rounded-md py-2 bg-white hover:bg-gray-50 cursor-pointer"
-                  onClick={() => {
-                    // Trigger Google login programmatically
-                    document
-                      .querySelector<HTMLDivElement>("[id^='google_btn']")
-                      ?.click();
-                  }}
-                >
-                  <img
-                    src="https://developers.google.com/identity/images/g-logo.png"
-                    alt="Google logo"
-                    className="w-6 h-6 mr-2"
-                  />
-                  <span className="text-gray-700 font-medium">
-                    {activeTab === "login"
-                      ? "Sign in with Google"
-                      : "Sign up with Google"}
-                  </span>
-                </div>
-
-                <div className="hidden">
-                  <GoogleLogin
-                    onSuccess={handleGoogleSuccess}
-                    onError={handleGoogleError}
-                    useOneTap={false}
-                    theme="outline"
-                    size="large"
-                    text="signin_with"
-                    shape="rectangular"
-                    auto_select={false}
-                  />
-                </div>
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  useOneTap={false}
+                  theme="outline"
+                  size="large"
+                  text={activeTab === "login" ? "signin_with" : "signup_with"}
+                  shape="rectangular"
+                  auto_select={false}
+                  width="100%"
+                />
               </div>
 
               {/* Divider */}
