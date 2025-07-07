@@ -119,22 +119,21 @@ export function Cta({ onStartAssessment }: CtaProps) {
     [],
   );
 
+  const styles = {
+    backgroundImage: `url(${homeBottomImage})`,
+    backgroundBlendMode: "screen",
+    backgroundSize: "contain",
+    backgroundPosition: "center right 40px",
+    backgroundRepeat: "no-repeat",
+  };
+
   return (
     <div className="section-space-y bg-gradient-to-br from-[#1C2D8A] via-[#3651DA] to-[#1C2D8A]">
       <div className="container relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Column - Visual Space with tsParticles */}
           <div className="hidden lg:block relative aspect-[4/3.5]">
-            <div
-              className="absolute inset-0 z-0"
-              style={{
-                backgroundImage: `url(${homeBottomImage})`,
-                backgroundBlendMode: "screen",
-                backgroundSize: "contain",
-                backgroundPosition: "center right 40px",
-                backgroundRepeat: "no-repeat",
-              }}
-            >
+            <div className="absolute inset-0 z-0">
               {init && (
                 <Particles
                   id="tsparticles-cta"
@@ -155,7 +154,7 @@ export function Cta({ onStartAssessment }: CtaProps) {
             <Button
               size="lg"
               variant="outline"
-              className="bg-white text-blue-600 border-white hover:bg-blue-50 hover:text-blue-700 px-8 font-bold"
+              className="bg-white text-blue-600 border-white hover:bg-blue-50 hover:text-blue-700 font-bold text-base"
               onClick={onStartAssessment}
             >
               Start Assessment
