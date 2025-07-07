@@ -4,7 +4,8 @@ import Particles, { initParticlesEngine } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
 import { loadPolygonMaskPlugin } from "@tsparticles/plugin-polygon-mask";
 import type { Engine } from "@tsparticles/engine";
-import homeTop from '@/assets/home-top.svg';
+import homeTop from "@/assets/home-top.svg";
+import homeTopImage from "@/assets/ai-readiness-top.png";
 
 interface HeroProps {
     onStartAssessment: () => void;
@@ -13,7 +14,7 @@ interface HeroProps {
 // Sample functional component
 export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
     const [init, setInit] = React.useState(false);
-    
+
     useEffect(() => {
         initParticlesEngine(async (engine: Engine) => {
             await loadSlim(engine);
@@ -88,7 +89,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
                         enable: true,
                         speed: 20,
                         sync: false,
-                    }, 
+                    },
                     value: { min: 0.1, max: 1 },
                 },
             },
@@ -107,13 +108,13 @@ export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
                 inline: {
                     arrangement: "equidistant",
                 },
-                scale: .9,
+                scale: 0.9,
                 type: "inline",
                 url: homeTop,
                 position: {
                     x: 15,
-                    y: 1.5
-                }
+                    y: 1.5,
+                },
             },
         }),
         [],
@@ -123,7 +124,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
         <div className="bg-blue-800">
             <div className="container">
                 <div className="grid grid-cols-1 lg:grid-cols-2">
-                    <div className="section-space-y max-w-2xl space-y-6 lg:space-y-8 text-white">
+                    <div className="section-space-y max-w-[435px] space-y-6 lg:space-y-8 text-white">
                         <h1 className="section__title tracking-tight">
                             MyZone AI <br />
                             Readiness Survey
@@ -147,14 +148,23 @@ export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
                         </Button>
                     </div>
                     <div className="relative hidden lg:block">
-                        <div className="absolute inset-0 z-0">
-                            {init && (
+                        <div
+                            className="absolute inset-0 z-0"
+                            style={{
+                                backgroundImage: `url(${homeTopImage})`,
+                                mixBlendMode: "screen",
+                                backgroundSize: "contain",
+                                backgroundPosition: "center right 60px",
+                                backgroundRepeat: "no-repeat"
+                            }}
+                        >
+                           {init && (
                                 <Particles
                                     id="tsparticles"
                                     options={options}
                                     className="w-full h-full relative"
                                 />
-                            )}
+                            )} 
                         </div>
                     </div>
                 </div>

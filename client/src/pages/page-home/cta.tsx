@@ -5,6 +5,7 @@ import { loadSlim } from "@tsparticles/slim";
 import { loadPolygonMaskPlugin } from "@tsparticles/plugin-polygon-mask";
 import type { Engine } from "@tsparticles/engine";
 import homeBottom from "@/assets/home-bottom-v2.svg";
+import homeBottomImage from "@/assets/ai-readiness-bottom.png";
 
 interface CtaProps {
   onStartAssessment: () => void;
@@ -124,7 +125,16 @@ export function Cta({ onStartAssessment }: CtaProps) {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Column - Visual Space with tsParticles */}
           <div className="hidden lg:block relative aspect-[4/3.5]">
-            <div className="absolute inset-0 z-0">
+            <div
+              className="absolute inset-0 z-0"
+              style={{
+                backgroundImage: `url(${homeBottomImage})`,
+                backgroundBlendMode: "screen",
+                backgroundSize: "contain",
+                backgroundPosition: "center right 40px",
+                backgroundRepeat: "no-repeat",
+              }}
+            >
               {init && (
                 <Particles
                   id="tsparticles-cta"

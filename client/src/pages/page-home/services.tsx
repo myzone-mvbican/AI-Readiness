@@ -1,49 +1,12 @@
-import { useEffect } from "react";
-import recording from "@/assets/recording.mp4";
+import laptopImage from "@/assets/Macbook-Pro-Crop.png";
 
 export function Services() {
-  useEffect(() => {
-    const targetElement = document.querySelector(".mockup-macbook"); // Assuming you want to observe this element
-
-    const observerOptions = {
-      root: null,
-      rootMargin: "-200px",
-      threshold: 0.5,
-    };
-
-    const observerCallback = (entries: any) => {
-      entries.forEach(({ isIntersecting }: any) => {
-        if (isIntersecting) {
-          targetElement?.classList.add("opened");
-        } else {
-          targetElement?.classList.remove("opened");
-        }
-      });
-    };
-
-    const observer = new IntersectionObserver(
-      observerCallback,
-      observerOptions,
-    );
-
-    if (targetElement) {
-      observer.observe(targetElement);
-    }
-
-    // Cleanup on unmount
-    return () => {
-      if (targetElement) {
-        observer.unobserve(targetElement);
-      }
-    };
-  }, []);
-
   return (
     <div className="py-20 bg-white hover overflow-hidden">
       <div className="container">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="grid lg:grid-cols-5 gap-12 items-center">
           {/* Left Column - Content */}
-          <div className="lg:pe-10">
+          <div className="lg:col-span-2 lg:pe-10">
             <h2 className="section__title text-foreground mb-6">
               Explore the 8 Pillars
               <br />
@@ -72,36 +35,16 @@ export function Services() {
           </div>
 
           {/* Right Column - 3D Laptop Mockup */}
-          <div className="relative flex justify-center">
-            <div className="mockup mockup-macbook loaded">
-              <div className="part top">
-                <img
-                  src="https://d1xm195wioio0k.cloudfront.net/images/mockup/macbook-top.svg"
-                  alt=""
-                  className="top"
-                />
-                <img
-                  src="https://d1xm195wioio0k.cloudfront.net/images/mockup/macbook-cover.svg"
-                  alt=""
-                  className="cover"
-                /> 
-                <video autoPlay={true} muted={true} loop={true}>
-                  <source src={recording} type="video/mp4" />
-                </video>
-              </div>
-              <div className="part bottom">
-                <img
-                  src="https://d1xm195wioio0k.cloudfront.net/images/mockup/macbook-cover.svg"
-                  alt=""
-                  className="cover"
-                />
-                <img
-                  src="https://d1xm195wioio0k.cloudfront.net/images/mockup/macbook-bottom.svg"
-                  alt=""
-                  className="bottom"
-                />
-              </div>
-            </div>
+          <div className="lg:col-span-3 relative flex justify-center">
+            <div
+              className="relative w-full h-full bg-contain bg-center aspect-[16/9]"
+              style={{
+                backgroundImage: `url(${laptopImage})`,
+                backgroundSize: "contain",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+              }}
+            />
           </div>
         </div>
       </div>
