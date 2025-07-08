@@ -14,12 +14,36 @@ import { EmailService } from "./services/email.service";
 // Import middleware if needed for protected routes
 import { auth, requireAdmin } from "./middleware/auth";
 import { upload } from "./middleware/upload";
+import path from "path";
 import { ApiResponseUtil } from "./utils/api-response";
 import cors from "cors";
+import { PDFGenerationService } from "./services/pdf-generation.service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Enable CORS
   app.use(cors());
+
+  // PDF serving route - MUST come before static middleware
+  app.get("/uploads/*", (req, res) => {
+    const filePath = req.params[0];
+    const fullPath = path.join(process.cwd(), 'public', 'uploads', filePath);
+    
+    console.log(`PDF request for: ${filePath}, full path: ${fullPath}`);
+    
+    // Check if file exists and is a PDF
+    if (!filePath.endsWith('.pdf')) {
+      return res.status(400).send('Invalid file type');
+    }
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${path.basename(filePath)}"`);
+    res.sendFile(fullPath, (err) => {
+      if (err) {
+        console.error('Error serving PDF:', err);
+        res.status(404).send('File not found');
+      }
+    });
+  });
 
   // API routes - path prefixed with /api
   app.get("/api/health", (req, res) => {
@@ -256,6 +280,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Serve PDF files (protected route)
   app.get("/api/files/*", auth, FileController.servePDF);
+  
+
   // Benchmark routes
   app.get(
     "/api/assessments/:id/benchmark",
@@ -284,6 +310,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/public/assessments/:id", AssessmentController.updateGuest);
   // Public endpoint for guest users to access survey details
   app.get("/api/public/surveys/detail/:id", SurveyController.getById);
+
+  // Test PDF generation endpoint
+  app.post("/api/test/generate-pdf/:id", async (req, res) => {
+    const assessmentId = parseInt(req.params.id);
+    try {
+      const result = await PDFGenerationService.generateAndSaveAssessmentPDF(assessmentId);
+      res.json({ success: true, data: { pdfPath: result }, message: "PDF generated successfully" });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
 
   const httpServer = createServer(app);
 

@@ -107,6 +107,9 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
+- July 8, 2025. FIXED PDF static file serving issue - PDFs now properly accessible via web URLs for both users and guests
+- July 8, 2025. Resolved server returning HTML instead of PDF content by implementing proper /uploads/* route handling
+- July 8, 2025. Successfully tested PDF access for both user paths (/uploads/1/assessment-X.pdf) and guest paths (/uploads/guest_email/assessment-X.pdf)
 - July 8, 2025. Successfully implemented exact client-side PDF structure on server with identical formatting for both users and guests - complete with cover page, results page, 5 recommendation pages, and response pages (10 answers per page)
 - July 8, 2025. Created ExactAssessmentPDF component that replicates client-side AssessmentPDF with professional blue cover page, radar chart, structured recommendations, and proper page numbering
 - July 8, 2025. Verified React PDF generation produces identical PDF format for both registered users and guest users with proper markdown parsing and comprehensive page structure
