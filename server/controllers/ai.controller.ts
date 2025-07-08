@@ -300,7 +300,7 @@ export class AIController {
               const downloadUrl = `${baseUrl}${pdfResult.relativePath}`;
 
               // Render email template
-              const emailHtml = render(AssessmentCompleteEmail({
+              const emailHtml = await render(AssessmentCompleteEmail({
                 recipientName,
                 recipientEmail,
                 downloadUrl,
