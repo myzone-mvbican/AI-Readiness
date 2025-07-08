@@ -2,6 +2,7 @@ import { pdf } from "@react-pdf/renderer";
 import { AssessmentPDF } from "@/components/survey/assessment-pdf";
 import { apiRequest } from "./queryClient";
 import { Assessment } from "@shared/types";
+import { createElement } from "react";
 
 /**
  * Generate PDF blob from assessment data and save to server
@@ -9,7 +10,8 @@ import { Assessment } from "@shared/types";
 export async function generateAndSavePDF(assessment: Assessment): Promise<string> {
   try {
     // Generate PDF blob using react-pdf
-    const blob = await pdf(<AssessmentPDF assessment={assessment} />).toBlob();
+    const pdfDocument = createElement(AssessmentPDF, { assessment });
+    const blob = await pdf(pdfDocument).toBlob();
     
     // Convert blob to base64
     const arrayBuffer = await blob.arrayBuffer();
