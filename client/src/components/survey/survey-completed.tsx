@@ -35,8 +35,6 @@ export default function SurveyCompleted({
   questions,
   additionalActions,
 }: SurveyCompletedProps) {
-  console.log(assessment);
-
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 space-y-6 md:space-y-0 py-4">
@@ -76,18 +74,18 @@ export default function SurveyCompleted({
                   </p>
                 </TooltipContent>
               </Tooltip>
-            ) : (
-              <Link href={"/"} asChild>
-                <Button
-                  className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"
+            ) : ( 
+                <a
+                  className="flex items-center justify-center gap-2 h-10 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"
                   style={{ textDecoration: "none" }}
+                  download="download"
+                  href={assessment.pdfPath} 
                 >
                   <>
                     <Download className="size-4" />
-                    {true ? "Preparing PDF..." : "Download PDF"}
+                    {!assessment.pdfPath ? "Preparing PDF..." : "Download PDF"}
                   </>
-                </Button>
-              </Link>
+                </a> 
             )}
           </div>
         </div>
