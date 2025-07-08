@@ -1,9 +1,11 @@
+import React from 'react';
+import { renderToBuffer } from '@react-pdf/renderer';
 import { AssessmentModel } from "../models/assessment.model";
 import { UserModel } from "../models/user.model";
 import { fileStorage } from "../utils/file-storage";
 import { EmailService } from "./email.service";
 import { Assessment, CsvQuestion } from "@shared/types";
-import { generateAssessmentPDF } from "../utils/pdf-generator";
+import { ServerAssessmentPDF } from "../templates/server-assessment-pdf";
 import path from 'path';
 
 // Simple PDF generation using a text-based approach
@@ -38,8 +40,10 @@ export class PDFGenerationService {
       // Generate PDF using React PDF on the server
       console.log(`Generating server-side PDF for assessment ${assessmentId}`);
       
-      // Create the PDF buffer using PDFKit
-      const pdfBuffer = await generateAssessmentPDF(assessment);
+      // Create the PDF buffer using React PDF (your existing code)
+      const pdfBuffer = await renderToBuffer(
+        React.createElement(ServerAssessmentPDF, { assessment })
+      );
       
       // Determine user ID for file storage
       let fileUserId = userId || assessment.userId;
