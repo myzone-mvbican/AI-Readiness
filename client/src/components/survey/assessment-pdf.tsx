@@ -656,7 +656,7 @@ const RadarChartPDF = ({
 };
 
 // PDF Document
-export const AssessmentPDF = ({ assessment }: { assessment: Assessment }) => {
+const AssessmentPDF = ({ assessment }: { assessment: Assessment }) => {
   const { answers = [], survey: { title: surveyTitle, questions = [] } = {} } =
     assessment;
   const score = assessment.score || 0;

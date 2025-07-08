@@ -125,10 +125,6 @@ export class ApiResponseUtil {
     dataSuccess: (res: Response, data: any, message?: string) => 
       res.json({ success: true, data, ...(message && { message }) }),
 
-    // Generic success response (matches current format)
-    success: (res: Response, data: any, message?: string, statusCode: number = 200) => 
-      res.status(statusCode).json({ success: true, ...data, ...(message && { message }) }),
-
     // Error response (matches current format)
     error: (res: Response, message: string, statusCode: number = 400) => 
       res.status(statusCode).json({ success: false, message })
