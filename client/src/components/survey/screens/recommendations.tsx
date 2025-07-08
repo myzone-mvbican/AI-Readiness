@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { generateAndSavePDF } from "@/lib/pdf-utils";
 
 interface ScreenRecommendations {
   assessment: Assessment & { survey?: Survey };
@@ -118,9 +119,19 @@ export default function ScreenRecommendations({
           assessment.recommendations = result.recommendations;
         }
 
+        // Generate and save PDF automatically after recommendations are ready
+        try {
+          console.log("Generating PDF for assessment:", assessment.id);
+          await generateAndSavePDF(assessment);
+          console.log("PDF generated and saved successfully");
+        } catch (pdfError) {
+          console.error("PDF generation failed:", pdfError);
+          // Don't block the user flow if PDF generation fails
+        }
+
         toast({
           title: "Ready",
-          description: "Recommendations generated.",
+          description: "Recommendations generated and PDF prepared.",
           action: isAuthenticated ? (
             <ToastAction
               altText="View Recommendations"

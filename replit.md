@@ -105,6 +105,7 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
+- July 8, 2025. Implemented server-side PDF storage system: PDFs are automatically generated and saved when AI recommendations complete, stored in user-specific directories (public/uploads/{userId}/pdf), with pdfPath field added to assessments table
 - June 27, 2025. Implemented React Email for professional email templates with responsive design and enhanced password reset emails
 - June 27, 2025. Successfully configured Brevo email service with verified sender email and SMTP settings (smtp-relay.brevo.com:587)
 - June 27, 2025. Fixed Google Auth client ID configuration - corrected environment variable from GOOGLE_CLIENT_ID to VITE_GOOGLE_CLIENT_ID for frontend access
