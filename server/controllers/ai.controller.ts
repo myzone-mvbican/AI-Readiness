@@ -285,7 +285,7 @@ export class AIController {
               const user = await UserModel.getById(userId);
               if (user) {
                 recipientEmail = user.email;
-                recipientName = user.firstName || user.name || "Valued User";
+                recipientName = user.name || "Valued User";
                 companyName = user.company || "your organization";
               }
             }

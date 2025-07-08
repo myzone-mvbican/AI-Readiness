@@ -46,7 +46,7 @@ export default function AdminSettings() {
   const [isRecalculating, setIsRecalculating] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const logsEndRef = useRef<HTMLDivElement>(null);
-  
+
   // PDF Download state
   const [assessmentId, setAssessmentId] = useState("");
   const [isCheckingAssessment, setIsCheckingAssessment] = useState(false);
@@ -113,7 +113,10 @@ export default function AdminSettings() {
 
     setIsLoadingUsers(true);
     try {
-      const response = await apiRequest("GET", `/api/admin/users/search?q=${encodeURIComponent(searchTerm)}`);
+      const response = await apiRequest(
+        "GET",
+        `/api/admin/users/search?q=${encodeURIComponent(searchTerm)}`,
+      );
       const result = await response.json();
       if (result.success) {
         setUsers(result.users || []);
@@ -129,7 +132,10 @@ export default function AdminSettings() {
   // Function to fetch user assessments
   const fetchUserAssessments = async (userId: number) => {
     try {
-      const response = await apiRequest("GET", `/api/admin/users/${userId}/assessments`);
+      const response = await apiRequest(
+        "GET",
+        `/api/admin/users/${userId}/assessments`,
+      );
       const result = await response.json();
       if (result.success) {
         setUserAssessments(result.assessments || []);
@@ -435,7 +441,10 @@ export default function AdminSettings() {
                 {/* User Search */}
                 <div className="space-y-2">
                   <Label>Search User (Optional)</Label>
-                  <Popover open={userSearchOpen} onOpenChange={setUserSearchOpen}>
+                  <Popover
+                    open={userSearchOpen}
+                    onOpenChange={setUserSearchOpen}
+                  >
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
@@ -443,11 +452,13 @@ export default function AdminSettings() {
                         aria-expanded={userSearchOpen}
                         className="w-full justify-between"
                       >
-                        {selectedUser ? userSearchValue : "Search by name or email..."}
+                        {selectedUser
+                          ? userSearchValue
+                          : "Search by name or email..."}
                         <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full p-0">
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                       <Command>
                         <CommandInput
                           placeholder="Type to search users..."
@@ -462,6 +473,10 @@ export default function AdminSettings() {
                             </div>
                           ) : users.length === 0 && userSearchValue ? (
                             <CommandEmpty>No users found.</CommandEmpty>
+                          ) : userSearchValue === "" ? (
+                            <CommandEmpty>
+                              Search by name or email.
+                            </CommandEmpty>
                           ) : (
                             <CommandGroup>
                               {users.map((user) => (
@@ -473,7 +488,9 @@ export default function AdminSettings() {
                                   <User className="mr-2 h-4 w-4" />
                                   <div className="flex flex-col">
                                     <span>{user.name}</span>
-                                    <span className="text-sm text-muted-foreground">{user.email}</span>
+                                    <span className="text-sm text-muted-foreground">
+                                      {user.email}
+                                    </span>
                                   </div>
                                 </CommandItem>
                               ))}
@@ -502,7 +519,10 @@ export default function AdminSettings() {
                         >
                           ID: {assessment.id}
                           {assessment.completedAt && (
-                            <Badge variant="secondary" className="ml-1 h-4 text-xs">
+                            <Badge
+                              variant="secondary"
+                              className="ml-1 h-4 text-xs"
+                            >
                               Completed
                             </Badge>
                           )}
@@ -530,17 +550,16 @@ export default function AdminSettings() {
                         <AssessmentPDFDownloadButton assessment={assessment} />
                       </div>
                     ) : (
-                      <Button
-                        disabled
-                        className="w-full"
-                      >
+                      <Button disabled className="w-full">
                         <span className="flex items-center justify-center gap-2">
                           {isCheckingAssessment ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
                             <Download className="h-4 w-4" />
                           )}
-                          {isCheckingAssessment ? "Checking..." : "Download PDF"}
+                          {isCheckingAssessment
+                            ? "Checking..."
+                            : "Download PDF"}
                         </span>
                       </Button>
                     )}
@@ -548,7 +567,9 @@ export default function AdminSettings() {
                   <div className="flex items-end">
                     <Button
                       onClick={regenerateReport}
-                      disabled={!assessmentExists || !assessment || isRegeneratingReport}
+                      disabled={
+                        !assessmentExists || !assessment || isRegeneratingReport
+                      }
                       variant="outline"
                       className="w-full"
                     >
@@ -558,12 +579,14 @@ export default function AdminSettings() {
                         ) : (
                           <RefreshCw className="h-4 w-4" />
                         )}
-                        {isRegeneratingReport ? "Regenerating..." : "Regenerate Report"}
+                        {isRegeneratingReport
+                          ? "Regenerating..."
+                          : "Regenerate Report"}
                       </span>
                     </Button>
                   </div>
                 </div>
-                
+
                 {/* Status indicator */}
                 {assessmentId && !isCheckingAssessment && (
                   <div className="flex items-center space-x-2 text-sm">
@@ -584,9 +607,10 @@ export default function AdminSettings() {
                     )}
                   </div>
                 )}
-                
+
                 <p className="text-sm text-muted-foreground">
-                  Enter an assessment ID to generate and download a PDF report on-demand.
+                  Enter an assessment ID to generate and download a PDF report
+                  on-demand.
                 </p>
               </div>
             </CardContent>
