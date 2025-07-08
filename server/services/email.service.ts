@@ -1,8 +1,6 @@
-import React from "react";
 import { createTransporter, getEmailFromAddress } from "../config/email.config";
 import { render } from "@react-email/render";
-import { PasswordResetEmail } from "../emails/password-reset";
-import AssessmentCompleteEmail from "../emails/assessment-complete"; 
+import { PasswordResetEmail } from "../emails/password-reset"; 
 
 export class EmailService {
   private static transporter = createTransporter();
@@ -88,64 +86,5 @@ The MyZone AI Team
       console.error("❌ Email transporter verification failed:", error);
       return false;
     }
-  }
-
-  static async sendAssessmentCompleteEmail(
-    email: string,
-    assessmentTitle: string,
-    score: number,
-    pdfDownloadUrl: string,
-    isGuest: boolean = false,
-  ): Promise<boolean> {
-    try {
-      const transporter = this.getTransporter();
-      if (!transporter) {
-        console.warn("No email transporter available for assessment completion email");
-        return false;
-      }
-
-      // Get formatted from address with name
-      const fromAddress = getEmailFromAddress();
-
-      // Render React Email template
-      const emailHtml = await render(
-        React.createElement(AssessmentCompleteEmail, {
-          userEmail: email,
-          assessmentTitle,
-          score,
-          pdfDownloadUrl,
-          isGuest,
-        })
-      );
-
-      const emailText = `
-Your AI Readiness Assessment is Complete!
-
-Assessment: ${assessmentTitle}
-Score: ${(score / 10).toFixed(1)}/10
-
-Your comprehensive report is ready for download:
-${pdfDownloadUrl}
-
-Best regards,
-MyZone AI Team
-      `.trim();
-
-      const mailOptions = {
-        from: fromAddress,
-        to: email,
-        subject: `Your AI Readiness Assessment Results are Ready! (Score: ${(score / 10).toFixed(1)}/10)`,
-        text: emailText,
-        html: emailHtml,
-      };
-
-      await transporter.sendMail(mailOptions);
-      console.log(`Assessment completion email sent successfully to ${email}`);
-      return true;
-
-    } catch (error) {
-      console.error("Error sending assessment completion email:", error);
-      return false;
-    }
-  }
+  } 
 }

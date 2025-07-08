@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { AssessmentModel } from "../models/assessment.model";
 import { SurveyModel } from "../models/survey.model";
 import { CompletionService } from "../services/completion.service";
-import { PDFGenerationService } from "../services/pdf-generation.service";
 import { getScore, formatDate } from "@/lib/utils";
 
 export class AssessmentController {
@@ -225,22 +224,6 @@ export class AssessmentController {
         score,
       });
 
-      // Generate PDF if recommendations were just added/updated
-      if (req.body.recommendations && typeof req.body.recommendations === 'string') {
-        try {
-          // Generate PDF asynchronously (don't wait for it to complete)
-          setImmediate(async () => {
-            const userId = existingAssessment.userId || req.user?.id;
-            if (userId) {
-              await PDFGenerationService.generateAndSaveAssessmentPDF(assessmentId, userId);
-            }
-          });
-        } catch (pdfError) {
-          console.error('Error triggering PDF generation:', pdfError);
-          // Don't fail the request if PDF generation fails
-        }
-      }
-
       return res.status(200).json({
         success: true,
         assessment: updatedAssessment,
@@ -458,23 +441,6 @@ export class AssessmentController {
           success: false,
           message: "Failed to update assessment",
         });
-      }
-
-      // Generate PDF for guest assessment using guest email as userId
-      if (recommendations && typeof recommendations === 'string') {
-        try {
-          setImmediate(async () => {
-            const guestData = JSON.parse(existingAssessment.guest || '{}');
-            const guestEmail = guestData.email;
-            if (guestEmail) {
-              // Use guest email as user identifier for file storage
-              await PDFGenerationService.generateAndSaveAssessmentPDF(assessmentId, guestEmail);
-            }
-          });
-        } catch (pdfError) {
-          console.error('Error triggering PDF generation for guest:', pdfError);
-          // Don't fail the request if PDF generation fails
-        }
       }
 
       return res.status(200).json({
