@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Tooltip,
   TooltipContent,
@@ -12,11 +13,16 @@ import {
   ListTodo,
   Download,
 } from "lucide-react";
-import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Assessment, CsvQuestion, Survey } from "@shared/types";
+import { CsvQuestion, Survey, Assessment } from "@shared/types";
 import { formatDate } from "@/lib/utils";
+import { ToastAction } from "@/components/ui/toast";
+import { navigate } from "wouter/use-browser-location";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 // Screens
 import ScreenResults from "./screens/results";
@@ -35,6 +41,140 @@ export default function SurveyCompleted({
   questions,
   additionalActions,
 }: SurveyCompletedProps) {
+  // Check if user is authenticated
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const isAuthenticated = !!user;
+  // State for PDF generation and tracking recommendations request
+  const [isLoading, setIsLoading] = useState(false);
+  // Access query client for mutations
+  const queryClient = useQueryClient();
+
+  // Define payload type for the mutation
+  type RecommendationPayload = {
+    recommendations: string;
+  };
+
+  // Mutation for saving recommendations to the assessment
+  const saveRecommendationsMutation = useMutation<
+    any,
+    Error,
+    RecommendationPayload
+  >({
+    mutationFn: async (data) => {
+      const endpoint = isAuthenticated
+        ? `/api/assessments/${assessment.id}`
+        : `/api/public/assessments/${assessment.id}`;
+
+      const payload = { recommendations: data.recommendations };
+
+      const response = await apiRequest("PATCH", endpoint, payload);
+
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate appropriate queries to refresh data
+      if (isAuthenticated) {
+        queryClient.invalidateQueries({
+          queryKey: [`/api/assessments/${assessment.id}`],
+        });
+      } else {
+        queryClient.invalidateQueries({
+          queryKey: [`/api/public/assessments/${assessment.id}`],
+        });
+      }
+
+      // Show success toast
+      toast({
+        title: "Success",
+        description: "Recommendations updated successfully",
+      });
+    },
+    onError: (error) => {
+      // Show error toast
+      toast({
+        title: "Error",
+        description: `Failed to update recommendations: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Effect to handle recommendations
+  useEffect(() => {
+    // Only fetch recommendations if not already present
+    // and if questions are available
+    // and if not loading
+    if (isLoading || questions.length == 0 || assessment?.recommendations) {
+      return;
+    }
+
+    const fetchRecommendations = async () => {
+      try {
+        setIsLoading(true);
+
+        // Same AI suggestions endpoint for both user types
+        const response = await apiRequest("POST", "/api/ai-suggestions", {
+          assessment: assessment,
+        });
+
+        const result = await response.json();
+        if (!result.success || !result.recommendations) {
+          throw new Error("Failed to generate recommendations");
+        }
+
+        // Create payload for saving recommendations
+        const payload: RecommendationPayload = {
+          recommendations: result.recommendations,
+        };
+
+        // Save recommendations
+        await saveRecommendationsMutation.mutateAsync(payload);
+
+        // Manually update assessment in local memory to prevent refetch
+        if (assessment && result.recommendations) {
+          assessment.recommendations = result.recommendations;
+        }
+
+        // Show success message with PDF generation status
+        const pdfMessage = result.pdfGenerated
+          ? "Recommendations generated and PDF saved automatically."
+          : "Recommendations generated.";
+
+        toast({
+          title: "Ready",
+          description: pdfMessage,
+          action: isAuthenticated ? (
+            <ToastAction
+              altText="View Recommendations"
+              onClick={() => {
+                navigate(`/dashboard/assessments/${assessment.id}`);
+              }}
+            >
+              View
+            </ToastAction>
+          ) : undefined,
+        });
+
+        // Log PDF generation info for debugging
+        if (result.pdfGenerated) {
+          console.log("PDF automatically generated and saved:", result.pdfPath);
+        }
+      } catch (error) {
+        console.error("Recommendations error:", error);
+        toast({
+          title: "Error",
+          description: "Failed to generate recommendations.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRecommendations();
+  }, [assessment, isAuthenticated]);
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 space-y-6 md:space-y-0 py-4">
@@ -74,18 +214,18 @@ export default function SurveyCompleted({
                   </p>
                 </TooltipContent>
               </Tooltip>
-            ) : ( 
-                <a
-                  className="flex items-center justify-center gap-2 h-10 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"
-                  style={{ textDecoration: "none" }}
-                  download="download"
-                  href={assessment.pdfPath} 
-                >
-                  <>
-                    <Download className="size-4" />
-                    {!assessment.pdfPath ? "Preparing PDF..." : "Download PDF"}
-                  </>
-                </a> 
+            ) : (
+              <a
+                className="flex items-center justify-center gap-2 h-10 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"
+                style={{ textDecoration: "none" }}
+                download="download"
+                href={assessment.pdfPath || "#"}
+              >
+                <>
+                  <Download className="size-4" />
+                  {!assessment.pdfPath ? "Preparing PDF..." : "Download PDF"}
+                </>
+              </a>
             )}
           </div>
         </div>
@@ -156,7 +296,10 @@ export default function SurveyCompleted({
         </TabsContent>
 
         <TabsContent value="suggestions">
-          <ScreenRecommendations assessment={assessment} />
+          <ScreenRecommendations
+            assessment={assessment}
+            isLoading={isLoading || saveRecommendationsMutation.isPending}
+          />
         </TabsContent>
 
         <TabsContent value="compare">
