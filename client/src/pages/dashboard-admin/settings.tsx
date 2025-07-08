@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { AssessmentPDFDownloadButton } from "@/components/survey/assessment-pdf";
+import { Assessment } from "@shared/types";
 
 type LogEntry = {
   timestamp: string;
@@ -33,7 +35,7 @@ export default function AdminSettings() {
   // PDF Download state
   const [assessmentId, setAssessmentId] = useState("");
   const [isCheckingAssessment, setIsCheckingAssessment] = useState(false);
-  const [assessmentPdfPath, setAssessmentPdfPath] = useState<string | null>(null);
+  const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [assessmentExists, setAssessmentExists] = useState(false);
 
   // Auto-scroll to bottom when new logs are added
@@ -50,11 +52,11 @@ export default function AdminSettings() {
     setLogs([]);
   };
 
-  // Function to check if assessment exists and has PDF
-  const checkAssessmentPdf = async (id: string) => {
+  // Function to check if assessment exists
+  const checkAssessment = async (id: string) => {
     if (!id.trim()) {
       setAssessmentExists(false);
-      setAssessmentPdfPath(null);
+      setAssessment(null);
       return;
     }
 
@@ -65,14 +67,14 @@ export default function AdminSettings() {
 
       if (result.success && result.assessment) {
         setAssessmentExists(true);
-        setAssessmentPdfPath(result.assessment.pdfPath || null);
+        setAssessment(result.assessment);
       } else {
         setAssessmentExists(false);
-        setAssessmentPdfPath(null);
+        setAssessment(null);
       }
     } catch (error) {
       setAssessmentExists(false);
-      setAssessmentPdfPath(null);
+      setAssessment(null);
     } finally {
       setIsCheckingAssessment(false);
     }
@@ -82,10 +84,10 @@ export default function AdminSettings() {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (assessmentId) {
-        checkAssessmentPdf(assessmentId);
+        checkAssessment(assessmentId);
       } else {
         setAssessmentExists(false);
-        setAssessmentPdfPath(null);
+        setAssessment(null);
       }
     }, 500);
 
@@ -314,21 +316,15 @@ export default function AdminSettings() {
                     />
                   </div>
                   <div className="flex items-end">
-                    <Button
-                      disabled={!assessmentExists || !assessmentPdfPath || isCheckingAssessment}
-                      className="w-full"
-                      asChild={assessmentExists && assessmentPdfPath}
-                    >
-                      {assessmentExists && assessmentPdfPath ? (
-                        <a
-                          href={assessmentPdfPath}
-                          download
-                          className="flex items-center justify-center gap-2"
-                        >
-                          <Download className="h-4 w-4" />
-                          Download PDF
-                        </a>
-                      ) : (
+                    {assessmentExists && assessment ? (
+                      <div className="w-full">
+                        <AssessmentPDFDownloadButton assessment={assessment} />
+                      </div>
+                    ) : (
+                      <Button
+                        disabled
+                        className="w-full"
+                      >
                         <span className="flex items-center justify-center gap-2">
                           {isCheckingAssessment ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -337,8 +333,8 @@ export default function AdminSettings() {
                           )}
                           {isCheckingAssessment ? "Checking..." : "Download PDF"}
                         </span>
-                      )}
-                    </Button>
+                      </Button>
+                    )}
                   </div>
                 </div>
                 
@@ -346,21 +342,12 @@ export default function AdminSettings() {
                 {assessmentId && !isCheckingAssessment && (
                   <div className="flex items-center space-x-2 text-sm">
                     {assessmentExists ? (
-                      assessmentPdfPath ? (
-                        <>
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                          <span className="text-green-700 dark:text-green-400">
-                            Assessment found with PDF available
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="h-4 w-4 text-yellow-500" />
-                          <span className="text-yellow-700 dark:text-yellow-400">
-                            Assessment found but no PDF generated yet
-                          </span>
-                        </>
-                      )
+                      <>
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <span className="text-green-700 dark:text-green-400">
+                          Assessment found - PDF will be generated on download
+                        </span>
+                      </>
                     ) : (
                       <>
                         <XCircle className="h-4 w-4 text-red-500" />
@@ -373,7 +360,7 @@ export default function AdminSettings() {
                 )}
                 
                 <p className="text-sm text-muted-foreground">
-                  Enter an assessment ID to check if a PDF report is available for download.
+                  Enter an assessment ID to generate and download a PDF report on-demand.
                 </p>
               </div>
             </CardContent>

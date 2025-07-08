@@ -151,6 +151,7 @@ const highlightBox = {
   borderRadius: "8px",
   margin: "24px 32px",
   padding: "20px",
+  maxWidth: "536px",
 };
 
 const highlightText = {
@@ -191,7 +192,7 @@ const footer = {
   color: "#8898aa",
   fontSize: "12px",
   lineHeight: "16px",
-  margin: "48px 32px 0",
+  padding: "48px 32px 0",
   textAlign: "center" as const,
 };
 
