@@ -13,20 +13,18 @@ interface AIRequestBody {
 
 // Validation schema for URL analysis
 const urlAnalysisSchema = z.object({
-  url: z.string()
+  url: z
+    .string()
     .min(1, "URL is required")
     .url("Please enter a valid URL")
-    .refine(
-      (url) => {
-        try {
-          const parsedUrl = new URL(url);
-          return ['http:', 'https:'].includes(parsedUrl.protocol);
-        } catch {
-          return false;
-        }
-      },
-      "URL must use HTTP or HTTPS protocol"
-    )
+    .refine((url) => {
+      try {
+        const parsedUrl = new URL(url);
+        return ["http:", "https:"].includes(parsedUrl.protocol);
+      } catch {
+        return false;
+      }
+    }, "URL must use HTTP or HTTPS protocol"),
 });
 
 export class AIController {
@@ -43,9 +41,9 @@ export class AIController {
     try {
       // Validate request body using Zod schema
       const validationResult = urlAnalysisSchema.safeParse(req.body);
-      
+
       if (!validationResult.success) {
-        const errors = validationResult.error.errors.map(err => err.message);
+        const errors = validationResult.error.errors.map((err) => err.message);
         return res.status(400).json({
           success: false,
           message: errors[0], // Return the first validation error
@@ -106,7 +104,7 @@ export class AIController {
           message: "Could not determine industry from the provided URL",
         });
       }
- 
+
       // Validate that the code contains only digits
       if (!/^[0-9]+$/.test(industryCode)) {
         return res.status(400).json({
@@ -209,7 +207,7 @@ export class AIController {
 
       // Make API request to OpenAI
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4.1",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPayload },
@@ -247,9 +245,9 @@ export class AIController {
         pdfResult = await PDFGenerator.generateAndSavePDF(
           updatedAssessment,
           userId,
-          guestEmail
+          guestEmail,
         );
-        
+
         if (pdfResult.success) {
           console.log(`PDF generated successfully: ${pdfResult.filePath}`);
         } else {
