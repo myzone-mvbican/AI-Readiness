@@ -4,12 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Settings,
   RefreshCw,
   Loader2,
   CheckCircle,
   XCircle,
+  Download,
+  FileText,
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +29,12 @@ export default function AdminSettings() {
   const [isRecalculating, setIsRecalculating] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const logsEndRef = useRef<HTMLDivElement>(null);
+  
+  // PDF Download state
+  const [assessmentId, setAssessmentId] = useState("");
+  const [isCheckingAssessment, setIsCheckingAssessment] = useState(false);
+  const [assessmentPdfPath, setAssessmentPdfPath] = useState<string | null>(null);
+  const [assessmentExists, setAssessmentExists] = useState(false);
 
   // Auto-scroll to bottom when new logs are added
   useEffect(() => {
@@ -39,6 +49,48 @@ export default function AdminSettings() {
   const clearLogs = () => {
     setLogs([]);
   };
+
+  // Function to check if assessment exists and has PDF
+  const checkAssessmentPdf = async (id: string) => {
+    if (!id.trim()) {
+      setAssessmentExists(false);
+      setAssessmentPdfPath(null);
+      return;
+    }
+
+    setIsCheckingAssessment(true);
+    try {
+      const response = await apiRequest("GET", `/api/assessments/${id}`);
+      const result = await response.json();
+
+      if (result.success && result.assessment) {
+        setAssessmentExists(true);
+        setAssessmentPdfPath(result.assessment.pdfPath || null);
+      } else {
+        setAssessmentExists(false);
+        setAssessmentPdfPath(null);
+      }
+    } catch (error) {
+      setAssessmentExists(false);
+      setAssessmentPdfPath(null);
+    } finally {
+      setIsCheckingAssessment(false);
+    }
+  };
+
+  // Handle assessment ID input change with debouncing
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (assessmentId) {
+        checkAssessmentPdf(assessmentId);
+      } else {
+        setAssessmentExists(false);
+        setAssessmentPdfPath(null);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [assessmentId]);
 
   const handleRecalculateStats = async () => {
     if (isRecalculating) return;
@@ -239,13 +291,89 @@ export default function AdminSettings() {
             </CardContent>
           </Card>
 
-          {/* Placeholder for future admin tools */}
-          <Card className="border-dashed">
-            <CardContent className="pt-6">
-              <div className="text-center text-muted-foreground">
-                <Settings className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="text-sm">
-                  Additional admin tools will be added here
+          {/* PDF Download Tool */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <FileText className="h-5 w-5 text-primary" />
+                <span>Assessment PDF Download</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="assessment-id">Assessment ID</Label>
+                    <Input
+                      id="assessment-id"
+                      type="number"
+                      placeholder="Enter assessment ID"
+                      value={assessmentId}
+                      onChange={(e) => setAssessmentId(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Button
+                      disabled={!assessmentExists || !assessmentPdfPath || isCheckingAssessment}
+                      className="w-full"
+                      asChild={assessmentExists && assessmentPdfPath}
+                    >
+                      {assessmentExists && assessmentPdfPath ? (
+                        <a
+                          href={assessmentPdfPath}
+                          download
+                          className="flex items-center justify-center gap-2"
+                        >
+                          <Download className="h-4 w-4" />
+                          Download PDF
+                        </a>
+                      ) : (
+                        <span className="flex items-center justify-center gap-2">
+                          {isCheckingAssessment ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Download className="h-4 w-4" />
+                          )}
+                          {isCheckingAssessment ? "Checking..." : "Download PDF"}
+                        </span>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Status indicator */}
+                {assessmentId && !isCheckingAssessment && (
+                  <div className="flex items-center space-x-2 text-sm">
+                    {assessmentExists ? (
+                      assessmentPdfPath ? (
+                        <>
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <span className="text-green-700 dark:text-green-400">
+                            Assessment found with PDF available
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-4 w-4 text-yellow-500" />
+                          <span className="text-yellow-700 dark:text-yellow-400">
+                            Assessment found but no PDF generated yet
+                          </span>
+                        </>
+                      )
+                    ) : (
+                      <>
+                        <XCircle className="h-4 w-4 text-red-500" />
+                        <span className="text-red-700 dark:text-red-400">
+                          Assessment not found
+                        </span>
+                      </>
+                    )}
+                  </div>
+                )}
+                
+                <p className="text-sm text-muted-foreground">
+                  Enter an assessment ID to check if a PDF report is available for download.
                 </p>
               </div>
             </CardContent>

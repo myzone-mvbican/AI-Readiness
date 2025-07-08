@@ -33,52 +33,59 @@ export const AssessmentCompleteEmail = ({
         <Section style={logoContainer}>
           <Heading style={h1}>MyZone AI</Heading>
         </Section>
-        
+
         <Heading style={h2}>Your AI Readiness Assessment is Complete!</Heading>
-        
+
+        <Text style={text}>Hello {recipientName},</Text>
+
         <Text style={text}>
-          Hello {recipientName},
+          Great news! We've completed the analysis of {companyName}'s AI
+          readiness assessment and generated your personalized recommendations
+          report.
         </Text>
-        
-        <Text style={text}>
-          Great news! We've completed the analysis of {companyName}'s AI readiness assessment and generated your personalized recommendations report.
-        </Text>
-        
+
         <Section style={highlightBox}>
           <Text style={highlightText}>
             🎯 Your comprehensive AI readiness report includes:
           </Text>
           <Text style={bulletText}>
-            • Detailed analysis of your AI readiness across 8 key pillars<br />
-            • Benchmarking against industry standards<br />
-            • Personalized recommendations powered by AI<br />
-            • Visual radar chart showing your strengths and opportunities<br />
-            • Actionable next steps for AI implementation
+            • Detailed analysis of your AI readiness across 8 key pillars
+            <br />
+            • Personalized recommendations powered by AI
+            <br />
+            • Visual radar chart showing your strengths and opportunities
+            <br />• Actionable next steps for AI implementation
           </Text>
         </Section>
-        
+
         <Section style={buttonContainer}>
           <Button style={button} href={downloadUrl}>
-            Download Your Assessment Report
+            Download Report
           </Button>
         </Section>
-        
+
         <Text style={text}>
-          Your report contains valuable insights to help guide your organization's AI transformation journey. We recommend sharing these findings with your leadership team and using them to develop your AI strategy.
+          Your report contains valuable insights to help guide your
+          organization's AI transformation journey. We recommend sharing these
+          findings with your leadership team and using them to develop your AI
+          strategy.
         </Text>
-        
+
         <Text style={text}>
-          If you have any questions about your results or need assistance interpreting the recommendations, our team is here to help.
+          If you have any questions about your results or need assistance
+          interpreting the recommendations, our team is here to help.
         </Text>
-        
+
         <Text style={text}>
-          Best regards,<br />
+          Best regards,
+          <br />
           The MyZone AI Team
         </Text>
-        
+
         <Section style={footer}>
           <Text style={footerText}>
-            This assessment was completed for {recipientEmail}. If you believe you received this email in error, please contact our support team.
+            This assessment was completed for {recipientEmail}. If you believe
+            you received this email in error, please contact our support team.
           </Text>
           <Text style={footerText}>
             © 2025 MyZone AI. All rights reserved.
@@ -99,9 +106,10 @@ const main = {
 };
 
 const container = {
+  maxWidth: "600px",
   backgroundColor: "#ffffff",
   margin: "0 auto",
-  padding: "20px 0 48px",
+  padding: "20px 0 20px",
   marginBottom: "64px",
 };
 
@@ -131,7 +139,7 @@ const h2 = {
 
 const text = {
   color: "#525f7f",
-  fontSize: "16px",
+  fontSize: "14px",
   lineHeight: "24px",
   textAlign: "left" as const,
   margin: "16px 32px",
