@@ -1,5 +1,5 @@
 import { db } from "../db";
-import { eq, or, ilike, desc } from "drizzle-orm";
+import { eq, or, ilike, desc, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import fetch from "node-fetch";
@@ -308,15 +308,15 @@ export class UserModel {
 
   static async searchByNameOrEmail(searchTerm: string): Promise<User[]> {
     try {
-      const search = `%${searchTerm}%`;
+      const searchPattern = `%${searchTerm.toLowerCase()}%`;
       const result = await db
         .select()
         .from(users)
         .where(
           or(
-            ilike(users.firstName, search),
-            ilike(users.lastName, search),
-            ilike(users.email, search)
+            sql`lower(${users.firstName}) LIKE ${searchPattern}`,
+            sql`lower(${users.lastName}) LIKE ${searchPattern}`,
+            sql`lower(${users.email}) LIKE ${searchPattern}`
           )
         )
         .orderBy(desc(users.createdAt))
