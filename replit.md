@@ -42,6 +42,8 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 - Real-time answer validation and storage
 - Resume functionality for incomplete assessments
 - Industry-specific question categorization
+- Automated PDF generation and storage upon completion
+- Email notifications with PDF download links
 
 ### Benchmarking System
 - Quarterly industry benchmark calculations
@@ -105,6 +107,11 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
+- July 8, 2025. Implemented server-side PDF generation and storage for completed assessments with automatic email notifications
+- July 8, 2025. Added file storage service with user-specific directories (uploads/userId/) and secure PDF serving endpoints
+- July 8, 2025. Enhanced assessment workflow to automatically generate PDFs when AI recommendations are added
+- July 8, 2025. Created assessment completion email templates with PDF download links for both registered and guest users
+- July 8, 2025. Fixed Google OAuth implementation using useGoogleLogin hook to avoid FedCM browser warnings
 - June 27, 2025. Implemented React Email for professional email templates with responsive design and enhanced password reset emails
 - June 27, 2025. Successfully configured Brevo email service with verified sender email and SMTP settings (smtp-relay.brevo.com:587)
 - June 27, 2025. Fixed Google Auth client ID configuration - corrected environment variable from GOOGLE_CLIENT_ID to VITE_GOOGLE_CLIENT_ID for frontend access

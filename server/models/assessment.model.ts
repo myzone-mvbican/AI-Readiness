@@ -4,6 +4,7 @@ import { assessments } from "@shared/schema";
 import { Assessment, Survey } from "@shared/types";
 import { InsertAssessment, UpdateAssessment } from "@shared/types/requests";
 import { SurveyModel } from "./survey.model";
+import { fileStorage } from "../utils/file-storage";
 
 export class AssessmentModel {
   static async getByUserId(userId: number): Promise<Assessment[]> {
@@ -141,6 +142,18 @@ export class AssessmentModel {
 
   static async delete(id: number): Promise<boolean> {
     try {
+      // First get the assessment to check for PDF file
+      const [assessment] = await db
+        .select({ pdfPath: assessments.pdfPath })
+        .from(assessments)
+        .where(eq(assessments.id, id));
+
+      // Delete the PDF file if it exists
+      if (assessment?.pdfPath) {
+        await fileStorage.deleteAssessmentPDF(assessment.pdfPath);
+      }
+
+      // Delete the assessment record
       const result = await db
         .delete(assessments)
         .where(eq(assessments.id, id))
@@ -149,6 +162,24 @@ export class AssessmentModel {
       return result.length > 0;
     } catch (error) {
       console.error(`Error deleting assessment ${id}:`, error);
+      return false;
+    }
+  }
+
+  static async updatePdfPath(id: number, pdfPath: string): Promise<boolean> {
+    try {
+      const result = await db
+        .update(assessments)
+        .set({
+          pdfPath: pdfPath,
+          updatedAt: new Date(),
+        })
+        .where(eq(assessments.id, id))
+        .returning({ id: assessments.id });
+
+      return result.length > 0;
+    } catch (error) {
+      console.error(`Error updating PDF path for assessment ${id}:`, error);
       return false;
     }
   }
