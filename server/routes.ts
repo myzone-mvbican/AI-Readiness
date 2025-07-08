@@ -8,6 +8,7 @@ import { AssessmentController } from "./controllers/assessment.controller";
 import { AIController } from "./controllers/ai.controller";
 import { BenchmarkController } from "./controllers/benchmark.controller";
 import { PasswordResetController } from "./controllers/password-reset.controller";
+import { FileController } from "./controllers/file.controller";
 import { EmailService } from "./services/email.service";
 
 // Import middleware if needed for protected routes
@@ -23,6 +24,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API routes - path prefixed with /api
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", message: "Server is healthy" });
+  });
+
+  // Test PDF generation endpoint
+  app.post("/api/test/generate-pdf/:assessmentId", async (req, res) => {
+    try {
+      const { assessmentId } = req.params;
+      const { PDFGenerationService } = await import("./services/pdf-generation.service");
+      
+      const pdfPath = await PDFGenerationService.generateAndSaveAssessmentPDF(
+        parseInt(assessmentId)
+      );
+      
+      if (pdfPath) {
+        return ApiResponseUtil.legacy.dataSuccess(res, { pdfPath }, "PDF generated successfully");
+      } else {
+        return ApiResponseUtil.legacy.error(res, "Failed to generate PDF", 500);
+      }
+    } catch (error) {
+      console.error('PDF generation test error:', error);
+      return ApiResponseUtil.legacy.error(res, "Failed to generate PDF", 500);
+    }
   });
 
   // Demonstration endpoint showing API response standardization
@@ -229,6 +251,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/assessments/:id", auth, AssessmentController.update);
   // Delete an assessment
   app.delete("/api/assessments/:id", auth, AssessmentController.delete);
+  
+  // File serving endpoints
+  
+  // Serve PDF files (protected route)
+  app.get("/api/files/*", auth, FileController.servePDF);
   // Benchmark routes
   app.get(
     "/api/assessments/:id/benchmark",
