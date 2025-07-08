@@ -5,6 +5,9 @@ import { UserModel } from "../models/user.model";
 import { getCategoryScores } from "@/lib/utils";
 import { Assessment, AssessmentAnswer, CsvQuestion } from "@shared/types";
 import { PDFGenerator } from "../utils/pdf-generator";
+import { db } from "../db";
+import { assessments } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 // Define interface for request body
 interface AIRequestBody {
@@ -250,6 +253,17 @@ export class AIController {
 
         if (pdfResult.success) {
           console.log(`PDF generated successfully: ${pdfResult.filePath}`);
+          
+          // Update assessment with PDF path in database
+          try {
+            await db
+              .update(assessments)
+              .set({ pdfPath: pdfResult.relativePath })
+              .where(eq(assessments.id, assessment.id));
+            console.log(`PDF path stored in database: ${pdfResult.relativePath}`);
+          } catch (dbError) {
+            console.error("Error storing PDF path in database:", dbError);
+          }
         } else {
           console.error(`PDF generation failed: ${pdfResult.error}`);
         }
