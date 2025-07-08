@@ -166,7 +166,11 @@ export default function AdminSettings() {
 
     setIsRegeneratingReport(true);
     try {
-      const response = await apiRequest("POST", `/api/assessments/${assessment.id}/regenerate-recommendations`);
+      // Use the same AI suggestions endpoint as survey completion
+      const response = await apiRequest("POST", "/api/ai-suggestions", {
+        assessment: assessment,
+      });
+
       const result = await response.json();
 
       if (result.success) {
@@ -179,7 +183,7 @@ export default function AdminSettings() {
       } else {
         toast({
           title: "Error",
-          description: result.message || "Failed to regenerate recommendations",
+          description: result.error || "Failed to regenerate recommendations",
           variant: "destructive",
         });
       }

@@ -272,8 +272,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/assessments/:id", auth, AssessmentController.update);
   // Delete an assessment
   app.delete("/api/assessments/:id", auth, AssessmentController.delete);
-  // Regenerate AI recommendations for an assessment (admin only)
-  app.post("/api/assessments/:id/regenerate-recommendations", auth, requireAdmin, AssessmentController.regenerateRecommendations);
   // Benchmark routes
   app.get(
     "/api/assessments/:id/benchmark",
