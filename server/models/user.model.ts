@@ -308,15 +308,14 @@ export class UserModel {
 
   static async searchByNameOrEmail(searchTerm: string): Promise<User[]> {
     try {
-      const searchPattern = `%${searchTerm}%`;
+      const searchPattern = `%${searchTerm.trim()}%`;
       const result = await db
         .select()
         .from(users)
         .where(
           or(
-            sql`${users.firstName} ILIKE ${searchPattern}`,
-            sql`${users.lastName} ILIKE ${searchPattern}`,
-            sql`${users.email} ILIKE ${searchPattern}`
+            ilike(users.name, searchPattern),
+            ilike(users.email, searchPattern)
           )
         )
         .orderBy(desc(users.createdAt))

@@ -142,7 +142,7 @@ export default function AdminSettings() {
   // Handle user selection
   const handleUserSelect = (user: any) => {
     setSelectedUser(user);
-    setUserSearchValue(`${user.firstName} ${user.lastName} (${user.email})`);
+    setUserSearchValue(`${user.name} (${user.email})`);
     setUserSearchOpen(false);
     fetchUserAssessments(user.id);
   };
@@ -420,12 +420,12 @@ export default function AdminSettings() {
                               {users.map((user) => (
                                 <CommandItem
                                   key={user.id}
-                                  value={`${user.firstName} ${user.lastName} ${user.email}`}
+                                  value={`${user.name} ${user.email}`}
                                   onSelect={() => handleUserSelect(user)}
                                 >
                                   <User className="mr-2 h-4 w-4" />
                                   <div className="flex flex-col">
-                                    <span>{user.firstName} {user.lastName}</span>
+                                    <span>{user.name}</span>
                                     <span className="text-sm text-muted-foreground">{user.email}</span>
                                   </div>
                                 </CommandItem>
@@ -442,7 +442,7 @@ export default function AdminSettings() {
                 {selectedUser && userAssessments.length > 0 && (
                   <div className="p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
                     <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-                      Assessments for {selectedUser.firstName} {selectedUser.lastName}
+                      Assessments for {selectedUser.name}
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {userAssessments.map((assessment) => (

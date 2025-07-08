@@ -224,8 +224,7 @@ export class UserController {
         success: true,
         users: users.map(user => ({
           id: user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
+          name: user.name,
           email: user.email,
         })),
       });
