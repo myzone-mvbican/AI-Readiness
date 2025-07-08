@@ -5,6 +5,7 @@ import {
   Image,
   View,
   StyleSheet,
+  PDFDownloadLink,
   Svg,
   Circle,
   Line,
@@ -14,7 +15,6 @@ import { Download } from "lucide-react";
 import { formatDate, getRadarChartData } from "@/lib/utils";
 import { Assessment, CsvQuestion } from "@shared/types";
 import logoPath from "@/assets/logo-myzone-ai.png";
-import { useState } from "react";
 
 // Create styles for PDF
 const styles = StyleSheet.create({
@@ -907,51 +907,28 @@ export const AssessmentPDFDownloadButton = ({
 }: {
   assessment: Assessment;
 }) => {
-  const [isDownloading, setIsDownloading] = useState(false);
   const today = new Date();
+  const year = today.getFullYear();
   const completed = new Date(assessment.completedOn || today);
   const filename = `myzoneai-readiness-report-${completed.toLocaleDateString()}.pdf`;
 
-  const handleDownload = async () => {
-    if (!assessment.pdfPath) {
-      console.error("No PDF path available for assessment");
-      return;
-    }
-
-    setIsDownloading(true);
-    try {
-      // Fetch PDF from uploads folder
-      const pdfUrl = `${import.meta.env.VITE_API_URL || ''}/uploads/${assessment.pdfPath.replace('public/uploads/', '')}`;
-      const response = await fetch(pdfUrl);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch PDF: ${response.statusText}`);
-      }
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error("Error downloading PDF:", error);
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
   return (
-    <button
-      onClick={handleDownload}
-      disabled={isDownloading || !assessment.pdfPath}
-      className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50"
+    <PDFDownloadLink
+      document={<AssessmentPDF assessment={assessment} />}
+      fileName={filename}
+      className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"
+      style={{ textDecoration: "none" }}
     >
-      <Download className="h-4 w-4" />
-      {isDownloading ? "Downloading..." : "Download PDF"}
-    </button>
+      {({ loading, error }) => (
+        <>
+          <Download className="h-4 w-4" />
+          {loading
+            ? "Preparing PDF..."
+            : error
+              ? "Error loading PDF"
+              : "Download PDF"}
+        </>
+      )}
+    </PDFDownloadLink>
   );
 };
