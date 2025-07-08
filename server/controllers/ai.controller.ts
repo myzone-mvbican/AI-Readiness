@@ -8,6 +8,9 @@ import { PDFGenerator } from "../utils/pdf-generator";
 import { db } from "../db";
 import { assessments } from "@shared/schema";
 import { eq } from "drizzle-orm";
+import { EmailService } from "../services/email.service";
+import { render } from "@react-email/render";
+import AssessmentCompleteEmail from "../emails/assessment-complete";
 
 // Define interface for request body
 interface AIRequestBody {
@@ -251,18 +254,73 @@ export class AIController {
           guestEmail,
         );
 
-        if (pdfResult.success) {
-          console.log(`PDF generated successfully: ${pdfResult.filePath}`);
-          
+        if (pdfResult.success) {  
           // Update assessment with PDF path in database
           try {
             await db
               .update(assessments)
               .set({ pdfPath: pdfResult.relativePath })
-              .where(eq(assessments.id, assessment.id));
-            console.log(`PDF path stored in database: ${pdfResult.relativePath}`);
+              .where(eq(assessments.id, assessment.id)); 
           } catch (dbError) {
             console.error("Error storing PDF path in database:", dbError);
+          }
+
+          // Send email with PDF download link
+          try {
+            let recipientEmail = null;
+            let recipientName = "Valued User";
+            let companyName = "your organization";
+
+            // Get recipient details
+            if (guest) {
+              try {
+                const guestData = JSON.parse(guest);
+                recipientEmail = guestData.email;
+                recipientName = guestData.name || guestData.firstName || "Valued User";
+                companyName = guestData.company || "your organization";
+              } catch (error) {
+                console.error("Error parsing guest data for email:", error);
+              }
+            } else if (userId) {
+              const user = await UserModel.getById(userId);
+              if (user) {
+                recipientEmail = user.email;
+                recipientName = user.firstName || user.name || "Valued User";
+                companyName = user.company || "your organization";
+              }
+            }
+
+            if (recipientEmail) {
+              // Build download URL - use REPLIT_DOMAINS if available, otherwise localhost
+              let baseUrl = `http://localhost:5000`;
+              if (process.env.REPLIT_DOMAINS) {
+                const domains = process.env.REPLIT_DOMAINS.split(',');
+                baseUrl = `https://${domains[0]}`;
+              }
+              const downloadUrl = `${baseUrl}${pdfResult.relativePath}`;
+
+              // Render email template
+              const emailHtml = render(AssessmentCompleteEmail({
+                recipientName,
+                recipientEmail,
+                downloadUrl,
+                companyName,
+              }));
+
+              // Send email
+              await EmailService.sendEmail({
+                to: recipientEmail,
+                subject: "Your MyZone AI Readiness Assessment Results Are Ready!",
+                html: emailHtml,
+              });
+
+              console.log(`Assessment completion email sent to: ${recipientEmail}`);
+            } else {
+              console.log("No recipient email found - skipping email notification");
+            }
+          } catch (emailError) {
+            console.error("Error sending assessment completion email:", emailError);
+            // Don't fail the entire request if email fails
           }
         } else {
           console.error(`PDF generation failed: ${pdfResult.error}`);

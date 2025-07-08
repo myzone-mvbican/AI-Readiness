@@ -105,6 +105,7 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
+- July 8, 2025. Successfully implemented email notifications for assessment completion with PDF download links sent automatically to users
 - July 8, 2025. Successfully implemented pdfPath field in assessment API responses - PDF download button now functional with database-stored relative paths
 - July 8, 2025. Fixed PDF generation to store relative paths in database (/uploads/userId/filename.pdf format) for proper download functionality  
 - July 8, 2025. Successfully replaced server-side radar chart with exact client-side implementation ensuring visual consistency between PDF and web interface

@@ -61,6 +61,42 @@ The MyZone AI Team
     }
   }
 
+  // Generic email sending method
+  static async sendEmail({
+    to,
+    subject,
+    html,
+    text
+  }: {
+    to: string;
+    subject: string;
+    html?: string;
+    text?: string;
+  }): Promise<boolean> {
+    try {
+      // Get formatted from address with name
+      const fromAddress = getEmailFromAddress();
+
+      const mailOptions = {
+        from: fromAddress,
+        to: to,
+        subject: subject,
+        html: html,
+        text: text,
+      };
+
+      // Send the actual email using the configured transporter
+      const transporter = this.getTransporter();
+      const info = await transporter.sendMail(mailOptions);
+
+      console.log(`Email sent successfully to: ${to}`);
+      return true;
+    } catch (error) {
+      console.error("Error sending email:", error);
+      return false;
+    }
+  }
+
   static async testConnection(): Promise<boolean> {
     try {
       // Test Brevo SMTP connection if configured
