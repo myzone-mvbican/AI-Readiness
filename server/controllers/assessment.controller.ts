@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { AssessmentModel } from "../models/assessment.model";
 import { SurveyModel } from "../models/survey.model";
+import { UserModel } from "../models/user.model";
 import { CompletionService } from "../services/completion.service";
 import { getScore, formatDate } from "@/lib/utils";
 
@@ -41,8 +42,9 @@ export class AssessmentController {
         });
       }
 
-      // Verify ownership
-      if (assessment.userId !== req.user!.id) {
+      // Verify ownership (allow admin access)
+      const user = await UserModel.getById(req.user!.id);
+      if (assessment.userId !== req.user!.id && user?.role !== "admin") {
         return res.status(403).json({
           success: false,
           message: "You do not have permission to access this assessment",
