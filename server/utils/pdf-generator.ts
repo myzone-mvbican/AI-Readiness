@@ -24,11 +24,13 @@ export class PDFGenerator {
     return `myzoneai-readiness-report-${completed.toISOString().split('T')[0]}.pdf`;
   }
 
-  private static getUploadPath(userId?: string, guestEmail?: string): string {
+  private static getUploadPath(userId?: string | number, guestEmail?: string): string {
     const baseUploadPath = path.join(process.cwd(), 'public', 'uploads');
     
     if (userId) {
-      return path.join(baseUploadPath, userId);
+      // Convert userId to string if it's a number
+      const userIdStr = typeof userId === 'number' ? userId.toString() : userId;
+      return path.join(baseUploadPath, userIdStr);
     } else if (guestEmail) {
       return path.join(baseUploadPath, 'guest', guestEmail);
     } else {
@@ -38,7 +40,7 @@ export class PDFGenerator {
 
   static async generateAndSavePDF(
     assessment: Assessment,
-    userId?: string,
+    userId?: string | number,
     guestEmail?: string
   ): Promise<PDFGenerationResult> {
     try {
@@ -61,7 +63,7 @@ export class PDFGenerator {
       
       console.log(`PDF generated successfully for assessment ${assessment.id}`);
       console.log(`File saved to: ${filePath}`);
-      console.log(`User ID: ${userId || 'guest'}`);
+      console.log(`User ID: ${userId || 'guest'} (type: ${typeof userId})`);
       console.log(`Guest email: ${guestEmail || 'none'}`);
       
       return {
