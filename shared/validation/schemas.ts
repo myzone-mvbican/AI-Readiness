@@ -184,6 +184,7 @@ export const updateAssessmentSchema = createInsertSchema(assessments)
     email: true,
     userId: true,
     recommendations: true,
+    pdfPath: true,
     completedOn: true,
   })
   .partial()
@@ -193,5 +194,6 @@ export const updateAssessmentSchema = createInsertSchema(assessments)
     status: assessmentStatusSchema.optional(),
     answers: z.array(assessmentAnswerSchema).optional(),
     recommendations: z.string().optional(), // Allow storing AI-generated recommendations
+    pdfPath: z.string().optional(), // Store relative path to generated PDF
     completedOn: z.date().nullable().optional(), // Allow setting completion timestamp
   });
