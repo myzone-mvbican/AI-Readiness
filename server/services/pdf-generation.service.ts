@@ -5,7 +5,7 @@ import { UserModel } from "../models/user.model";
 import { fileStorage } from "../utils/file-storage";
 import { EmailService } from "./email.service";
 import { Assessment, CsvQuestion } from "@shared/types";
-import { ServerAssessmentPDF } from "../templates/server-assessment-pdf";
+import { ExactAssessmentPDF } from "../templates/exact-assessment-pdf";
 import path from 'path';
 
 // Simple PDF generation using a text-based approach
@@ -40,9 +40,9 @@ export class PDFGenerationService {
       // Generate PDF using React PDF on the server
       console.log(`Generating server-side PDF for assessment ${assessmentId}`);
       
-      // Create the PDF buffer using React PDF (your existing code)
+      // Create the PDF buffer using React PDF (exact copy of client code)
       const pdfBuffer = await renderToBuffer(
-        React.createElement(ServerAssessmentPDF, { assessment })
+        React.createElement(ExactAssessmentPDF, { assessment })
       );
       
       // Determine user ID for file storage
