@@ -242,6 +242,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     SurveyController.delete,
   );
 
+  // Admin User Management routes
+  
+  // Search users by name or email (admin only)
+  app.get(
+    "/api/admin/users/search",
+    auth,
+    requireAdmin,
+    UserController.searchUsers,
+  );
+
+  // Get assessments for a specific user (admin only)
+  app.get(
+    "/api/admin/users/:userId/assessments",
+    auth,
+    requireAdmin,
+    UserController.getUserAssessments,
+  );
+
   // Assessment routes
 
   // Get all assessments for the current user

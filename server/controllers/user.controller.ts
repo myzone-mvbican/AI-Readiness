@@ -197,4 +197,85 @@ export class UserController {
       });
     }
   }
+
+  static async searchUsers(req: Request, res: Response) {
+    try {
+      const { q } = req.query;
+
+      if (!q || typeof q !== "string") {
+        return res.status(200).json({
+          success: true,
+          users: [],
+        });
+      }
+
+      const searchTerm = q.trim();
+      if (searchTerm.length < 2) {
+        return res.status(200).json({
+          success: true,
+          users: [],
+        });
+      }
+
+      // Search users by name or email
+      const users = await UserModel.searchByNameOrEmail(searchTerm);
+
+      res.status(200).json({
+        success: true,
+        users: users.map(user => ({
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+        })),
+      });
+    } catch (error) {
+      console.error("Error searching users:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error searching users",
+      });
+    }
+  }
+
+  static async getUserAssessments(req: Request, res: Response) {
+    try {
+      const { userId } = req.params;
+
+      if (!userId || isNaN(Number(userId))) {
+        return res.status(400).json({
+          success: false,
+          message: "Valid user ID is required",
+        });
+      }
+
+      // Check if user exists
+      const user = await UserModel.getById(Number(userId));
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        });
+      }
+
+      // Get user's assessments
+      const assessments = await UserModel.getUserAssessments(Number(userId));
+
+      res.status(200).json({
+        success: true,
+        assessments: assessments.map(assessment => ({
+          id: assessment.id,
+          surveyId: assessment.surveyId,
+          completedAt: assessment.completedAt,
+          createdAt: assessment.createdAt,
+        })),
+      });
+    } catch (error) {
+      console.error("Error fetching user assessments:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error fetching user assessments",
+      });
+    }
+  }
 }

@@ -1,11 +1,11 @@
 import { db } from "../db";
-import { eq } from "drizzle-orm";
+import { eq, or, ilike, desc } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import fetch from "node-fetch";
 import crypto from "crypto";
 import { User, GoogleUserPayload } from "@shared/types";
-import { users, userTeams, surveys } from "@shared/schema";
+import { users, userTeams, surveys, assessments } from "@shared/schema";
 import { InsertUser, UpdateUser } from "@shared/types/requests";
 
 // Create a JWT_SECRET if not already set
@@ -303,6 +303,49 @@ export class UserModel {
         .where(eq(users.id, userId));
     } catch (error) {
       console.error("Error clearing reset token:", error);
+    }
+  }
+
+  static async searchByNameOrEmail(searchTerm: string): Promise<User[]> {
+    try {
+      const search = `%${searchTerm}%`;
+      const result = await db
+        .select()
+        .from(users)
+        .where(
+          or(
+            ilike(users.firstName, search),
+            ilike(users.lastName, search),
+            ilike(users.email, search)
+          )
+        )
+        .orderBy(desc(users.createdAt))
+        .limit(10);
+      
+      return result;
+    } catch (error) {
+      console.error("Error searching users:", error);
+      return [];
+    }
+  }
+
+  static async getUserAssessments(userId: number): Promise<any[]> {
+    try {
+      const result = await db
+        .select({
+          id: assessments.id,
+          surveyId: assessments.surveyId,
+          completedAt: assessments.completedAt,
+          createdAt: assessments.createdAt,
+        })
+        .from(assessments)
+        .where(eq(assessments.userId, userId))
+        .orderBy(desc(assessments.createdAt));
+      
+      return result;
+    } catch (error) {
+      console.error("Error getting user assessments:", error);
+      return [];
     }
   }
 }

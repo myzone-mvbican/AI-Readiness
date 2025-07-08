@@ -14,11 +14,26 @@ import {
   XCircle,
   Download,
   FileText,
+  Search,
+  User,
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { AssessmentPDFDownloadButton } from "@/components/survey/assessment-pdf";
 import { Assessment } from "@shared/types";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 type LogEntry = {
   timestamp: string;
@@ -37,6 +52,14 @@ export default function AdminSettings() {
   const [isCheckingAssessment, setIsCheckingAssessment] = useState(false);
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [assessmentExists, setAssessmentExists] = useState(false);
+
+  // User search state
+  const [userSearchOpen, setUserSearchOpen] = useState(false);
+  const [userSearchValue, setUserSearchValue] = useState("");
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [users, setUsers] = useState<any[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [userAssessments, setUserAssessments] = useState<Assessment[]>([]);
 
   // Auto-scroll to bottom when new logs are added
   useEffect(() => {
@@ -80,6 +103,55 @@ export default function AdminSettings() {
     }
   };
 
+  // Function to search users
+  const searchUsers = async (searchTerm: string) => {
+    if (!searchTerm.trim()) {
+      setUsers([]);
+      return;
+    }
+
+    setIsLoadingUsers(true);
+    try {
+      const response = await apiRequest("GET", `/api/admin/users/search?q=${encodeURIComponent(searchTerm)}`);
+      const result = await response.json();
+      if (result.success) {
+        setUsers(result.users || []);
+      }
+    } catch (error) {
+      console.error("Error searching users:", error);
+      setUsers([]);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  // Function to fetch user assessments
+  const fetchUserAssessments = async (userId: number) => {
+    try {
+      const response = await apiRequest("GET", `/api/admin/users/${userId}/assessments`);
+      const result = await response.json();
+      if (result.success) {
+        setUserAssessments(result.assessments || []);
+      }
+    } catch (error) {
+      console.error("Error fetching user assessments:", error);
+      setUserAssessments([]);
+    }
+  };
+
+  // Handle user selection
+  const handleUserSelect = (user: any) => {
+    setSelectedUser(user);
+    setUserSearchValue(`${user.firstName} ${user.lastName} (${user.email})`);
+    setUserSearchOpen(false);
+    fetchUserAssessments(user.id);
+  };
+
+  // Handle assessment ID click from user assessments
+  const handleAssessmentIdClick = (id: number) => {
+    setAssessmentId(id.toString());
+  };
+
   // Handle assessment ID input change with debouncing
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -93,6 +165,16 @@ export default function AdminSettings() {
 
     return () => clearTimeout(timeoutId);
   }, [assessmentId]);
+
+  // Debounced user search
+  useEffect(() => {
+    if (userSearchOpen) {
+      const timeoutId = setTimeout(() => {
+        searchUsers(userSearchValue);
+      }, 300);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [userSearchValue, userSearchOpen]);
 
   const handleRecalculateStats = async () => {
     if (isRecalculating) return;
@@ -303,6 +385,86 @@ export default function AdminSettings() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                {/* User Search */}
+                <div className="space-y-2">
+                  <Label>Search User (Optional)</Label>
+                  <Popover open={userSearchOpen} onOpenChange={setUserSearchOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={userSearchOpen}
+                        className="w-full justify-between"
+                      >
+                        {selectedUser ? userSearchValue : "Search by name or email..."}
+                        <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0">
+                      <Command>
+                        <CommandInput
+                          placeholder="Type to search users..."
+                          value={userSearchValue}
+                          onValueChange={setUserSearchValue}
+                        />
+                        <CommandList>
+                          {isLoadingUsers ? (
+                            <div className="flex items-center justify-center p-4">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <span className="ml-2">Searching...</span>
+                            </div>
+                          ) : users.length === 0 && userSearchValue ? (
+                            <CommandEmpty>No users found.</CommandEmpty>
+                          ) : (
+                            <CommandGroup>
+                              {users.map((user) => (
+                                <CommandItem
+                                  key={user.id}
+                                  value={`${user.firstName} ${user.lastName} ${user.email}`}
+                                  onSelect={() => handleUserSelect(user)}
+                                >
+                                  <User className="mr-2 h-4 w-4" />
+                                  <div className="flex flex-col">
+                                    <span>{user.firstName} {user.lastName}</span>
+                                    <span className="text-sm text-muted-foreground">{user.email}</span>
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          )}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* User Assessments Display */}
+                {selectedUser && userAssessments.length > 0 && (
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+                      Assessments for {selectedUser.firstName} {selectedUser.lastName}
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {userAssessments.map((assessment) => (
+                        <Button
+                          key={assessment.id}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAssessmentIdClick(assessment.id)}
+                          className="h-8 px-3 text-xs border-blue-300 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900"
+                        >
+                          ID: {assessment.id}
+                          {assessment.completedAt && (
+                            <Badge variant="secondary" className="ml-1 h-4 text-xs">
+                              Completed
+                            </Badge>
+                          )}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="assessment-id">Assessment ID</Label>
