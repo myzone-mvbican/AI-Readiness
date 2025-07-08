@@ -98,7 +98,6 @@ export const assessments = pgTable("assessments", {
     .references(() => surveys.id),
   status: text("status").default("draft").notNull(),
   score: integer("score"),
-  pdfPath: text("pdf_path"),  // Path to generated PDF file
   answers: text("answers").notNull(), // JSON string of answers array
   recommendations: text("recommendations"), // Store AI-generated recommendations
   completedOn: timestamp("completed_on"), // Timestamp when assessment was completed
