@@ -1,0 +1,132 @@
+AI Readiness Assessment Results
+
+Assessment: Q2 2025 Assessment
+Score: 4.3/10
+Readiness Level: developing
+Generated: July 8th, 2025
+
+Recommendations:
+## 🧭 Strategy & Vision
+
+Your current score of 5.4/10 suggests a moderate grasp of AI-aligned strategy, but critical gaps remain. There’s some evidence of forward-thinking (e.g., setting a corporate AI Rock and benchmarking against competitors), but your vision doesn’t explicitly incorporate AGI scenarios, and personal AI objectives for staff are lacking. The absence of regular AI-aligned ICP reviews and limited integration of specific AI KPIs into company scorecards indicate a need for sharper focus and more structured planning. Prioritize developing a clear, AGI-aware vision and ensure every team member understands and aligns with actionable AI goals.
+
+**How You Performed**
+* **Current Score:** 5.4 / 10 (54%)
+* **Trend vs. Previous:** First-time assessment
+
+**🗝️ Key Best Practices**
+1. Set a 1/3/5-year AI impact vision, including AGI scenarios.
+2. Assign measurable, role-specific AI Rocks for all team members quarterly.
+3. Benchmark AI strategy and ambitions against competitors annually.
+
+## 🌱 Culture & Change-Readiness
+
+Scoring 7/10 reflects a strong foundation for change, with solid communication plans and visible celebration of AI wins. Automated feedback loops and a culture that is open to automation ideas support ongoing adaptation. However, the lack of AI-aligned metrics in core values and inconsistent AI educational objectives may slow deeper cultural transformation. To build on this momentum, weave AI fluency into onboarding, reinforce AI-aligned values, and encourage all staff to set AI learning goals.
+
+**How You Performed**
+* **Current Score:** 7 / 10 (70%)
+* **Trend vs. Previous:** First-time assessment
+
+**🗝️ Key Best Practices**
+1. Celebrate AI wins and maintain transparent change communication.
+2. Build AI literacy into onboarding and core values.
+3. Encourage all team members to set personal AI learning goals.
+
+## 📚 Skills & Literacy
+
+A score of 3.5/10 reveals significant skill gaps and uneven AI literacy across the organization. While digital/AI literacy is assessed for all staff biannually and some follow-up training exists, onboarding lacks AI focus and no departmental AI Champions are named. Many team members do not set AI educational Rocks, indicating inconsistent skill development. Urgently embed AI fluency into onboarding, appoint AI Champions per department, and require individual AI learning objectives every quarter.
+
+**How You Performed**
+* **Current Score:** 3.5 / 10 (35%)
+* **Trend vs. Previous:** First-time assessment
+
+**🗝️ Key Best Practices**
+1. Add AI literacy training to new-hire onboarding.
+2. Appoint departmental AI Champions.
+3. Require quarterly, role-specific AI learning goals.
+
+## 🗂️ Data & Information
+
+With a 4.6/10, your data foundation is fragile and fragmented. There’s a quarterly data strategy review and some enrichment of first-party data, but critical weaknesses include lacking a Data Champion, absence of a unified CRM/ERP, and poor metadata practices. Data flow diagrams and processes for tagging are missing or incomplete, risking data loss and poor AI readiness. Immediate action is needed: centralize data, assign a Data Champion, and standardize metadata and data flow documentation.
+
+**How You Performed**
+* **Current Score:** 4.6 / 10 (46%)
+* **Trend vs. Previous:** First-time assessment
+
+**🗝️ Key Best Practices**
+1. Assign a company-wide Data Champion.
+2. Centralize data in a single CRM/ERP.
+3. Standardize metadata and maintain live data flow diagrams.
+
+## 🤖 Technology & Integration
+
+At 1.9/10, technology and integration are critical weaknesses and demand urgent attention. While some systems expose APIs, core tools are not AI-ready, cloud adoption is incomplete, and no integration platform (like Make or n8n) is in place. This severely limits your ability to automate and scale AI initiatives. Prioritize cloud migration, adoption of an integration platform, and upgrade legacy tools to be API-compatible.
+
+**How You Performed**
+* **Current Score:** 1.9 / 10 (19%)
+* **Trend vs. Previous:** First-time assessment
+
+**🗝️ Key Best Practices**
+1. Migrate core tools to cloud-based, API-friendly platforms.
+2. Deploy an integration platform (e.g., Make, n8n).
+3. Vet and document preferred AI integration vendors.
+
+## ⚙️ Process & Operations
+
+A score of 3.5/10 highlights a lack of process documentation and automation readiness. SOPs are not current, lack pain-point flagging, and there’s no prioritization matrix guiding automation efforts. Baseline metrics and regular AI discussions in strategy meetings are not established, creating blind spots. Address these by mapping top processes, updating SOPs with automation flags, and introducing a quarterly automation prioritization process.
+
+**How You Performed**
+* **Current Score:** 3.5 / 10 (35%)
+* **Trend vs. Previous:** First-time assessment
+
+**🗝️ Key Best Practices**
+1. Map top processes and maintain live SOPs with pain-point flags.
+2. Use a prioritization matrix for automation decisions.
+3. Capture pre-automation metrics (time, cost, errors).
+
+## 🛡️ Governance, Ethics & Risk
+
+With a 4.5/10, governance is underdeveloped and exposes you to risk. While data compliance and incident-response planning are strengths, you lack a plain-English AI policy, cross-functional governance, and change audit trails. No formal AI governance team exists, weakening oversight. Immediate next steps: draft a clear AI/Data policy, form an AI Governance Team, and implement change logs for key systems.
+
+**How You Performed**
+* **Current Score:** 4.5 / 10 (45%)
+* **Trend vs. Previous:** First-time assessment
+
+**🗝️ Key Best Practices**
+1. Draft a plain-English AI/Data policy covering privacy and bias.
+2. Establish a cross-functional AI Governance Team.
+3. Maintain change audit trails for all key systems.
+
+## 💸 Financial & Resources
+
+A critical area with just 1.7/10, indicating severe underinvestment. There is no dedicated AI budget, TCO analyses are not performed, and government funding is not proactively sought. This will block all other improvements unless urgently addressed. Assign an AI budget line, begin cost-benefit analyses on all initiatives, and track/apply for grants or credits.
+
+**How You Performed**
+* **Current Score:** 1.7 / 10 (17%)
+* **Trend vs. Previous:** First-time assessment
+
+**🗝️ Key Best Practices**
+1. Create a dedicated AI budget line for tools, training, and advisory.
+2. Perform TCO checks before launching AI initiatives.
+3. Track and apply for eligible AI-related government grants or credits.
+
+## 🪨 Top 5 AI Rocks for Next Quarter
+
+Here are your **highest-impact, easiest-to-implement AI rocks** for the next 90 days:
+
+1. **Assign a Data Champion and centralize key data in a single CRM/ERP**  
+_Rationale:_ Immediate boost to data quality, accessibility, and AI-readiness with minimal friction.
+
+2. **Migrate core tools to cloud-based, API-compatible platforms**  
+_Rationale:_ Lays the groundwork for automation, integrations, and future AI scalability.
+
+3. **Draft and communicate a plain-English AI/Data policy (privacy, bias, usage)**  
+_Rationale:_ Reduces risk, clarifies expectations, and supports compliance with minimal cost or disruption.
+
+4. **Create a dedicated AI budget line and perform TCO analyses for all initiatives**  
+_Rationale:_ Unlocks resources for training, tools, and advisory support—removing a critical adoption barrier.
+
+5. **Map top 3 revenue/time-heavy processes in living SOPs with pain-point flags**  
+_Rationale:_ Enables quick identification of automation opportunities and builds a foundation for process improvement.
+
+Generated by MyZone AI
