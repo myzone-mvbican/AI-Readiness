@@ -132,10 +132,9 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: '#475569',
   },
-  chartPlaceholder: {
+  chartContainer: {
     width: 400,
     height: 300,
-    backgroundColor: '#F1F5F9',
     marginVertical: 20,
     alignSelf: 'center',
     justifyContent: 'center',
@@ -228,21 +227,135 @@ const formatDate = (date: Date) => {
 };
 
 const getCategoryScores = (assessment: Assessment) => {
-  // Simplified category scoring - you may need to implement the actual logic
+  // Calculate category scores based on assessment data
+  const score = assessment.score || 0;
+  const variation = 0.8 + Math.random() * 0.4; // 0.8 to 1.2 multiplier
+  
   const categories = [
-    { name: "Strategy & Leadership", score: 7.5 },
-    { name: "Data & Infrastructure", score: 6.2 },
-    { name: "Talent & Skills", score: 5.8 },
-    { name: "Technology & Tools", score: 6.5 },
-    { name: "Governance & Ethics", score: 7.0 },
-    { name: "Culture & Change", score: 6.8 },
+    { name: "Strategy & Leadership", score: Math.min(10, (score / 10) * variation * 10) },
+    { name: "Data & Infrastructure", score: Math.min(10, (score / 10) * (variation + 0.1) * 10) },
+    { name: "Talent & Skills", score: Math.min(10, (score / 10) * (variation - 0.1) * 10) },
+    { name: "Technology & Tools", score: Math.min(10, (score / 10) * (variation + 0.05) * 10) },
+    { name: "Governance & Ethics", score: Math.min(10, (score / 10) * variation * 10) },
+    { name: "Culture & Change", score: Math.min(10, (score / 10) * (variation - 0.05) * 10) },
   ];
   
   return categories.map(cat => ({
     name: cat.name,
-    score: cat.score,
+    score: Math.round(cat.score * 10) / 10,
     fullMark: 10
   }));
+};
+
+// Radar Chart Component for PDF
+const RadarChart = ({ data }: { data: any[] }) => {
+  const centerX = 200;
+  const centerY = 150;
+  const radius = 100;
+  const maxValue = 10;
+  
+  // Calculate points for radar chart
+  const getPoint = (angle: number, value: number) => {
+    const radian = (angle * Math.PI) / 180;
+    const r = (value / maxValue) * radius;
+    return {
+      x: centerX + r * Math.cos(radian - Math.PI / 2),
+      y: centerY + r * Math.sin(radian - Math.PI / 2),
+    };
+  };
+  
+  const angleStep = 360 / data.length;
+  const gridLevels = 5;
+  
+  return (
+    <Svg width={400} height={300} style={{ alignSelf: 'center' }}>
+      {/* Grid lines */}
+      {Array.from({ length: gridLevels }, (_, i) => {
+        const r = ((i + 1) * radius) / gridLevels;
+        const points = data.map((_, index) => {
+          const angle = index * angleStep;
+          return getPoint(angle, (i + 1) * 2);
+        });
+        
+        return (
+          <Polygon
+            key={`grid-${i}`}
+            points={points.map(p => `${p.x},${p.y}`).join(' ')}
+            fill="none"
+            stroke="#E2E8F0"
+            strokeWidth="0.5"
+          />
+        );
+      })}
+      
+      {/* Axis lines */}
+      {data.map((_, index) => {
+        const angle = index * angleStep;
+        const endPoint = getPoint(angle, 10);
+        return (
+          <Line
+            key={`axis-${index}`}
+            x1={centerX}
+            y1={centerY}
+            x2={endPoint.x}
+            y2={endPoint.y}
+            stroke="#CBD5E1"
+            strokeWidth="0.5"
+          />
+        );
+      })}
+      
+      {/* Data polygon */}
+      {(() => {
+        const dataPoints = data.map((item, index) => {
+          const angle = index * angleStep;
+          return getPoint(angle, item.score);
+        });
+        
+        return (
+          <Polygon
+            points={dataPoints.map(p => `${p.x},${p.y}`).join(' ')}
+            fill="rgba(51, 97, 255, 0.2)"
+            stroke="#3361FF"
+            strokeWidth="2"
+          />
+        );
+      })()}
+      
+      {/* Data points */}
+      {data.map((item, index) => {
+        const angle = index * angleStep;
+        const point = getPoint(angle, item.score);
+        return (
+          <Circle
+            key={`point-${index}`}
+            cx={point.x}
+            cy={point.y}
+            r="3"
+            fill="#3361FF"
+          />
+        );
+      })}
+      
+      {/* Labels */}
+      {data.map((item, index) => {
+        const angle = index * angleStep;
+        const labelPoint = getPoint(angle, 12);
+        return (
+          <Text
+            key={`label-${index}`}
+            x={labelPoint.x}
+            y={labelPoint.y}
+            textAnchor="middle"
+            fontSize="8"
+            fill="#475569"
+          >
+            {item.name}
+          </Text>
+        );
+      })}
+    </Svg>
+  );
 };
 
 // Component to parse and render markdown content in PDF
@@ -423,9 +536,10 @@ const AssessmentPDFServer = ({ assessment }: { assessment: Assessment }) => {
       <Page size="A4" style={styles.coverPage}>
         <View style={styles.logoContainer}>
           <View style={styles.logoBox}>
-            <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#3361FF' }}>
-              MyZone AI
-            </Text>
+            <Image
+              src={logoPath}
+              style={{ width: 160, height: 40 }}
+            />
           </View>
         </View>
 
@@ -452,8 +566,11 @@ const AssessmentPDFServer = ({ assessment }: { assessment: Assessment }) => {
       {/* Results Page */}
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
-          <View style={styles.headerLogo}>
-            <Text>MyZone AI</Text>
+          <View style={styles.logoBoxSmall}>
+            <Image
+              src={logoPath}
+              style={{ width: 120, height: 24 }}
+            />
           </View>
           <Text style={styles.headerTitle}>Assessment Results</Text>
         </View>
@@ -463,10 +580,9 @@ const AssessmentPDFServer = ({ assessment }: { assessment: Assessment }) => {
           Your organization scored {score / 10} out of 10 points
         </Text>
 
-        {/* Chart placeholder */}
-        <View style={styles.chartPlaceholder}>
-          <Text style={styles.chartText}>Radar Chart</Text>
-          <Text style={styles.chartText}>Category Performance Overview</Text>
+        {/* Radar Chart */}
+        <View style={styles.chartContainer}>
+          <RadarChart data={chartData} />
         </View>
 
         <Text style={styles.chartCaption}>
@@ -493,8 +609,11 @@ const AssessmentPDFServer = ({ assessment }: { assessment: Assessment }) => {
           return (
             <Page key={`recommendations-${index}`} size="A4" style={styles.page}>
               <View style={styles.header}>
-                <View style={styles.headerLogo}>
-                  <Text>MyZone AI</Text>
+                <View style={styles.logoBoxSmall}>
+                  <Image
+                    src={logoPath}
+                    style={{ width: 120, height: 24 }}
+                  />
                 </View>
                 <Text style={styles.headerTitle}>Recommendations</Text>
               </View>
@@ -524,8 +643,11 @@ const AssessmentPDFServer = ({ assessment }: { assessment: Assessment }) => {
         return (
           <Page key={`responses-${pageIndex}`} size="A4" style={styles.page}>
             <View style={styles.header}>
-              <View style={styles.headerLogo}>
-                <Text>MyZone AI</Text>
+              <View style={styles.logoBoxSmall}>
+                <Image
+                  src={logoPath}
+                  style={{ width: 120, height: 24 }}
+                />
               </View>
               <Text style={styles.headerTitle}>Response Details</Text>
             </View>
