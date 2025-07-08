@@ -118,9 +118,14 @@ export default function ScreenRecommendations({
           assessment.recommendations = result.recommendations;
         }
 
+        // Show success message with PDF generation status
+        const pdfMessage = result.pdfGenerated 
+          ? "Recommendations generated and PDF saved automatically."
+          : "Recommendations generated.";
+
         toast({
           title: "Ready",
-          description: "Recommendations generated.",
+          description: pdfMessage,
           action: isAuthenticated ? (
             <ToastAction
               altText="View Recommendations"
@@ -132,6 +137,11 @@ export default function ScreenRecommendations({
             </ToastAction>
           ) : undefined,
         });
+
+        // Log PDF generation info for debugging
+        if (result.pdfGenerated) {
+          console.log("PDF automatically generated and saved:", result.pdfPath);
+        }
       } catch (error) {
         console.error("Recommendations error:", error);
         toast({

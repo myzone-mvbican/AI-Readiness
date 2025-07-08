@@ -4,6 +4,7 @@ import { z } from "zod";
 import { UserModel } from "../models/user.model";
 import { getCategoryScores } from "@/lib/utils";
 import { Assessment, AssessmentAnswer, CsvQuestion } from "@shared/types";
+import { PDFGenerator } from "../utils/pdf-generator";
 
 // Define interface for request body
 interface AIRequestBody {
@@ -208,7 +209,7 @@ export class AIController {
 
       // Make API request to OpenAI
       const completion = await openai.chat.completions.create({
-        model: "gpt-4.1",
+        model: "gpt-4o",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPayload },
@@ -227,10 +228,43 @@ export class AIController {
         });
       }
 
+      // Generate and save PDF automatically after successful recommendations
+      let pdfResult = null;
+      try {
+        // Extract guest email if available
+        let guestEmail = null;
+        if (guest) {
+          try {
+            const guestData = JSON.parse(guest);
+            guestEmail = guestData.email;
+          } catch (error) {
+            console.error("Error parsing guest email:", error);
+          }
+        }
+
+        // Generate PDF with recommendations
+        const updatedAssessment = { ...assessment, recommendations: content };
+        pdfResult = await PDFGenerator.generateAndSavePDF(
+          updatedAssessment,
+          userId,
+          guestEmail
+        );
+        
+        if (pdfResult.success) {
+          console.log(`PDF generated successfully: ${pdfResult.filePath}`);
+        } else {
+          console.error(`PDF generation failed: ${pdfResult.error}`);
+        }
+      } catch (pdfError) {
+        console.error("Error during PDF generation:", pdfError);
+      }
+
       // Return the AI-generated content
       return res.status(200).json({
         success: true,
         recommendations: content,
+        pdfGenerated: pdfResult?.success || false,
+        pdfPath: pdfResult?.filePath,
       });
     } catch (error: any) {
       console.error("Error generating AI suggestions:", error);
