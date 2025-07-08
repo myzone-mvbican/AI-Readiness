@@ -15,10 +15,35 @@ import { auth, requireAdmin } from "./middleware/auth";
 import { upload } from "./middleware/upload";
 import { ApiResponseUtil } from "./utils/api-response";
 import cors from "cors";
+import path from "path";
+import fs from "fs";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Enable CORS
   app.use(cors());
+
+  // PDF download route - serve PDF files with correct headers
+  app.get("/uploads/*", (req, res) => {
+    const filePath = path.join(process.cwd(), "public", req.path);
+    
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: "File not found" });
+    }
+    
+    // Check if it's a PDF file
+    if (path.extname(filePath).toLowerCase() !== '.pdf') {
+      return res.status(400).json({ error: "Only PDF files are allowed" });
+    }
+    
+    // Set proper headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${path.basename(filePath)}"`);
+    
+    // Stream the file
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+  });
 
   // API routes - path prefixed with /api
   app.get("/api/health", (req, res) => {
