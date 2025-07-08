@@ -301,7 +301,7 @@ const getCategoryScores = (assessment: Assessment) => {
   return categoryScores;
 };
 
-// Radar Chart Component for PDF - Exact match with client-side
+// Simplified Radar Chart Component for PDF - Optimized for react-pdf rendering
 const RadarChart = ({
   data,
   width = 400,
@@ -329,66 +329,79 @@ const RadarChart = ({
   // Chart configuration
   const centerX = width / 2;
   const centerY = height / 2;
-  const radius = Math.min(centerX, centerY) * 0.8;
+  const radius = Math.min(centerX, centerY) * 0.7;
 
-  // Calculate points for the polygon (the filled radar area)
+  // Calculate points for the data polygon
   const dataPoints = data
     .map((item, index) => {
-      const angle = ((Math.PI * 2) / data.length) * index;
-      const normalizedValue = item.score / item.fullMark; // 0-1 scale
-      const x = centerX + radius * normalizedValue * Math.sin(angle);
-      const y = centerY - radius * normalizedValue * Math.cos(angle);
+      const angle = ((Math.PI * 2) / data.length) * index - Math.PI / 2; // Start from top
+      const normalizedValue = Math.max(0.1, item.score / item.fullMark); // Minimum 0.1 to show structure
+      const x = centerX + radius * normalizedValue * Math.cos(angle);
+      const y = centerY + radius * normalizedValue * Math.sin(angle);
       return `${x},${y}`;
     })
     .join(" ");
 
-  // Category labels positioning
-  const labelPoints = data.map((item, index) => {
-    const angle = ((Math.PI * 2) / data.length) * index;
-    // Position labels slightly outside the chart area
-    const x = centerX + (radius + 15) * Math.sin(angle);
-    const y = centerY - (radius + 15) * Math.cos(angle);
-    return {
-      x,
-      y,
-      label: item.name,
-      align: x > centerX ? "left" : x < centerX ? "right" : "center",
-      vAlign: y > centerY ? "top" : "bottom",
-    };
-  });
+  // Calculate outer polygon points for grid
+  const outerPoints = data
+    .map((_, index) => {
+      const angle = ((Math.PI * 2) / data.length) * index - Math.PI / 2;
+      const x = centerX + radius * Math.cos(angle);
+      const y = centerY + radius * Math.sin(angle);
+      return `${x},${y}`;
+    })
+    .join(" ");
 
-  // Generate concentric circles for scale
-  const circles = [0.33, 0.66, 1].map((scale) => {
-    return {
-      r: radius * scale,
-      stroke: "#E2E8F0",
-      strokeWidth: 0.5,
-      strokeDasharray: "2,2",
-    };
-  });
+  // Calculate middle polygon points for grid
+  const middlePoints = data
+    .map((_, index) => {
+      const angle = ((Math.PI * 2) / data.length) * index - Math.PI / 2;
+      const x = centerX + radius * 0.6 * Math.cos(angle);
+      const y = centerY + radius * 0.6 * Math.sin(angle);
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  // Calculate inner polygon points for grid  
+  const innerPoints = data
+    .map((_, index) => {
+      const angle = ((Math.PI * 2) / data.length) * index - Math.PI / 2;
+      const x = centerX + radius * 0.3 * Math.cos(angle);
+      const y = centerY + radius * 0.3 * Math.sin(angle);
+      return `${x},${y}`;
+    })
+    .join(" ");
 
   return (
-    <View style={{ width, height, marginBottom: 25 }}>
+    <View style={{ width, height, marginBottom: 20, alignItems: 'center' }}>
       <Svg height={height} width={width}>
-        {/* Background grid circles */}
-        {circles.map((circle, i) => (
-          <Circle
-            key={`circle-${i}`}
-            cx={centerX}
-            cy={centerY}
-            r={circle.r}
-            stroke={circle.stroke}
-            strokeWidth={circle.strokeWidth}
-            strokeDasharray={circle.strokeDasharray}
-            fill="none"
-          />
-        ))}
+        {/* Grid polygons - simplified approach */}
+        <Polygon
+          points={outerPoints}
+          fill="none"
+          stroke="#E2E8F0"
+          strokeWidth={1}
+        />
+        <Polygon
+          points={middlePoints}
+          fill="none"
+          stroke="#E2E8F0"
+          strokeWidth={0.5}
+          strokeDasharray="3,3"
+        />
+        <Polygon
+          points={innerPoints}
+          fill="none"
+          stroke="#E2E8F0"
+          strokeWidth={0.5}
+          strokeDasharray="3,3"
+        />
 
-        {/* Axis lines */}
+        {/* Axis lines from center to outer vertices */}
         {data.map((_, i) => {
-          const angle = ((Math.PI * 2) / data.length) * i;
-          const endX = centerX + radius * Math.sin(angle);
-          const endY = centerY - radius * Math.cos(angle);
+          const angle = ((Math.PI * 2) / data.length) * i - Math.PI / 2;
+          const endX = centerX + radius * Math.cos(angle);
+          const endY = centerY + radius * Math.sin(angle);
 
           return (
             <Line
@@ -397,82 +410,68 @@ const RadarChart = ({
               y1={centerY}
               x2={endX}
               y2={endY}
-              stroke="#E2E8F0"
+              stroke="#CBD5E1"
               strokeWidth={0.5}
             />
           );
         })}
 
-        {/* Data polygon */}
+        {/* Data polygon - the actual scores */}
         <Polygon
           points={dataPoints}
           fill="#4361EE"
           fillOpacity={0.3}
           stroke="#4361EE"
-          strokeWidth={1.5}
+          strokeWidth={2}
         />
 
         {/* Data points */}
         {data.map((item, i) => {
-          const angle = ((Math.PI * 2) / data.length) * i;
-          const normalizedValue = item.score / item.fullMark;
-          const x = centerX + radius * normalizedValue * Math.sin(angle);
-          const y = centerY - radius * normalizedValue * Math.cos(angle);
+          const angle = ((Math.PI * 2) / data.length) * i - Math.PI / 2;
+          const normalizedValue = Math.max(0.1, item.score / item.fullMark);
+          const x = centerX + radius * normalizedValue * Math.cos(angle);
+          const y = centerY + radius * normalizedValue * Math.sin(angle);
 
           return (
             <Circle key={`point-${i}`} cx={x} cy={y} r={3} fill="#4361EE" />
           );
         })}
+      </Svg>
 
-        {/* Scale line with numbers */}
-        <Line
-          x1={centerX}
-          y1={centerY}
-          x2={centerX + radius}
-          y2={centerY}
-          stroke="#94A3B8"
-          strokeWidth={0.5}
-        />
-        {[0, 3, 6, 10].map((value) => {
-          const x = centerX + (radius * value) / 10;
+      {/* Category labels positioned around the chart */}
+      <View style={{ position: 'absolute', width: '100%', height: '100%' }}>
+        {data.map((item, i) => {
+          const angle = ((Math.PI * 2) / data.length) * i - Math.PI / 2;
+          const labelRadius = radius + 25;
+          const x = centerX + labelRadius * Math.cos(angle);
+          const y = centerY + labelRadius * Math.sin(angle);
+          
           return (
             <Text
-              key={`scale-${value}`}
-              x={x}
-              y={centerY + 10}
-              textAnchor="middle"
-              fill="#64748B"
-              style={{ fontSize: 8 }}
+              key={`label-${i}`}
+              style={{
+                position: "absolute",
+                left: x - 50,
+                top: y - 10,
+                width: 100,
+                fontSize: 8,
+                textAlign: 'center',
+                color: "#334155",
+                fontWeight: 'bold',
+              }}
             >
-              {value}
+              {item.name}
             </Text>
           );
         })}
-      </Svg>
+      </View>
 
-      {/* Category labels */}
-      {labelPoints.map((point, i) => (
-        <Text
-          key={`label-${i}`}
-          style={{
-            position: "absolute",
-            left:
-              point.x -
-              (point.align === "right" ? 110 : point.align === "left" ? 0 : 55),
-            top: point.y - (point.vAlign === "bottom" ? 5 : 5),
-            width: 110,
-            fontSize: 8,
-            textAlign: (point.align === "left"
-              ? "left"
-              : point.align === "right"
-                ? "right"
-                : "center") as any,
-            color: "#121212",
-          }}
-        >
-          {point.label}
+      {/* Score legend */}
+      <View style={{ position: 'absolute', bottom: 5, right: 5 }}>
+        <Text style={{ fontSize: 7, color: '#64748B' }}>
+          Scale: 0-10 points
         </Text>
-      ))}
+      </View>
     </View>
   );
 };
