@@ -10,12 +10,14 @@ import {
   GitCompare,
   FileBarChart2,
   ListTodo,
+  Download,
 } from "lucide-react";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Assessment, CsvQuestion, Survey } from "@shared/types";
 import { formatDate } from "@/lib/utils";
-import { AssessmentPDFDownloadButton } from "./assessment-pdf";
+
 // Screens
 import ScreenResults from "./screens/results";
 import ScreenAnswers from "./screens/answers";
@@ -33,6 +35,8 @@ export default function SurveyCompleted({
   questions,
   additionalActions,
 }: SurveyCompletedProps) {
+  console.log(assessment);
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 space-y-6 md:space-y-0 py-4">
@@ -73,7 +77,17 @@ export default function SurveyCompleted({
                 </TooltipContent>
               </Tooltip>
             ) : (
-              <AssessmentPDFDownloadButton assessment={assessment} />
+              <Link href={"/"} asChild>
+                <Button
+                  className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"
+                  style={{ textDecoration: "none" }}
+                >
+                  <>
+                    <Download className="size-4" />
+                    {true ? "Preparing PDF..." : "Download PDF"}
+                  </>
+                </Button>
+              </Link>
             )}
           </div>
         </div>

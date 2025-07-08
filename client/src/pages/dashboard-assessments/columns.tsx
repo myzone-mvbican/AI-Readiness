@@ -1,5 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Eye, CheckCircle, Clock, Edit3, Trash2 } from "lucide-react";
+import { ArrowUpDown, Eye, CheckCircle, Clock, Edit3, Trash2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";

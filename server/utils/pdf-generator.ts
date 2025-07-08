@@ -1,12 +1,14 @@
-import fs from 'fs';
-import path from 'path';
-import { Assessment } from '@shared/types';
-import { AssessmentPDFServer, renderToBuffer } from '../components/assessment-pdf-server';
-import React from 'react';
+import fs from "fs";
+import React from "react";
+import path from "path";
+import { Assessment } from "@shared/types";
+import { renderToBuffer } from "@react-pdf/renderer";
+import { AssessmentPDF } from "../../client/src/pdfs/assessment";
 
 export interface PDFGenerationResult {
   success: boolean;
   filePath?: string;
+  relativePath?: string;
   fileName?: string;
   error?: string;
 }
@@ -21,62 +23,89 @@ export class PDFGenerator {
   private static generateFileName(assessment: Assessment): string {
     const today = new Date();
     const completed = new Date(assessment.completedOn || today);
-    return `myzoneai-readiness-report-${completed.toISOString().split('T')[0]}.pdf`;
+    return `myzoneai-readiness-report-${completed.toISOString().split("T")[0]}.pdf`;
   }
 
-  private static getUploadPath(userId?: string | number, guestEmail?: string): string {
-    const baseUploadPath = path.join(process.cwd(), 'public', 'uploads');
-    
+  private static getUploadPath(
+    userId?: string | number,
+    guestEmail?: string,
+  ): string {
+    const baseUploadPath = path.join(process.cwd(), "public", "uploads");
+
     if (userId) {
       // Convert userId to string if it's a number
-      const userIdStr = typeof userId === 'number' ? userId.toString() : userId;
+      const userIdStr = typeof userId === "number" ? userId.toString() : userId;
       return path.join(baseUploadPath, userIdStr);
     } else if (guestEmail) {
-      return path.join(baseUploadPath, 'guest', guestEmail);
+      return path.join(baseUploadPath, "guest", guestEmail);
     } else {
-      return path.join(baseUploadPath, 'guest', 'anonymous');
+      return path.join(baseUploadPath, "guest", "anonymous");
+    }
+  }
+
+  private static getRelativePath(
+    fileName: string,
+    userId?: string | number,
+    guestEmail?: string,
+  ): string {
+    if (userId) {
+      const userIdStr = typeof userId === "number" ? userId.toString() : userId;
+      return `/uploads/${userIdStr}/${fileName}`;
+    } else if (guestEmail) {
+      return `/uploads/guest/${guestEmail}/${fileName}`;
+    } else {
+      return `/uploads/guest/anonymous/${fileName}`;
     }
   }
 
   static async generateAndSavePDF(
     assessment: Assessment,
     userId?: string | number,
-    guestEmail?: string
+    guestEmail?: string,
   ): Promise<PDFGenerationResult> {
     try {
       // Generate file name
       const fileName = this.generateFileName(assessment);
-      
+
       // Get upload path
       const uploadDir = this.getUploadPath(userId, guestEmail);
       this.ensureDirectoryExists(uploadDir);
-      
+
       const filePath = path.join(uploadDir, fileName);
-      
+
+      const logoPath = path.join(
+        process.cwd(),
+        "client/src/assets/logo-myzone-ai.png",
+      );
+
       // Generate PDF using React PDF
       const pdfBuffer = await renderToBuffer(
-        React.createElement(AssessmentPDFServer, { assessment })
+        React.createElement(AssessmentPDF, { assessment, logoUrl: logoPath }),
       );
-      
+
       // Write PDF to file
       fs.writeFileSync(filePath, pdfBuffer);
-      
+
+      // Generate relative path for database storage
+      const relativePath = this.getRelativePath(fileName, userId, guestEmail);
+
       console.log(`PDF generated successfully for assessment ${assessment.id}`);
       console.log(`File saved to: ${filePath}`);
-      console.log(`User ID: ${userId || 'guest'} (type: ${typeof userId})`);
-      console.log(`Guest email: ${guestEmail || 'none'}`);
-      
+      console.log(`Relative path: ${relativePath}`);
+      console.log(`User ID: ${userId || "guest"} (type: ${typeof userId})`);
+      console.log(`Guest email: ${guestEmail || "none"}`);
+
       return {
         success: true,
         filePath,
+        relativePath,
         fileName,
       };
-      
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      console.error("Error generating PDF:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       };
     }
   }
