@@ -107,8 +107,11 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
+- July 8, 2025. Successfully implemented and tested complete PDF generation system with proper file storage in public/uploads/ directory
+- July 8, 2025. Fixed file storage paths - PDFs now correctly saved to public/uploads/ and accessible via static URL serving
+- July 8, 2025. Verified PDF generation for both registered users (uploads/userId/) and guest users (uploads/guest_email/) with database path tracking
 - July 8, 2025. Implemented server-side PDF generation and storage for completed assessments with automatic email notifications
-- July 8, 2025. Added file storage service with user-specific directories (uploads/userId/) and secure PDF serving endpoints
+- July 8, 2025. Added file storage service with user-specific directories and secure PDF serving endpoints
 - July 8, 2025. Enhanced assessment workflow to automatically generate PDFs when AI recommendations are added
 - July 8, 2025. Created assessment completion email templates with PDF download links for both registered and guest users
 - July 8, 2025. Fixed Google OAuth implementation using useGoogleLogin hook to avoid FedCM browser warnings

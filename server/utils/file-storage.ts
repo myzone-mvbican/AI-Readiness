@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 
 export class FileStorageService {
-  private baseUploadPath = 'uploads';
+  private baseUploadPath = path.join('public', 'uploads');
 
   async ensureDirectoryExists(dirPath: string): Promise<void> {
     try {
@@ -40,8 +40,10 @@ export class FileStorageService {
   }
 
   getPDFUrl(pdfPath: string): string {
-    // Convert file path to URL path
-    return `/api/files/${pdfPath.replace(/\\/g, '/')}`;
+    // Convert file system path to URL path
+    // Remove 'public/' prefix since static files are served from public/
+    const urlPath = pdfPath.replace(/^public\//, '');
+    return `/${urlPath}`;
   }
 }
 
