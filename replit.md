@@ -107,18 +107,8 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
-- July 8, 2025. FIXED PDF static file serving issue - PDFs now properly accessible via web URLs for both users and guests
-- July 8, 2025. Resolved server returning HTML instead of PDF content by implementing proper /uploads/* route handling
-- July 8, 2025. Successfully tested PDF access for both user paths (/uploads/1/assessment-X.pdf) and guest paths (/uploads/guest_email/assessment-X.pdf)
-- July 8, 2025. Successfully implemented exact client-side PDF structure on server with identical formatting for both users and guests - complete with cover page, results page, 5 recommendation pages, and response pages (10 answers per page)
-- July 8, 2025. Created ExactAssessmentPDF component that replicates client-side AssessmentPDF with professional blue cover page, radar chart, structured recommendations, and proper page numbering
-- July 8, 2025. Verified React PDF generation produces identical PDF format for both registered users and guest users with proper markdown parsing and comprehensive page structure
-- July 8, 2025. Replaced PDFKit with React PDF server-side rendering using @react-pdf/renderer to match existing client-side PDF download functionality
-- July 8, 2025. Successfully implemented and tested complete PDF generation system with proper file storage in public/uploads/ directory
-- July 8, 2025. Fixed file storage paths - PDFs now correctly saved to public/uploads/ and accessible via static URL serving
-- July 8, 2025. Verified PDF generation for both registered users (uploads/userId/) and guest users (uploads/guest_email/) with database path tracking
 - July 8, 2025. Implemented server-side PDF generation and storage for completed assessments with automatic email notifications
-- July 8, 2025. Added file storage service with user-specific directories and secure PDF serving endpoints
+- July 8, 2025. Added file storage service with user-specific directories (uploads/userId/) and secure PDF serving endpoints
 - July 8, 2025. Enhanced assessment workflow to automatically generate PDFs when AI recommendations are added
 - July 8, 2025. Created assessment completion email templates with PDF download links for both registered and guest users
 - July 8, 2025. Fixed Google OAuth implementation using useGoogleLogin hook to avoid FedCM browser warnings
