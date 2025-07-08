@@ -8,6 +8,7 @@ import { AssessmentController } from "./controllers/assessment.controller";
 import { AIController } from "./controllers/ai.controller";
 import { BenchmarkController } from "./controllers/benchmark.controller";
 import { PasswordResetController } from "./controllers/password-reset.controller";
+import { PDFController } from "./controllers/pdf.controller";
 import { EmailService } from "./services/email.service";
 
 // Import middleware if needed for protected routes
@@ -236,6 +237,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     BenchmarkController.getBenchmark,
   );
 
+  // PDF Generation routes
+  // Generate and save PDF for an assessment
+  app.post("/api/assessments/:id/pdf/generate", PDFController.generateAndSave);
+
   // AI Suggestions endpoint
   app.post("/api/ai-suggestions", AIController.generateSuggestions);
   
@@ -257,6 +262,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/public/assessments/:id", AssessmentController.updateGuest);
   // Public endpoint for guest users to access survey details
   app.get("/api/public/surveys/detail/:id", SurveyController.getById);
+  // Generate and save PDF for guest assessments
+  app.post("/api/public/assessments/:id/pdf/generate", PDFController.generateAndSave);
 
   const httpServer = createServer(app);
 
