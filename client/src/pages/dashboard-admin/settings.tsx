@@ -52,6 +52,7 @@ export default function AdminSettings() {
   const [isCheckingAssessment, setIsCheckingAssessment] = useState(false);
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [assessmentExists, setAssessmentExists] = useState(false);
+  const [isRegeneratingReport, setIsRegeneratingReport] = useState(false);
 
   // User search state
   const [userSearchOpen, setUserSearchOpen] = useState(false);
@@ -150,6 +151,48 @@ export default function AdminSettings() {
   // Handle assessment ID click from user assessments
   const handleAssessmentIdClick = (id: number) => {
     setAssessmentId(id.toString());
+  };
+
+  // Function to regenerate AI recommendations
+  const regenerateReport = async () => {
+    if (!assessment) {
+      toast({
+        title: "Error",
+        description: "No assessment selected",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsRegeneratingReport(true);
+    try {
+      const response = await apiRequest("POST", `/api/assessments/${assessment.id}/regenerate-recommendations`);
+      const result = await response.json();
+
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "AI recommendations regenerated successfully",
+        });
+        // Refresh the assessment data
+        await checkAssessment(assessmentId);
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Failed to regenerate recommendations",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error regenerating report:", error);
+      toast({
+        title: "Error",
+        description: "Failed to regenerate recommendations",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRegeneratingReport(false);
+    }
   };
 
   // Handle assessment ID input change with debouncing
@@ -465,7 +508,7 @@ export default function AdminSettings() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="assessment-id">Assessment ID</Label>
                     <Input
@@ -497,6 +540,23 @@ export default function AdminSettings() {
                         </span>
                       </Button>
                     )}
+                  </div>
+                  <div className="flex items-end">
+                    <Button
+                      onClick={regenerateReport}
+                      disabled={!assessmentExists || !assessment || isRegeneratingReport}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        {isRegeneratingReport ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-4 w-4" />
+                        )}
+                        {isRegeneratingReport ? "Regenerating..." : "Regenerate Report"}
+                      </span>
+                    </Button>
                   </div>
                 </div>
                 
