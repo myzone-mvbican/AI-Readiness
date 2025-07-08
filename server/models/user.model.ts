@@ -331,12 +331,7 @@ export class UserModel {
   static async getUserAssessments(userId: number): Promise<any[]> {
     try {
       const result = await db
-        .select({
-          id: assessments.id,
-          surveyId: assessments.surveyId,
-          completedAt: assessments.completedAt,
-          createdAt: assessments.createdAt,
-        })
+        .select()
         .from(assessments)
         .where(eq(assessments.userId, userId))
         .orderBy(desc(assessments.createdAt));
