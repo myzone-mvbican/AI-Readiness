@@ -227,134 +227,253 @@ const formatDate = (date: Date) => {
 };
 
 const getCategoryScores = (assessment: Assessment) => {
-  // Calculate category scores based on assessment data
-  const score = assessment.score || 0;
-  const variation = 0.8 + Math.random() * 0.4; // 0.8 to 1.2 multiplier
-  
-  const categories = [
-    { name: "Strategy & Leadership", score: Math.min(10, (score / 10) * variation * 10) },
-    { name: "Data & Infrastructure", score: Math.min(10, (score / 10) * (variation + 0.1) * 10) },
-    { name: "Talent & Skills", score: Math.min(10, (score / 10) * (variation - 0.1) * 10) },
-    { name: "Technology & Tools", score: Math.min(10, (score / 10) * (variation + 0.05) * 10) },
-    { name: "Governance & Ethics", score: Math.min(10, (score / 10) * variation * 10) },
-    { name: "Culture & Change", score: Math.min(10, (score / 10) * (variation - 0.05) * 10) },
-  ];
-  
-  return categories.map(cat => ({
-    name: cat.name,
-    score: Math.round(cat.score * 10) / 10,
-    fullMark: 10
-  }));
+  const {
+    answers = [],
+    survey: { questions = [] } = {}
+  } = assessment;
+
+  // Group questions by category
+  const categoryMap = new Map<string, number[]>();
+
+  questions.forEach((question: CsvQuestion, index: number) => {
+    const category = question.category;
+    if (!category) {
+      return;
+    }
+
+    if (!categoryMap.has(category)) {
+      categoryMap.set(category, []);
+    }
+
+    // Add this question's index to the category
+    categoryMap.get(category)?.push(index);
+  });
+
+  // Calculate average score for each category
+  const categoryScores = Array.from(categoryMap.entries()).map(
+    ([name, questionIndices]) => {
+      // Get answers for this category's questions
+      const categoryAnswers = questionIndices
+        .map((idx: number) => answers[idx])
+        .filter((a: any) => a && a.a !== null);
+
+      // Calculate average score
+      const sum = categoryAnswers.reduce((acc: number, ans: any) => {
+        // Convert from -2 to +2 scale to 0 to 10 scale
+        const score = ((ans.a || 0) + 2) * 2.5;
+        return acc + score;
+      }, 0);
+
+      const avgScore =
+        categoryAnswers.length > 0
+          ? Math.round((sum / categoryAnswers.length) * 10) / 10
+          : 0;
+
+      return {
+        name,
+        score: avgScore,
+        fullMark: 10
+      };
+    }
+  );
+
+  // If no category data available, return default categories
+  if (categoryScores.length === 0) {
+    const score = assessment.score || 0;
+    const variation = 0.8 + Math.random() * 0.4; // 0.8 to 1.2 multiplier
+    
+    const defaultCategories = [
+      { name: "Strategy & Leadership", score: Math.min(10, (score / 10) * variation * 10) },
+      { name: "Data & Infrastructure", score: Math.min(10, (score / 10) * (variation + 0.1) * 10) },
+      { name: "Talent & Skills", score: Math.min(10, (score / 10) * (variation - 0.1) * 10) },
+      { name: "Technology & Tools", score: Math.min(10, (score / 10) * (variation + 0.05) * 10) },
+      { name: "Governance & Ethics", score: Math.min(10, (score / 10) * variation * 10) },
+      { name: "Culture & Change", score: Math.min(10, (score / 10) * (variation - 0.05) * 10) },
+    ];
+    
+    return defaultCategories.map(cat => ({
+      name: cat.name,
+      score: Math.round(cat.score * 10) / 10,
+      fullMark: 10
+    }));
+  }
+
+  return categoryScores;
 };
 
-// Radar Chart Component for PDF
-const RadarChart = ({ data }: { data: any[] }) => {
-  const centerX = 200;
-  const centerY = 150;
-  const radius = 100;
-  const maxValue = 10;
-  
-  // Calculate points for radar chart
-  const getPoint = (angle: number, value: number) => {
-    const radian = (angle * Math.PI) / 180;
-    const r = (value / maxValue) * radius;
+// Radar Chart Component for PDF - Exact match with client-side
+const RadarChart = ({
+  data,
+  width = 400,
+  height = 300,
+}: {
+  data: Array<{ name: string; score: number; fullMark: number }>;
+  width?: number;
+  height?: number;
+}) => {
+  if (!data || data.length === 0) {
+    return (
+      <View
+        style={{
+          width,
+          height,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Text>No chart data available</Text>
+      </View>
+    );
+  }
+
+  // Chart configuration
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const radius = Math.min(centerX, centerY) * 0.8;
+
+  // Calculate points for the polygon (the filled radar area)
+  const dataPoints = data
+    .map((item, index) => {
+      const angle = ((Math.PI * 2) / data.length) * index;
+      const normalizedValue = item.score / item.fullMark; // 0-1 scale
+      const x = centerX + radius * normalizedValue * Math.sin(angle);
+      const y = centerY - radius * normalizedValue * Math.cos(angle);
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  // Category labels positioning
+  const labelPoints = data.map((item, index) => {
+    const angle = ((Math.PI * 2) / data.length) * index;
+    // Position labels slightly outside the chart area
+    const x = centerX + (radius + 15) * Math.sin(angle);
+    const y = centerY - (radius + 15) * Math.cos(angle);
     return {
-      x: centerX + r * Math.cos(radian - Math.PI / 2),
-      y: centerY + r * Math.sin(radian - Math.PI / 2),
+      x,
+      y,
+      label: item.name,
+      align: x > centerX ? "left" : x < centerX ? "right" : "center",
+      vAlign: y > centerY ? "top" : "bottom",
     };
-  };
-  
-  const angleStep = 360 / data.length;
-  const gridLevels = 5;
-  
+  });
+
+  // Generate concentric circles for scale
+  const circles = [0.33, 0.66, 1].map((scale) => {
+    return {
+      r: radius * scale,
+      stroke: "#E2E8F0",
+      strokeWidth: 0.5,
+      strokeDasharray: "2,2",
+    };
+  });
+
   return (
-    <Svg width={400} height={300} style={{ alignSelf: 'center' }}>
-      {/* Grid lines */}
-      {Array.from({ length: gridLevels }, (_, i) => {
-        const r = ((i + 1) * radius) / gridLevels;
-        const points = data.map((_, index) => {
-          const angle = index * angleStep;
-          return getPoint(angle, (i + 1) * 2);
-        });
-        
-        return (
-          <Polygon
-            key={`grid-${i}`}
-            points={points.map(p => `${p.x},${p.y}`).join(' ')}
-            fill="none"
-            stroke="#E2E8F0"
-            strokeWidth="0.5"
-          />
-        );
-      })}
-      
-      {/* Axis lines */}
-      {data.map((_, index) => {
-        const angle = index * angleStep;
-        const endPoint = getPoint(angle, 10);
-        return (
-          <Line
-            key={`axis-${index}`}
-            x1={centerX}
-            y1={centerY}
-            x2={endPoint.x}
-            y2={endPoint.y}
-            stroke="#CBD5E1"
-            strokeWidth="0.5"
-          />
-        );
-      })}
-      
-      {/* Data polygon */}
-      {(() => {
-        const dataPoints = data.map((item, index) => {
-          const angle = index * angleStep;
-          return getPoint(angle, item.score);
-        });
-        
-        return (
-          <Polygon
-            points={dataPoints.map(p => `${p.x},${p.y}`).join(' ')}
-            fill="rgba(51, 97, 255, 0.2)"
-            stroke="#3361FF"
-            strokeWidth="2"
-          />
-        );
-      })()}
-      
-      {/* Data points */}
-      {data.map((item, index) => {
-        const angle = index * angleStep;
-        const point = getPoint(angle, item.score);
-        return (
+    <View style={{ width, height, marginBottom: 25 }}>
+      <Svg height={height} width={width}>
+        {/* Background grid circles */}
+        {circles.map((circle, i) => (
           <Circle
-            key={`point-${index}`}
-            cx={point.x}
-            cy={point.y}
-            r="3"
-            fill="#3361FF"
+            key={`circle-${i}`}
+            cx={centerX}
+            cy={centerY}
+            r={circle.r}
+            stroke={circle.stroke}
+            strokeWidth={circle.strokeWidth}
+            strokeDasharray={circle.strokeDasharray}
+            fill="none"
           />
-        );
-      })}
-      
-      {/* Labels */}
-      {data.map((item, index) => {
-        const angle = index * angleStep;
-        const labelPoint = getPoint(angle, 12);
-        return (
-          <Text
-            key={`label-${index}`}
-            x={labelPoint.x}
-            y={labelPoint.y}
-            textAnchor="middle"
-            fontSize="8"
-            fill="#475569"
-          >
-            {item.name}
-          </Text>
-        );
-      })}
-    </Svg>
+        ))}
+
+        {/* Axis lines */}
+        {data.map((_, i) => {
+          const angle = ((Math.PI * 2) / data.length) * i;
+          const endX = centerX + radius * Math.sin(angle);
+          const endY = centerY - radius * Math.cos(angle);
+
+          return (
+            <Line
+              key={`axis-${i}`}
+              x1={centerX}
+              y1={centerY}
+              x2={endX}
+              y2={endY}
+              stroke="#E2E8F0"
+              strokeWidth={0.5}
+            />
+          );
+        })}
+
+        {/* Data polygon */}
+        <Polygon
+          points={dataPoints}
+          fill="#4361EE"
+          fillOpacity={0.3}
+          stroke="#4361EE"
+          strokeWidth={1.5}
+        />
+
+        {/* Data points */}
+        {data.map((item, i) => {
+          const angle = ((Math.PI * 2) / data.length) * i;
+          const normalizedValue = item.score / item.fullMark;
+          const x = centerX + radius * normalizedValue * Math.sin(angle);
+          const y = centerY - radius * normalizedValue * Math.cos(angle);
+
+          return (
+            <Circle key={`point-${i}`} cx={x} cy={y} r={3} fill="#4361EE" />
+          );
+        })}
+
+        {/* Scale line with numbers */}
+        <Line
+          x1={centerX}
+          y1={centerY}
+          x2={centerX + radius}
+          y2={centerY}
+          stroke="#94A3B8"
+          strokeWidth={0.5}
+        />
+        {[0, 3, 6, 10].map((value) => {
+          const x = centerX + (radius * value) / 10;
+          return (
+            <Text
+              key={`scale-${value}`}
+              x={x}
+              y={centerY + 10}
+              textAnchor="middle"
+              fill="#64748B"
+              style={{ fontSize: 8 }}
+            >
+              {value}
+            </Text>
+          );
+        })}
+      </Svg>
+
+      {/* Category labels */}
+      {labelPoints.map((point, i) => (
+        <Text
+          key={`label-${i}`}
+          style={{
+            position: "absolute",
+            left:
+              point.x -
+              (point.align === "right" ? 110 : point.align === "left" ? 0 : 55),
+            top: point.y - (point.vAlign === "bottom" ? 5 : 5),
+            width: 110,
+            fontSize: 8,
+            textAlign: (point.align === "left"
+              ? "left"
+              : point.align === "right"
+                ? "right"
+                : "center") as any,
+            color: "#121212",
+          }}
+        >
+          {point.label}
+        </Text>
+      ))}
+    </View>
   );
 };
 
