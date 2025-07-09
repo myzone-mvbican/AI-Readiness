@@ -1,17 +1,31 @@
 import laptopImage from "@/assets/Macbook-Pro-Crop.png";
 import CategoriesRadarChart from "@/components/survey/radar";
-import { AssessmentResponse, Survey } from "@shared/types";
-import { useQuery } from "@tanstack/react-query";
+import { Assessment } from "@shared/types";
 
 export function Services() {
-  const { data, isLoading } = useQuery<AssessmentResponse & { survey: Survey }>(
-    {
-      queryKey: [`/api/assessments/194`],
-      enabled: true,
+  // Dummy assessment data for demonstration
+  const assessment: Assessment = {
+    id: 1,
+    userId: 1,
+    surveyId: 1,
+    teamId: 1,
+    responses: {
+      "leadership": 7.5,
+      "strategy": 6.8,
+      "data": 8.2,
+      "technology": 7.1,
+      "talent": 6.5,
+      "governance": 7.8,
+      "culture": 6.9,
+      "operations": 7.3
     },
-  );
+    score: 73.9,
+    completedAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
 
-  const assessment = data?.assessment || {};
+  const isLoading = false;
 
   return (
     <div className="py-20 bg-white hover overflow-hidden">
@@ -54,12 +68,10 @@ export function Services() {
                 backgroundImage: `url(${laptopImage})`,
               }}
             >
-              {!isLoading && (
-                <CategoriesRadarChart
-                  assessment={assessment}
-                  className="absolute h-[82.5%] w-[73.5%] top-[5%] left-[12.5%]"
-                />
-              )}
+              <CategoriesRadarChart
+              assessment={assessment}
+              className="absolute h-[82.5%] w-[73.5%] top-[5%] left-[12.5%]"
+            />
             </div>
           </div>
         </div>
