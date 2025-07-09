@@ -29,13 +29,11 @@ import {
   Settings,
 } from "lucide-react";
 
-import profileImage from "@/assets/mvbican.jpg";
-
 // This is sample data.
 const defaultUser = {
   name: "mvbican",
   email: "bican.valeriu@myzone.ai",
-  avatar: profileImage,
+  avatar: '',
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

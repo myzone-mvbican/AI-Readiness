@@ -21,9 +21,9 @@ export class PDFGenerator {
   }
 
   private static generateFileName(assessment: Assessment): string {
-    const today = new Date();
-    const completed = new Date(assessment.completedOn || today);
-    return `myzoneai-readiness-report-${completed.toISOString().split("T")[0]}.pdf`;
+    // const today = new Date();
+    // const completed = new Date(assessment.completedOn || today);
+    return `report-${assessment.id}.pdf`;
   }
 
   private static getUploadPath(

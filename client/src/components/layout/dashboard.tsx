@@ -55,7 +55,7 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
             <SidebarTrigger className="-ml-1 dark:text-foreground" />
             <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>
-              <BreadcrumbList>
+              <BreadcrumbList className="overflow-elipsis text-nowrap">
                 <BreadcrumbItem className="hidden md:block">
                   <BreadcrumbLink href="/dashboard" asChild>
                     <Link href="/dashboard">AI Readiness Dashboard</Link>
@@ -63,7 +63,9 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>{pageName}</BreadcrumbPage>
+                  <BreadcrumbPage className="text-xs lg:text-base">
+                    {pageName}
+                  </BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
