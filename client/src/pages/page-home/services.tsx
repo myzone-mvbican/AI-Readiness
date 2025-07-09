@@ -1,6 +1,18 @@
 import laptopImage from "@/assets/Macbook-Pro-Crop.png";
+import CategoriesRadarChart from "@/components/survey/radar";
+import { AssessmentResponse, Survey } from "@shared/types";
+import { useQuery } from "@tanstack/react-query";
 
 export function Services() {
+  const { data, isLoading } = useQuery<AssessmentResponse & { survey: Survey }>(
+    {
+      queryKey: [`/api/assessments/194`],
+      enabled: true,
+    },
+  );
+
+  const assessment = data?.assessment || {};
+
   return (
     <div className="py-20 bg-white hover overflow-hidden">
       <div className="container">
@@ -37,14 +49,18 @@ export function Services() {
           {/* Right Column - 3D Laptop Mockup */}
           <div className="lg:col-span-3 relative flex justify-center">
             <div
-              className="relative w-full h-full bg-contain bg-center aspect-[16/9]"
+              className="relative w-full h-full bg-contain bg-center bg-no-repeat aspect-[16/9]"
               style={{
                 backgroundImage: `url(${laptopImage})`,
-                backgroundSize: "contain",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
               }}
-            />
+            >
+              {!isLoading && (
+                <CategoriesRadarChart
+                  assessment={assessment}
+                  className="absolute h-[82.5%] w-[73.5%] top-[5%] left-[12.5%]"
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>

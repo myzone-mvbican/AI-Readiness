@@ -91,7 +91,7 @@ h1, h2, h3, h4, h5, h6, .section__title {
 }
 
 .section-space-y {
-  @apply py-16 md:py-24 lg:py-32;
+  @apply py-16 md:py-24 xl:py-32;
 }
 
 .section__title {
@@ -187,7 +187,7 @@ h1, h2, h3, h4, h5, h6, .section__title {
   }
 
   p {
-    @apply text-muted-foreground;
+    @apply text-xs lg:text-base text-muted-foreground;
 
     + :is(ol, ul) {
       margin-top: .5rem;
@@ -196,7 +196,7 @@ h1, h2, h3, h4, h5, h6, .section__title {
 
   ol,
   ul {
-    @apply text-muted-foreground;
+    @apply text-xs lg:text-base text-muted-foreground;
     padding-left: 1.1em;
     line-height: 1.5;
   }

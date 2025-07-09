@@ -5,7 +5,8 @@ import { loadSlim } from "@tsparticles/slim";
 import { loadPolygonMaskPlugin } from "@tsparticles/plugin-polygon-mask";
 import type { Engine } from "@tsparticles/engine";
 import homeBottom from "@/assets/home-bottom-v2.svg";
-import homeBottomImage from "@/assets/ai-readiness-bottom.png";
+import homeBottomImage from "@/assets/home-bottom-v2.svg";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CtaProps {
   onStartAssessment: () => void;
@@ -13,6 +14,7 @@ interface CtaProps {
 
 export function Cta({ onStartAssessment }: CtaProps) {
   const [init, setInit] = React.useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     initParticlesEngine(async (engine: Engine) => {
@@ -39,8 +41,8 @@ export function Cta({ onStartAssessment }: CtaProps) {
             distance: 40,
             duration: 2,
             opacity: 8,
-            size: 6,
-            speed: 3,
+            size: 4,
+            speed: 1,
           },
         },
       },
@@ -65,16 +67,16 @@ export function Cta({ onStartAssessment }: CtaProps) {
         move: {
           enable: true,
           outModes: "bounce",
-          speed: { min: 0.5, max: 1 },
+          speed: { min: 0.1, max: .3 },
         },
         number: {
-          value: 150,
+          value: 250,
         },
         opacity: {
           random: false,
           animation: {
             enable: true,
-            speed: 1.5,
+            speed: 1,
             sync: false,
           },
           value: { min: 0.1, max: 0.8 },
@@ -86,10 +88,10 @@ export function Cta({ onStartAssessment }: CtaProps) {
           random: true,
           animation: {
             enable: true,
-            speed: 30,
+            speed: 20,
             sync: false,
           },
-          value: { min: 0.2, max: 1 },
+          value: { min: 0.5, max: 1.5 },
         },
       },
       polygon: {
@@ -102,17 +104,17 @@ export function Cta({ onStartAssessment }: CtaProps) {
           },
         },
         move: {
-          radius: 8,
+          radius: 5,
         },
         inline: {
           arrangement: "equidistant",
         },
-        scale: 1,
+        scale: 1.090,
         type: "inline",
         url: homeBottom,
         position: {
           x: 0,
-          y: 1,
+          y: 0,
         },
       },
     }),
@@ -120,11 +122,7 @@ export function Cta({ onStartAssessment }: CtaProps) {
   );
 
   const styles = {
-    backgroundImage: `url(${homeBottomImage})`,
-    backgroundBlendMode: "screen",
-    backgroundSize: "contain",
-    backgroundPosition: "center right 40px",
-    backgroundRepeat: "no-repeat",
+    backgroundImage: `url(${homeBottomImage})`, 
   };
 
   return (
@@ -132,13 +130,16 @@ export function Cta({ onStartAssessment }: CtaProps) {
       <div className="container relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Column - Visual Space with tsParticles */}
-          <div className="hidden lg:block relative aspect-[4/3.5]">
-            <div className="absolute inset-0 z-0">
-              {init && (
+          <div className="relative aspect-[550/510]">
+            <div
+              className="absolute inset-0 z-0 bg-contain bg-center bg-no-repeat"
+              style={styles}
+            >
+              {!isMobile && init && (
                 <Particles
                   id="tsparticles-cta"
                   options={options}
-                  className="w-full h-full relative"
+                  className="w-full h-full absolute inset-0"
                 />
               )}
             </div>
