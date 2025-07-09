@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { GoogleLogin, useGoogleLogin } from "@react-oauth/google";
+import { GoogleLogin } from "@react-oauth/google";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -33,37 +33,36 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation, googleLoginMutation } =
     useAuth();
 
-  // Google login hook
-  const googleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        setIsSubmitting(true);
-        
-        // Use the googleLoginMutation from our auth hook
-        await googleLoginMutation.mutateAsync({
-          credential: tokenResponse.access_token,
-        });
-      } catch (error) {
-        console.error("Error with Google login:", error);
-        toast({
-          title: "Google login failed",
-          description: "There was a problem with your Google login.",
-          variant: "destructive",
-          duration: 3000,
-        });
-      } finally {
-        setIsSubmitting(false);
-      }
-    },
-    onError: () => {
+  // Google login handlers
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    try {
+      setIsSubmitting(true);
+      
+      // Use the googleLoginMutation from our auth hook
+      await googleLoginMutation.mutateAsync({
+        credential: credentialResponse.credential,
+      });
+    } catch (error) {
+      console.error("Error with Google login:", error);
       toast({
         title: "Google login failed",
         description: "There was a problem with your Google login.",
         variant: "destructive",
         duration: 3000,
       });
-    },
-  });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    toast({
+      title: "Google login failed",
+      description: "There was a problem with your Google login.",
+      variant: "destructive",
+      duration: 3000,
+    });
+  };
 
   // Redirect if user is already authenticated
   useEffect(() => {
@@ -180,24 +179,15 @@ export default function AuthPage() {
             </CardHeader>
             <CardContent className="pt-6">
               {/* Google Sign-In Option */}
-              <div className="w-full mb-6">
-                <button
-                  type="button"
-                  onClick={() => googleLogin()}
-                  disabled={isSubmitting}
-                  className="w-full flex items-center justify-center border border-gray-300 rounded-md py-2 bg-white hover:bg-gray-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <img
-                    src="https://developers.google.com/identity/images/g-logo.png"
-                    alt="Google logo"
-                    className="w-6 h-6 mr-2"
-                  />
-                  <span className="text-gray-700 font-medium">
-                    {activeTab === "login"
-                      ? "Sign in with Google"
-                      : "Sign up with Google"}
-                  </span>
-                </button>
+              <div className="w-full mb-6 flex justify-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  theme="outline"
+                  size="large"
+                  text={activeTab === "login" ? "signin_with" : "signup_with"}
+                  width="100%"
+                />
               </div>
 
               {/* Divider */}
