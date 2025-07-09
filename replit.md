@@ -105,6 +105,7 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
+- July 9, 2025. Fixed Google OAuth authentication by replacing deprecated tokeninfo endpoint with Google Auth Library and switching from access tokens to ID tokens
 - July 8, 2025. Added admin PDF download tool to settings page - allows admins to download any assessment PDF by ID with real-time validation
 - July 8, 2025. Successfully implemented email notifications for assessment completion with PDF download links sent automatically to users
 - July 8, 2025. Successfully implemented pdfPath field in assessment API responses - PDF download button now functional with database-stored relative paths
