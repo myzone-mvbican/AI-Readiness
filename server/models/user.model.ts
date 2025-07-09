@@ -2,7 +2,7 @@ import { db } from "../db";
 import { eq, or, ilike, desc, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import fetch from "node-fetch";
+import { OAuth2Client } from "google-auth-library";
 import crypto from "crypto";
 import { User, GoogleUserPayload } from "@shared/types";
 import { users, userTeams, surveys, assessments } from "@shared/schema";
@@ -172,19 +172,34 @@ export class UserModel {
     token: string,
   ): Promise<GoogleUserPayload | null> {
     try {
-      // Verify the Google token by making a request to the tokeninfo endpoint
-      const response = await fetch(
-        `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`,
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          `Google token verification failed: ${response.status} ${response.statusText}`,
-        );
+      // Get the Google Client ID from environment
+      const googleClientId = process.env.VITE_GOOGLE_CLIENT_ID;
+      if (!googleClientId) {
+        console.error("Google Client ID not configured");
+        return null;
       }
 
-      const data = await response.json();
-      return data as GoogleUserPayload;
+      // Create OAuth2Client and verify the token
+      const client = new OAuth2Client(googleClientId);
+      const ticket = await client.verifyIdToken({
+        idToken: token,
+        audience: googleClientId,
+      });
+
+      const payload = ticket.getPayload();
+      if (!payload) {
+        console.error("No payload in Google token");
+        return null;
+      }
+
+      // Return the payload in the expected format
+      return {
+        sub: payload.sub,
+        email: payload.email || '',
+        name: payload.name || '',
+        picture: payload.picture || '',
+        email_verified: payload.email_verified || false,
+      } as GoogleUserPayload;
     } catch (error) {
       console.error("Error verifying Google token:", error);
       return null;
