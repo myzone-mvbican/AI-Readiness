@@ -3,12 +3,16 @@ import CategoriesRadarChart from "@/components/survey/radar";
 import { Assessment } from "@shared/types";
 
 export function Services() {
-  // Dummy assessment data for demonstration
+  // Comprehensive dummy assessment data for demonstration
   const assessment: Assessment = {
-    id: 1,
+    id: 194,
     userId: 1,
     surveyId: 1,
     teamId: 1,
+    title: "Q4 2024 AI Readiness Assessment",
+    status: "completed",
+    email: "demo@myzone.ai",
+    guest: null,
     responses: {
       "leadership": 7.5,
       "strategy": 6.8,
@@ -20,13 +24,41 @@ export function Services() {
       "operations": 7.3
     },
     score: 73.9,
-    completedAt: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    answers: [
+      { q: 1, type: "scale", a: 2, r: "We have strong executive buy-in for AI initiatives" },
+      { q: 2, type: "scale", a: 1, r: "Clear AI strategy defined but implementation ongoing" },
+      { q: 3, type: "scale", a: 2, r: "High-quality data infrastructure in place" },
+      { q: 4, type: "scale", a: 1, r: "Modern tech stack with cloud capabilities" },
+      { q: 5, type: "scale", a: 0, r: "Mixed skill levels across teams" },
+      { q: 6, type: "scale", a: 2, r: "Strong governance framework established" },
+      { q: 7, type: "scale", a: 1, r: "Culture is adapting to AI transformation" },
+      { q: 8, type: "scale", a: 1, r: "Operations being optimized for AI workflows" }
+    ],
+    recommendations: "Based on your assessment, your organization shows strong potential for AI adoption with particular strengths in data infrastructure and governance. Focus areas for improvement include talent development and cultural change management. Consider implementing AI training programs and establishing cross-functional AI teams to accelerate adoption.",
+    pdfPath: "/uploads/1/myzoneai-readiness-report-demo.pdf",
+    completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+    updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
     survey: {
-      questions: []
+      id: 1,
+      title: "AI Readiness Assessment 2024",
+      description: "Comprehensive evaluation of organizational AI readiness across 8 key dimensions",
+      authorId: 1,
+      isActive: true,
+      questions: [
+        { id: 1, question: "How would you rate your organization's leadership commitment to AI?", category: "leadership", details: "Executive support and vision" },
+        { id: 2, question: "Does your organization have a clear AI strategy?", category: "strategy", details: "Strategic planning and roadmap" },
+        { id: 3, question: "How would you assess your data quality and accessibility?", category: "data", details: "Data infrastructure and governance" },
+        { id: 4, question: "Is your technology infrastructure ready for AI?", category: "technology", details: "Technical capabilities and systems" },
+        { id: 5, question: "Does your team have the necessary AI skills?", category: "talent", details: "Human capital and expertise" },
+        { id: 6, question: "Are there proper governance frameworks for AI?", category: "governance", details: "Policies and compliance" },
+        { id: 7, question: "Is your organizational culture prepared for AI adoption?", category: "culture", details: "Change readiness and mindset" },
+        { id: 8, question: "Are your operations optimized for AI integration?", category: "operations", details: "Process efficiency and workflows" }
+      ],
+      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
+      updatedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
     }
-  }; 
+  };
 
   return (
     <div className="py-20 bg-white hover overflow-hidden">
@@ -70,9 +102,9 @@ export function Services() {
               }}
             >
               <CategoriesRadarChart
-              assessment={assessment}
-              className="absolute h-[82.5%] w-[73.5%] top-[5%] left-[12.5%]"
-            />
+                assessment={assessment}
+                className="absolute h-[82.5%] w-[73.5%] top-[5%] left-[12.5%]"
+              />
             </div>
           </div>
         </div>
