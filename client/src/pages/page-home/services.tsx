@@ -22,10 +22,11 @@ export function Services() {
     score: 73.9,
     completedAt: new Date().toISOString(),
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-
-  const isLoading = false;
+    updatedAt: new Date().toISOString(),
+    survey: {
+      questions: []
+    }
+  }; 
 
   return (
     <div className="py-20 bg-white hover overflow-hidden">
