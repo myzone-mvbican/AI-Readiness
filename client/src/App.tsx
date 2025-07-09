@@ -20,8 +20,8 @@ import NotFound from "@/pages/page-404";
 import PageHome from "@/pages/page-home";
 import PageAuth from "@/pages/page-auth";
 import PageAbout from "@/pages/page-about";
-import ForgotPasswordPage from "@/pages/forgot-password";
-import ResetPasswordPage from "@/pages/reset-password";
+import ForgotPasswordPage from "@/pages/page-auth/password/forgot";
+import ResetPasswordPage from "@/pages/page-auth/password/reset";
 // Dashboard pages
 import DashboardHome from "@/pages/dashboard-home";
 import DashboardProgress from "@/pages/dashboard-progress";
