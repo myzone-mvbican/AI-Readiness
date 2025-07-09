@@ -16,6 +16,7 @@ export const CategoriesRadarChart = ({
     ...props
 }: {
     assessment: Assessment & { survey?: Survey };
+    className?: string
 }) => {
     const isMobile = useIsMobile();
     
