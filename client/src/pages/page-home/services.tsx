@@ -14,14 +14,14 @@ export function Services() {
     email: "demo@myzone.ai",
     guest: null,
     responses: {
-      "strategy": 7.5,
-      "culture": 6.8,
-      "talent": 8.2,
-      "data": 7.1,
-      "technology": 6.5,
-      "operations": 7.8,
-      "governance": 6.9,
-      "financial": 7.3
+      "Strategy & Vision": 7.5,
+      "Change-Readiness & Culture": 6.8,
+      "Skills & Literacy": 8.2,
+      "Data & Information": 7.1,
+      "Technology & Integration": 6.5,
+      "Process & Operations": 7.8,
+      "Governance, Ethics & Risk": 6.9,
+      "Financial & Resources": 7.3
     },
     score: 73.9,
     answers: [
