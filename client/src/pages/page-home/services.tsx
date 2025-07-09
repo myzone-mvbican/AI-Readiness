@@ -5,7 +5,7 @@ import { Assessment } from "@shared/types";
 export function Services() {
   // Comprehensive dummy assessment data for demonstration
   const assessment: Assessment = {
-    id: 194,
+    id: 999,
     userId: 1,
     surveyId: 1,
     teamId: 1,
@@ -34,26 +34,26 @@ export function Services() {
       { q: 7, type: "scale", a: 1, r: "Culture is adapting to AI transformation" },
       { q: 8, type: "scale", a: 1, r: "Operations being optimized for AI workflows" }
     ],
-    recommendations: "Based on your assessment, your organization shows strong potential for AI adoption with particular strengths in data infrastructure and governance. Focus areas for improvement include talent development and cultural change management. Consider implementing AI training programs and establishing cross-functional AI teams to accelerate adoption.",
-    pdfPath: "/uploads/1/myzoneai-readiness-report-demo.pdf",
+    recommendations: "",
+    pdfPath: "",
     completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
     createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
     updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
     survey: {
       id: 1,
       title: "AI Readiness Assessment 2024",
-      description: "Comprehensive evaluation of organizational AI readiness across 8 key dimensions",
+      description: "",
       authorId: 1,
       isActive: true,
       questions: [
-        { id: 1, question: "Does your organization have a clear AI strategy?", category: "strategy", details: "Strategy & Vision" },
-        { id: 2, question: "Is your organizational culture prepared for AI adoption?", category: "culture", details: "Change-Readiness & Culture" },
-        { id: 3, question: "Does your team have the necessary AI skills?", category: "talent", details: "Skills & Literacy" },
-        { id: 4, question: "How would you assess your data quality and accessibility?", category: "data", details: "Data & Information" },
-        { id: 5, question: "Is your technology infrastructure ready for AI?", category: "technology", details: "Technology & Integration" },
-        { id: 6, question: "Are your operations optimized for AI integration?", category: "operations", details: "Process & Operations" },
-        { id: 7, question: "Are there proper governance frameworks for AI?", category: "governance", details: "Governance, Ethics & Risk" },
-        { id: 8, question: "Does your organization have adequate financial resources for AI?", category: "financial", details: "Financial & Resources" }
+        { id: 1, question: "", category: "Strategy & Vision", details: "" },
+        { id: 2, question: "", category: "Change-Readiness & Culture", details: "" },
+        { id: 3, question: "", category: "Skills & Literacy", details: "" },
+        { id: 4, question: "", category: "Data & Information", details: "" },
+        { id: 5, question: "", category: "Technology & Integration", details: "" },
+        { id: 6, question: "", category: "Process & Operations", details: "" },
+        { id: 7, question: "", category: "Governance, Ethics & Risk", details: "" },
+        { id: 8, question: "", category: "Financial & Resources", details: "" }
       ],
       createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
       updatedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
