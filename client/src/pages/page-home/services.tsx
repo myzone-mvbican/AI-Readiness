@@ -14,8 +14,8 @@ export function Services() {
     email: "demo@myzone.ai",
     guest: null,
     responses: {
-      "leadership": 7.5,
-      "strategy": 6.8,
+      "strategy": 7.5,
+      "leadership": 6.8,
       "data": 8.2,
       "technology": 7.1,
       "talent": 6.5,
@@ -46,14 +46,14 @@ export function Services() {
       authorId: 1,
       isActive: true,
       questions: [
-        { id: 1, question: "How would you rate your organization's leadership commitment to AI?", category: "leadership", details: "Executive support and vision" },
-        { id: 2, question: "Does your organization have a clear AI strategy?", category: "strategy", details: "Strategic planning and roadmap" },
-        { id: 3, question: "How would you assess your data quality and accessibility?", category: "data", details: "Data infrastructure and governance" },
-        { id: 4, question: "Is your technology infrastructure ready for AI?", category: "technology", details: "Technical capabilities and systems" },
-        { id: 5, question: "Does your team have the necessary AI skills?", category: "talent", details: "Human capital and expertise" },
-        { id: 6, question: "Are there proper governance frameworks for AI?", category: "governance", details: "Policies and compliance" },
-        { id: 7, question: "Is your organizational culture prepared for AI adoption?", category: "culture", details: "Change readiness and mindset" },
-        { id: 8, question: "Are your operations optimized for AI integration?", category: "operations", details: "Process efficiency and workflows" }
+        { id: 1, question: "Does your organization have a clear AI strategy?", category: "strategy", details: "Strategy & Vision" },
+        { id: 2, question: "How would you rate your organization's leadership commitment to AI?", category: "leadership", details: "Leadership & Governance" },
+        { id: 3, question: "How would you assess your data quality and accessibility?", category: "data", details: "Data Infrastructure" },
+        { id: 4, question: "Is your technology infrastructure ready for AI?", category: "technology", details: "Technology Readiness" },
+        { id: 5, question: "Does your team have the necessary AI skills?", category: "talent", details: "Talent & Skills" },
+        { id: 6, question: "Are there proper governance frameworks for AI?", category: "governance", details: "Risk & Compliance" },
+        { id: 7, question: "Is your organizational culture prepared for AI adoption?", category: "culture", details: "Change-Readiness & Culture" },
+        { id: 8, question: "Are your operations optimized for AI integration?", category: "operations", details: "Process & Operations" }
       ],
       createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
       updatedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
