@@ -104,9 +104,10 @@ export function TeamManagement({
   // Get properly typed teams array
   const teams = teamsData?.teams || [];
 
-  // Filtered teams based on search
+  // Filtered teams based on search and exclude deleted teams
   const filteredTeams = teams.filter((team) =>
-    team.name.toLowerCase().includes(teamSearchValue.toLowerCase()),
+    team.name.toLowerCase().includes(teamSearchValue.toLowerCase()) &&
+    !team.name.includes('(deleted)')
   );
 
   // Check if this is the current user

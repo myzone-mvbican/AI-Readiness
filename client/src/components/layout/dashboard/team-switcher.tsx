@@ -101,16 +101,22 @@ export function TeamSwitcher({}: TeamSwitcherProps) {
 
     // When teams are loaded, verify the selected team is valid
     if (teams?.teams?.length) {
-      // Check if the saved team actually exists in the user's assigned teams
+      // Filter out deleted teams
+      const activeTeams = teams.teams.filter(team => !team.name.includes('(deleted)'));
+      
+      // Check if the saved team actually exists in the user's assigned teams and is not deleted
       const savedTeamExists =
         parsedSavedTeam &&
-        teams.teams.some((team) => team.id === parsedSavedTeam.id);
+        activeTeams.some((team) => team.id === parsedSavedTeam.id);
 
-      // If no valid team is selected, select the first available team
-      if (!savedTeamExists) {
-        setSelectedTeam(teams.teams[0]);
-        localStorage.setItem("selectedTeam", JSON.stringify(teams.teams[0]));
-
+      // If no valid team is selected, select the first available active team
+      if (!savedTeamExists && activeTeams.length > 0) {
+        setSelectedTeam(activeTeams[0]);
+        localStorage.setItem("selectedTeam", JSON.stringify(activeTeams[0]));
+      } else if (!savedTeamExists && activeTeams.length === 0) {
+        // If no active teams, clear the selection
+        setSelectedTeam(null);
+        localStorage.removeItem("selectedTeam");
       }
     }
 
@@ -185,7 +191,10 @@ export function TeamSwitcher({}: TeamSwitcherProps) {
   // Only show teams that the user is assigned to, regardless of admin status
   // This prevents regular users switching to teams they're not part of
   // Admin users will only see their assigned teams in the switcher (not all teams)
-  const availableTeams = teams?.teams?.length ? teams.teams : defaultTeams;
+  // Filter out deleted teams from the switcher
+  const availableTeams = teams?.teams?.length 
+    ? teams.teams.filter(team => !team.name.includes('(deleted)'))
+    : defaultTeams;
 
   const handleSelectTeam = (team: TeamWithRole) => {
     // Check if we're switching to a different team
