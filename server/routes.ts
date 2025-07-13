@@ -276,6 +276,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     TeamController.restore,
   );
 
+  // Hard delete team (admin only) - only if soft-deleted and has zero members
+  app.delete(
+    "/api/admin/teams/:id/hard-delete",
+    auth,
+    requireAdmin,
+    TeamController.hardDelete,
+  );
+
   // Get team members (admin only)
   app.get(
     "/api/admin/teams/:id/members",

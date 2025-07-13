@@ -86,6 +86,11 @@ export default function AdminTeamsPage() {
   const [showMembersDialog, setShowMembersDialog] = useState(false);
   const [updatingRoleUserId, setUpdatingRoleUserId] = useState<number | null>(null);
 
+  // Utility function to check if team can be hard deleted
+  const canHardDelete = (team: Team & { memberCount: number }) => {
+    return team.name.includes('(deleted)') && team.memberCount === 0;
+  };
+
   // Fetch all teams with members
   const { data: teamsData, isLoading } = useQuery<TeamsResponse>({
     queryKey: ["/api/admin/teams", page, pageSize, search],
@@ -218,6 +223,30 @@ export default function AdminTeamsPage() {
     },
   });
 
+  // Hard delete team mutation (only for soft-deleted teams with zero members)
+  const hardDeleteTeamMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("DELETE", `/api/admin/teams/${id}/hard-delete`);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/teams"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
+      setSelectedTeam(null); // Clear selection if the team was hard deleted
+      toast({
+        title: "Team permanently deleted",
+        description: "The team has been permanently deleted from the system.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error permanently deleting team",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Remove user from team mutation
   const removeUserMutation = useMutation({
     mutationFn: async ({
@@ -342,6 +371,10 @@ export default function AdminTeamsPage() {
     restoreTeamMutation.mutate(id);
   };
 
+  const handleHardDeleteTeam = (id: number) => {
+    hardDeleteTeamMutation.mutate(id);
+  };
+
   const handleViewMembers = (team: Team) => {
     setSelectedTeam(team);
     setShowMembersDialog(true);
@@ -371,6 +404,8 @@ export default function AdminTeamsPage() {
     onViewMembers: handleViewMembers,
     onDeleteTeam: handleDeleteTeam,
     onRestoreTeam: handleRestoreTeam,
+    onHardDeleteTeam: handleHardDeleteTeam,
+    canHardDelete,
   });
 
   // Get properly typed teams array
