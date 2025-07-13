@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,44 +43,44 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import { 
   Users, 
   Plus, 
-  Edit, 
-  Trash2, 
   UserMinus, 
-  Crown,
-  Eye,
-  MoreHorizontal
+  Search,
+  Loader2,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-interface TeamMember {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  company?: string;
-}
-
-interface TeamWithMembers {
-  id: number;
-  name: string;
-  memberCount: number;
-  members: TeamMember[];
-  createdAt: string;
-  updatedAt: string;
-}
+import { Team, TeamMember, TeamsResponse } from "./teams/types";
+import { getColumns } from "./teams/columns";
 
 export default function AdminTeamsPage() {
   const { toast } = useToast();
-  const [selectedTeam, setSelectedTeam] = useState<TeamWithMembers | null>(null);
-  const [editingTeam, setEditingTeam] = useState<TeamWithMembers | null>(null);
+  
+  // State for table sorting and filtering (client-side)
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+
+  // State for server-side pagination and search
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [search, setSearch] = useState("");
+
+  // State for team management
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [newTeamName, setNewTeamName] = useState("");
   const [editTeamName, setEditTeamName] = useState("");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -88,12 +88,27 @@ export default function AdminTeamsPage() {
   const [showMembersDialog, setShowMembersDialog] = useState(false);
 
   // Fetch all teams with members
-  const { data: teams, isLoading } = useQuery<TeamWithMembers[]>({
-    queryKey: ["/api/admin/teams"],
+  const { data: teamsData, isLoading } = useQuery<TeamsResponse>({
+    queryKey: ["/api/admin/teams", page, pageSize, search],
     queryFn: async () => {
-      const res = await apiRequest("GET", "/api/admin/teams");
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: pageSize.toString(),
+      });
+
+      if (search.trim()) {
+        params.append("search", search.trim());
+      }
+
+      const res = await apiRequest("GET", `/api/admin/teams?${params}`);
       const data = await res.json();
-      return data.teams;
+      return {
+        success: data.success,
+        teams: data.teams,
+        total: data.teams.length,
+        page: page,
+        totalPages: Math.ceil(data.teams.length / pageSize),
+      };
     },
   });
 
@@ -105,6 +120,7 @@ export default function AdminTeamsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/teams"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
       toast({
         title: "Team created",
         description: "The team has been created successfully.",
@@ -129,6 +145,7 @@ export default function AdminTeamsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/teams"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
       toast({
         title: "Team updated",
         description: "The team has been updated successfully.",
@@ -154,6 +171,7 @@ export default function AdminTeamsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/teams"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
       toast({
         title: "Team deleted",
         description: "The team has been deleted successfully.",
@@ -176,6 +194,7 @@ export default function AdminTeamsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/teams"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
       toast({
         title: "User removed",
         description: "The user has been removed from the team successfully.",
@@ -198,6 +217,7 @@ export default function AdminTeamsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/teams"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
       toast({
         title: "Role updated",
         description: "The user's role has been updated successfully.",
@@ -224,7 +244,8 @@ export default function AdminTeamsPage() {
     createTeamMutation.mutate(newTeamName.trim());
   };
 
-  const handleEditTeam = (team: TeamWithMembers) => {
+  // Handler functions
+  const handleEditTeam = (team: Team) => {
     setEditingTeam(team);
     setEditTeamName(team.name);
     setShowEditDialog(true);
@@ -246,7 +267,7 @@ export default function AdminTeamsPage() {
     deleteTeamMutation.mutate(id);
   };
 
-  const handleViewMembers = (team: TeamWithMembers) => {
+  const handleViewMembers = (team: Team) => {
     setSelectedTeam(team);
     setShowMembersDialog(true);
   };
@@ -258,6 +279,38 @@ export default function AdminTeamsPage() {
   const handleUpdateRole = (teamId: number, userId: number, role: string) => {
     updateUserRoleMutation.mutate({ teamId, userId, role });
   };
+
+  // Define columns with handlers
+  const columns = getColumns({
+    onEditTeam: handleEditTeam,
+    onViewMembers: handleViewMembers,
+    onDeleteTeam: handleDeleteTeam,
+  });
+
+  // Get properly typed teams array
+  const teams = teamsData?.teams || [];
+
+  // Create the table
+  const table = useReactTable({
+    data: teams,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+    },
+  });
+
+  // Pagination helpers
+  const totalPages = teamsData?.totalPages || 1;
+  const canPreviousPage = page > 1;
+  const canNextPage = page < totalPages;
 
   if (isLoading) {
     return (
@@ -326,111 +379,150 @@ export default function AdminTeamsPage() {
           </Dialog>
         </div>
 
-        {/* Teams Table */}
+        {/* Search and Filters */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Teams ({teams?.length || 0})
+              Teams ({teamsData?.total || 0})
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {!teams || teams.length === 0 ? (
+            <div className="flex items-center py-4">
+              <div className="relative w-full max-w-sm">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search teams..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+            </div>
+
+            {/* Teams Table */}
+            {isLoading ? (
+              <div className="flex items-center justify-center h-32">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : !teams || teams.length === 0 ? (
               <div className="text-center py-8">
                 <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium">No teams found</h3>
                 <p className="text-muted-foreground mb-4">
-                  Get started by creating your first team.
+                  {search ? "Try adjusting your search terms." : "Get started by creating your first team."}
                 </p>
-                <Button onClick={() => setShowCreateDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Team
-                </Button>
+                {!search && (
+                  <Button onClick={() => setShowCreateDialog(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Team
+                  </Button>
+                )}
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Team Name</TableHead>
-                    <TableHead>Members</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead>Last Updated</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {teams.map((team) => (
-                    <TableRow key={team.id}>
-                      <TableCell>
-                        <div className="font-medium">{team.name}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary">
-                            {team.memberCount} member{team.memberCount !== 1 ? 's' : ''}
-                          </Badge>
-                          {team.members.some(m => m.role === 'admin') && (
-                            <Crown className="h-4 w-4 text-yellow-500" title="Has admin" />
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(team.createdAt).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        {new Date(team.updatedAt).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleViewMembers(team)}>
-                              <Eye className="h-4 w-4 mr-2" />
-                              View Members
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEditTeam(team)}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit Team
-                            </DropdownMenuItem>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <DropdownMenuItem
-                                  onSelect={(e) => e.preventDefault()}
-                                  className="text-red-600"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete Team
-                                </DropdownMenuItem>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This will soft-delete the team "{team.name}". This action cannot be undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDeleteTeam(team.id)}
-                                    className="bg-red-600 hover:bg-red-700"
-                                  >
-                                    Delete Team
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <>
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      {table.getHeaderGroups().map((headerGroup) => (
+                        <TableRow key={headerGroup.id}>
+                          {headerGroup.headers.map((header) => {
+                            return (
+                              <TableHead key={header.id}>
+                                {header.isPlaceholder
+                                  ? null
+                                  : flexRender(
+                                      header.column.columnDef.header,
+                                      header.getContext()
+                                    )}
+                              </TableHead>
+                            )
+                          })}
+                        </TableRow>
+                      ))}
+                    </TableHeader>
+                    <TableBody>
+                      {table.getRowModel().rows?.length ? (
+                        table.getRowModel().rows.map((row) => (
+                          <TableRow
+                            key={row.id}
+                            data-state={row.getIsSelected() && "selected"}
+                          >
+                            {row.getVisibleCells().map((cell) => (
+                              <TableCell key={cell.id}>
+                                {flexRender(
+                                  cell.column.columnDef.cell,
+                                  cell.getContext()
+                                )}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell
+                            colSpan={columns.length}
+                            className="h-24 text-center"
+                          >
+                            No results.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Pagination */}
+                <div className="flex items-center justify-between space-x-2 py-4">
+                  <div className="flex items-center space-x-2">
+                    <p className="text-sm font-medium">Rows per page</p>
+                    <Select
+                      value={`${pageSize}`}
+                      onValueChange={(value) => {
+                        setPageSize(Number(value));
+                        setPage(1);
+                      }}
+                    >
+                      <SelectTrigger className="h-8 w-[70px]">
+                        <SelectValue placeholder={pageSize} />
+                      </SelectTrigger>
+                      <SelectContent side="top">
+                        {[10, 20, 30, 40, 50].map((pageSize) => (
+                          <SelectItem key={pageSize} value={`${pageSize}`}>
+                            {pageSize}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-center space-x-6 lg:space-x-8">
+                    <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                      Page {page} of {totalPages}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        className="h-8 w-8 p-0"
+                        onClick={() => setPage(page - 1)}
+                        disabled={!canPreviousPage}
+                      >
+                        <span className="sr-only">Go to previous page</span>
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="h-8 w-8 p-0"
+                        onClick={() => setPage(page + 1)}
+                        disabled={!canNextPage}
+                      >
+                        <span className="sr-only">Go to next page</span>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
