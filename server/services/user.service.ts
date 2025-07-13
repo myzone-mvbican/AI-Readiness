@@ -33,8 +33,8 @@ export class UserService {
       sortOrder = 'desc'
     } = params;
 
-    // Validate page size limits
-    const validatedLimit = [10, 25, 50].includes(limit) ? limit : 10;
+    // Validate page size limits - allow larger limits for export
+    const validatedLimit = [10, 25, 50, 100, 500, 1000].includes(limit) ? limit : 10;
     const offset = (page - 1) * validatedLimit;
 
     // Build base query

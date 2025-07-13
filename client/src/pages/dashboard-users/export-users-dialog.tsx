@@ -64,7 +64,14 @@ export function ExportUsersDialog({ children }: ExportUsersDialogProps) {
   const { data: allUsersData, isLoading: isLoadingAllUsers } = useQuery({
     queryKey: ["/api/admin/users/export"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/users?limit=10000&page=1", {
+      const params = new URLSearchParams({
+        page: "1",
+        limit: "1000", // Large limit to get all users
+        sortBy: "createdAt",
+        sortOrder: "desc",
+      });
+
+      const response = await fetch(`/api/admin/users?${params}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
