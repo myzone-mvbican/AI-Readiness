@@ -6,6 +6,7 @@ import {
   ShieldCheck,
   ChevronLeft,
   ChevronRight,
+  Download,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { DashboardLayout } from "@/components/layout/dashboard";
@@ -47,6 +48,7 @@ import { User, UsersResponse } from "./types";
 import { getColumns } from "./columns";
 import { UserEditForm } from "./user-edit-form";
 import { UserDeleteDialog } from "./user-delete-dialog";
+import { ExportUsersDialog } from "./export-users-dialog";
 
 export default function UsersPage() {
   const { user: currentUser } = useAuth();
@@ -168,7 +170,16 @@ export default function UsersPage() {
               teams.
             </p>
           </div>
-          <div className="col-span-1 flex justify-end"></div>
+          <div className="col-span-1 flex justify-end">
+            {currentUser?.role === "admin" && (
+              <ExportUsersDialog>
+                <Button variant="outline">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Users
+                </Button>
+              </ExportUsersDialog>
+            )}
+          </div>
         </div>
         <div className="flex items-center justify-between">
           <div className="relative w-64">
