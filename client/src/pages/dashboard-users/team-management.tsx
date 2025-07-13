@@ -105,9 +105,10 @@ export function TeamManagement({
   const teams = teamsData?.teams || [];
 
   // Filtered teams based on search and exclude deleted teams
-  const filteredTeams = teams.filter((team) =>
-    team.name.toLowerCase().includes(teamSearchValue.toLowerCase()) &&
-    !team.name.includes('(deleted)')
+  const filteredTeams = teams.filter(
+    (team) =>
+      team.name.toLowerCase().includes(teamSearchValue.toLowerCase()) &&
+      !team.name.includes("(deleted)"),
   );
 
   // Check if this is the current user
@@ -155,65 +156,63 @@ export function TeamManagement({
           </Badge>
         ))
       )}
-      {!isCurrentUser ? (
-        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-          <PopoverTrigger className="absolute inset-0">
-            <span className="sr-only">Manage Teams</span>
-          </PopoverTrigger>
-          <PopoverContent
-            className="w-[--radix-popover-trigger-width] p-0"
-            align="center"
-            ref={popoverContentRef}
-          >
-            <div className="p-4 border-b">
-              <div className="flex items-center">
-                <h4 className="text-sm font-medium">Manage Teams</h4>
-              </div>
-              <div className="mt-2">
-                <Input
-                  placeholder="Search teams..."
-                  value={teamSearchValue}
-                  onChange={handleInputChange}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
+      <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+        <PopoverTrigger className="absolute inset-0">
+          <span className="sr-only">Manage Teams</span>
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-[--radix-popover-trigger-width] p-0"
+          align="center"
+          ref={popoverContentRef}
+        >
+          <div className="p-4 border-b">
+            <div className="flex items-center">
+              <h4 className="text-sm font-medium">Manage Teams</h4>
             </div>
-
-            <div className="max-h-[250px] overflow-y-auto">
-              {isLoadingTeams ? (
-                <div className="flex items-center justify-center p-4">
-                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                </div>
-              ) : (
-                filteredTeams.map((team) => {
-                  const isAssigned = user.teams.some((t) => t.id === team.id);
-                  return (
-                    <div
-                      key={team.id}
-                      className="flex items-center justify-between px-4 py-2 hover:bg-muted"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <span className="text-sm">{team.name}</span>
-                      <Checkbox
-                        checked={isAssigned}
-                        onCheckedChange={() =>
-                          handleCheckboxChange(user.id, team.id, user.teams)
-                        }
-                      />
-                    </div>
-                  );
-                })
-              )}
-
-              {!isLoadingTeams && filteredTeams.length === 0 && (
-                <div className="text-center p-4 text-sm text-muted-foreground">
-                  No teams found.
-                </div>
-              )}
+            <div className="mt-2">
+              <Input
+                placeholder="Search teams..."
+                value={teamSearchValue}
+                onChange={handleInputChange}
+                onClick={(e) => e.stopPropagation()}
+              />
             </div>
-          </PopoverContent>
-        </Popover>
-      ) : null}
+          </div>
+
+          <div className="max-h-[250px] overflow-y-auto">
+            {isLoadingTeams ? (
+              <div className="flex items-center justify-center p-4">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              </div>
+            ) : (
+              filteredTeams.map((team) => {
+                const isAssigned = user.teams.some((t) => t.id === team.id);
+                return (
+                  <div
+                    key={team.id}
+                    className="flex items-center justify-between px-4 py-2 hover:bg-muted"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <span className="text-sm">{team.name}</span>
+                    <Checkbox
+                      checked={isAssigned}
+                      onCheckedChange={() =>
+                        handleCheckboxChange(user.id, team.id, user.teams)
+                      }
+                    />
+                  </div>
+                );
+              })
+            )}
+
+            {!isLoadingTeams && filteredTeams.length === 0 && (
+              <div className="text-center p-4 text-sm text-muted-foreground">
+                No teams found.
+              </div>
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }

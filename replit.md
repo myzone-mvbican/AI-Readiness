@@ -105,6 +105,7 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
+- July 13, 2025. Implemented comprehensive hard delete system for teams with strict validation - teams can only be permanently deleted if soft-deleted AND have zero members, includes database transactions and conditional UI controls
 - July 13, 2025. Implemented comprehensive team deletion system with restore functionality - deleted teams filtered from all dropdowns and selectors while maintaining restore capability for admins
 - July 9, 2025. Fixed Google OAuth authentication by replacing deprecated tokeninfo endpoint with Google Auth Library and switching from access tokens to ID tokens
 - July 8, 2025. Added admin PDF download tool to settings page - allows admins to download any assessment PDF by ID with real-time validation

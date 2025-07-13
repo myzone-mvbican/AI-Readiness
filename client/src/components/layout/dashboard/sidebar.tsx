@@ -34,7 +34,7 @@ import {
 const defaultUser = {
   name: "mvbican",
   email: "bican.valeriu@myzone.ai",
-  avatar: '',
+  avatar: "",
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -62,7 +62,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, []);
 
   // Check if current team is an admin team
-  const isTeamAdmin = selectedTeam?.role === "admin";
+  const isAdmin = user?.role === "admin";
 
   // Navigation items
   const navItems = [
@@ -84,8 +84,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
   ];
 
-  // Admin-only menu items that are only shown when the current team has admin role
-  const adminNavItems = isTeamAdmin
+  // Admin-only menu items that are only shown when the role has admin role
+  const adminNavItems = isAdmin
     ? [
         {
           title: "Manage Surveys",
