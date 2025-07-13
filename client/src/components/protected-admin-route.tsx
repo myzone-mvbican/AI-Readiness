@@ -1,7 +1,6 @@
+import { Redirect, Route } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
-import { Redirect, Route } from "wouter";
-import React, { useEffect, useState } from "react";
 
 type AdminProtectedRouteProps = {
   path: string;
@@ -13,25 +12,27 @@ export function AdminProtectedRoute({
   component: Component,
 }: AdminProtectedRouteProps) {
   const { user, isLoading } = useAuth();
-  const [selectedTeam, setSelectedTeam] = useState<{ role: string } | null>(null);
-  const [isLoadingTeam, setIsLoadingTeam] = useState(true);
+  // const [selectedTeam, setSelectedTeam] = useState<{ role: string } | null>(
+  //   null,
+  // );
+  // const [isLoadingTeam, setIsLoadingTeam] = useState(true);
 
   // Load selected team from local storage
-  useEffect(() => {
-    setIsLoadingTeam(true);
-    const savedTeam = localStorage.getItem('selectedTeam');
-    if (savedTeam) {
-      try {
-        setSelectedTeam(JSON.parse(savedTeam));
-      } catch (e) {
-        console.error("Error parsing saved team:", e);
-      }
-    }
-    setIsLoadingTeam(false);
-  }, []);
+  // useEffect(() => {
+  //   setIsLoadingTeam(true);
+  //   const savedTeam = localStorage.getItem("selectedTeam");
+  //   if (savedTeam) {
+  //     try {
+  //       setSelectedTeam(JSON.parse(savedTeam));
+  //     } catch (e) {
+  //       console.error("Error parsing saved team:", e);
+  //     }
+  //   }
+  //   setIsLoadingTeam(false);
+  // }, []);
 
   // If still loading user or team data, show loading spinner
-  if (isLoading || isLoadingTeam) {
+  if (isLoading) {
     return (
       <Route path={path}>
         <div className="flex items-center justify-center min-h-screen">
@@ -51,7 +52,7 @@ export function AdminProtectedRoute({
   }
 
   // If authenticated but no team selected or not an admin team, redirect to dashboard
-  if (!selectedTeam || selectedTeam.role !== 'admin') {
+  if (user.role !== "admin") {
     return (
       <Route path={path}>
         <Redirect to="/dashboard" />
