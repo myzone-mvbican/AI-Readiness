@@ -509,9 +509,9 @@ export default function AdminTeamsPage() {
 
         <div className="flex items-center justify-between">
           <div className="relative w-64">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-2 top-2.5 size-4 text-muted-foreground" />
             <Input
-              placeholder="Search teams by name..."
+              placeholder="Search teams..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               className="pl-8"
@@ -632,7 +632,7 @@ export default function AdminTeamsPage() {
               disabled={!canNextPage || isLoading}
             >
               Next
-              <ChevronRight className="h-4 w-4 ml-1" />
+              <ChevronRight className="size-4 ml-1" />
             </Button>
           </div>
         </div>
@@ -686,7 +686,7 @@ export default function AdminTeamsPage() {
             <div className="space-y-4">
               {selectedTeam?.members.length === 0 ? (
                 <div className="text-center py-8">
-                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <Users className="size-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-medium">No members</h3>
                   <p className="text-muted-foreground">
                     This team doesn't have any members yet.
@@ -736,7 +736,7 @@ export default function AdminTeamsPage() {
                                 size="sm"
                                 className="text-red-600"
                               >
-                                <UserMinus className="h-4 w-4" />
+                                <UserMinus className="size-4" />
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
