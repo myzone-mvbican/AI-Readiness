@@ -64,11 +64,38 @@ export class TeamController {
   // Admin-only: Get all teams with member details
   static async getAll(req: Request, res: Response) {
     try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const search = req.query.search as string;
+
       const allTeams = await TeamModel.getAllWithMembers();
+      
+      // Filter teams by search if provided
+      let filteredTeams = allTeams;
+      if (search && search.trim()) {
+        const searchLower = search.toLowerCase();
+        filteredTeams = allTeams.filter(team => 
+          team.name.toLowerCase().includes(searchLower) ||
+          team.members.some(member => 
+            member.name.toLowerCase().includes(searchLower) ||
+            member.email.toLowerCase().includes(searchLower)
+          )
+        );
+      }
+
+      // Apply pagination
+      const total = filteredTeams.length;
+      const totalPages = Math.ceil(total / limit);
+      const offset = (page - 1) * limit;
+      const paginatedTeams = filteredTeams.slice(offset, offset + limit);
 
       return res.status(200).json({
         success: true,
-        teams: allTeams,
+        teams: paginatedTeams,
+        total,
+        page,
+        totalPages,
+        hasMore: page < totalPages,
       });
     } catch (error) {
       console.error("Admin get teams error:", error);
