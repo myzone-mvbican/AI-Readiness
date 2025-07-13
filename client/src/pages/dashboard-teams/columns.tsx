@@ -27,6 +27,8 @@ interface ColumnProps {
   onViewMembers: (team: Team) => void;
   onDeleteTeam: (teamId: number) => void;
   onRestoreTeam: (teamId: number) => void;
+  onHardDeleteTeam: (teamId: number) => void;
+  canHardDelete: (team: Team & { memberCount: number }) => boolean;
 }
 
 export const getColumns = ({
@@ -34,6 +36,8 @@ export const getColumns = ({
   onViewMembers,
   onDeleteTeam,
   onRestoreTeam,
+  onHardDeleteTeam,
+  canHardDelete,
 }: ColumnProps): ColumnDef<Team>[] => [
   {
     accessorKey: "name",
@@ -164,6 +168,37 @@ export const getColumns = ({
                         className="bg-green-600 hover:bg-green-700"
                       >
                         Restore Team
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+              {isDeleted && canHardDelete(team) && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem
+                      onSelect={(e) => e.preventDefault()}
+                      className="text-red-600 focus:text-red-600"
+                    >
+                      <Trash2 className="mr-2 size-4" />
+                      Permanently Delete
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Permanently Delete Team?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete the team "{team.name}" from the system. This action cannot be undone.
+                        Only teams that are soft-deleted and have zero members can be permanently deleted.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => onHardDeleteTeam(team.id)}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        Permanently Delete
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>

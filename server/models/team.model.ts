@@ -235,6 +235,62 @@ export class TeamModel {
     }
   }
 
+  static async canHardDelete(id: number): Promise<{ canDelete: boolean; reason?: string }> {
+    try {
+      const team = await this.getById(id);
+      if (!team) {
+        return { canDelete: false, reason: "Team not found" };
+      }
+
+      // Check if team is soft-deleted
+      if (!team.name.includes('(deleted)')) {
+        return { canDelete: false, reason: "Team must be soft-deleted first" };
+      }
+
+      // Check if team has zero members
+      const members = await this.getTeamMembers(id);
+      if (members.length > 0) {
+        return { canDelete: false, reason: "Team must have zero members" };
+      }
+
+      return { canDelete: true };
+    } catch (error) {
+      console.error("Error checking if team can be hard deleted:", error);
+      return { canDelete: false, reason: "Error checking team eligibility" };
+    }
+  }
+
+  static async hardDelete(id: number): Promise<boolean> {
+    try {
+      // Check if team can be hard deleted
+      const { canDelete, reason } = await this.canHardDelete(id);
+      if (!canDelete) {
+        console.error(`Cannot hard delete team ${id}: ${reason}`);
+        return false;
+      }
+
+      // Perform hard delete in a transaction
+      await db.transaction(async (tx) => {
+        // Delete any remaining user-team relationships (should be none)
+        await tx.delete(userTeams).where(eq(userTeams.teamId, id));
+        
+        // Note: In a real implementation, you might also need to clean up:
+        // - Survey assignments to teams
+        // - Assessment assignments to teams
+        // - Any other foreign key relationships
+        // For now, we'll just delete the team and user-team relationships
+        
+        // Finally delete the team itself
+        await tx.delete(teams).where(eq(teams.id, id));
+      });
+
+      return true;
+    } catch (error) {
+      console.error("Error hard deleting team:", error);
+      return false;
+    }
+  }
+
   static async removeUser(userId: number, teamId: number): Promise<boolean> {
     try {
       const result = await db

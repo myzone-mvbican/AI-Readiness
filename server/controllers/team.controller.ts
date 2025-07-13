@@ -375,4 +375,41 @@ export class TeamController {
       });
     }
   }
+
+  // Admin-only: Hard delete team (only if soft-deleted and has zero members)
+  static async hardDelete(req: Request, res: Response) {
+    try {
+      const teamId = parseInt(req.params.id);
+
+      // Check if team can be hard deleted
+      const { canDelete, reason } = await TeamModel.canHardDelete(teamId);
+      
+      if (!canDelete) {
+        return res.status(400).json({
+          success: false,
+          message: reason || "Team cannot be hard deleted",
+        });
+      }
+
+      const success = await TeamModel.hardDelete(teamId);
+
+      if (!success) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to hard delete team",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Team permanently deleted successfully",
+      });
+    } catch (error) {
+      console.error("Hard delete team error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to hard delete team",
+      });
+    }
+  }
 }
