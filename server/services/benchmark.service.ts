@@ -82,9 +82,10 @@ export class BenchmarkService {
       hierarchy.push(code);
       
       // For numeric NAICS codes, create hierarchy by removing digits from right
+      // Stop at 2 digits minimum (NAICS sector level)
       if (/^\d+$/.test(code)) {
         let currentCode = code;
-        while (currentCode.length > 1) {
+        while (currentCode.length > 2) {
           currentCode = currentCode.slice(0, -1);
           hierarchy.push(currentCode);
         }
@@ -95,7 +96,7 @@ export class BenchmarkService {
         const basePart = code.split("-")[0];
         if (/^\d+$/.test(basePart)) {
           let currentCode = basePart;
-          while (currentCode.length > 1) {
+          while (currentCode.length > 2) {
             currentCode = currentCode.slice(0, -1);
             hierarchy.push(currentCode);
           }
