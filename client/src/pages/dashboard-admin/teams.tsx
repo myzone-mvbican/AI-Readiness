@@ -312,220 +312,213 @@ export default function AdminTeamsPage() {
   const canPreviousPage = page > 1;
   const canNextPage = page < totalPages;
 
-  if (isLoading) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-            <p className="text-muted-foreground">Loading teams...</p>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  // Server-side search with debounce
+  const [searchInput, setSearchInput] = useState("");
+
+  useMemo(() => {
+    const timeoutId = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1); // Reset to first page when searching
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchInput]);
 
   return (
-    <DashboardLayout>
+    <DashboardLayout title="Manage Teams">
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">Team Management</h1>
-            <p className="text-muted-foreground">
+        <div className="grid grid-cols-1 md:grid-cols-2 space-y-3">
+          <div className="col-span-1">
+            <div className="col-span-1 flex items-center space-x-2">
+              <Users className="h-6 w-6 text-blue-500" />
+              <h2 className="text-xl text-foreground font-semibold">
+                Manage Teams
+              </h2>
+            </div>
+            <p className="text-muted-foreground mt-2">
               Manage teams and their members across the platform
             </p>
           </div>
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Team
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Team</DialogTitle>
-                <DialogDescription>
-                  Create a new team to organize users and manage access.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="teamName">Team Name</Label>
-                  <Input
-                    id="teamName"
-                    value={newTeamName}
-                    onChange={(e) => setNewTeamName(e.target.value)}
-                    placeholder="Enter team name"
-                  />
+          <div className="col-span-1 flex justify-end">
+            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Team
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Team</DialogTitle>
+                  <DialogDescription>
+                    Create a new team to organize users and manage access.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="teamName">Team Name</Label>
+                    <Input
+                      id="teamName"
+                      value={newTeamName}
+                      onChange={(e) => setNewTeamName(e.target.value)}
+                      placeholder="Enter team name"
+                    />
+                  </div>
                 </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowCreateDialog(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleCreateTeam}
-                  disabled={createTeamMutation.isPending}
-                >
-                  {createTeamMutation.isPending ? "Creating..." : "Create Team"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCreateDialog(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleCreateTeam}
+                    disabled={createTeamMutation.isPending}
+                  >
+                    {createTeamMutation.isPending ? "Creating..." : "Create Team"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
-        {/* Search and Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Teams ({teamsData?.total || 0})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center py-4">
-              <div className="relative w-full max-w-sm">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search teams..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-            </div>
+        <div className="flex items-center justify-between">
+          <div className="relative w-64">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search teams by name..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="pl-8"
+            />
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-muted-foreground">Page size:</span>
+            <Select
+              value={pageSize.toString()}
+              onValueChange={(value) => {
+                setPageSize(parseInt(value));
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
-            {/* Teams Table */}
-            {isLoading ? (
-              <div className="flex items-center justify-center h-32">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : !teams || teams.length === 0 ? (
-              <div className="text-center py-8">
-                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium">No teams found</h3>
-                <p className="text-muted-foreground mb-4">
-                  {search ? "Try adjusting your search terms." : "Get started by creating your first team."}
-                </p>
-                {!search && (
-                  <Button onClick={() => setShowCreateDialog(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Team
-                  </Button>
-                )}
-              </div>
-            ) : (
+        <div className="relative rounded-md border overflow-auto">
+          <Table className="w-full whitespace-nowrap">
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={5}
+                    className="h-24 text-center text-foreground"
+                  >
+                    Loading teams...
+                  </TableCell>
+                </TableRow>
+              ) : table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="p-0 px-4">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No teams found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Server-side Pagination */}
+        <div className="flex items-center justify-between py-4">
+          <div className="text-sm text-muted-foreground">
+            {teamsData && (
               <>
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      {table.getHeaderGroups().map((headerGroup) => (
-                        <TableRow key={headerGroup.id}>
-                          {headerGroup.headers.map((header) => {
-                            return (
-                              <TableHead key={header.id}>
-                                {header.isPlaceholder
-                                  ? null
-                                  : flexRender(
-                                      header.column.columnDef.header,
-                                      header.getContext()
-                                    )}
-                              </TableHead>
-                            )
-                          })}
-                        </TableRow>
-                      ))}
-                    </TableHeader>
-                    <TableBody>
-                      {table.getRowModel().rows?.length ? (
-                        table.getRowModel().rows.map((row) => (
-                          <TableRow
-                            key={row.id}
-                            data-state={row.getIsSelected() && "selected"}
-                          >
-                            {row.getVisibleCells().map((cell) => (
-                              <TableCell key={cell.id}>
-                                {flexRender(
-                                  cell.column.columnDef.cell,
-                                  cell.getContext()
-                                )}
-                              </TableCell>
-                            ))}
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell
-                            colSpan={columns.length}
-                            className="h-24 text-center"
-                          >
-                            No results.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                {/* Pagination */}
-                <div className="flex items-center justify-between space-x-2 py-4">
-                  <div className="flex items-center space-x-2">
-                    <p className="text-sm font-medium">Rows per page</p>
-                    <Select
-                      value={`${pageSize}`}
-                      onValueChange={(value) => {
-                        setPageSize(Number(value));
-                        setPage(1);
-                      }}
-                    >
-                      <SelectTrigger className="h-8 w-[70px]">
-                        <SelectValue placeholder={pageSize} />
-                      </SelectTrigger>
-                      <SelectContent side="top">
-                        {[10, 20, 30, 40, 50].map((pageSize) => (
-                          <SelectItem key={pageSize} value={`${pageSize}`}>
-                            {pageSize}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="flex items-center space-x-6 lg:space-x-8">
-                    <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-                      Page {page} of {totalPages}
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        className="h-8 w-8 p-0"
-                        onClick={() => setPage(page - 1)}
-                        disabled={!canPreviousPage}
-                      >
-                        <span className="sr-only">Go to previous page</span>
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="h-8 w-8 p-0"
-                        onClick={() => setPage(page + 1)}
-                        disabled={!canNextPage}
-                      >
-                        <span className="sr-only">Go to next page</span>
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+                Showing{" "}
+                {(teamsData.page - 1) * pageSize + 1}{" "}
+                to{" "}
+                {Math.min(
+                  teamsData.page * pageSize,
+                  teamsData.total,
+                )}{" "}
+                of {teamsData.total} teams
               </>
             )}
-          </CardContent>
-        </Card>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(page - 1)}
+              disabled={!canPreviousPage || isLoading}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Previous
+            </Button>
+
+            <div className="flex items-center space-x-1">
+              <span className="text-sm text-muted-foreground">
+                Page {teamsData?.page || 1} of{" "}
+                {teamsData?.totalPages || 1}
+              </span>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(page + 1)}
+              disabled={!canNextPage || isLoading}
+            >
+              Next
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
 
         {/* Edit Team Dialog */}
         <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
