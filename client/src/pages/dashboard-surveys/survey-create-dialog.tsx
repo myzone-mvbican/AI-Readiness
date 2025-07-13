@@ -401,7 +401,7 @@ export default function SurveyCreateDialog({
                           <CommandInput placeholder="Search teams..." />
                           <CommandEmpty>No teams found.</CommandEmpty>
                           <CommandGroup>
-                            {teams.map((team: any) => (
+                            {teams.filter((team: any) => !team.name.includes('(deleted)')).map((team: any) => (
                               <CommandItem
                                 key={team.id}
                                 value={team.name}
