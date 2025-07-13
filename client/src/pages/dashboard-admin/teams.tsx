@@ -186,6 +186,29 @@ export default function AdminTeamsPage() {
     },
   });
 
+  // Restore team mutation
+  const restoreTeamMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("POST", `/api/admin/teams/${id}/restore`);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/teams"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
+      toast({
+        title: "Team restored",
+        description: "The team has been restored successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error restoring team",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Remove user from team mutation
   const removeUserMutation = useMutation({
     mutationFn: async ({ teamId, userId }: { teamId: number; userId: number }) => {
@@ -267,6 +290,10 @@ export default function AdminTeamsPage() {
     deleteTeamMutation.mutate(id);
   };
 
+  const handleRestoreTeam = (id: number) => {
+    restoreTeamMutation.mutate(id);
+  };
+
   const handleViewMembers = (team: Team) => {
     setSelectedTeam(team);
     setShowMembersDialog(true);
@@ -285,6 +312,7 @@ export default function AdminTeamsPage() {
     onEditTeam: handleEditTeam,
     onViewMembers: handleViewMembers,
     onDeleteTeam: handleDeleteTeam,
+    onRestoreTeam: handleRestoreTeam,
   });
 
   // Get properly typed teams array

@@ -169,6 +169,33 @@ export class TeamController {
     }
   }
 
+  // Admin-only: Restore team
+  static async restore(req: Request, res: Response) {
+    try {
+      const teamId = parseInt(req.params.id);
+      
+      const success = await TeamModel.restoreTeam(teamId);
+
+      if (!success) {
+        return res.status(404).json({
+          success: false,
+          message: "Team not found",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Team restored successfully",
+      });
+    } catch (error) {
+      console.error("Restore team error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to restore team",
+      });
+    }
+  }
+
   // Admin-only: Remove user from team
   static async removeUser(req: Request, res: Response) {
     try {

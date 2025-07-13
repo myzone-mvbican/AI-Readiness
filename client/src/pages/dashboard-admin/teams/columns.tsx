@@ -19,29 +19,34 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { MoreHorizontal, Edit, Eye, Trash2, Crown } from "lucide-react";
+import { MoreHorizontal, Edit, Eye, Trash2, Crown, RotateCcw } from "lucide-react";
 import { Team } from "./types";
 
 interface ColumnProps {
   onEditTeam: (team: Team) => void;
   onViewMembers: (team: Team) => void;
   onDeleteTeam: (teamId: number) => void;
+  onRestoreTeam: (teamId: number) => void;
 }
 
 export const getColumns = ({
   onEditTeam,
   onViewMembers,
   onDeleteTeam,
+  onRestoreTeam,
 }: ColumnProps): ColumnDef<Team>[] => [
   {
     accessorKey: "name",
     header: "Team Name",
     cell: ({ row }) => {
       const team = row.original;
+      const isDeleted = team.name.includes('(deleted)');
       return (
         <div className="flex items-center gap-2">
-          <div className="font-medium">{team.name}</div>
-          {team.members.some(m => m.role === 'admin') && (
+          <div className={`font-medium ${isDeleted ? 'text-muted-foreground line-through' : ''}`}>
+            {team.name}
+          </div>
+          {!isDeleted && team.members.some(m => m.role === 'admin') && (
             <Crown className="h-4 w-4 text-yellow-500" title="Has admin" />
           )}
         </div>
@@ -81,6 +86,7 @@ export const getColumns = ({
     header: () => <div className="text-right">Actions</div>,
     cell: ({ row }) => {
       const team = row.original;
+      const isDeleted = team.name.includes('(deleted)');
 
       return (
         <div className="text-right">
@@ -92,43 +98,77 @@ export const getColumns = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onViewMembers(team)}>
-                <Eye className="mr-2 h-4 w-4" />
-                View Members
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onEditTeam(team)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Team
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem
-                    onSelect={(e) => e.preventDefault()}
-                    className="text-red-600 focus:text-red-600"
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete Team
+              {!isDeleted && (
+                <>
+                  <DropdownMenuItem onClick={() => onViewMembers(team)}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Members
                   </DropdownMenuItem>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will soft-delete the team "{team.name}". This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => onDeleteTeam(team.id)}
-                      className="bg-red-600 hover:bg-red-700"
+                  <DropdownMenuItem onClick={() => onEditTeam(team)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Team
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <DropdownMenuItem
+                        onSelect={(e) => e.preventDefault()}
+                        className="text-red-600 focus:text-red-600"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete Team
+                      </DropdownMenuItem>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will soft-delete the team "{team.name}". This action can be undone by restoring the team.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => onDeleteTeam(team.id)}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          Delete Team
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
+              {isDeleted && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem
+                      onSelect={(e) => e.preventDefault()}
+                      className="text-green-600 focus:text-green-600"
                     >
-                      Delete Team
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                      <RotateCcw className="mr-2 h-4 w-4" />
+                      Restore Team
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Restore Team?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will restore the team "{team.name}" and make it active again.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => onRestoreTeam(team.id)}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        Restore Team
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

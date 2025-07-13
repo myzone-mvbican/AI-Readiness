@@ -203,7 +203,7 @@ export class TeamModel {
       // For now, we'll implement soft delete by updating name to include "(deleted)"
       // In future, we could add a deletedAt field to the schema
       const team = await this.getById(id);
-      if (!team) return false;
+      if (!team || team.name.includes('(deleted)')) return false;
 
       await this.update(id, {
         name: `${team.name} (deleted)`,
@@ -212,6 +212,25 @@ export class TeamModel {
       return true;
     } catch (error) {
       console.error("Error soft deleting team:", error);
+      return false;
+    }
+  }
+
+  static async restoreTeam(id: number): Promise<boolean> {
+    try {
+      const team = await this.getById(id);
+      if (!team || !team.name.includes('(deleted)')) return false;
+
+      // Remove "(deleted)" from the team name
+      const originalName = team.name.replace(' (deleted)', '');
+      
+      await this.update(id, {
+        name: originalName,
+      });
+
+      return true;
+    } catch (error) {
+      console.error("Error restoring team:", error);
       return false;
     }
   }

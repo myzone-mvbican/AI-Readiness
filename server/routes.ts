@@ -268,6 +268,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     TeamController.delete,
   );
 
+  // Restore team (admin only)
+  app.post(
+    "/api/admin/teams/:id/restore",
+    auth,
+    requireAdmin,
+    TeamController.restore,
+  );
+
   // Get team members (admin only)
   app.get(
     "/api/admin/teams/:id/members",
