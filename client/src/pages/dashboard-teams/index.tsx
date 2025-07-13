@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -110,6 +110,16 @@ export default function AdminTeamsPage() {
       };
     },
   });
+
+  // Effect to update selectedTeam when teams data changes
+  useEffect(() => {
+    if (selectedTeam && teamsData?.teams) {
+      const updatedTeam = teamsData.teams.find(team => team.id === selectedTeam.id);
+      if (updatedTeam && JSON.stringify(updatedTeam) !== JSON.stringify(selectedTeam)) {
+        setSelectedTeam(updatedTeam);
+      }
+    }
+  }, [teamsData, selectedTeam]);
 
   // Create team mutation
   const createTeamMutation = useMutation({
@@ -264,7 +274,16 @@ export default function AdminTeamsPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       // Force a refetch to ensure immediate UI update
-      queryClient.refetchQueries({ queryKey: ["/api/admin/teams"] });
+      queryClient.refetchQueries({ queryKey: ["/api/admin/teams"] }).then(() => {
+        // Update selectedTeam with fresh data after refetch
+        if (selectedTeam) {
+          const freshTeamsData = queryClient.getQueryData(["/api/admin/teams"]) as TeamsResponse;
+          const updatedTeam = freshTeamsData?.teams?.find(team => team.id === selectedTeam.id);
+          if (updatedTeam) {
+            setSelectedTeam(updatedTeam);
+          }
+        }
+      });
       setUpdatingRoleUserId(null);
       toast({
         title: "Role updated",
@@ -334,6 +353,15 @@ export default function AdminTeamsPage() {
 
   const handleUpdateRole = (teamId: number, userId: number, role: string) => {
     setUpdatingRoleUserId(userId);
+    
+    // Optimistic update: immediately update the selectedTeam state
+    if (selectedTeam && selectedTeam.id === teamId) {
+      const updatedMembers = selectedTeam.members.map(member => 
+        member.id === userId ? { ...member, role } : member
+      );
+      setSelectedTeam({ ...selectedTeam, members: updatedMembers });
+    }
+    
     updateUserRoleMutation.mutate({ teamId, userId, role });
   };
 
