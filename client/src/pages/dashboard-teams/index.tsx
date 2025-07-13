@@ -3,8 +3,6 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { DashboardLayout } from "@/components/layout/dashboard";
@@ -53,21 +51,21 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { 
-  Users, 
-  Plus, 
-  UserMinus, 
+import {
+  Users,
+  Plus,
+  UserMinus,
   Search,
   Loader2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
 } from "lucide-react";
-import { Team, TeamMember, TeamsResponse } from "./teams/types";
-import { getColumns } from "./teams/columns";
+import { Team, TeamMember, TeamsResponse } from "./types";
+import { getColumns } from "./columns";
 
 export default function AdminTeamsPage() {
   const { toast } = useToast();
-  
+
   // State for table sorting and filtering (client-side)
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -86,6 +84,7 @@ export default function AdminTeamsPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showMembersDialog, setShowMembersDialog] = useState(false);
+  const [updatingRoleUserId, setUpdatingRoleUserId] = useState<number | null>(null);
 
   // Fetch all teams with members
   const { data: teamsData, isLoading } = useQuery<TeamsResponse>({
@@ -211,8 +210,17 @@ export default function AdminTeamsPage() {
 
   // Remove user from team mutation
   const removeUserMutation = useMutation({
-    mutationFn: async ({ teamId, userId }: { teamId: number; userId: number }) => {
-      const res = await apiRequest("DELETE", `/api/admin/teams/${teamId}/users/${userId}`);
+    mutationFn: async ({
+      teamId,
+      userId,
+    }: {
+      teamId: number;
+      userId: number;
+    }) => {
+      const res = await apiRequest(
+        "DELETE",
+        `/api/admin/teams/${teamId}/users/${userId}`,
+      );
       return await res.json();
     },
     onSuccess: () => {
@@ -234,19 +242,37 @@ export default function AdminTeamsPage() {
 
   // Update user role mutation
   const updateUserRoleMutation = useMutation({
-    mutationFn: async ({ teamId, userId, role }: { teamId: number; userId: number; role: string }) => {
-      const res = await apiRequest("PATCH", `/api/admin/teams/${teamId}/users/${userId}/role`, { role });
+    mutationFn: async ({
+      teamId,
+      userId,
+      role,
+    }: {
+      teamId: number;
+      userId: number;
+      role: string;
+    }) => {
+      const res = await apiRequest(
+        "PATCH",
+        `/api/admin/teams/${teamId}/users/${userId}/role`,
+        { role },
+      );
       return await res.json();
     },
     onSuccess: () => {
+      // Invalidate all team-related queries to ensure UI updates
       queryClient.invalidateQueries({ queryKey: ["/api/admin/teams"] });
       queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      // Force a refetch to ensure immediate UI update
+      queryClient.refetchQueries({ queryKey: ["/api/admin/teams"] });
+      setUpdatingRoleUserId(null);
       toast({
         title: "Role updated",
         description: "The user's role has been updated successfully.",
       });
     },
     onError: (error: Error) => {
+      setUpdatingRoleUserId(null);
       toast({
         title: "Error updating role",
         description: error.message,
@@ -283,7 +309,10 @@ export default function AdminTeamsPage() {
       });
       return;
     }
-    updateTeamMutation.mutate({ id: editingTeam.id, name: editTeamName.trim() });
+    updateTeamMutation.mutate({
+      id: editingTeam.id,
+      name: editTeamName.trim(),
+    });
   };
 
   const handleDeleteTeam = (id: number) => {
@@ -304,6 +333,7 @@ export default function AdminTeamsPage() {
   };
 
   const handleUpdateRole = (teamId: number, userId: number, role: string) => {
+    setUpdatingRoleUserId(userId);
     updateUserRoleMutation.mutate({ teamId, userId, role });
   };
 
@@ -404,7 +434,9 @@ export default function AdminTeamsPage() {
                     onClick={handleCreateTeam}
                     disabled={createTeamMutation.isPending}
                   >
-                    {createTeamMutation.isPending ? "Creating..." : "Create Team"}
+                    {createTeamMutation.isPending
+                      ? "Creating..."
+                      : "Create Team"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -506,14 +538,9 @@ export default function AdminTeamsPage() {
           <div className="text-sm text-muted-foreground">
             {teamsData && (
               <>
-                Showing{" "}
-                {(teamsData.page - 1) * pageSize + 1}{" "}
-                to{" "}
-                {Math.min(
-                  teamsData.page * pageSize,
-                  teamsData.total,
-                )}{" "}
-                of {teamsData.total} teams
+                Showing {(teamsData.page - 1) * pageSize + 1} to{" "}
+                {Math.min(teamsData.page * pageSize, teamsData.total)} of{" "}
+                {teamsData.total} teams
               </>
             )}
           </div>
@@ -531,8 +558,7 @@ export default function AdminTeamsPage() {
 
             <div className="flex items-center space-x-1">
               <span className="text-sm text-muted-foreground">
-                Page {teamsData?.page || 1} of{" "}
-                {teamsData?.totalPages || 1}
+                Page {teamsData?.page || 1} of {teamsData?.totalPages || 1}
               </span>
             </div>
 
@@ -589,9 +615,7 @@ export default function AdminTeamsPage() {
         <Dialog open={showMembersDialog} onOpenChange={setShowMembersDialog}>
           <DialogContent className="max-w-4xl">
             <DialogHeader>
-              <DialogTitle>
-                Team Members - {selectedTeam?.name}
-              </DialogTitle>
+              <DialogTitle>Team Members - {selectedTeam?.name}</DialogTitle>
               <DialogDescription>
                 Manage team members and their roles.
               </DialogDescription>
@@ -627,7 +651,8 @@ export default function AdminTeamsPage() {
                         <TableCell>
                           <Select
                             value={member.role}
-                            onValueChange={(role) => 
+                            disabled={updatingRoleUserId === member.id}
+                            onValueChange={(role) =>
                               handleUpdateRole(selectedTeam.id, member.id, role)
                             }
                           >
@@ -643,21 +668,30 @@ export default function AdminTeamsPage() {
                         <TableCell className="text-right">
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm" className="text-red-600">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-600"
+                              >
                                 <UserMinus className="h-4 w-4" />
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Remove member?</AlertDialogTitle>
+                                <AlertDialogTitle>
+                                  Remove member?
+                                </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  This will remove {member.name} from the team. They will lose access to team resources.
+                                  This will remove {member.name} from the team.
+                                  They will lose access to team resources.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
-                                  onClick={() => handleRemoveUser(selectedTeam.id, member.id)}
+                                  onClick={() =>
+                                    handleRemoveUser(selectedTeam.id, member.id)
+                                  }
                                   className="bg-red-600 hover:bg-red-700"
                                 >
                                   Remove Member
@@ -673,9 +707,7 @@ export default function AdminTeamsPage() {
               )}
             </div>
             <DialogFooter>
-              <Button onClick={() => setShowMembersDialog(false)}>
-                Close
-              </Button>
+              <Button onClick={() => setShowMembersDialog(false)}>Close</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
