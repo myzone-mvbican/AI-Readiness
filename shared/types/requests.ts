@@ -37,6 +37,7 @@ export type GoogleConnectInput = z.infer<typeof googleConnectSchema>;
  * Types for team creation and user-team relationships
  */
 export type InsertTeam = z.infer<typeof insertTeamSchema>;
+export type UpdateTeam = { name?: string };
 export type InsertUserTeam = z.infer<typeof userTeamSchema>;
 
 /**

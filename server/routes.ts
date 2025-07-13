@@ -242,6 +242,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     SurveyController.delete,
   );
 
+  // Admin Team Management routes
+  
+  // Get all teams with member details (admin only)
+  app.get(
+    "/api/admin/teams",
+    auth,
+    requireAdmin,
+    TeamController.getAll,
+  );
+
+  // Update team (admin only)
+  app.put(
+    "/api/admin/teams/:id",
+    auth,
+    requireAdmin,
+    TeamController.update,
+  );
+
+  // Delete team (admin only)
+  app.delete(
+    "/api/admin/teams/:id",
+    auth,
+    requireAdmin,
+    TeamController.delete,
+  );
+
+  // Get team members (admin only)
+  app.get(
+    "/api/admin/teams/:id/members",
+    auth,
+    requireAdmin,
+    TeamController.getMembers,
+  );
+
+  // Remove user from team (admin only)
+  app.delete(
+    "/api/admin/teams/:teamId/users/:userId",
+    auth,
+    requireAdmin,
+    TeamController.removeUser,
+  );
+
+  // Update user role in team (admin only)
+  app.patch(
+    "/api/admin/teams/:teamId/users/:userId/role",
+    auth,
+    requireAdmin,
+    TeamController.updateUserRole,
+  );
+
   // Admin User Management routes
   
   // Search users by name or email (admin only)
