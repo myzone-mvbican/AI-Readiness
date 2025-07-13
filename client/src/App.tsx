@@ -30,7 +30,7 @@ import AssessmentDetailPage from "@/pages/dashboard-assessments/[id]";
 // Admin pages
 import AdminSurveysPage from "@/pages/dashboard-surveys";
 import AdminUsersPage from "@/pages/dashboard-users";
-import AdminTeamsPage from "@/pages/dashboard-admin/teams";
+import AdminTeamsPage from "@/pages/dashboard-teams";
 import AdminSettingsPage from "@/pages/dashboard-admin/settings";
 // Account settings page
 import AccountSettingsPage from "./pages/account-settings";
