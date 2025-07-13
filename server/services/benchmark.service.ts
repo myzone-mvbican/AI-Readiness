@@ -63,6 +63,64 @@ export class BenchmarkService {
   }
 
   /**
+   * Get industry statistics with hierarchical NAICS fallback
+   * Tries exact match first, then progressively broader NAICS categories
+   */
+  static async getIndustryStatsWithFallback(
+    allStats: any[],
+    industry: string
+  ): Promise<any[]> {
+    if (!industry) {
+      return [];
+    }
+
+    // Helper function to get NAICS hierarchy levels
+    const getNAICSHierarchy = (code: string): string[] => {
+      const hierarchy: string[] = [];
+      
+      // Start with the exact code
+      hierarchy.push(code);
+      
+      // For numeric NAICS codes, create hierarchy by removing digits from right
+      if (/^\d+$/.test(code)) {
+        let currentCode = code;
+        while (currentCode.length > 1) {
+          currentCode = currentCode.slice(0, -1);
+          hierarchy.push(currentCode);
+        }
+      }
+      
+      // For special cases like "31-33" (Manufacturing), try some common patterns
+      if (code.includes("-")) {
+        const basePart = code.split("-")[0];
+        if (/^\d+$/.test(basePart)) {
+          let currentCode = basePart;
+          while (currentCode.length > 1) {
+            currentCode = currentCode.slice(0, -1);
+            hierarchy.push(currentCode);
+          }
+        }
+      }
+      
+      return hierarchy;
+    };
+
+    const hierarchyLevels = getNAICSHierarchy(industry);
+    
+    // Try each level in the hierarchy until we find statistics
+    for (const level of hierarchyLevels) {
+      const statsForLevel = allStats.filter((s) => s.industry === level);
+      if (statsForLevel.length > 0) {
+        console.log(`Found industry stats for ${industry} using hierarchy level: ${level}`);
+        return statsForLevel;
+      }
+    }
+    
+    console.log(`No industry stats found for ${industry} in any hierarchy level`);
+    return [];
+  }
+
+  /**
    * Get user industry from assessment (guest or authenticated user)
    */
   static getUserIndustry(assessment: any, user: any): string | null {
@@ -426,7 +484,8 @@ export class BenchmarkService {
         .from(surveyStats)
         .where(eq(surveyStats.quarter, quarter));
 
-      const industryStats = stats.filter((s) => s.industry === industry);
+      // Try hierarchical fallback for industry stats
+      const industryStats = await this.getIndustryStatsWithFallback(stats, industry);
       const globalStats = stats.filter((s) => s.industry === "global");
 
       // Calculate user's category scores using real data
@@ -463,6 +522,14 @@ export class BenchmarkService {
           };
         },
       );
+
+      // Log which industry level was used for debugging
+      if (industryStats.length > 0) {
+        const usedIndustryCode = industryStats[0].industry;
+        if (usedIndustryCode !== industry) {
+          console.log(`Benchmark: Used hierarchy fallback from ${industry} to ${usedIndustryCode}`);
+        }
+      }
 
       return {
         quarter,
