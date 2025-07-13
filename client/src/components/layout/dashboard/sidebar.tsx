@@ -26,6 +26,7 @@ import {
   ScrollText,
   FileSpreadsheet,
   Users,
+  Users2,
   Settings,
 } from "lucide-react";
 
@@ -95,6 +96,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Manage Users",
           url: "/dashboard/admin/users",
           icon: Users,
+        },
+        {
+          title: "Manage Teams",
+          url: "/dashboard/admin/teams",
+          icon: Users2,
         },
         {
           title: "Settings / Tools",

@@ -61,10 +61,10 @@ export class TeamController {
     }
   }
 
-  // Admin-only: Get all teams
+  // Admin-only: Get all teams with member details
   static async getAll(req: Request, res: Response) {
     try {
-      const allTeams = await db.select().from(teams);
+      const allTeams = await TeamModel.getAllWithMembers();
 
       return res.status(200).json({
         success: true,
@@ -74,7 +74,153 @@ export class TeamController {
       console.error("Admin get teams error:", error);
       return res.status(500).json({
         success: false,
-        message: "Failed to retrieve all teams",
+        message: "Failed to retrieve teams",
+      });
+    }
+  }
+
+  // Admin-only: Update team
+  static async update(req: Request, res: Response) {
+    try {
+      const teamId = parseInt(req.params.id);
+      const { name } = req.body;
+
+      if (!name || name.trim().length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Team name is required",
+        });
+      }
+
+      const updatedTeam = await TeamModel.update(teamId, { name: name.trim() });
+
+      if (!updatedTeam) {
+        return res.status(404).json({
+          success: false,
+          message: "Team not found",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Team updated successfully",
+        team: updatedTeam,
+      });
+    } catch (error) {
+      console.error("Update team error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to update team",
+      });
+    }
+  }
+
+  // Admin-only: Delete team (soft delete)
+  static async delete(req: Request, res: Response) {
+    try {
+      const teamId = parseInt(req.params.id);
+      
+      const success = await TeamModel.softDelete(teamId);
+
+      if (!success) {
+        return res.status(404).json({
+          success: false,
+          message: "Team not found",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Team deleted successfully",
+      });
+    } catch (error) {
+      console.error("Delete team error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to delete team",
+      });
+    }
+  }
+
+  // Admin-only: Remove user from team
+  static async removeUser(req: Request, res: Response) {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      const userId = parseInt(req.params.userId);
+
+      const success = await TeamModel.removeUser(userId, teamId);
+
+      if (!success) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found in team",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "User removed from team successfully",
+      });
+    } catch (error) {
+      console.error("Remove user from team error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to remove user from team",
+      });
+    }
+  }
+
+  // Admin-only: Update user role in team
+  static async updateUserRole(req: Request, res: Response) {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      const userId = parseInt(req.params.userId);
+      const { role } = req.body;
+
+      if (!["admin", "member"].includes(role)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid role. Must be 'admin' or 'member'",
+        });
+      }
+
+      const success = await TeamModel.updateUserRole(userId, teamId, role);
+
+      if (!success) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found in team",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "User role updated successfully",
+      });
+    } catch (error) {
+      console.error("Update user role error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to update user role",
+      });
+    }
+  }
+
+  // Admin-only: Get team members
+  static async getMembers(req: Request, res: Response) {
+    try {
+      const teamId = parseInt(req.params.id);
+      const members = await TeamModel.getTeamMembers(teamId);
+
+      return res.status(200).json({
+        success: true,
+        members,
+      });
+    } catch (error) {
+      console.error("Get team members error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to retrieve team members",
       });
     }
   }
