@@ -21,10 +21,10 @@ export class UserController {
         });
       }
 
-      if (![10, 25, 50].includes(limit)) {
+      if (![10, 25, 50, 100, 500, 1000].includes(limit)) {
         return res.status(400).json({
           success: false,
-          message: "Limit must be 10, 25, or 50",
+          message: "Limit must be 10, 25, 50, 100, 500, or 1000",
         });
       }
 
