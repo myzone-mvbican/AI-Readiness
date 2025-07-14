@@ -134,13 +134,13 @@ export function BenchmarkStatsTool() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <RefreshCw className="h-5 w-5" />
+        <CardTitle className="flex items-center space-x-2 text-base lg:text-xl">
+          <RefreshCw className="size-5" />
           <span>Benchmark Statistics</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="space-y-1">
             <p className="text-sm font-medium">Recalculate Statistics</p>
             <p className="text-sm text-muted-foreground">
@@ -157,12 +157,12 @@ export function BenchmarkStatsTool() {
           >
             {isRecalculating ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-2 size-4 animate-spin" />
                 Recalculating...
               </>
             ) : (
               <>
-                <RefreshCw className="mr-2 h-4 w-4" />
+                <RefreshCw className="mr-2 size-4" />
                 Recalculate
               </>
             )}

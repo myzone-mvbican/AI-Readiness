@@ -1,5 +1,5 @@
 import { AppSidebar } from "./dashboard/sidebar";
-import { ThemeToggle } from "@/components/theme/toggle";
+// import { ThemeToggle } from "@/components/theme/toggle";
 import { Separator } from "@/components/ui/separator";
 import { useMemo } from "react";
 import { Link, useLocation } from "wouter";
@@ -69,9 +69,7 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-            <div className="ml-auto">
-              <ThemeToggle />
-            </div>
+            <div className="ml-auto"></div>
           </div>
         </header>
         <main className="bg-white dark:bg-gray-900 flex-1 p-6">{children}</main>
