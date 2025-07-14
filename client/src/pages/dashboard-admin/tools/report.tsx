@@ -207,8 +207,8 @@ export function PDFDownloadTool() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <FileText className="h-5 w-5 text-primary" />
+        <CardTitle className="flex items-center space-x-2 text-base lg:text-xl">
+          <FileText className="size-5" />
           <span>Assessment PDF Download</span>
         </CardTitle>
       </CardHeader>
