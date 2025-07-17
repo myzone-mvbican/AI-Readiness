@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
-// import Particles, { initParticlesEngine } from "@tsparticles/react";
+// import { useState, useEffect, useMemo } from "react";
 // import { loadSlim } from "@tsparticles/slim";
+// import Particles, { initParticlesEngine } from "@tsparticles/react";
 // import { loadPolygonMaskPlugin } from "@tsparticles/plugin-polygon-mask";
 // import type { Engine } from "@tsparticles/engine";
-// import { useIsMobile } from "@/hooks/use-mobile";
-// import homeTop from "@/assets/home-top-v3.svg";
-import homeTopImage from "@/assets/ai-readiness-top.png";
+// import { useIsMobile } from "@/hooks/use-mobile"; 
+import homeTopImage from "@/assets/top-graphic.svg";
 
 interface HeroProps {
     onStartAssessment: () => void;
@@ -13,7 +13,7 @@ interface HeroProps {
 
 // Sample functional component
 export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
-    // const [init, setInit] = React.useState(false);
+    // const [init, setInit] = useState(false);
     // const isMobile = useIsMobile();
 
     // useEffect(() => {
@@ -70,7 +70,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
     //                 speed: { min: 0.5, max: 1 },
     //             },
     //             number: {
-    //                 value: 150,
+    //                 value: 100,
     //             },
     //             opacity: {
     //                 animation: {
@@ -109,12 +109,12 @@ export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
     //             inline: {
     //                 arrangement: "equidistant",
     //             },
-    //             scale: 0.975,
+    //             scale: .36,
     //             type: "inline",
-    //             url: homeTop,
+    //             url: homeTopImage,
     //             position: {
-    //                 x: 9.75,
-    //                 y: 0,
+    //                 x: 10,
+    //                 y: 1,
     //             },
     //         },
     //     }),
