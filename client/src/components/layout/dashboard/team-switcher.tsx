@@ -28,16 +28,8 @@ import { useQuery } from "@tanstack/react-query";
 import { TeamWithRole } from "@shared/types";
 import { getInitials } from "@/lib/utils";
 
-// Mock teams for initial development, will be replaced with real data
-const defaultTeams: TeamWithRole[] = [
-  {
-    id: 2,
-    name: "Client",
-    role: "client",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
+// Default teams for fallback (empty array to prevent stale data)
+const defaultTeams: TeamWithRole[] = [];
 
 type TeamSwitcherProps = React.HTMLAttributes<HTMLDivElement>;
 
@@ -98,9 +90,12 @@ export function TeamSwitcher({}: TeamSwitcherProps) {
         activeTeams.some((team) => team.id === parsedSavedTeam.id);
 
       // If no valid team is selected, select the first available active team
+      // For admin users, prioritize MyZone team if available
       if (!savedTeamExists && activeTeams.length > 0) {
-        setSelectedTeam(activeTeams[0]);
-        localStorage.setItem("selectedTeam", JSON.stringify(activeTeams[0]));
+        const myZoneTeam = activeTeams.find(team => team.name === "MyZone");
+        const defaultTeam = myZoneTeam || activeTeams[0];
+        setSelectedTeam(defaultTeam);
+        localStorage.setItem("selectedTeam", JSON.stringify(defaultTeam));
       } else if (!savedTeamExists && activeTeams.length === 0) {
         // If no active teams, clear the selection
         setSelectedTeam(null);
@@ -187,7 +182,9 @@ export function TeamSwitcher({}: TeamSwitcherProps) {
                 <span className="truncate font-semibold">
                   {selectedTeam?.name}
                 </span>
-                <span className="truncate text-xs">{selectedTeam?.role}</span>
+                <span className="truncate text-xs">
+                  {selectedTeam?.role} {selectedTeam?.role === "admin" && "👑"}
+                </span>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
