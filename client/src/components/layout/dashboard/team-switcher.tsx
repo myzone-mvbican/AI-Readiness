@@ -183,7 +183,7 @@ export function TeamSwitcher({}: TeamSwitcherProps) {
                   {selectedTeam?.name}
                 </span>
                 <span className="truncate text-xs">
-                  {selectedTeam?.role} {selectedTeam?.role === "admin" && "👑"}
+                  {selectedTeam?.role} 
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto" />

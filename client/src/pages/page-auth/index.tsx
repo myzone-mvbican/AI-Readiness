@@ -37,7 +37,7 @@ export default function AuthPage() {
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
       setIsSubmitting(true);
-      
+
       // Use the googleLoginMutation from our auth hook
       await googleLoginMutation.mutateAsync({
         credential: credentialResponse.credential,
@@ -150,15 +150,13 @@ export default function AuthPage() {
     }
   };
 
-
-
   return (
     <div className="container flex flex-col flex-grow">
       {/* Form section */}
       <div className="w-full max-w-[600px] mx-auto py-8 flex flex-col flex-grow justify-center">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Welcome to MyZone AI
+            Welcome to Keeran Networks
           </h2>
           <p className="text-gray-600 mt-2">
             Your AI Readiness Assessment platform
@@ -263,7 +261,7 @@ export default function AuthPage() {
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors"
+                    className="w-full bg-primary hover:primary text-white py-2 px-4 rounded-md transition-colors"
                   >
                     {isSubmitting ? "Signing in..." : "Sign in"}
                   </Button>
@@ -477,7 +475,7 @@ export default function AuthPage() {
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors"
+                    className="w-full bg-primary hover:bg-primary text-white py-2 px-4 rounded-md transition-colors"
                   >
                     {isSubmitting ? "Creating account..." : "Create account"}
                   </Button>
