@@ -105,6 +105,7 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
+- July 22, 2025. Successfully integrated PostgreSQL database using Neon - database schema pushed and models updated to use database storage instead of memory storage
 - July 13, 2025. Implemented hierarchical NAICS fallback system for benchmark statistics - when specific industry codes have no data, system progressively searches broader categories until statistics are found
 - July 13, 2025. Created comprehensive export users feature for admins - supports CSV/Excel formats with configurable field selection, progress indicators, and smart filename generation
 - July 13, 2025. Implemented comprehensive hard delete system for teams with strict validation - teams can only be permanently deleted if soft-deleted AND have zero members, includes database transactions and conditional UI controls
