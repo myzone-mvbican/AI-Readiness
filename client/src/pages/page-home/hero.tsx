@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 // import Particles, { initParticlesEngine } from "@tsparticles/react";
 // import { loadPolygonMaskPlugin } from "@tsparticles/plugin-polygon-mask";
 // import type { Engine } from "@tsparticles/engine";
-// import { useIsMobile } from "@/hooks/use-mobile"; 
-import homeTopImage from "@/assets/top-graphic.svg";
+// import { useIsMobile } from "@/hooks/use-mobile";
+import homeTopImage from "@/assets/Keeran_BrandGuide.png";
 
 interface HeroProps {
     onStartAssessment: () => void;
@@ -123,39 +123,32 @@ export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
 
     const styles = {
         backgroundImage: `url(${homeTopImage})`,
-        mixBlendMode: "screen",
     };
 
     return (
-        <div className="bg-blue-800">
+        <div className="bg-gradient-to-br from-[#E6EAEC] to-white">
             <div className="container">
                 <div className="grid grid-cols-1 lg:grid-cols-2 items-center">
-                    <div className="section-space-y max-w-[435px] space-y-6 lg:space-y-8 text-white">
+                    <div className="section-space-y max-w-[435px] space-y-6 lg:space-y-8">
                         <h1 className="section__title tracking-tight">
-                            MyZone AI <br />
-                            Readiness Survey
+                            Keeran AI <br />
+                            Readiness <br />
+                            Assessment
                         </h1>
                         <p className="text-base xl:text-xl">
-                            Welcome! This AI Readiness Assessment should be
-                            completed quarterly as one of your foundational AI
-                            KPIs (Key Performance Indicators).
-                        </p>
-                        <p className="text-base xl:text-xl">
-                            It takes approximately 10 minutes to complete. You
-                            can save your results as a PDF or compare with
-                            industry benchmarks.
-                        </p>
+                            Take this 10-minute assessment to find out where your business stands with AI. Compare your results across industry benchmarks, and track your progress quarter by quarter.
+                        </p> 
                         <Button
-                            size="lg"
+                            size="lg" 
                             onClick={onStartAssessment}
-                            className="bg-white hover:bg-white text-blue-600 font-bold text-base"
+                            className="rounded-full font-bold text-base"
                         >
                             Start Assessment
                         </Button>
                     </div>
                     <div className="relative aspect-[625/645]">
                         <div
-                            className="absolute inset-0 z-0 bg-contain bg-center bg-no-repeat"
+                            className="absolute inset-0 z-0 bg-contain bg-bottom bg-no-repeat"
                             style={styles}
                         >
                             {/* {!isMobile && init && (

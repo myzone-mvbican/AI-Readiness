@@ -17,7 +17,7 @@ interface CategoryCardProps {
 
 const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-[0_20px_50px_0px_#00000008] border-t-4 border-t-blue-500">
+    <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-[0_20px_50px_0px_#00000008] border-t-4 border-t-primary">
       <h3 className="text-lg font-bold text-foreground mb-4">
         {category.title}
       </h3>
@@ -32,42 +32,42 @@ const categoriesData: Category[] = [
   {
     title: "Strategy & Vision",
     description:
-      "Compare your AI readiness with industry standards and competitors",
+      "Is your interest in AI linked to clear business goals and real challenges, or is it more exploratory?",
   },
   {
     title: "Change-Readiness & Culture",
     description:
-      "Evaluates the organizational culture and readiness for change in AI contexts.",
+      "How prepared is your team to adapt to new technology? Are there barriers to adoption?",
   },
   {
     title: "Skills & Literacy",
     description:
-      "Measures the knowledge and literacy levels of AI across the workforce.",
+      "Does your team, especially non-technical staff, have the support they need to work confidently with AI tools?",
   },
   {
     title: "Data & Information",
     description:
-      "Assesses the management and utilization of data and information resources.",
+      "Is your data structured and reliable enough to power automation and insights?",
   },
   {
     title: "Technology & Integration",
     description:
-      "Evaluates the technological systems and their integration with AI processes.",
+      "Can your existing systems support AI without complications or risks?",
   },
   {
     title: "Process & Operations",
     description:
-      "Reviews the efficiency and adaptability of operational processes with AI.",
+      "Where could manual, repetitive work be streamlined to free up resources?",
   },
   {
     title: "Governance, Ethics & Risk",
     description:
-      "Analyzes governance frameworks, ethical considerations, and risk management.",
+      "Are you positioned to use AI responsibly, protect sensitive information, and meet compliance standards?",
   },
   {
     title: "Financial & Resources",
     description:
-      "Assesses the availability and allocation of financial and resource supports.",
+      "Do you have the budget and internal capacity to take AI from idea to implementation?",
   },
 ];
 
@@ -90,7 +90,7 @@ export const Categories: React.FC = () => {
   }, [api]);
 
   return (
-    <div className="section-space-y bg-radial-gradient">
+    <div className="section-space-y bg-[#E6EAEC]">
       <div className="container">
         <div className="text-center mb-12">
           <h2 className="section__title text-foreground">

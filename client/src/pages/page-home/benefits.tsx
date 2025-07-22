@@ -27,7 +27,7 @@ const BenefitCard: React.FC<BenefitCardProps> = ({
             <div className="text-foreground text-xl lg:text-2xl font-bold mb-3">
                 {title}
             </div>
-            <p className="text-foreground">{description}</p>
+            <p className="text-foreground mx-auto max-w-[295px]">{description}</p>
         </div>
     );
 };
@@ -36,34 +36,33 @@ const benefitsData = [
     {
         title: "Benchmark",
         description:
-            "Compare your AI readiness with industry standards and competitors",
+            "See how your readiness compares to others in your space",
         icon: iconOne,
     },
     {
         title: "Track Progress",
         description:
-            "Monitor your improvement over time with quarterly assessments",
+            "Revisit this quarterly and watch your capabilities evolve",
         icon: iconTwo,
     },
     {
-        title: "Get Insights",
+        title: "Get Clear Guidance",
         description:
-            "Receive tailored recommendations to improve your AI capabilities",
+            "Walk away with practical ideas to guide your next steps",
         icon: iconThree,
     },
 ];
 
 export const Benefits: React.FC = () => {
     return (
-        <div className="section-space-y bg-radial-gradient">
+        <div className="section-space-y bg-[#E6EAEC]">
             <div className="container">
                 <div className="text-center">
                     <h2 className="section__title text-foreground">
-                        Benefits of the Assessment
+                        Why Take This Assessment?
                     </h2>
                     <p className="mt-4 text-base lg:text-lg text-muted-foreground">
-                        Understand your organization&apos;s AI readiness and get
-                        actionable insights
+                        Understand where you stand with AI and what steps to take next
                     </p>
                 </div>
                 <div className="mt-12 lg:mt-16 grid gap-8 md:grid-cols-3">

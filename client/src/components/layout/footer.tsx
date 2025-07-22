@@ -1,28 +1,28 @@
 import { Link } from "wouter";
-import logoPath from "@/assets/logo-myzone-ai-black.svg";
+import logoPath from "@/assets/logo-keeran.svg";
 
 export default function Footer() {
   return (
-    <footer className="bg-white py-6 border-t border-t-accent">
+    <footer className="bg-[#082B3D] py-6">
       <div className="container">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <Link href="/">
             <img
               src={logoPath}
               alt="MyZone AI Logo"
-              className="h-8 w-auto dark:invert"
+              className="h-8 w-auto"
             />
           </Link>
           <div className="text-center text-sm">
-            <p>
+            <p className="text-white">
               &copy; 2025{" "}
               <a
-                href="https://myzone.ai"
-                className="text-primary-500 hover:text-primary-700 transition-colors"
+                href="https://www.keeran.ca/"
+                className="text-inherit transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                MyZone AI
+                Keeran Networks
               </a>
               . All rights reserved.
             </p>

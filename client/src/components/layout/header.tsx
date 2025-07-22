@@ -3,11 +3,11 @@ import { Button } from "@/components/ui/button";
 import { useAssessment } from "@/hooks/use-assessment";
 import { useAuth } from "@/hooks/use-auth";
 import { navigate } from "wouter/use-browser-location";
-import logoPath from "@/assets/logo-myzone-ai-black.svg";
+import logoPath from "@/assets/logo-keeran.svg";
 
 export default function Header() {
   const { user } = useAuth();
-  const assessmentCreateModal = useAssessment(); 
+  const assessmentCreateModal = useAssessment();
 
   const handleAssessmentStart = () => {
     if (user) {
@@ -15,12 +15,12 @@ export default function Header() {
       assessmentCreateModal.onOpen();
     } else {
       // If no user is logged in, show the guest dialog
-       navigate("/#start");
+      navigate("/#start");
     }
   };
 
   return (
-    <header className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800">
+    <header className="bg-[#082B3D] shadow-sm sticky top-0 z-50">
       <div className="container py-4">
         <div className="grid grid-cols-2 md:grid-cols-3 items-center">
           <Link href="/">
@@ -30,23 +30,17 @@ export default function Header() {
               className="h-10 w-auto dark:invert"
             />
           </Link>
-          <div className="hidden md:block text-center">
-            <p className="text-xs lg:text-base">
-              Try It Free — <strong>Limited Time Beta Access!</strong>
-            </p>
-          </div>
+          <div className="hidden md:block text-center"></div>
           <nav className="flex items-center justify-end space-x-8">
             <Button
-              className="hidden sm:block font-bold text-base"
+              size="lg"
+              className="hidden sm:block rounded-full font-bold text-base"
               onClick={handleAssessmentStart}
             >
               Start Assessment
             </Button>
             <Link href="/dashboard" asChild>
-              <Button
-                variant="link"
-                className="text-dark hover:text-blue-600 dark:text-white font-bold text-base"
-              >
+              <Button variant="link" className="text-white text-base">
                 {user ? "Dashboard" : "Log In"}
               </Button>
             </Link>
