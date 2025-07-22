@@ -338,7 +338,7 @@ export class TeamModel {
           employeeCount: users.employeeCount,
           industry: users.industry,
           password: users.password,
-          role: userTeams.role,
+          role: users.role,
           googleId: users.googleId,
           resetToken: users.resetToken,
           resetTokenExpiry: users.resetTokenExpiry,
