@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { GoogleAuthProvider } from "@/components/google-auth-provider";
 import { AuthProvider } from "@/hooks/use-auth";
-import { ThemeProvider } from "@/components/theme/provider";
+// import { ThemeProvider } from "@/components/theme/provider";
 import { AssessmentProvider } from "@/components/assessment/assessment-provider";
 // Protected routes
 import { ProtectedRoute } from "@/components/protected-route";
@@ -107,20 +107,18 @@ function Router() {
 
 function App() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <GoogleAuthProvider>
-            <AuthProvider>
-              <Toaster />
-              <AssessmentProvider>
-                <Router />
-              </AssessmentProvider>
-            </AuthProvider>
-          </GoogleAuthProvider>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <GoogleAuthProvider>
+          <AuthProvider>
+            <Toaster />
+            <AssessmentProvider>
+              <Router />
+            </AssessmentProvider>
+          </AuthProvider>
+        </GoogleAuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }
 
