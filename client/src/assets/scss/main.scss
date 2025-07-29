@@ -12,7 +12,7 @@ body, p, span, div, label, input, textarea, select {
 
 // Headings - font weight 700
 h1, h2, h3, h4, h5, h6, .section__title {
-  font-weight: 700;
+  font-weight: 600;
 } 
 
 :root {
@@ -95,7 +95,27 @@ h1, h2, h3, h4, h5, h6, .section__title {
 }
 
 .section__title {
-  @apply text-3xl md:text-4xl font-extrabold;
+  @apply text-3xl md:text-4xl lg:text-[40px];
+}
+
+h1, h2, h3, h4, h5, h6 {
+  @apply font-semibold !leading-[1.1];
+}
+
+h1 {
+  @apply text-3xl md:text-4xl lg:text-[52px];
+}
+
+h2 {
+  @apply text-2xl md:text-3xl lg:text-[40px];
+}
+
+h3 {
+  @apply text-xl md:text-2xl lg:text-[32px];
+}
+
+h4 {
+  @apply text-lg md:text-xl lg:text-[24px];
 }
 
 // Custom button styles that extend Tailwind
