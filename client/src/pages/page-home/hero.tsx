@@ -130,7 +130,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartAssessment }) => {
             <div className="container">
                 <div className="grid grid-cols-1 lg:grid-cols-2 items-center">
                     <div className="section-space-y max-w-[435px] space-y-6 lg:space-y-8">
-                        <h1 className="section__title tracking-tight">
+                        <h1 className="tracking-tight">
                             Keeran AI <br />
                             Readiness <br />
                             Assessment
