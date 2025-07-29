@@ -41,6 +41,8 @@ export class TeamModel {
         .select({
           id: teams.id,
           name: teams.name,
+          createdAt: teams.createdAt,
+          updatedAt: teams.updatedAt,
           role: userTeams.role,
         })
         .from(userTeams)
@@ -50,6 +52,8 @@ export class TeamModel {
       return result.map((row) => ({
         id: row.id,
         name: row.name,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
         role: row.role,
       }));
     } catch (error) {
