@@ -1,4 +1,3 @@
-import laptopImage from "@/assets/Macbook-Pro-Crop.png";
 import CategoriesRadarChart from "@/components/survey/radar";
 import { Assessment } from "@shared/types";
 
@@ -139,18 +138,8 @@ export function Services() {
           </div>
 
           {/* Right Column - 3D Laptop Mockup */}
-          <div className="lg:col-span-3 relative flex justify-center">
-            <div
-              className="relative w-full h-full bg-contain bg-center bg-no-repeat aspect-[16/9]"
-              style={{
-                backgroundImage: `url(${laptopImage})`,
-              }}
-            >
-              <CategoriesRadarChart
-                assessment={assessment}
-                className="absolute h-[82.5%] w-[73.5%] top-[5%] left-[12.5%]"
-              />
-            </div>
+          <div className="lg:col-span-3 relative flex justify-center aspect-[16/9]">
+            <CategoriesRadarChart assessment={assessment} />
           </div>
         </div>
       </div>

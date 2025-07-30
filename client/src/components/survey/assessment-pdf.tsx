@@ -2,7 +2,7 @@ import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Download } from "lucide-react";
 import { Assessment } from "@shared/types";
 import { AssessmentPDF } from "@/pdfs/assessment";
-import logoPath from "@/assets/logo-myzone-ai.png";
+import logoPath from "@/assets/logo-keeran.svg";
 
 // Download Button Component
 export const AssessmentPDFDownloadButton = ({
@@ -12,7 +12,7 @@ export const AssessmentPDFDownloadButton = ({
 }) => {
   const today = new Date();
   const completed = new Date(assessment.completedOn || today);
-  const filename = `myzoneai-readiness-report-${completed.toLocaleDateString()}.pdf`;
+  const filename = `report-${assessment.id}-${completed.toLocaleDateString()}.pdf`;
 
   return (
     <PDFDownloadLink
