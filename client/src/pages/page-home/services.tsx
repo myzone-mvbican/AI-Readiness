@@ -112,7 +112,7 @@ export function Services() {
   return (
     <div className="py-20 bg-white hover overflow-hidden">
       <div className="container">
-        <div className="grid lg:grid-cols-5 gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 items-center">
           {/* Left Column - Content */}
           <div className="lg:col-span-2 lg:pe-10">
             <h2 className="section__title text-foreground mb-6">
@@ -139,7 +139,7 @@ export function Services() {
 
           {/* Right Column - 3D Laptop Mockup */}
           <div className="lg:col-span-3 relative flex justify-center aspect-[16/9]">
-            <CategoriesRadarChart assessment={assessment} />
+            <CategoriesRadarChart assessment={assessment} className="h-full " />
           </div>
         </div>
       </div>
