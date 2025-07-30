@@ -451,7 +451,7 @@ export default function AdminTeamsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 space-y-3">
           <div className="col-span-1">
             <div className="col-span-1 flex items-center space-x-2">
-              <Users className="h-6 w-6 text-blue-500" />
+              <Users className="size-6 text-primary" />
               <h2 className="text-xl text-foreground font-semibold">
                 Manage Teams
               </h2>

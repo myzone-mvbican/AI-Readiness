@@ -17,17 +17,12 @@ const getTitleForRoute = (path: string): string => {
   const routeTitles: Record<string, string> = {
     "/": "Ready for the future",
     "/auth": "Sign In",
-    "/assessment": "Take Assessment",
-    "/assessment/guest": "Guest Assessment",
-    "/assessment/completed": "Assessment Complete",
     "/dashboard": "Dashboard",
     "/dashboard/assessments": "My Assessments",
-    "/dashboard/compare": "Benchmark Comparison",
     "/dashboard/surveys": "Survey Management",
     "/dashboard/users": "User Management",
     "/dashboard/teams": "Team Management",
     "/dashboard/settings": "Settings",
-    "/survey-completed": "Survey Complete",
     "/not-found": "Page Not Found",
   };
 
@@ -52,12 +47,10 @@ export const usePageTitle = (customTitle?: string) => {
     if (metaDescription) {
       const descriptions: Record<string, string> = {
         "/": "Evaluate your organization's AI readiness with comprehensive assessments, benchmarking, and personalized recommendations.",
-        "/assessment":
+        "/assessments":
           "Complete your AI readiness assessment to understand your organization's current capabilities and improvement opportunities.",
         "/dashboard":
           "View your AI readiness dashboard with assessments, benchmarks, and performance insights.",
-        "/dashboard/compare":
-          "Compare your AI readiness scores against industry and global benchmarks.",
         "/dashboard/assessments":
           "Manage and review your completed AI readiness assessments and detailed reports.",
         "/dashboard/surveys":
