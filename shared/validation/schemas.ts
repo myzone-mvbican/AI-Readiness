@@ -42,6 +42,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   employeeCount: true,
   industry: true,
   googleId: true,
+  role: true,
 });
 
 export const loginSchema = z.object({
@@ -165,7 +166,7 @@ export const insertAssessmentSchema = createInsertSchema(assessments)
   .pick({
     title: true,
     userId: true,
-    email: true,
+    guest: true,
     surveyTemplateId: true,
     status: true,
   })
@@ -181,7 +182,7 @@ export const updateAssessmentSchema = createInsertSchema(assessments)
     title: true,
     status: true,
     score: true,
-    email: true,
+    guest: true,
     userId: true,
     recommendations: true,
     pdfPath: true,

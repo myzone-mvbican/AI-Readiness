@@ -216,11 +216,16 @@ export class AuthController {
             .map((chars) => chars[Math.floor(Math.random() * chars.length)])
             .join("");
 
+          // Check if this is the first user - if so, make them admin
+          const userCount = await UserModel.getUserCount();
+          const isFirstUser = userCount === 0;
+
           user = await UserModel.create({
             name: googleUserData.name,
             email: googleUserData.email,
             password: randomPassword, // Random password as it won't be used
             googleId: googleUserData.sub,
+            role: isFirstUser ? "admin" : "client"
           });
 
           // Auto-assign user to the "Client" team
@@ -315,7 +320,17 @@ export class AuthController {
         });
       }
 
-      const user = await UserModel.create(req.body);
+      // Check if this is the first user - if so, make them admin
+      const userCount = await UserModel.getUserCount();
+      const isFirstUser = userCount === 0;
+
+      // Prepare user data with appropriate role
+      const userData = {
+        ...req.body,
+        role: isFirstUser ? "admin" : "client"
+      };
+
+      const user = await UserModel.create(userData);
 
       // Auto-assign user to the "Client" team
       try {
