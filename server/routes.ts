@@ -112,9 +112,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send test email
       const emailSent = await EmailService.sendEmail({
         to: email,
-        subject: "MyZone AI - Test Email",
-        text: "This is a test email from MyZone AI to verify email configuration.",
-        html: "<p>This is a test email from MyZone AI to verify email configuration.</p>"
+        subject: "MyZone AI Test Email",
+        html: "<h1>Test Email</h1><p>This is a test email from MyZone AI. If you received this, email is working correctly!</p>",
+        text: "Test Email - This is a test email from MyZone AI. If you received this, email is working correctly!"
       });
       
       if (emailSent) {

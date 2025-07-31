@@ -62,26 +62,10 @@ export class UserModel {
         userWithHashedPwd.email = userWithHashedPwd.email.toLowerCase();
       }
 
-      // Check if this will be the first user (admin privileges)
-      const [userCount] = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(users);
-      
-      const isFirstUser = userCount.count === 0;
-
-      // Prepare the final user data for insertion
-      let finalUserData: any = { ...userWithHashedPwd };
-
-      // If this is the first user, automatically assign admin role
-      if (isFirstUser) {
-        finalUserData.role = "admin";
-        console.log("First user detected - automatically assigned admin role");
-      }
-
       // Insert user into database
       const [user] = await db
         .insert(users)
-        .values(finalUserData)
+        .values(userWithHashedPwd)
         .returning();
       return user;
     } catch (error) {
@@ -334,6 +318,18 @@ export class UserModel {
         .where(eq(users.id, userId));
     } catch (error) {
       console.error("Error clearing reset token:", error);
+    }
+  }
+
+  static async getUserCount(): Promise<number> {
+    try {
+      const result = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(users);
+      return result[0]?.count || 0;
+    } catch (error) {
+      console.error("Error getting user count:", error);
+      return 0;
     }
   }
 
