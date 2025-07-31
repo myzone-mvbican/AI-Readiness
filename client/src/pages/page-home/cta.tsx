@@ -26,7 +26,7 @@ export function Cta({ onStartAssessment }: CtaProps) {
             </p>
             <Button
               size="lg" 
-              className="rounded-full bg-white text-primary border-white font-bold text-base"
+              className="rounded-full bg-white hover:bg-[#072B3D] text-primary border-white font-bold text-base"
               onClick={onStartAssessment}
             >
               Start Assessment
