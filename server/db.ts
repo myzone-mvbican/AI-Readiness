@@ -16,8 +16,8 @@ const getDatabaseUrl = () => {
   }
   
   // If production host variables are set, construct URL from components
-  if (isProduction && process.env.PROD_PGHOST) {
-    const prodUrl = `postgresql://${process.env.PROD_PGUSER || 'neondb_owner'}:${process.env.PROD_PGPASSWORD}@${process.env.PROD_PGHOST}/${process.env.PROD_PGDATABASE || 'neondb'}?sslmode=require`;
+  if (isProduction && process.env.PRODUCTION_PGHOST) {
+    const prodUrl = `postgresql://${process.env.PRODUCTION_PGUSER || 'neondb_owner'}:${process.env.PRODUCTION_PGPASSWORD}@${process.env.PRODUCTION_PGHOST}/${process.env.PRODUCTION_PGDATABASE || 'neondb'}?sslmode=require`;
     console.log('Using production database from PROD_PG* variables');
     return prodUrl;
   }
