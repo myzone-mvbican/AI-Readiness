@@ -94,16 +94,12 @@ h1, h2, h3, h4, h5, h6, .section__title {
   @apply py-16 md:py-24 xl:py-32;
 }
 
-.section__title {
-  @apply text-3xl md:text-4xl lg:text-[40px];
-}
-
 h1, h2, h3, h4, h5, h6 {
   @apply font-semibold !leading-[1.1];
 }
 
 h1 {
-  @apply text-3xl md:text-4xl lg:text-[52px];
+  @apply text-4xl md:text-4xl lg:text-[52px];
 }
 
 h2 {
