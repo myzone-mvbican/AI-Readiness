@@ -321,6 +321,18 @@ export class UserModel {
     }
   }
 
+  static async getUserCount(): Promise<number> {
+    try {
+      const result = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(users);
+      return result[0]?.count || 0;
+    } catch (error) {
+      console.error("Error getting user count:", error);
+      return 0;
+    }
+  }
+
   static async searchByNameOrEmail(searchTerm: string): Promise<User[]> {
     try {
       const searchPattern = `%${searchTerm.trim()}%`;
