@@ -165,7 +165,6 @@ export const insertAssessmentSchema = createInsertSchema(assessments)
   .pick({
     title: true,
     userId: true,
-    email: true,
     surveyTemplateId: true,
     status: true,
   })
@@ -181,7 +180,6 @@ export const updateAssessmentSchema = createInsertSchema(assessments)
     title: true,
     status: true,
     score: true,
-    email: true,
     userId: true,
     recommendations: true,
     pdfPath: true,
