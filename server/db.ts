@@ -11,13 +11,20 @@ const getDatabaseUrl = () => {
   
   // If production database URL is explicitly set, use it
   if (isProduction && process.env.PRODUCTION_DATABASE_URL) {
-    console.log('Using production database');
+    console.log('Using production database from PRODUCTION_DATABASE_URL');
     return process.env.PRODUCTION_DATABASE_URL;
+  }
+  
+  // If production host variables are set, construct URL from components
+  if (isProduction && process.env.PROD_PGHOST) {
+    const prodUrl = `postgresql://${process.env.PROD_PGUSER || 'neondb_owner'}:${process.env.PROD_PGPASSWORD}@${process.env.PROD_PGHOST}/${process.env.PROD_PGDATABASE || 'neondb'}?sslmode=require`;
+    console.log('Using production database from PROD_PG* variables');
+    return prodUrl;
   }
   
   // For production without explicit production URL, use pooled connection
   if (isProduction && process.env.DATABASE_URL) {
-    console.log('Using production database with connection pooling');
+    console.log('Using production database with connection pooling (same host)');
     // Convert regular URL to pooled URL by adding -pooler to hostname
     return process.env.DATABASE_URL.replace(
       /(@[^.]+)(\.[^/]+)/,
