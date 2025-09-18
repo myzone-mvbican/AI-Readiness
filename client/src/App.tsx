@@ -6,6 +6,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { GoogleAuthProvider } from "@/components/google-auth-provider";
+import { MicrosoftAuthProvider } from "@/components/microsoft-auth-provider";
 import { AuthProvider } from "@/hooks/use-auth";
 // import { ThemeProvider } from "@/components/theme/provider";
 import { AssessmentProvider } from "@/components/assessment/assessment-provider";
@@ -110,12 +111,14 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <GoogleAuthProvider>
-          <AuthProvider>
-            <Toaster />
-            <AssessmentProvider>
-              <Router />
-            </AssessmentProvider>
-          </AuthProvider>
+          <MicrosoftAuthProvider>
+            <AuthProvider>
+              <Toaster />
+              <AssessmentProvider>
+                <Router />
+              </AssessmentProvider>
+            </AuthProvider>
+          </MicrosoftAuthProvider>
         </GoogleAuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
