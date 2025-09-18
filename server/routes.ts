@@ -147,6 +147,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     auth,
     AuthController.disconnectGoogle,
   );
+  // Connect Microsoft account to existing user (protected route)
+  app.post("/api/user/microsoft/connect", auth, AuthController.connectMicrosoft);
+  // Disconnect Microsoft account from existing user (protected route)
+  app.delete(
+    "/api/user/microsoft/disconnect",
+    auth,
+    AuthController.disconnectMicrosoft,
+  );
 
   // Team endpoints (all protected routes)
 
