@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { DashboardLayout } from "@/components/layout/dashboard";
 import { GoogleLogin } from "@react-oauth/google";
+import { MicrosoftLoginButton } from "@/components/microsoft-login-button";
 
 import {
   settingsSchema,
@@ -26,10 +27,18 @@ import { IndustrySelect } from "@/components/industries";
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  const { user, googleConnectMutation, googleDisconnectMutation } = useAuth();
+  const { 
+    user, 
+    googleConnectMutation, 
+    googleDisconnectMutation,
+    microsoftConnectMutation,
+    microsoftDisconnectMutation,
+  } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isConnectingGoogle, setIsConnectingGoogle] = useState(false);
   const [isDisconnectingGoogle, setIsDisconnectingGoogle] = useState(false);
+  const [isConnectingMicrosoft, setIsConnectingMicrosoft] = useState(false);
+  const [isDisconnectingMicrosoft, setIsDisconnectingMicrosoft] = useState(false);
   const [initialFormData, setInitialFormData] =
     useState<SettingsFormValues | null>(null);
 
@@ -61,6 +70,35 @@ export default function SettingsPage() {
       onSettled: () => setIsDisconnectingGoogle(false),
     });
   }, [googleDisconnectMutation]);
+
+  // Microsoft authentication handlers
+  const handleMicrosoftSuccess = useCallback(
+    (credentialResponse: any) => {
+      setIsConnectingMicrosoft(true);
+      microsoftConnectMutation.mutate(
+        { credential: credentialResponse.credential },
+        {
+          onSettled: () => setIsConnectingMicrosoft(false),
+        },
+      );
+    },
+    [microsoftConnectMutation],
+  );
+
+  const handleMicrosoftError = useCallback(() => {
+    toast({
+      title: "Microsoft Sign-In Failed",
+      description: "There was a problem connecting your Microsoft account.",
+      variant: "destructive",
+    });
+  }, [toast]);
+
+  const handleDisconnectMicrosoft = useCallback(() => {
+    setIsDisconnectingMicrosoft(true);
+    microsoftDisconnectMutation.mutate(undefined, {
+      onSettled: () => setIsDisconnectingMicrosoft(false),
+    });
+  }, [microsoftDisconnectMutation]);
 
   const {
     register,
@@ -530,6 +568,90 @@ export default function SettingsPage() {
                                   shape="circle"
                                   theme="outline"
                                   locale="en"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-gray-100">
+                    <h3 className="text-base font-medium mb-3">
+                      Microsoft Account
+                    </h3>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 21 21"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <rect x="1" y="1" width="9" height="9" fill="#f25022" />
+                            <rect x="12" y="1" width="9" height="9" fill="#00a4ef" />
+                            <rect x="1" y="12" width="9" height="9" fill="#ffb900" />
+                            <rect x="12" y="12" width="9" height="9" fill="#7fba00" />
+                          </svg>
+                        </div>
+                        <div>
+                          {user?.microsoftId ? (
+                            <div>
+                              <div className="text-sm font-medium text-foreground">
+                                Microsoft account connected
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                You can use Microsoft to sign in to your account
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <div className="text-sm font-medium text-foreground">
+                                Connect Microsoft account
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                Link your Microsoft account for easier sign-in
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        {user?.microsoftId ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={isDisconnectingMicrosoft}
+                            onClick={handleDisconnectMicrosoft}
+                            className="text-muted-foreground border-muted-foreground"
+                            data-testid="button-disconnect-microsoft"
+                          >
+                            {isDisconnectingMicrosoft
+                              ? "Disconnecting..."
+                              : "Disconnect"}
+                          </Button>
+                        ) : (
+                          <div className="flex justify-center">
+                            <div className="relative">
+                              {isConnectingMicrosoft && (
+                                <div className="absolute inset-0 flex items-center justify-center z-10">
+                                  <div className="w-5 h-5 border-2 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+                                </div>
+                              )}
+                              <div
+                                className={
+                                  isConnectingMicrosoft ? "opacity-50" : ""
+                                }
+                              >
+                                <MicrosoftLoginButton
+                                  onSuccess={handleMicrosoftSuccess}
+                                  onError={handleMicrosoftError}
+                                  disabled={isConnectingMicrosoft}
                                 />
                               </div>
                             </div>

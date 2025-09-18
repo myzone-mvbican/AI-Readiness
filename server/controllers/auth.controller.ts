@@ -603,4 +603,118 @@ export class AuthController {
       });
     }
   }
+
+  static async connectMicrosoft(req: Request, res: Response) {
+    try {
+      // Validate the input
+      const result = microsoftAuthSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Microsoft connect data",
+          errors: result.error.format(),
+        });
+      }
+
+      const userId = req.user!.id;
+      const { credential } = req.body;
+
+      // Verify the Microsoft token
+      const microsoftUserData = await UserModel.verifyMicrosoftToken(credential);
+      if (!microsoftUserData) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid Microsoft token",
+        });
+      }
+
+      // Check if another user has already connected this Microsoft account
+      const existingUser = await UserModel.getByMicrosoftId(microsoftUserData.sub);
+      if (existingUser && existingUser.id !== userId) {
+        return res.status(409).json({
+          success: false,
+          message: "This Microsoft account is already connected to another user",
+        });
+      }
+
+      // Connect Microsoft account to current user
+      const updatedUser = await UserModel.connectMicrosoftAccount(
+        userId,
+        microsoftUserData.sub,
+      );
+
+      if (!updatedUser) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to connect Microsoft account",
+        });
+      }
+
+      // Remove password from response
+      const { password, ...userWithoutPassword } = updatedUser;
+
+      return res.status(200).json({
+        success: true,
+        message: "Microsoft account connected successfully",
+        user: userWithoutPassword,
+      });
+    } catch (error) {
+      console.error("Microsoft connect error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to connect Microsoft account",
+      });
+    }
+  }
+
+  static async disconnectMicrosoft(req: Request, res: Response) {
+    try {
+      const userId = req.user!.id;
+
+      // Get current user
+      const user = await UserModel.getById(userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        });
+      }
+
+      // Check if user has Microsoft account connected
+      if (!user.microsoftId) {
+        return res.status(400).json({
+          success: false,
+          message: "No Microsoft account is connected to this user",
+        });
+      }
+
+      // Disconnect Microsoft account
+      const updatedUser = await UserModel.disconnectMicrosoftAccount(userId);
+
+      if (!updatedUser) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to disconnect Microsoft account",
+        });
+      }
+
+      // Remove password from response
+      const { password, ...userWithoutPassword } = updatedUser;
+
+      return res.status(200).json({
+        success: true,
+        message: "Microsoft account disconnected successfully",
+        user: userWithoutPassword,
+      });
+    } catch (error) {
+      console.error("Microsoft disconnect error:", error);
+      return res.status(500).json({
+        success: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to disconnect Microsoft account",
+      });
+    }
+  }
 }
