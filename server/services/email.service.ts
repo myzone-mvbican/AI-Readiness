@@ -1,6 +1,6 @@
 import { createTransporter, getEmailFromAddress } from "../config/email.config";
 import { render } from "@react-email/render";
-import { PasswordResetEmail } from "../emails/password-reset"; 
+import { PasswordResetEmail } from "../emails/password-reset";
 
 export class EmailService {
   private static transporter = createTransporter();
@@ -22,15 +22,17 @@ export class EmailService {
       const fromAddress = getEmailFromAddress();
 
       // Render React Email template
-      const emailHtml = await render(PasswordResetEmail({
-        userFirstName: name,
-        resetUrl: resetUrl
-      }));
+      const emailHtml = await render(
+        PasswordResetEmail({
+          userFirstName: name,
+          resetUrl: resetUrl,
+        }),
+      );
 
       const emailText = `
 Hello ${name},
 
-We received a request to reset your password for your MyZone AI account.
+We received a request to reset your password for your Keeran Networks AI account.
 
 To reset your password, please visit the following link:
 ${resetUrl}
@@ -40,23 +42,23 @@ This link will expire in 30 minutes for security reasons.
 If you didn't request this password reset, you can safely ignore this email.
 
 Best regards,
-The MyZone AI Team
+Keeran Networks AI Team
       `.trim();
 
       const mailOptions = {
         from: fromAddress,
         to: email,
-        subject: "Reset Your MyZone AI Password",
+        subject: "Reset Your Keeran Networks AI Password",
         html: emailHtml,
         text: emailText,
       };
 
       // Send the actual email using the configured transporter
       const transporter = this.getTransporter();
-      const info = await transporter.sendMail(mailOptions); 
+      const info = await transporter.sendMail(mailOptions);
 
       return true;
-    } catch (error) {  
+    } catch (error) {
       return false;
     }
   }
@@ -66,7 +68,7 @@ The MyZone AI Team
     to,
     subject,
     html,
-    text
+    text,
   }: {
     to: string;
     subject: string;
@@ -108,7 +110,11 @@ The MyZone AI Team
       }
 
       // Test legacy email configuration
-      if (process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      if (
+        process.env.EMAIL_HOST &&
+        process.env.EMAIL_USER &&
+        process.env.EMAIL_PASS
+      ) {
         const transporter = this.getTransporter();
         await transporter.verify();
         console.log("✅ Email SMTP connection verified successfully");
@@ -122,5 +128,5 @@ The MyZone AI Team
       console.error("❌ Email transporter verification failed:", error);
       return false;
     }
-  } 
+  }
 }
