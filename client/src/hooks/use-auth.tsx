@@ -41,6 +41,12 @@ type AuthContextType = {
   >;
   googleDisconnectMutation: UseMutationResult<LoginResponse, Error, void>;
   microsoftLoginMutation: UseMutationResult<LoginResponse, Error, GoogleLoginData>;
+  microsoftConnectMutation: UseMutationResult<
+    LoginResponse,
+    Error,
+    GoogleLoginData
+  >;
+  microsoftDisconnectMutation: UseMutationResult<LoginResponse, Error, void>;
 };
 
 type LoginData = {
@@ -578,6 +584,99 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // Connect Microsoft account to existing user
+  const microsoftConnectMutation = useMutation({
+    mutationFn: async (data: GoogleLoginData) => {
+      const res = await apiRequest(
+        "POST",
+        "/api/user/microsoft/connect",
+        data,
+        false,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      return await res.json();
+    },
+    onSuccess: (data: LoginResponse) => {
+      if (data.success) {
+        // Cache user data in query client and localStorage
+        queryClient.setQueryData(["/api/user"], data.user);
+        localStorage.setItem("userData", JSON.stringify(data.user));
+
+        // Update cached user state
+        setCachedUser(data.user);
+
+        toast({
+          title: "Microsoft account connected",
+          description: "Your Microsoft account has been connected successfully.",
+        });
+      } else {
+        toast({
+          title: "Microsoft connect failed",
+          description: data.message || "Failed to connect Microsoft account.",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Microsoft connect failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Disconnect Microsoft account from existing user
+  const microsoftDisconnectMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest(
+        "DELETE",
+        "/api/user/microsoft/disconnect",
+        null,
+        false,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      return await res.json();
+    },
+    onSuccess: (data: LoginResponse) => {
+      if (data.success) {
+        // Cache user data in query client and localStorage
+        queryClient.setQueryData(["/api/user"], data.user);
+        localStorage.setItem("userData", JSON.stringify(data.user));
+
+        // Update cached user state
+        setCachedUser(data.user);
+
+        toast({
+          title: "Microsoft account disconnected",
+          description:
+            "Your Microsoft account has been disconnected successfully.",
+        });
+      } else {
+        toast({
+          title: "Microsoft disconnect failed",
+          description: data.message || "Failed to disconnect Microsoft account.",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Microsoft disconnect failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Helper functions for the new type-safe interface
   const clearError = () => setAuthError(null);
 
@@ -594,6 +693,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         googleConnectMutation,
         googleDisconnectMutation,
         microsoftLoginMutation,
+        microsoftConnectMutation,
+        microsoftDisconnectMutation,
       }}
     >
       {children}

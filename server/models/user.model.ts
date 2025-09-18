@@ -169,6 +169,43 @@ export class UserModel {
     }
   }
 
+  static async connectMicrosoftAccount(
+    userId: number,
+    microsoftId: string,
+  ): Promise<User | undefined> {
+    try {
+      return UserModel.update(userId, { microsoftId });
+    } catch (error) {
+      console.error("Error connecting Microsoft account:", error);
+      throw error;
+    }
+  }
+
+  static async disconnectMicrosoftAccount(
+    userId: number,
+  ): Promise<User | undefined> {
+    try {
+      // First get the current user
+      const user = await UserModel.getById(userId);
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      // Ensure the user has a password before disconnecting Microsoft
+      if (!user.password) {
+        throw new Error(
+          "Cannot disconnect Microsoft account without a password set",
+        );
+      }
+
+      // Update the user to remove Microsoft ID
+      return UserModel.update(userId, { microsoftId: null });
+    } catch (error) {
+      console.error("Error disconnecting Microsoft account:", error);
+      throw error;
+    }
+  }
+
   static async validatePassword(
     plainPassword: string,
     hashedPassword: string,

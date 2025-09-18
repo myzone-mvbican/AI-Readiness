@@ -57,6 +57,7 @@ export const updateUserSchema = createInsertSchema(users)
     industry: true,
     password: true,
     googleId: true,
+    microsoftId: true,
   })
   .partial();
 
