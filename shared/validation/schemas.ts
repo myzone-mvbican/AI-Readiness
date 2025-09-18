@@ -73,6 +73,14 @@ export const googleConnectSchema = z.object({
 });
 
 /**
+ * Microsoft OAuth Authentication Schemas
+ * Schemas for handling Microsoft sign-in and account connection
+ */
+export const microsoftAuthSchema = z.object({
+  credential: z.string(),
+});
+
+/**
  * Team Management Schemas
  * Schemas for team creation and user-team relationships
  */

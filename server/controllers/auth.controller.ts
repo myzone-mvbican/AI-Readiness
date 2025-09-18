@@ -8,6 +8,7 @@ import {
   updateUserSchema,
   googleAuthSchema,
   googleConnectSchema,
+  microsoftAuthSchema,
 } from "@shared/validation/schemas";
 
 export class AuthController {
@@ -291,6 +292,124 @@ export class AuthController {
       return res.status(500).json({
         success: false,
         message: "Google authentication failed due to an unexpected error",
+      });
+    }
+  }
+
+  static async loginMicrosoft(req: Request, res: Response) {
+    try {
+      // Validate the input
+      const result = microsoftAuthSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Microsoft authentication data",
+          errors: result.error.format(),
+        });
+      }
+
+      const { credential } = req.body;
+
+      // Verify the Microsoft token
+      const microsoftUserData = await UserModel.verifyMicrosoftToken(credential);
+      if (!microsoftUserData) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid Microsoft token",
+        });
+      }
+
+      // Check if a user with this Microsoft ID already exists
+      let user = await UserModel.getByMicrosoftId(microsoftUserData.sub);
+
+      if (!user) {
+        // Check if user exists with this email
+        user = await UserModel.getByEmail(microsoftUserData.email);
+
+        if (!user) {
+          // Create a new user with data from Microsoft
+          const randomPassword = Array(16)
+            .fill(
+              "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*",
+            )
+            .map((chars) => chars[Math.floor(Math.random() * chars.length)])
+            .join("");
+
+          user = await UserModel.create({
+            name: microsoftUserData.name,
+            email: microsoftUserData.email,
+            password: randomPassword, // Random password as it won't be used
+            microsoftId: microsoftUserData.sub,
+          });
+
+          // Auto-assign user to the "Client" team
+          try {
+            // Check if user's email is part of the myzone.ai domain (admin users)
+            const isMyZoneEmail = user.email.endsWith("@myzone.ai");
+
+            // Determine which team to assign:
+            // - If it's a myzone.ai email, MyZone team
+            // - Otherwise, Client team
+            let defaultTeam = await TeamModel.getByName(
+              isMyZoneEmail ? "MyZone" : "Client",
+            );
+
+            // Add user to the Default team
+            if (defaultTeam) {
+              await TeamModel.addUser({
+                userId: user.id,
+                teamId: defaultTeam.id,
+                role: "client",
+              });
+            }
+          } catch (teamError) {
+            console.error("Error assigning user to team:", teamError);
+            // Continue with user creation even if team assignment fails
+          }
+
+          // Check for guest assessments with this email and associate them with the new user
+          try {
+            await AssessmentModel.assignGuestAssessmentsToUser(user.email, user.id);
+          } catch (err) {
+            // Just log the error but don't fail registration if this fails
+            console.error(
+              "Error associating guest assessments with new user:",
+              err,
+            );
+          }
+        } else {
+          // User exists with this email but not connected to Microsoft yet
+          // Connect the Microsoft ID to this user
+          user = await UserModel.update(user.id, {
+            microsoftId: microsoftUserData.sub,
+          });
+        }
+      }
+
+      // Generate JWT token
+      if (!user) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to authenticate with Microsoft",
+        });
+      }
+
+      const token = UserModel.generateToken(user);
+
+      // Remove password from response (TypeScript now knows user is defined)
+      const { password, ...userWithoutPassword } = user;
+
+      return res.status(200).json({
+        success: true,
+        message: "Microsoft authentication successful",
+        token,
+        user: userWithoutPassword,
+      });
+    } catch (error) {
+      console.error("Microsoft authentication error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Microsoft authentication failed due to an unexpected error",
       });
     }
   }

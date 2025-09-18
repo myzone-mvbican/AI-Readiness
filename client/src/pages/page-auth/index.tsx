@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { GoogleLogin } from "@react-oauth/google";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -18,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { IndustrySelect } from "@/components/industries";
 import { useAuth } from "@/hooks/use-auth";
+import { MicrosoftLoginButton } from "@/components/microsoft-login-button";
 import {
   loginSchema,
   signupSchema,
@@ -30,23 +30,23 @@ export default function AuthPage() {
   const [_, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
-  const { user, loginMutation, registerMutation, googleLoginMutation } =
+  const { user, loginMutation, registerMutation, microsoftLoginMutation } =
     useAuth();
 
-  // Google login handlers
-  const handleGoogleSuccess = async (credentialResponse: any) => {
+  // Microsoft login handlers
+  const handleMicrosoftSuccess = async (credentialResponse: any) => {
     try {
       setIsSubmitting(true);
 
-      // Use the googleLoginMutation from our auth hook
-      await googleLoginMutation.mutateAsync({
+      // Use the microsoftLoginMutation from our auth hook
+      await microsoftLoginMutation.mutateAsync({
         credential: credentialResponse.credential,
       });
     } catch (error) {
-      console.error("Error with Google login:", error);
+      console.error("Error with Microsoft login:", error);
       toast({
-        title: "Google login failed",
-        description: "There was a problem with your Google login.",
+        title: "Microsoft login failed",
+        description: "There was a problem with your Microsoft login.",
         variant: "destructive",
         duration: 3000,
       });
@@ -55,10 +55,10 @@ export default function AuthPage() {
     }
   };
 
-  const handleGoogleError = () => {
+  const handleMicrosoftError = () => {
     toast({
-      title: "Google login failed",
-      description: "There was a problem with your Google login.",
+      title: "Microsoft login failed",
+      description: "There was a problem with your Microsoft login.",
       variant: "destructive",
       duration: 3000,
     });
@@ -176,15 +176,13 @@ export default function AuthPage() {
               </TabsList>
             </CardHeader>
             <CardContent className="pt-6">
-              {/* Google Sign-In Option */}
-              <div className="w-full mb-6 flex justify-center">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={handleGoogleError}
-                  theme="outline"
-                  size="large"
+              {/* Microsoft Sign-In Option */}
+              <div className="w-full mb-6">
+                <MicrosoftLoginButton
+                  onSuccess={handleMicrosoftSuccess}
+                  onError={handleMicrosoftError}
                   text={activeTab === "login" ? "signin_with" : "signup_with"}
-                  width="100%"
+                  disabled={isSubmitting}
                 />
               </div>
 

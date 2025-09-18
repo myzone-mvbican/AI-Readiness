@@ -29,6 +29,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   role: text("role").default("client"),
   googleId: text("google_id").unique(),
+  microsoftId: text("microsoft_id").unique(),
   resetToken: text("reset_token"),
   resetTokenExpiry: timestamp("reset_token_expiry"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
