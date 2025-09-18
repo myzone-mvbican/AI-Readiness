@@ -26,7 +26,7 @@ export default function Header() {
           <Link href="/">
             <img
               src={logoPath}
-              alt="MyZone AI Logo"
+              alt="Keeran Networks AI Logo"
               className="h-10 w-auto dark:invert"
             />
           </Link>

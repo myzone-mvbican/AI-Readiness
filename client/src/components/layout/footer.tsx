@@ -9,7 +9,7 @@ export default function Footer() {
           <Link href="/">
             <img
               src={logoPath}
-              alt="MyZone AI Logo"
+              alt="Keeran Networks AI Logo"
               className="h-8 w-auto"
             />
           </Link>
