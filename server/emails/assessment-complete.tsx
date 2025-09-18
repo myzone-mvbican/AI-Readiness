@@ -27,7 +27,7 @@ export const AssessmentCompleteEmail = ({
 }: AssessmentCompleteEmailProps) => (
   <Html>
     <Head />
-    <Preview>Your MyZone AI Readiness Assessment Results Are Ready</Preview>
+    <Preview>Your Keeran Networks AI Assessment Results Are Ready</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={logoContainer}>
