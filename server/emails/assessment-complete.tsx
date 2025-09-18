@@ -31,7 +31,7 @@ export const AssessmentCompleteEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Section style={logoContainer}>
-          <Heading style={h1}>MyZone AI</Heading>
+          <Heading style={h1}>Keeran Networks AI</Heading>
         </Section>
 
         <Heading style={h2}>Your AI Readiness Assessment is Complete!</Heading>
@@ -79,7 +79,7 @@ export const AssessmentCompleteEmail = ({
         <Text style={text}>
           Best regards,
           <br />
-          The MyZone AI Team
+          The Keeran Networks AI Team
         </Text>
 
         <Section style={footer}>
@@ -88,7 +88,7 @@ export const AssessmentCompleteEmail = ({
             you received this email in error, please contact our support team.
           </Text>
           <Text style={footerText}>
-            © 2025 MyZone AI. All rights reserved.
+            © 2025 Keeran Networks AI. All rights reserved.
           </Text>
         </Section>
       </Container>

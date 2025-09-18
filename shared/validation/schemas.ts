@@ -42,6 +42,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   employeeCount: true,
   industry: true,
   googleId: true,
+  microsoftId: true,
 });
 
 export const loginSchema = z.object({

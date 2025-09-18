@@ -276,11 +276,11 @@ export class UserModel {
       // Verify the JWT token with signature validation
       // Accept any valid Microsoft tenant issuer (multi-tenant support)
       const { payload } = await jwtVerify(token, JWKS, {
-        issuer: (iss: string) => {
-          // Accept Microsoft v2.0 issuer format for any tenant
-          const microsoftIssuerPattern = /^https:\/\/login\.microsoftonline\.com\/(common|consumers|organizations|[0-9a-f-]{36})\/v2\.0$/;
-          return microsoftIssuerPattern.test(iss);
-        },
+        issuer: [
+          'https://login.microsoftonline.com/common/v2.0',
+          'https://login.microsoftonline.com/consumers/v2.0',
+          'https://login.microsoftonline.com/organizations/v2.0'
+        ],
         audience: microsoftClientId,
       });
 

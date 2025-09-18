@@ -24,11 +24,11 @@ export const PasswordResetEmail = ({
 }: PasswordResetEmailProps) => (
   <Html>
     <Head />
-    <Preview>Reset your MyZone AI password</Preview>
+    <Preview>Reset your Keeran Networks AI password</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={logoContainer}>
-          <Heading style={h1}>MyZone AI</Heading>
+          <Heading style={h1}>Keeran Networks AI</Heading>
         </Section>
         <Heading style={h2}>Reset Your Password</Heading>
         <Text style={text}>Hello {userFirstName},</Text>
@@ -65,7 +65,7 @@ export const PasswordResetEmail = ({
         <Text style={text}>
           Best regards,
           <br />
-          The MyZone AI Team
+          The Keeran Networks AI Team
         </Text>
         <Section style={footer}>
           <Text style={footerText}>
@@ -160,7 +160,7 @@ const warningBox = {
   borderRadius: "6px",
   margin: "20px 20px",
   padding: "15px",
-  width: "auto"
+  width: "auto",
 };
 
 const warningText = {

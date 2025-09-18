@@ -29,7 +29,7 @@ export function ProfileCompletionCard() {
 
       const fieldsToCheck = [
         { name: "name", value: user.name, label: "Name" },
-        { name: "email", value: user.name, label: "Email" },
+        { name: "email", value: user.email, label: "Email" },
         { name: "company", value: user.company, label: "Company" },
         { name: "industry", value: user.industry, label: "Industry" },
         {
@@ -37,7 +37,7 @@ export function ProfileCompletionCard() {
           value: user.employeeCount,
           label: "Team Size",
         },
-        { name: "googleId", value: user.googleId, label: "Google Account" },
+        { name: "microsoftId", value: user.microsoftId, label: "Microsoft Account" },
       ];
 
       const completed = fieldsToCheck.filter((field) => !!field.value);
