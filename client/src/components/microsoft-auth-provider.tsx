@@ -76,5 +76,5 @@ export const MicrosoftAuthProvider: React.FC<MicrosoftAuthProviderProps> = ({
 
 // Export login request configuration for use in components
 export const loginRequest = {
-  scopes: ["openid", "profile", "User.Read"], // Basic scopes for authentication
+  scopes: ["openid", "profile", "email", "User.Read"], // Basic scopes for authentication + email
 };

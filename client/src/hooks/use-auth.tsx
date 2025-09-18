@@ -40,6 +40,7 @@ type AuthContextType = {
     GoogleLoginData
   >;
   googleDisconnectMutation: UseMutationResult<LoginResponse, Error, void>;
+  microsoftLoginMutation: UseMutationResult<LoginResponse, Error, GoogleLoginData>;
 };
 
 type LoginData = {
@@ -529,6 +530,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // Microsoft login mutation
+  const microsoftLoginMutation = useMutation({
+    mutationFn: async (data: GoogleLoginData) => {
+      const res = await apiRequest("POST", "/api/auth/microsoft/login", data);
+      return await res.json();
+    },
+    onSuccess: (data: LoginResponse) => {
+      if (data.success && data.token) {
+        // Save token to state and localStorage
+        setToken(data.token);
+
+        // Cache user data in query client and localStorage
+        queryClient.setQueryData(["/api/user"], data.user);
+        localStorage.setItem("userData", JSON.stringify(data.user));
+
+        // Update cached user state
+        setCachedUser(data.user);
+
+        // Invalidate teams query to ensure we get fresh data
+        queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
+
+        // Clear any previously selected team to force auto-selection
+        localStorage.removeItem("selectedTeam");
+
+        // Clear any guest assessment data
+        clearGuestAssessmentData();
+
+        toast({
+          title: "Microsoft login successful",
+          description: "You have been logged in successfully with Microsoft.",
+        });
+      } else {
+        toast({
+          title: "Microsoft login failed",
+          description: data.message || "An error occurred during Microsoft login.",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Microsoft login failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Helper functions for the new type-safe interface
   const clearError = () => setAuthError(null);
 
@@ -544,6 +593,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         googleLoginMutation,
         googleConnectMutation,
         googleDisconnectMutation,
+        microsoftLoginMutation,
       }}
     >
       {children}

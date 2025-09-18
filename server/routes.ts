@@ -82,6 +82,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/login", AuthController.login);
   // Google OAuth login/signup endpoint
   app.post("/api/auth/google/login", AuthController.loginGoogle);
+  app.post("/api/auth/microsoft/login", AuthController.loginMicrosoft);
 
   // Password reset endpoints
   app.post("/api/password/reset-request", PasswordResetController.requestReset);

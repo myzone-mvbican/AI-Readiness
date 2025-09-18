@@ -10,10 +10,10 @@ import { InsertUser, UpdateUser } from "@shared/types/requests";
 
 // Create a JWT_SECRET if not already set
 if (!process.env.JWT_SECRET) {
-  console.warn(
-    "JWT_SECRET not set. Using a default secret for development. DO NOT USE THIS IN PRODUCTION!",
+  console.error(
+    "CRITICAL: JWT_SECRET environment variable is required but not set. Application cannot start securely without it.",
   );
-  process.env.JWT_SECRET = "myzone-ai-dev-secret-2025";
+  process.exit(1);
 }
 
 // List of admin emails (environment variable based for security, with defaults)
@@ -43,6 +43,19 @@ export class UserModel {
       return user;
     } catch (error) {
       console.error("Error getting user by Google ID:", error);
+      return undefined;
+    }
+  }
+
+  static async getByMicrosoftId(microsoftId: string): Promise<User | undefined> {
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.microsoftId, microsoftId));
+      return user;
+    } catch (error) {
+      console.error("Error getting user by Microsoft ID:", error);
       return undefined;
     }
   }
@@ -202,6 +215,74 @@ export class UserModel {
       } as GoogleUserPayload;
     } catch (error) {
       console.error("Error verifying Google token:", error);
+      return null;
+    }
+  }
+
+  static async verifyMicrosoftToken(
+    token: string,
+  ): Promise<GoogleUserPayload | null> {
+    try {
+      // Get the Microsoft Client ID from environment (server-side env var, not VITE_*)
+      const microsoftClientId = process.env.MICROSOFT_CLIENT_ID;
+      if (!microsoftClientId) {
+        console.error("Microsoft Client ID not configured (MICROSOFT_CLIENT_ID)");
+        return null;
+      }
+
+      // Import jose for proper JWT verification
+      const { jwtVerify, createRemoteJWKSet } = await import('jose');
+
+      // Microsoft Azure AD JWKS URL for token signature verification
+      const JWKS = createRemoteJWKSet(new URL('https://login.microsoftonline.com/common/discovery/v2.0/keys'));
+
+      // Verify the JWT token with signature validation
+      // Accept any valid Microsoft tenant issuer (multi-tenant support)
+      const { payload } = await jwtVerify(token, JWKS, {
+        issuer: (iss: string) => {
+          // Accept Microsoft v2.0 issuer format for any tenant
+          const microsoftIssuerPattern = /^https:\/\/login\.microsoftonline\.com\/(common|consumers|organizations|[0-9a-f-]{36})\/v2\.0$/;
+          return microsoftIssuerPattern.test(iss);
+        },
+        audience: microsoftClientId,
+      });
+
+      // Extract user information from validated payload
+      const microsoftId = payload.sub || payload.oid as string;
+      const email = payload.email as string || payload.preferred_username as string || '';
+      const name = payload.name as string || '';
+
+      // Ensure we have required fields
+      if (!microsoftId) {
+        console.error("Missing user ID (sub/oid) in Microsoft token");
+        return null;
+      }
+
+      if (!email) {
+        console.error("Missing email in Microsoft token - ensure 'email' scope is requested");
+        return null;
+      }
+
+      // Return the payload in the expected format (same as Google)
+      return {
+        sub: microsoftId,
+        email: email.toLowerCase(), // Ensure consistent email casing
+        name: name,
+        picture: '', // Microsoft doesn't provide picture in ID token
+        email_verified: payload.email_verified !== false, // Default to true if not specified
+      } as GoogleUserPayload;
+    } catch (error) {
+      console.error("Error verifying Microsoft token:", error);
+      if (error instanceof Error) {
+        // Log specific JWT verification errors
+        if (error.message.includes('JWTExpired')) {
+          console.error("Microsoft token has expired");
+        } else if (error.message.includes('JWTClaimValidationFailed')) {
+          console.error("Microsoft token claim validation failed (aud/iss)");
+        } else if (error.message.includes('JWSSignatureVerificationFailed')) {
+          console.error("Microsoft token signature verification failed");
+        }
+      }
       return null;
     }
   }
