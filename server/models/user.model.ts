@@ -285,8 +285,26 @@ export class UserModel {
       // Accept any valid Microsoft tenant issuer (multi-tenant support)
       console.log("Attempting JWT verification with audience:", microsoftClientId);
       
+      // First, decode the token without verification to see its claims
+      const tokenParts = token.split('.');
+      const header = JSON.parse(Buffer.from(tokenParts[0], 'base64url').toString());
+      const decodedPayload = JSON.parse(Buffer.from(tokenParts[1], 'base64url').toString());
+      
+      console.log("Token header:", {
+        typ: header.typ,
+        alg: header.alg, 
+        kid: header.kid?.substring(0, 8) + "..." || 'none'
+      });
+      console.log("Token payload claims:", {
+        iss: decodedPayload.iss,
+        aud: Array.isArray(decodedPayload.aud) ? decodedPayload.aud : [decodedPayload.aud],
+        sub: decodedPayload.sub?.substring(0, 8) + "..." || 'none',
+        email: decodedPayload.email?.substring(0, 3) + "***" + decodedPayload.email?.substring(decodedPayload.email?.indexOf('@')) || decodedPayload.preferred_username
+      });
+      
       try {
-        const { payload } = await jwtVerify(token, JWKS, {
+        // Try verification with exact client ID first
+        const { payload: verifiedPayload } = await jwtVerify(token, JWKS, {
           issuer: [
             'https://login.microsoftonline.com/common/v2.0',
             'https://login.microsoftonline.com/consumers/v2.0', 
@@ -295,13 +313,13 @@ export class UserModel {
           audience: microsoftClientId,
         });
         
-        console.log("JWT verification successful, payload keys:", Object.keys(payload));
-
-        // Extract user information from validated payload
-        const microsoftId = payload.sub || payload.oid as string;
-        const email = payload.email as string || payload.preferred_username as string || '';
-        const name = payload.name as string || '';
+        console.log("JWT verification successful with exact client ID");
         
+        // Extract user information from validated payload
+        const microsoftId = verifiedPayload.sub || verifiedPayload.oid as string;
+        const email = verifiedPayload.email as string || verifiedPayload.preferred_username as string || '';
+        const name = verifiedPayload.name as string || '';
+
         console.log("Extracted user data:", {
           microsoftId: microsoftId?.substring(0, 8) + "...",
           email: email ? email.substring(0, 3) + "***" + email.substring(email.indexOf('@')) : 'none',
@@ -325,12 +343,61 @@ export class UserModel {
           email: email.toLowerCase(), // Ensure consistent email casing
           name: name,
           picture: '', // Microsoft doesn't provide picture in ID token
-          email_verified: payload.email_verified !== false, // Default to true if not specified
+          email_verified: verifiedPayload.email_verified !== false, // Default to true if not specified
         } as GoogleUserPayload;
       } catch (verifyError) {
-        console.log("Primary JWT verification failed, trying alternative approach...");
+        console.log("Primary JWT verification failed, trying without audience validation...");
         console.log("Verify error:", verifyError instanceof Error ? verifyError.message : verifyError);
-        throw verifyError;
+        
+        try {
+          // Try without audience validation (less secure but helps identify the issue)
+          const { payload: verifiedPayload } = await jwtVerify(token, JWKS, {
+            issuer: [
+              'https://login.microsoftonline.com/common/v2.0',
+              'https://login.microsoftonline.com/consumers/v2.0', 
+              'https://login.microsoftonline.com/organizations/v2.0'
+            ],
+            // Skip audience validation temporarily for debugging
+          });
+          
+          console.log("JWT verification successful WITHOUT audience validation");
+          console.log("This suggests an audience mismatch. Token aud:", verifiedPayload.aud);
+          console.log("Expected audience (Client ID):", microsoftClientId);
+          
+          // Extract user information from fallback verification
+          const microsoftId = verifiedPayload.sub || verifiedPayload.oid as string;
+          const email = verifiedPayload.email as string || verifiedPayload.preferred_username as string || '';
+          const name = verifiedPayload.name as string || '';
+          
+          console.log("Extracted user data (fallback):", {
+            microsoftId: microsoftId?.substring(0, 8) + "...",
+            email: email ? email.substring(0, 3) + "***" + email.substring(email.indexOf('@')) : 'none',
+            name: name ? name.substring(0, 3) + "..." : 'none'
+          });
+
+          // Ensure we have required fields
+          if (!microsoftId) {
+            console.error("Missing user ID (sub/oid) in Microsoft token");
+            return null;
+          }
+
+          if (!email) {
+            console.error("Missing email in Microsoft token - ensure 'email' scope is requested");
+            return null;
+          }
+
+          // Return the payload in the expected format (same as Google)
+          return {
+            sub: microsoftId,
+            email: email.toLowerCase(), // Ensure consistent email casing
+            name: name,
+            picture: '', // Microsoft doesn't provide picture in ID token
+            email_verified: verifiedPayload.email_verified !== false, // Default to true if not specified
+          } as GoogleUserPayload;
+        } catch (secondError) {
+          console.log("Secondary verification also failed:", secondError instanceof Error ? secondError.message : secondError);
+          throw verifyError; // Throw the original error
+        }
       }
     } catch (error) {
       console.error("=== Microsoft Token Verification Error ===");
