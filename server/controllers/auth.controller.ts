@@ -298,13 +298,10 @@ export class AuthController {
 
   static async loginMicrosoft(req: Request, res: Response) {
     try {
-      console.log("=== Microsoft Login Controller Debug ===");
-      console.log("Request body received:", JSON.stringify(req.body, null, 2));
       
       // Validate the input
       const result = microsoftAuthSchema.safeParse(req.body);
       if (!result.success) {
-        console.log("Schema validation failed:", result.error.format());
         return res.status(400).json({
           success: false,
           message: "Invalid Microsoft authentication data",
@@ -313,17 +310,6 @@ export class AuthController {
       }
 
       const { credential } = req.body;
-      console.log("Credential extracted, length:", credential?.length || 0);
-      console.log("Credential type:", typeof credential);
-      console.log("Credential first 100 chars:", credential?.substring(0, 100) + "...");
-      
-      // Check if it looks like a JWT (has 3 parts separated by dots)
-      const parts = credential?.split('.') || [];
-      console.log("JWT parts count:", parts.length);
-      if (parts.length === 3) {
-        console.log("JWT header (first 50 chars):", parts[0].substring(0, 50));
-        console.log("JWT payload (first 50 chars):", parts[1].substring(0, 50)); 
-      }
 
       // Verify the Microsoft token
       const microsoftUserData = await UserModel.verifyMicrosoftToken(credential);
