@@ -285,12 +285,8 @@ export class UserModel {
         return null;
       }
 
-      console.log("Token issuer:", issuer);
-      console.log("Token key ID:", kid?.substring(0, 8) + "...");
-      
       // Fetch OIDC metadata to get the correct JWKS URI
       const metadataUrl = `${issuer}/.well-known/openid-configuration`;
-      console.log("Fetching OIDC metadata from:", metadataUrl);
       
       const metadataResponse = await fetch(metadataUrl);
       if (!metadataResponse.ok) {
@@ -306,7 +302,6 @@ export class UserModel {
         return null;
       }
 
-      console.log("Using JWKS URI:", jwksUri);
 
       // Import jose and create RemoteJWKSet with the issuer-specific JWKS endpoint
       const { jwtVerify, createRemoteJWKSet } = await import('jose');
@@ -319,7 +314,6 @@ export class UserModel {
         clockTolerance: '60s'
       });
 
-      console.log("JWT verification successful");
 
       // Extract user information from validated payload
       const microsoftId = verifiedPayload.sub || verifiedPayload.oid as string;
@@ -337,7 +331,6 @@ export class UserModel {
         return null;
       }
 
-      console.log("Successfully extracted user data from Microsoft token");
 
       // Return the payload in the expected format (same as Google)
       return {
