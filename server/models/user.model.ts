@@ -276,43 +276,62 @@ export class UserModel {
       const { jwtVerify, createRemoteJWKSet } = await import('jose');
 
       // Microsoft Azure AD JWKS URL for token signature verification
+      // Try multiple JWKS endpoints for better compatibility
       const JWKS = createRemoteJWKSet(new URL('https://login.microsoftonline.com/common/discovery/v2.0/keys'));
+      
+      console.log("Using JWKS endpoint: https://login.microsoftonline.com/common/discovery/v2.0/keys");
 
       // Verify the JWT token with signature validation
       // Accept any valid Microsoft tenant issuer (multi-tenant support)
-      const { payload } = await jwtVerify(token, JWKS, {
-        issuer: [
-          'https://login.microsoftonline.com/common/v2.0',
-          'https://login.microsoftonline.com/consumers/v2.0',
-          'https://login.microsoftonline.com/organizations/v2.0'
-        ],
-        audience: microsoftClientId,
-      });
+      console.log("Attempting JWT verification with audience:", microsoftClientId);
+      
+      try {
+        const { payload } = await jwtVerify(token, JWKS, {
+          issuer: [
+            'https://login.microsoftonline.com/common/v2.0',
+            'https://login.microsoftonline.com/consumers/v2.0', 
+            'https://login.microsoftonline.com/organizations/v2.0'
+          ],
+          audience: microsoftClientId,
+        });
+        
+        console.log("JWT verification successful, payload keys:", Object.keys(payload));
 
-      // Extract user information from validated payload
-      const microsoftId = payload.sub || payload.oid as string;
-      const email = payload.email as string || payload.preferred_username as string || '';
-      const name = payload.name as string || '';
+        // Extract user information from validated payload
+        const microsoftId = payload.sub || payload.oid as string;
+        const email = payload.email as string || payload.preferred_username as string || '';
+        const name = payload.name as string || '';
+        
+        console.log("Extracted user data:", {
+          microsoftId: microsoftId?.substring(0, 8) + "...",
+          email: email ? email.substring(0, 3) + "***" + email.substring(email.indexOf('@')) : 'none',
+          name: name ? name.substring(0, 3) + "..." : 'none'
+        });
 
-      // Ensure we have required fields
-      if (!microsoftId) {
-        console.error("Missing user ID (sub/oid) in Microsoft token");
-        return null;
+        // Ensure we have required fields
+        if (!microsoftId) {
+          console.error("Missing user ID (sub/oid) in Microsoft token");
+          return null;
+        }
+
+        if (!email) {
+          console.error("Missing email in Microsoft token - ensure 'email' scope is requested");
+          return null;
+        }
+
+        // Return the payload in the expected format (same as Google)
+        return {
+          sub: microsoftId,
+          email: email.toLowerCase(), // Ensure consistent email casing
+          name: name,
+          picture: '', // Microsoft doesn't provide picture in ID token
+          email_verified: payload.email_verified !== false, // Default to true if not specified
+        } as GoogleUserPayload;
+      } catch (verifyError) {
+        console.log("Primary JWT verification failed, trying alternative approach...");
+        console.log("Verify error:", verifyError instanceof Error ? verifyError.message : verifyError);
+        throw verifyError;
       }
-
-      if (!email) {
-        console.error("Missing email in Microsoft token - ensure 'email' scope is requested");
-        return null;
-      }
-
-      // Return the payload in the expected format (same as Google)
-      return {
-        sub: microsoftId,
-        email: email.toLowerCase(), // Ensure consistent email casing
-        name: name,
-        picture: '', // Microsoft doesn't provide picture in ID token
-        email_verified: payload.email_verified !== false, // Default to true if not specified
-      } as GoogleUserPayload;
     } catch (error) {
       console.error("=== Microsoft Token Verification Error ===");
       console.error("Error verifying Microsoft token:", error);
