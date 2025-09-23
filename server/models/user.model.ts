@@ -260,163 +260,96 @@ export class UserModel {
     token: string,
   ): Promise<GoogleUserPayload | null> {
     try {
-      console.log("=== Microsoft Token Verification Debug ===");
-      console.log("Token received (first 50 chars):", token.substring(0, 50) + "...");
-      
-      // Get the Microsoft Client ID from environment (server-side env var, not VITE_*)
+      // Get the Microsoft Client ID from environment
       const microsoftClientId = process.env.MICROSOFT_CLIENT_ID;
       if (!microsoftClientId) {
-        console.error("Microsoft Client ID not configured (MICROSOFT_CLIENT_ID)");
+        console.error("Microsoft Client ID not configured");
+        return null;
+      }
+
+      // Decode token without verification to extract issuer and kid
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        console.error("Invalid JWT format");
+        return null;
+      }
+
+      const header = JSON.parse(Buffer.from(tokenParts[0], 'base64url').toString());
+      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64url').toString());
+      
+      const issuer = payload.iss;
+      const kid = header.kid;
+      
+      if (!issuer) {
+        console.error("No issuer found in token");
+        return null;
+      }
+
+      console.log("Token issuer:", issuer);
+      console.log("Token key ID:", kid?.substring(0, 8) + "...");
+      
+      // Fetch OIDC metadata to get the correct JWKS URI
+      const metadataUrl = `${issuer}/.well-known/openid-configuration`;
+      console.log("Fetching OIDC metadata from:", metadataUrl);
+      
+      const metadataResponse = await fetch(metadataUrl);
+      if (!metadataResponse.ok) {
+        console.error("Failed to fetch OIDC metadata:", metadataResponse.statusText);
         return null;
       }
       
-      console.log("Microsoft Client ID configured:", microsoftClientId.substring(0, 8) + "...");
+      const metadata = await metadataResponse.json();
+      const jwksUri = metadata.jwks_uri;
+      
+      if (!jwksUri) {
+        console.error("No jwks_uri found in OIDC metadata");
+        return null;
+      }
 
-      // Import jose for proper JWT verification
+      console.log("Using JWKS URI:", jwksUri);
+
+      // Import jose and create RemoteJWKSet with the issuer-specific JWKS endpoint
       const { jwtVerify, createRemoteJWKSet } = await import('jose');
+      const JWKS = createRemoteJWKSet(new URL(jwksUri));
 
-      // Microsoft Azure AD JWKS URL for token signature verification
-      // Try multiple JWKS endpoints for better compatibility
-      const JWKS = createRemoteJWKSet(new URL('https://login.microsoftonline.com/common/discovery/v2.0/keys'));
-      
-      console.log("Using JWKS endpoint: https://login.microsoftonline.com/common/discovery/v2.0/keys");
-
-      // Verify the JWT token with signature validation
-      // Accept any valid Microsoft tenant issuer (multi-tenant support)
-      console.log("Attempting JWT verification with audience:", microsoftClientId);
-      
-      // First, decode the token without verification to see its claims
-      const tokenParts = token.split('.');
-      const header = JSON.parse(Buffer.from(tokenParts[0], 'base64url').toString());
-      const decodedPayload = JSON.parse(Buffer.from(tokenParts[1], 'base64url').toString());
-      
-      console.log("Token header:", {
-        typ: header.typ,
-        alg: header.alg, 
-        kid: header.kid?.substring(0, 8) + "..." || 'none'
+      // Verify the JWT token with proper issuer and audience validation
+      const { payload: verifiedPayload } = await jwtVerify(token, JWKS, {
+        issuer: issuer, // Use exact issuer from token
+        audience: microsoftClientId,
+        clockTolerance: '60s'
       });
-      console.log("Token payload claims:", {
-        iss: decodedPayload.iss,
-        aud: Array.isArray(decodedPayload.aud) ? decodedPayload.aud : [decodedPayload.aud],
-        sub: decodedPayload.sub?.substring(0, 8) + "..." || 'none',
-        email: decodedPayload.email?.substring(0, 3) + "***" + decodedPayload.email?.substring(decodedPayload.email?.indexOf('@')) || decodedPayload.preferred_username
-      });
-      
-      try {
-        // Try verification with exact client ID first
-        const { payload: verifiedPayload } = await jwtVerify(token, JWKS, {
-          issuer: [
-            'https://login.microsoftonline.com/common/v2.0',
-            'https://login.microsoftonline.com/consumers/v2.0', 
-            'https://login.microsoftonline.com/organizations/v2.0'
-          ],
-          audience: microsoftClientId,
-        });
-        
-        console.log("JWT verification successful with exact client ID");
-        
-        // Extract user information from validated payload
-        const microsoftId = verifiedPayload.sub || verifiedPayload.oid as string;
-        const email = verifiedPayload.email as string || verifiedPayload.preferred_username as string || '';
-        const name = verifiedPayload.name as string || '';
 
-        console.log("Extracted user data:", {
-          microsoftId: microsoftId?.substring(0, 8) + "...",
-          email: email ? email.substring(0, 3) + "***" + email.substring(email.indexOf('@')) : 'none',
-          name: name ? name.substring(0, 3) + "..." : 'none'
-        });
+      console.log("JWT verification successful");
 
-        // Ensure we have required fields
-        if (!microsoftId) {
-          console.error("Missing user ID (sub/oid) in Microsoft token");
-          return null;
-        }
+      // Extract user information from validated payload
+      const microsoftId = verifiedPayload.sub || verifiedPayload.oid as string;
+      const email = verifiedPayload.email as string || verifiedPayload.preferred_username as string || '';
+      const name = verifiedPayload.name as string || '';
 
-        if (!email) {
-          console.error("Missing email in Microsoft token - ensure 'email' scope is requested");
-          return null;
-        }
-
-        // Return the payload in the expected format (same as Google)
-        return {
-          sub: microsoftId,
-          email: email.toLowerCase(), // Ensure consistent email casing
-          name: name,
-          picture: '', // Microsoft doesn't provide picture in ID token
-          email_verified: verifiedPayload.email_verified !== false, // Default to true if not specified
-        } as GoogleUserPayload;
-      } catch (verifyError) {
-        console.log("Primary JWT verification failed, trying without audience validation...");
-        console.log("Verify error:", verifyError instanceof Error ? verifyError.message : verifyError);
-        
-        try {
-          // Try without audience validation (less secure but helps identify the issue)
-          const { payload: verifiedPayload } = await jwtVerify(token, JWKS, {
-            issuer: [
-              'https://login.microsoftonline.com/common/v2.0',
-              'https://login.microsoftonline.com/consumers/v2.0', 
-              'https://login.microsoftonline.com/organizations/v2.0'
-            ],
-            // Skip audience validation temporarily for debugging
-          });
-          
-          console.log("JWT verification successful WITHOUT audience validation");
-          console.log("This suggests an audience mismatch. Token aud:", verifiedPayload.aud);
-          console.log("Expected audience (Client ID):", microsoftClientId);
-          
-          // Extract user information from fallback verification
-          const microsoftId = verifiedPayload.sub || verifiedPayload.oid as string;
-          const email = verifiedPayload.email as string || verifiedPayload.preferred_username as string || '';
-          const name = verifiedPayload.name as string || '';
-          
-          console.log("Extracted user data (fallback):", {
-            microsoftId: microsoftId?.substring(0, 8) + "...",
-            email: email ? email.substring(0, 3) + "***" + email.substring(email.indexOf('@')) : 'none',
-            name: name ? name.substring(0, 3) + "..." : 'none'
-          });
-
-          // Ensure we have required fields
-          if (!microsoftId) {
-            console.error("Missing user ID (sub/oid) in Microsoft token");
-            return null;
-          }
-
-          if (!email) {
-            console.error("Missing email in Microsoft token - ensure 'email' scope is requested");
-            return null;
-          }
-
-          // Return the payload in the expected format (same as Google)
-          return {
-            sub: microsoftId,
-            email: email.toLowerCase(), // Ensure consistent email casing
-            name: name,
-            picture: '', // Microsoft doesn't provide picture in ID token
-            email_verified: verifiedPayload.email_verified !== false, // Default to true if not specified
-          } as GoogleUserPayload;
-        } catch (secondError) {
-          console.log("Secondary verification also failed:", secondError instanceof Error ? secondError.message : secondError);
-          throw verifyError; // Throw the original error
-        }
+      // Ensure we have required fields
+      if (!microsoftId) {
+        console.error("Missing user ID (sub/oid) in Microsoft token");
+        return null;
       }
+
+      if (!email) {
+        console.error("Missing email in Microsoft token");
+        return null;
+      }
+
+      console.log("Successfully extracted user data from Microsoft token");
+
+      // Return the payload in the expected format (same as Google)
+      return {
+        sub: microsoftId,
+        email: email.toLowerCase(),
+        name: name,
+        picture: '',
+        email_verified: verifiedPayload.email_verified !== false,
+      } as GoogleUserPayload;
+
     } catch (error) {
-      console.error("=== Microsoft Token Verification Error ===");
-      console.error("Error verifying Microsoft token:", error);
-      if (error instanceof Error) {
-        console.error("Error message:", error.message);
-        console.error("Error stack:", error.stack);
-        
-        // Log specific JWT verification errors
-        if (error.message.includes('JWTExpired')) {
-          console.error("Microsoft token has expired");
-        } else if (error.message.includes('JWTClaimValidationFailed')) {
-          console.error("Microsoft token claim validation failed (aud/iss)");
-        } else if (error.message.includes('JWSSignatureVerificationFailed')) {
-          console.error("Microsoft token signature verification failed");
-        } else if (error.message.includes('Invalid Compact JWS')) {
-          console.error("Token is not in proper JWT format");
-        }
-      }
+      console.error("Error verifying Microsoft token:", error instanceof Error ? error.message : error);
       return null;
     }
   }
