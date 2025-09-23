@@ -20,6 +20,9 @@ export const MicrosoftLoginButton: React.FC<MicrosoftLoginButtonProps> = ({
   const { instance } = useMsal();
 
   const handleLogin = async () => {
+    console.log("🚀 MICROSOFT BUTTON CLICKED!");
+    alert("Microsoft button clicked - check console");
+    
     try {
       console.log("=== Microsoft Login Debug ===");
       console.log("Starting Microsoft login popup...");
