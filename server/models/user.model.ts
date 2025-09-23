@@ -260,12 +260,17 @@ export class UserModel {
     token: string,
   ): Promise<GoogleUserPayload | null> {
     try {
+      console.log("=== Microsoft Token Verification Debug ===");
+      console.log("Token received (first 50 chars):", token.substring(0, 50) + "...");
+      
       // Get the Microsoft Client ID from environment (server-side env var, not VITE_*)
       const microsoftClientId = process.env.MICROSOFT_CLIENT_ID;
       if (!microsoftClientId) {
         console.error("Microsoft Client ID not configured (MICROSOFT_CLIENT_ID)");
         return null;
       }
+      
+      console.log("Microsoft Client ID configured:", microsoftClientId.substring(0, 8) + "...");
 
       // Import jose for proper JWT verification
       const { jwtVerify, createRemoteJWKSet } = await import('jose');
@@ -309,8 +314,12 @@ export class UserModel {
         email_verified: payload.email_verified !== false, // Default to true if not specified
       } as GoogleUserPayload;
     } catch (error) {
+      console.error("=== Microsoft Token Verification Error ===");
       console.error("Error verifying Microsoft token:", error);
       if (error instanceof Error) {
+        console.error("Error message:", error.message);
+        console.error("Error stack:", error.stack);
+        
         // Log specific JWT verification errors
         if (error.message.includes('JWTExpired')) {
           console.error("Microsoft token has expired");
@@ -318,6 +327,8 @@ export class UserModel {
           console.error("Microsoft token claim validation failed (aud/iss)");
         } else if (error.message.includes('JWSSignatureVerificationFailed')) {
           console.error("Microsoft token signature verification failed");
+        } else if (error.message.includes('Invalid Compact JWS')) {
+          console.error("Token is not in proper JWT format");
         }
       }
       return null;

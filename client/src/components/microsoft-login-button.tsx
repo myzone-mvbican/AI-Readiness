@@ -21,16 +21,29 @@ export const MicrosoftLoginButton: React.FC<MicrosoftLoginButtonProps> = ({
 
   const handleLogin = async () => {
     try {
+      console.log("=== Microsoft Login Debug ===");
+      console.log("Starting Microsoft login popup...");
+      
       // Trigger popup login
       const response = await instance.loginPopup(loginRequest);
       
+      console.log("Microsoft login response:", {
+        hasIdToken: !!response?.idToken,
+        hasAccessToken: !!response?.accessToken,
+        account: response?.account?.username,
+        tokenLength: response?.idToken?.length
+      });
+      
       if (response && response.idToken) {
+        console.log("ID Token (first 100 chars):", response.idToken.substring(0, 100) + "...");
+        
         // Call success handler with the ID token
         onSuccess({
           credential: response.idToken,
         });
       } else {
         console.error("No ID token received from Microsoft");
+        console.error("Full response:", response);
         onError();
       }
     } catch (error) {
