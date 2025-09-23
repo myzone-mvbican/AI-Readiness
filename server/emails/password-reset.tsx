@@ -33,9 +33,9 @@ export const PasswordResetEmail = ({
         <Heading style={h2}>Reset Your Password</Heading>
         <Text style={text}>Hello {userFirstName},</Text>
         <Text style={text}>
-          We received a request to reset your password for your MyZone AI
-          account. If you didn't make this request, you can safely ignore this
-          email.
+          We received a request to reset your password for your Keeran Networks
+          AI account. If you didn't make this request, you can safely ignore
+          this email.
         </Text>
         <Text style={text}>
           To reset your password, click the button below:
@@ -99,7 +99,7 @@ const container = {
 const logoContainer = {
   padding: "32px 20px",
   textAlign: "center" as const,
-  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  background: "#40bd56",
   color: "#ffffff",
 };
 
@@ -134,13 +134,13 @@ const buttonContainer = {
 };
 
 const button = {
-  backgroundColor: "#667eea",
+  backgroundColor: "#40bd56",
   borderRadius: "6px",
   color: "#fff",
   fontSize: "16px",
   fontWeight: "bold",
   textDecoration: "none",
-  lineHeight: "2",
+  lineHeight: "40px",
   textAlign: "center" as const,
   display: "block",
   height: "40px",
