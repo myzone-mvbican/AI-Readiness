@@ -298,9 +298,13 @@ export class AuthController {
 
   static async loginMicrosoft(req: Request, res: Response) {
     try {
+      console.log("=== Microsoft Login Controller Debug ===");
+      console.log("Request body received:", JSON.stringify(req.body, null, 2));
+      
       // Validate the input
       const result = microsoftAuthSchema.safeParse(req.body);
       if (!result.success) {
+        console.log("Schema validation failed:", result.error.format());
         return res.status(400).json({
           success: false,
           message: "Invalid Microsoft authentication data",
@@ -309,6 +313,7 @@ export class AuthController {
       }
 
       const { credential } = req.body;
+      console.log("Credential extracted, length:", credential?.length || 0);
 
       // Verify the Microsoft token
       const microsoftUserData = await UserModel.verifyMicrosoftToken(credential);
