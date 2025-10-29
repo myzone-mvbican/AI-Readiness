@@ -22,9 +22,10 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Download, FileText, Table as TableIcon, Loader2 } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-import { User } from "./types";
+import { User, UsersResponse } from "./types";
 
 type ExportFormat = "csv" | "xlsx";
 
@@ -61,7 +62,7 @@ export function ExportUsersDialog({ children }: ExportUsersDialogProps) {
   const [exportProgress, setExportProgress] = useState(0);
 
   // Fetch all users for export (no pagination)
-  const { data: allUsersData, isLoading: isLoadingAllUsers } = useQuery({
+  const { data: allUsersData, isLoading: isLoadingAllUsers } = useQuery<UsersResponse>({
     queryKey: ["/api/admin/users/export"],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -71,15 +72,7 @@ export function ExportUsersDialog({ children }: ExportUsersDialogProps) {
         sortOrder: "desc",
       });
 
-      const response = await fetch(`/api/admin/users?${params}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch users for export");
-      }
+      const response = await apiRequest("GET", `/api/admin/users?${params}`);
 
       return response.json();
     },
@@ -186,7 +179,7 @@ export function ExportUsersDialog({ children }: ExportUsersDialogProps) {
       return;
     }
 
-    if (!allUsersData?.users?.length) {
+    if (!allUsersData?.data?.length) {
       toast({
         title: "No users to export",
         description: "There are no users available for export.",
@@ -206,7 +199,7 @@ export function ExportUsersDialog({ children }: ExportUsersDialogProps) {
         setExportProgress(progressSteps[i]);
       }
 
-      const formattedData = formatUserData(allUsersData.users);
+      const formattedData = formatUserData(allUsersData.data);
 
       if (format === "csv") {
         exportToCSV(formattedData);
@@ -216,7 +209,7 @@ export function ExportUsersDialog({ children }: ExportUsersDialogProps) {
 
       toast({
         title: "Export successful",
-        description: `Exported ${allUsersData.users.length} users to ${format.toUpperCase()} format.`,
+        description: `Exported ${allUsersData.data.length} users to ${format.toUpperCase()} format.`,
       });
 
       setIsOpen(false);
@@ -337,7 +330,7 @@ export function ExportUsersDialog({ children }: ExportUsersDialogProps) {
           {/* Summary */}
           {allUsersData && !isLoadingAllUsers && (
             <div className="text-sm text-muted-foreground bg-muted/30 p-3 rounded">
-              Ready to export {allUsersData.users?.length || 0} users with {selectedFields.size} selected fields.
+              Ready to export {allUsersData.data?.length || 0} users with {selectedFields.size} selected fields.
             </div>
           )}
         </div>

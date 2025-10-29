@@ -100,7 +100,6 @@ export class CompletionService {
           : `You have reached the completion limit for this survey (${completionCount}/${survey.completionLimit})`,
       };
     } catch (error) {
-      console.error("Error checking survey completion eligibility:", error);
       return {
         canTake: false,
         completionCount: 0,
@@ -175,14 +174,12 @@ export class CompletionService {
                 .where(eq(assessments.id, assessment.id));
             }
           } catch (error) {
-            console.error("Error parsing guest data during reset:", error);
           }
         }
       }
 
       return true;
     } catch (error) {
-      console.error("Error resetting user completions:", error);
       return false;
     }
   }

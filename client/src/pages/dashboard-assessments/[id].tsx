@@ -73,15 +73,16 @@ export default function AssessmentDetailPage() {
   // datas();
 
   // Fetch assessment data
-  const { data, isLoading, error } = useQuery<
-    AssessmentResponse & { survey: Survey }
-  >({
+  const { data, isLoading, error } = useQuery<{
+    success: boolean;
+    data?: { assessment: AssessmentResponse["assessment"] & { survey: Survey } };
+  }>({
     queryKey: [`/api/assessments/${assessmentId}`],
     enabled: !!assessmentId,
     staleTime: 30 * 1000, // 30 seconds
   });
 
-  const assessment = data?.assessment;
+  const assessment = data?.data?.assessment;
 
   // Is assessment completed?
   const isCompleted = assessment?.status === "completed";
@@ -131,7 +132,7 @@ export default function AssessmentDetailPage() {
 
   // Update assessment mutation
   const updateAssessmentMutation = useMutation<
-    AssessmentResponse,
+    { success: boolean; data?: { assessment: AssessmentResponse["assessment"] } },
     Error,
     { status?: string; answers: typeof answers }
   >({

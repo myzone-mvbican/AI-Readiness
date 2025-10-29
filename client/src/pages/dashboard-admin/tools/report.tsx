@@ -64,9 +64,9 @@ export function PDFDownloadTool() {
       const response = await apiRequest("GET", `/api/assessments/${id}`);
       const result = await response.json();
 
-      if (result.success && result.assessment) {
+      if (result.success && result.data?.assessment) {
         setAssessmentExists(true);
-        setAssessment(result.assessment);
+        setAssessment(result.data.assessment);
       } else {
         setAssessmentExists(false);
         setAssessment(null);
@@ -94,7 +94,7 @@ export function PDFDownloadTool() {
       );
       const result = await response.json();
       if (result.success) {
-        setUsers(result.users || []);
+        setUsers(result.data || []);
       }
     } catch (error) {
       console.error("Error searching users:", error);
@@ -113,7 +113,7 @@ export function PDFDownloadTool() {
       );
       const result = await response.json();
       if (result.success) {
-        setUserAssessments(result.assessments || []);
+        setUserAssessments(result.data || []);
       }
     } catch (error) {
       console.error("Error fetching user assessments:", error);
@@ -164,7 +164,7 @@ export function PDFDownloadTool() {
       } else {
         toast({
           title: "Error",
-          description: result.error || "Failed to regenerate recommendations",
+          description: result.error?.message || "Failed to regenerate recommendations",
           variant: "destructive",
         });
       }
@@ -196,13 +196,17 @@ export function PDFDownloadTool() {
 
   // Debounced user search
   useEffect(() => {
-    if (userSearchOpen) {
-      const timeoutId = setTimeout(() => {
-        searchUsers(userSearchValue);
-      }, 300);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [userSearchValue, userSearchOpen]);
+    const timeoutId = setTimeout(() => {
+      searchUsers(userSearchValue);
+      
+      // Clear selected user and assessments when search is cleared
+      if (!userSearchValue.trim()) {
+        setSelectedUser(null);
+        setUserAssessments([]);
+      }
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [userSearchValue]);
 
   return (
     <Card>
@@ -282,29 +286,38 @@ export function PDFDownloadTool() {
           {selectedUser && userAssessments.length > 0 && (
             <div className="p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
               <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-                Assessments for {selectedUser.name}
+                Completed Assessments for {selectedUser.name}
               </h4>
-              <div className="flex flex-wrap gap-2">
-                {userAssessments.map((assessment) => (
-                  <Button
-                    key={assessment.id}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleAssessmentIdClick(assessment.id)}
-                    className="h-8 px-3 text-xs border-blue-300 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900"
-                  >
-                    ID: {assessment.id}
-                    {assessment.completedAt && (
-                      <Badge
-                        variant="secondary"
-                        className="ml-1 h-4 text-xs"
+              {userAssessments.filter((assessment) => (assessment as any).completedAt || assessment.completedOn).length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {userAssessments
+                    .filter((assessment) => (assessment as any).completedAt || assessment.completedOn)
+                    .map((assessment) => (
+                      <Button
+                        key={assessment.id}
+                        variant={assessmentId === assessment.id.toString() ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleAssessmentIdClick(assessment.id)}
+                        className={`h-8 px-3 text-xs ${assessmentId === assessment.id.toString()
+                            ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
+                            : "border-blue-300 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900"
+                          }`}
                       >
-                        Completed
-                      </Badge>
-                    )}
-                  </Button>
-                ))}
-              </div>
+                        ID: {assessment.id}
+                        <Badge
+                          variant="secondary"
+                          className="ml-1 h-4 text-xs"
+                        >
+                          Completed
+                        </Badge>
+                      </Button>
+                    ))}
+                </div>
+              ) : (
+                <p className="text-sm text-blue-700 dark:text-blue-300 italic">
+                  No completed assessments found for this user.
+                </p>
+              )}
             </div>
           )}
 

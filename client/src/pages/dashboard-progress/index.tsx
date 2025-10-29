@@ -6,6 +6,7 @@ import { TrendingUp } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { Loading } from "./loading";
+import { BenchmarkData } from "@shared/types";
 import {
   Bar,
   BarChart,
@@ -41,18 +42,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface BenchmarkData {
-  quarter: string;
-  surveyTemplateId: number;
-  industry: string;
-  categories: {
-    name: string;
-    userScore: number;
-    industryAverage: number | null;
-    globalAverage: number | null;
-  }[];
-}
-
 export default function DashboardCompare() {
   const { user } = useAuth();
   const [activeChart, setActiveChart] = useState<"industry" | "global">(
@@ -76,15 +65,20 @@ export default function DashboardCompare() {
   });
 
   // Find the most recent completed assessment
-  const latestCompletedAssessment = assessments?.assessments
-    ?.filter((a) => a.status === "completed" && a.completedOn)
+  // NEW: Handle standardized response format
+  const assessmentsList = (assessments as any)?.success && (assessments as any)?.data?.assessments
+    ? (assessments as any).data.assessments
+    : (assessments as any)?.assessments || [];
+  
+  const latestCompletedAssessment = assessmentsList
+    ?.filter((a: any) => a.status === "completed" && a.completedOn)
     ?.sort(
-      (a, b) =>
+      (a: any, b: any) =>
         new Date(b.completedOn!).getTime() - new Date(a.completedOn!).getTime(),
     )?.[0];
 
   const {
-    data: benchmarkData,
+    data: benchmarkResponse,
     isLoading,
     error,
   } = useQuery<{
@@ -98,14 +92,14 @@ export default function DashboardCompare() {
   // Auto-select Global when user's industry has no data (must be before conditional returns)
   useEffect(() => {
     if (
-      benchmarkData?.data &&
-      !benchmarkData.data.categories.some((c) => c.industryAverage !== null) &&
+      benchmarkResponse?.data &&
+      !benchmarkResponse.data.categories.some((c) => c.industryAverage !== null) &&
       activeChart === "industry"
     ) {
       setActiveChart("global");
       setActiveView("global");
     }
-  }, [benchmarkData, activeChart]);
+  }, [benchmarkResponse, activeChart]);
 
   if (!latestCompletedAssessment) {
     return <Loading type="none" />;
@@ -115,11 +109,11 @@ export default function DashboardCompare() {
     return <Loading type="loading" />;
   }
 
-  if (error || !benchmarkData?.success || !benchmarkData?.data) {
+  if (error || !benchmarkResponse?.success || !benchmarkResponse?.data) {
     return <Loading type="error" />;
   }
 
-  const { data } = benchmarkData;
+  const { data } = benchmarkResponse;
   const { company = "Your company", industry: industryCode = "Industry" } =
     user || {};
 

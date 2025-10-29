@@ -10,12 +10,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { DashboardLayout } from "@/components/layout/dashboard";
 import { GoogleLogin } from "@react-oauth/google";
-import { MicrosoftLoginButton } from "@/components/microsoft-login-button";
 
 import {
   settingsSchema,
   type SettingsFormValues,
-} from "@/schemas/validation-schemas";
+} from "@shared/validation/validation-schemas";
 import {
   Select,
   SelectContent,
@@ -27,18 +26,10 @@ import { IndustrySelect } from "@/components/industries";
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  const { 
-    user, 
-    googleConnectMutation, 
-    googleDisconnectMutation,
-    microsoftConnectMutation,
-    microsoftDisconnectMutation,
-  } = useAuth();
+  const { user, googleConnectMutation, googleDisconnectMutation } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isConnectingGoogle, setIsConnectingGoogle] = useState(false);
   const [isDisconnectingGoogle, setIsDisconnectingGoogle] = useState(false);
-  const [isConnectingMicrosoft, setIsConnectingMicrosoft] = useState(false);
-  const [isDisconnectingMicrosoft, setIsDisconnectingMicrosoft] = useState(false);
   const [initialFormData, setInitialFormData] =
     useState<SettingsFormValues | null>(null);
 
@@ -71,35 +62,6 @@ export default function SettingsPage() {
     });
   }, [googleDisconnectMutation]);
 
-  // Microsoft authentication handlers
-  const handleMicrosoftSuccess = useCallback(
-    (credentialResponse: any) => {
-      setIsConnectingMicrosoft(true);
-      microsoftConnectMutation.mutate(
-        { credential: credentialResponse.credential },
-        {
-          onSettled: () => setIsConnectingMicrosoft(false),
-        },
-      );
-    },
-    [microsoftConnectMutation],
-  );
-
-  const handleMicrosoftError = useCallback(() => {
-    toast({
-      title: "Microsoft Sign-In Failed",
-      description: "There was a problem connecting your Microsoft account.",
-      variant: "destructive",
-    });
-  }, [toast]);
-
-  const handleDisconnectMicrosoft = useCallback(() => {
-    setIsDisconnectingMicrosoft(true);
-    microsoftDisconnectMutation.mutate(undefined, {
-      onSettled: () => setIsDisconnectingMicrosoft(false),
-    });
-  }, [microsoftDisconnectMutation]);
-
   const {
     register,
     handleSubmit,
@@ -120,11 +82,12 @@ export default function SettingsPage() {
     },
   });
 
+  // CSRF token is now read directly from cookie - no initialization needed
+
   // Load user data when available
   useEffect(() => {
     if (user) {
 
-      
       const formData = {
         name: user.name || "",
         company: user.company || "",
@@ -133,8 +96,6 @@ export default function SettingsPage() {
         password: "",
         confirmPassword: "",
       };
-
-
 
       // Set initial form data for dirty check comparison
       setInitialFormData(formData);
@@ -180,14 +141,13 @@ export default function SettingsPage() {
 
       if (response.ok) {
         // Update with the latest user data returned from the server
-        const updatedUser = result.user;
+        const updatedUser = result.data?.user;
 
-        // Update localStorage cache with fresh data
-        localStorage.setItem("userData", JSON.stringify(updatedUser));
-        
-        // Force refresh user data from server to ensure consistency
-        queryClient.setQueryData(["/api/user"], updatedUser);
-        await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        // Update the query cache with the correct API response format
+        queryClient.setQueryData(["/api/user"], {
+          success: true,
+          data: { user: updatedUser },
+        });
 
         // Create a new form data object from the updated user
         const updatedFormData = {
@@ -215,7 +175,7 @@ export default function SettingsPage() {
       } else {
         toast({
           title: "Update failed",
-          description: result.message || "Failed to update your profile",
+          description: result.error?.message || "Failed to update your profile",
           variant: "destructive",
           duration: 3000,
         });
@@ -568,90 +528,6 @@ export default function SettingsPage() {
                                   shape="circle"
                                   theme="outline"
                                   locale="en"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-6 border-t border-gray-100">
-                    <h3 className="text-base font-medium mb-3">
-                      Microsoft Account
-                    </h3>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                          <svg
-                            width="20"
-                            height="20"
-                            viewBox="0 0 21 21"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <rect x="1" y="1" width="9" height="9" fill="#f25022" />
-                            <rect x="12" y="1" width="9" height="9" fill="#00a4ef" />
-                            <rect x="1" y="12" width="9" height="9" fill="#ffb900" />
-                            <rect x="12" y="12" width="9" height="9" fill="#7fba00" />
-                          </svg>
-                        </div>
-                        <div>
-                          {user?.microsoftId ? (
-                            <div>
-                              <div className="text-sm font-medium text-foreground">
-                                Microsoft account connected
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                You can use Microsoft to sign in to your account
-                              </div>
-                            </div>
-                          ) : (
-                            <div>
-                              <div className="text-sm font-medium text-foreground">
-                                Connect Microsoft account
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                Link your Microsoft account for easier sign-in
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div>
-                        {user?.microsoftId ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={isDisconnectingMicrosoft}
-                            onClick={handleDisconnectMicrosoft}
-                            className="text-muted-foreground border-muted-foreground"
-                            data-testid="button-disconnect-microsoft"
-                          >
-                            {isDisconnectingMicrosoft
-                              ? "Disconnecting..."
-                              : "Disconnect"}
-                          </Button>
-                        ) : (
-                          <div className="flex justify-center">
-                            <div className="relative">
-                              {isConnectingMicrosoft && (
-                                <div className="absolute inset-0 flex items-center justify-center z-10">
-                                  <div className="w-5 h-5 border-2 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
-                                </div>
-                              )}
-                              <div
-                                className={
-                                  isConnectingMicrosoft ? "opacity-50" : ""
-                                }
-                              >
-                                <MicrosoftLoginButton
-                                  onSuccess={handleMicrosoftSuccess}
-                                  onError={handleMicrosoftError}
-                                  disabled={isConnectingMicrosoft}
                                 />
                               </div>
                             </div>

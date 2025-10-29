@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Building2 } from "lucide-react";
 import { getIndustryDisplayName } from "@/lib/industry-validation";
 import { Badge } from "@/components/ui/badge";
-import { Assessment } from "@shared/types";
+import { Assessment, BenchmarkData } from "@shared/types";
 import {
   Bar,
   BarChart,
@@ -42,18 +42,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface BenchmarkData {
-  quarter: string;
-  surveyTemplateId: number;
-  industry: string;
-  categories: {
-    name: string;
-    userScore: number;
-    industryAverage: number | null;
-    globalAverage: number | null;
-  }[];
-}
-
 interface ScreenCompare {
   assessment: Assessment;
 }
@@ -66,7 +54,7 @@ export default function ScreenCompare({ assessment }: ScreenCompare) {
   );
 
   const {
-    data: benchmarkData,
+    data: benchmarkResponse,
     isLoading,
     error,
   } = useQuery<{
@@ -80,13 +68,14 @@ export default function ScreenCompare({ assessment }: ScreenCompare) {
   // Auto-select Global when user's industry has no data (must be before conditional returns)
   useEffect(() => {
     if (
-      benchmarkData?.data &&
-      !benchmarkData.data.categories.some((c) => c.industryAverage !== null) &&
+      benchmarkResponse?.data &&
+      benchmarkResponse.data.categories &&
+      !benchmarkResponse.data.categories.some((c) => c.industryAverage !== null) &&
       activeView === "industry"
     ) {
       setActiveView("global");
     }
-  }, [benchmarkData, activeView]);
+  }, [benchmarkResponse, activeView]);
 
   if (!isAuthenticated) {
     return (
@@ -118,7 +107,7 @@ export default function ScreenCompare({ assessment }: ScreenCompare) {
     );
   }
 
-  if (error || !benchmarkData?.success || !benchmarkData?.data) {
+  if (error || !benchmarkResponse?.success || !benchmarkResponse?.data || !benchmarkResponse.data.categories) {
     return (
       <Card>
         <CardContent className="p-6">
@@ -134,31 +123,33 @@ export default function ScreenCompare({ assessment }: ScreenCompare) {
     );
   }
 
-  const { data } = benchmarkData;
+  const { data } = benchmarkResponse;
   const { company = "Your company" } = user || {};
 
   // Get proper industry display name from the code
   const industry = getIndustryDisplayName(data.industry);
 
   // Calculate statistics
-  const hasIndustryData = data.categories.some(
+  const hasIndustryData = data.categories?.some(
     (c) => c.industryAverage !== null,
-  );
+  ) || false;
 
-  const avgUserScore =
-    data.categories.reduce((sum, c) => sum + c.userScore, 0) /
-    data.categories.length;
+  const avgUserScore = data.categories?.length
+    ? data.categories.reduce((sum, c) => sum + c.userScore, 0) /
+      data.categories.length
+    : 0;
 
-  const avgIndustryScore = hasIndustryData
+  const avgIndustryScore = hasIndustryData && data.categories?.length
     ? data.categories
         .filter((c) => c.industryAverage !== null)
         .reduce((sum, c) => sum + (c.industryAverage || 0), 0) /
       data.categories.filter((c) => c.industryAverage !== null).length
     : null;
 
-  const avgGlobalScore =
-    data.categories.reduce((sum, c) => sum + (c.globalAverage || 0), 0) /
-    data.categories.length;
+  const avgGlobalScore = data.categories?.length
+    ? data.categories.reduce((sum, c) => sum + (c.globalAverage || 0), 0) /
+      data.categories.length
+    : 0;
 
   // Calculate total averages for the switcher display
   const userTotal = Math.round(avgUserScore) / 10;
@@ -171,7 +162,7 @@ export default function ScreenCompare({ assessment }: ScreenCompare) {
   const globalTotal = Math.round(avgGlobalScore) / 10;
 
   // Prepare chart data based on active comparison
-  const chartData = data.categories.map((category) => {
+  const chartData = data.categories?.map((category) => {
     const benchmarkValue =
       activeView === "industry"
         ? category.industryAverage
@@ -182,7 +173,7 @@ export default function ScreenCompare({ assessment }: ScreenCompare) {
       userScore: Math.round(category.userScore) / 10,
       benchmark: benchmarkValue ? Math.round(benchmarkValue) / 10 : null,
     };
-  });
+  }) || [];
 
   // Prepare pie chart data for company/industry/global comparison
   const pieChartData = [

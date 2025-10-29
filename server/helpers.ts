@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 import Papa from "papaparse";
 import { CsvParseResult, CsvValidationResult } from "@shared/types";
 
@@ -78,7 +79,31 @@ export class CsvParser {
 
   static parse(filePath: string): CsvParseResult {
     try {
-      const fileContent = fs.readFileSync(filePath, "utf8");
+      // Resolve the file path - handle both absolute and relative paths
+      let resolvedPath = filePath;
+      
+      // If the absolute path doesn't exist, try to resolve it relative to current working directory
+      if (!fs.existsSync(filePath)) {
+        // Extract just the filename part if it's a full path
+        const filename = path.basename(filePath);
+        
+        // Try common locations
+        const possiblePaths = [
+          path.join(process.cwd(), 'public', 'uploads', filename),
+          path.join(process.cwd(), filePath),
+          // If the path contains 'public/uploads', extract from there
+          filePath.includes('public') ? path.join(process.cwd(), filePath.substring(filePath.indexOf('public'))) : null,
+        ].filter(Boolean) as string[];
+        
+        // Find the first path that exists
+        resolvedPath = possiblePaths.find(p => fs.existsSync(p)) || filePath;
+        
+        if (!fs.existsSync(resolvedPath)) {
+          throw new Error(`File not found: ${filePath}. Tried: ${possiblePaths.join(', ')}`);
+        }
+      }
+
+      const fileContent = fs.readFileSync(resolvedPath, "utf8");
 
       const validation = this.validate(fileContent);
 

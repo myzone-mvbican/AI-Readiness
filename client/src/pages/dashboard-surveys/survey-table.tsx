@@ -16,11 +16,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, MoreHorizontal } from "lucide-react";
+import { Pencil, Trash2, MoreHorizontal, Download } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import SurveyEditDialog from "./survey-edit-dialog";
 import SurveyDeleteDialog from "./survey-delete-dialog";
 import { SurveyWithAuthor } from "@shared/types";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export type Team = {
   id: number;
@@ -33,6 +35,7 @@ interface SurveyTableProps {
 
 export default function SurveyTable({ surveys }: SurveyTableProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [currentSurvey, setCurrentSurvey] = useState<SurveyWithAuthor | null>(
     null,
   );
@@ -54,6 +57,67 @@ export default function SurveyTable({ surveys }: SurveyTableProps) {
   const handleDeleteClick = (survey: SurveyWithAuthor) => {
     setCurrentSurvey(survey);
     setDeleteDialogOpen(true);
+  };
+
+  // Download survey questions as CSV
+  const handleDownloadCSV = async (surveyId: number) => {
+    try {
+      const response = await apiRequest("GET", `/api/admin/surveys/detail/${surveyId}`);
+      
+      const { data } = await response.json(); 
+
+      const { questions = [], title } = data?.survey || {};
+      
+      // Convert questions to CSV format
+      const csvHeader = "Question Number,Category,Question Summary,Question Details\n";
+      const csvRows = questions.map((q: any) => {
+        // Escape fields that contain commas or quotes
+        const escapeField = (field: string) => {
+          if (!field) return '""';
+          const fieldStr = String(field);
+          if (fieldStr.includes(',') || fieldStr.includes('"') || fieldStr.includes('\n')) {
+            return `"${fieldStr.replace(/"/g, '""')}"`;
+          }
+          return fieldStr;
+        };
+
+        return [
+          escapeField(q.id || ''),
+          escapeField(q.category || ''),
+          escapeField(q.question || ''),
+          escapeField(q.details || ''),
+        ].join(',');
+      });
+
+      const csvContent = csvHeader + csvRows.join('\n');
+
+      // Create and trigger download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      // Sanitize filename
+      const sanitizedTitle = title.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+      link.href = url;
+      link.download = `survey-${sanitizedTitle}-questions.csv`;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success",
+        description: "Survey questions downloaded successfully",
+      });
+    } catch (error) {
+      console.error("Error downloading CSV:", error);
+      toast({
+        title: "Error",
+        description: "Failed to download survey questions",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -143,6 +207,13 @@ export default function SurveyTable({ surveys }: SurveyTableProps) {
                         >
                           <Pencil className="mr-2 h-4 w-4" />
                           <span>Edit</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDownloadCSV(survey.id)}
+                          title="Download survey questions as CSV"
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          <span>Download CSV</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive hover:text-destructive"

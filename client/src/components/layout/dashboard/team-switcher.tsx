@@ -3,11 +3,10 @@
 import * as React from "react";
 import {
   Check,
-  ChevronsUpDown, 
+  ChevronsUpDown,
   ShieldCheck,
   Building,
 } from "lucide-react";
-import { cn } from "@/lib/utils"; 
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -18,53 +17,60 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel, 
+  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useAuth } from "@/hooks/use-auth"; 
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
-import { TeamWithRole } from "@shared/types";
+import { TeamsResponse, TeamWithRole } from "@shared/types";
 import { getInitials } from "@/lib/utils";
 
-// Default teams for fallback (empty array to prevent stale data)
-const defaultTeams: TeamWithRole[] = [];
+// Mock teams for initial development, will be replaced with real data
+const defaultTeams: TeamWithRole[] = [
+  {
+    id: 2,
+    name: "Client",
+    role: "client",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+  },
+];
 
 type TeamSwitcherProps = React.HTMLAttributes<HTMLDivElement>;
 
-export function TeamSwitcher({}: TeamSwitcherProps) { 
+export function TeamSwitcher({ }: TeamSwitcherProps) {
   const { toast } = useToast();
-  const { user } = useAuth(); 
+  const { user } = useAuth();
   const { isMobile } = useSidebar();
 
-  // Local state for selected team (fallback to first team if no team selected)
+  const [activeTeams, setActiveTeams] = React.useState<TeamWithRole[]>([]);
   const [selectedTeam, setSelectedTeam] = React.useState<TeamWithRole | null>(
     null,
   );
 
   // Get teams from API
-  const { data: teams } = useQuery<{
-    success: boolean;
-    teams: TeamWithRole[];
-  }>({
+  const { data: teamsResponse } = useQuery({
     queryKey: ["/api/teams"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/teams");
+      const data = await res.json();
+      return data || {};
+    },
+    select: (data) => data.data || [],
     enabled: !!user, // Only fetch if user is logged in
   });
 
-  // Enhanced team selection logic:
-  // 1. Load from localStorage on mount
-  // 2. When teams are fetched, check if selected team is valid
-  // 3. If no valid team is selected, select the first available team
+  // Load saved team from localStorage on component mount
   React.useEffect(() => {
-    // Load team from localStorage on component mount
     const loadSavedTeam = () => {
       const savedTeam = localStorage.getItem("selectedTeam");
-      let parsedSavedTeam = null;
-
       if (savedTeam) {
         try {
-          parsedSavedTeam = JSON.parse(savedTeam);
+          const parsedSavedTeam = JSON.parse(savedTeam);
           setSelectedTeam(parsedSavedTeam);
           return parsedSavedTeam;
         } catch (e) {
@@ -74,36 +80,59 @@ export function TeamSwitcher({}: TeamSwitcherProps) {
       return null;
     };
 
-    // Initially try to load team
-    const parsedSavedTeam = loadSavedTeam();
+    // Load team from localStorage immediately on mount
+    loadSavedTeam();
+  }, []); // Empty dependency array - only run on mount
 
-    // When teams are loaded, verify the selected team is valid
-    if (teams?.teams?.length) {
+  // Handle teams data and validate selected team
+  React.useEffect(() => {
+    if (teamsResponse?.length) {
       // Filter out deleted teams
-      const activeTeams = teams.teams.filter(
-        (team) => !team.name.includes("(deleted)"),
-      );
+      const activeTeams = teamsResponse.filter((team: TeamWithRole) => !team?.deletedAt);
+      setActiveTeams(activeTeams);
 
-      // Check if the saved team actually exists in the user's assigned teams and is not deleted
-      const savedTeamExists =
-        parsedSavedTeam &&
-        activeTeams.some((team) => team.id === parsedSavedTeam.id);
+      // Only validate and potentially change selection if we don't have a selected team yet
+      // or if the current selected team is not in the active teams
+      setSelectedTeam(prevSelectedTeam => {
+        // If no team is selected, select the first available team
+        if (!prevSelectedTeam && activeTeams.length > 0) {
+          const firstTeam = activeTeams[0] as TeamWithRole;
+          localStorage.setItem("selectedTeam", JSON.stringify(firstTeam));
+          return firstTeam;
+        }
 
-      // If no valid team is selected, select the first available active team
-      // For admin users, prioritize MyZone team if available
-      if (!savedTeamExists && activeTeams.length > 0) {
-        const myZoneTeam = activeTeams.find(team => team.name === "MyZone");
-        const defaultTeam = myZoneTeam || activeTeams[0];
-        setSelectedTeam(defaultTeam);
-        localStorage.setItem("selectedTeam", JSON.stringify(defaultTeam));
-      } else if (!savedTeamExists && activeTeams.length === 0) {
-        // If no active teams, clear the selection
-        setSelectedTeam(null);
-        localStorage.removeItem("selectedTeam");
-      }
+        // If a team is selected, check if it still exists in active teams
+        if (prevSelectedTeam) {
+          const selectedTeamExists = activeTeams.some((team: TeamWithRole) => team.id === prevSelectedTeam.id);
+          
+          if (selectedTeamExists) {
+            // Selected team is still valid, keep it
+            return prevSelectedTeam;
+          } else if (activeTeams.length > 0) {
+            // Selected team is no longer valid, select the first available team
+            const firstTeam = activeTeams[0] as TeamWithRole;
+            localStorage.setItem("selectedTeam", JSON.stringify(firstTeam));
+            return firstTeam;
+          } else {
+            // No active teams available, clear selection
+            localStorage.removeItem("selectedTeam");
+            return null;
+          }
+        }
+
+        // No teams available and no previous selection
+        if (activeTeams.length === 0) {
+          localStorage.removeItem("selectedTeam");
+          return null;
+        }
+
+        return prevSelectedTeam;
+      });
     }
+  }, [teamsResponse]); // Only depend on teamsResponse, not selectedTeam
 
-    // Listen for storage events from other tabs
+  // Listen for storage events from other tabs
+  React.useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === "selectedTeam" && event.newValue !== null) {
         try {
@@ -114,8 +143,8 @@ export function TeamSwitcher({}: TeamSwitcherProps) {
         }
       } else if (event.key === "selectedTeam" && event.newValue === null) {
         // If team was removed, try to select first available team
-        if (teams?.teams?.length) {
-          setSelectedTeam(teams.teams[0]);
+        if (activeTeams.length > 0) {
+          setSelectedTeam(activeTeams[0]);
         } else {
           setSelectedTeam(null);
         }
@@ -129,15 +158,7 @@ export function TeamSwitcher({}: TeamSwitcherProps) {
     return () => {
       window.removeEventListener("storage", handleStorageChange);
     };
-  }, [teams]); 
-
-  // Only show teams that the user is assigned to, regardless of admin status
-  // This prevents regular users switching to teams they're not part of
-  // Admin users will only see their assigned teams in the switcher (not all teams)
-  // Filter out deleted teams from the switcher
-  const availableTeams = teams?.teams?.length
-    ? teams.teams.filter((team) => !team.name.includes("(deleted)"))
-    : defaultTeams;
+  }, [activeTeams]);
 
   const handleSelectTeam = (team: TeamWithRole) => {
     // Check if we're switching to a different team
@@ -164,7 +185,7 @@ export function TeamSwitcher({}: TeamSwitcherProps) {
         description: `Switched to ${team.name}`,
       });
     }
-  }; 
+  };
 
   return (
     <SidebarMenu>
@@ -182,9 +203,7 @@ export function TeamSwitcher({}: TeamSwitcherProps) {
                 <span className="truncate font-semibold">
                   {selectedTeam?.name}
                 </span>
-                <span className="truncate text-xs">
-                  {selectedTeam?.role} 
-                </span>
+                <span className="truncate text-xs">{selectedTeam?.role}</span>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
@@ -198,16 +217,16 @@ export function TeamSwitcher({}: TeamSwitcherProps) {
             <DropdownMenuLabel className="text-xs text-muted-foreground">
               Teams
             </DropdownMenuLabel>
-            {availableTeams.map((team) => (
+            {activeTeams.map((team: TeamWithRole) => (
               <DropdownMenuItem
                 key={team.id}
                 onSelect={() => handleSelectTeam(team)}
                 className="text-sm"
               >
                 {team.role === "admin" ? (
-                  <ShieldCheck className="mr-2 h-4 w-4 text-blue-500" />
+                  <ShieldCheck className="size-4 text-blue-500" />
                 ) : (
-                  <Building className="mr-2 h-4 w-4" />
+                  <Building className="size-4" />
                 )}
                 <span className="flex flex-1 items-center justify-between">
                   <span>{team.name}</span>
@@ -219,7 +238,7 @@ export function TeamSwitcher({}: TeamSwitcherProps) {
                 </span>
                 <Check
                   className={cn(
-                    "ml-2 h-4 w-4",
+                    "size-4",
                     selectedTeam?.id === team.id ? "opacity-100" : "opacity-0",
                   )}
                 />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,29 +6,39 @@ import { ShieldCheck, Search, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import SurveyCreateDialog from "./survey-create-dialog";
 import SurveyTable from "./survey-table";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function AdminSurveysPage() {
   const [newSurveyOpen, setNewSurveyOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(""); 
 
-  // Get surveys
-  const { data: surveysData, isLoading } = useQuery({
-    queryKey: ["/api/admin/surveys/0"],
+  // Debounce search term to avoid too many API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Build query parameters for the API
+  const queryParams = new URLSearchParams({
+    ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
+    ...(statusFilter && { status: statusFilter }),
+  });
+
+  // Get surveys with server-side search and status filtering
+  const { data: surveys, isLoading } = useQuery({
+    queryKey: ["/api/admin/surveys/0", queryParams.toString()],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/admin/surveys/0?${queryParams}`);
+      const { data } = await res.json();
+      return data || [];
+    },
     retry: false,
-  });
-
-  // Get surveys from the response and handle the correct structure
-  const surveys = surveysData?.surveys || [];
-
-  // Filter surveys based on search term and status filter
-  const filteredSurveys = surveys.filter((survey: any) => {
-    const matchesSearch = survey.title
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesStatus = !statusFilter || survey.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  }); 
 
   return (
     <DashboardLayout title="Manage Surveys">
@@ -36,7 +46,7 @@ export default function AdminSurveysPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 space-y-3">
           <div className="col-span-1">
             <div className="col-span-1 flex items-center space-x-2">
-              <ShieldCheck className="size-6 text-primary" />
+              <ShieldCheck className="h-6 w-6 text-blue-500" />
               <h2 className="text-xl text-foreground font-semibold">
                 Manage Surveys
               </h2>
@@ -102,14 +112,14 @@ export default function AdminSurveysPage() {
 
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
+            <Loader2 className="size-8 animate-spin" />
           </div>
-        ) : filteredSurveys.length === 0 ? (
+        ) : surveys.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             No surveys found. Create a new survey to get started.
           </div>
         ) : (
-          <SurveyTable surveys={filteredSurveys} />
+          <SurveyTable surveys={surveys} />
         )}
       </div>
     </DashboardLayout>

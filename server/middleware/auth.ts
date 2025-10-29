@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { UserModel } from "../models/user.model";
+import { UserService } from "../services/user.service";
+import { TokenService } from "../services/token.service";
 
 // Extend the Express Request interface to include the user
 declare global {
@@ -34,31 +35,28 @@ export const requireAdmin = (
 
 export const auth = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Get token from header
-    const authHeader = req.headers.authorization;
+    // Get access token from HttpOnly cookie
+    const accessToken = TokenService.getTokenFromRequest(req, 'access');
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (!accessToken) {
       return res.status(401).json({
         success: false,
-        message: "Authorization denied. No token provided.",
+        message: "Authorization denied. No access token provided.",
       });
     }
 
-    // Extract the token
-    const token = authHeader.split(" ")[1];
-
-    // Verify the token
-    const decoded = UserModel.verifyToken(token);
+    // Verify the access token
+    const decoded = TokenService.verifyAccessToken(accessToken);
 
     if (!decoded) {
       return res.status(401).json({
         success: false,
-        message: "Invalid or expired token",
+        message: "Invalid or expired access token",
       });
     }
 
     // Get user from database
-    const user = await UserModel.getById(decoded.userId);
+    const user = await UserService.getById(decoded.userId);
 
     if (!user) {
       return res.status(401).json({
@@ -73,7 +71,7 @@ export const auth = async (req: Request, res: Response, next: NextFunction) => {
       // @ts-ignore - Handle if role property doesn't exist on user
       if (user.role) {
         role = user.role;
-      } else if (UserModel.isAdmin(user.email)) {
+      } else if (UserService.isAdmin(user.email)) {
         role = "admin";
       }
     } catch (e) {

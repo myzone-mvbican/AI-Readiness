@@ -1,32 +1,47 @@
 import { Request, Response } from "express";
-import { SurveyModel } from "../models/survey.model";
-import { TeamModel } from "../models/team.model";
-import { CompletionService } from "../services/completion.service";
-import fs from "fs";
+import { ApiResponse } from "../utils/apiResponse";
+import { SurveyService } from "../services/survey.service";
+import { ValidationError, NotFoundError, ForbiddenError, InternalServerError } from "../utils/errors";
 
 export class SurveyController {
   static async getAll(req: Request, res: Response) {
     try {
       const teamId = parseInt(req.params.teamId);
       if (isNaN(teamId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid team ID",
-        });
+        return ApiResponse.validationError(res, 
+          { teamId: "Invalid team ID" }, 
+          "Invalid team ID"
+        );
       }
 
-      const surveysWithAuthors = await SurveyModel.getWithAuthors(teamId);
+      // Extract query parameters for server-side filtering, sorting, and pagination
+      const page = parseInt(req.query.page as string) || 1;
+      const pageSize = parseInt(req.query.pageSize as string) || 10;
+      const search = (req.query.search as string) || "";
+      const status = (req.query.status as string) || null;
+      const sortBy = (req.query.sortBy as string) || "updatedAt";
+      const sortOrder = (req.query.sortOrder as string) || "desc";
 
-      return res.status(200).json({
-        success: true,
-        surveys: surveysWithAuthors,
+      const result = await SurveyService.getSurveysForTeam(teamId, {
+        page,
+        pageSize,
+        limit: pageSize,
+        search,
+        status: status || undefined,
+        sortBy,
+        sortOrder: sortOrder as "asc" | "desc",
       });
-    } catch (error) {
-      console.error("Error getting surveys:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to retrieve surveys",
-      });
+
+      // Use standardized paginated response format
+      return ApiResponse.paginated(
+        res,
+        result.data,
+        page,
+        pageSize,
+        result.pagination.total
+      );
+    } catch (error: any) {
+      return ApiResponse.internalError(res, error.message || "Failed to retrieve surveys");
     }
   }
 
@@ -34,262 +49,40 @@ export class SurveyController {
     try {
       const surveyId = parseInt(req.params.id);
       if (isNaN(surveyId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid survey ID",
-        });
+        return ApiResponse.validationError(res, 
+          { surveyId: "Invalid survey ID" }, 
+          "Invalid survey ID"
+        );
       }
 
-      const survey = await SurveyModel.getById(surveyId);
-
+      const survey = await SurveyService.getById(surveyId);
       if (!survey) {
-        return res.status(404).json({
-          success: false,
-          message: "Survey not found",
-        });
+        return ApiResponse.notFound(res, "Survey");
       }
-
-      return res.status(200).json({
-        success: true,
-        survey,
-      });
-    } catch (error) {
-      console.error(`Error getting survey ${req.params.id}:`, error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to retrieve survey",
-      });
-    }
-  }
-
-  static async getByIdForUser(req: Request, res: Response) {
-    try {
-      const surveyId = parseInt(req.params.id);
-      if (isNaN(surveyId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid survey ID",
-        });
-      }
-
-      const survey = await SurveyModel.getById(surveyId);
-
-      if (!survey) {
-        return res.status(404).json({
-          success: false,
-          message: "Survey not found",
-        });
-      }
-
-      // Get all teams for the user to verify access
-      const userTeams = await TeamModel.getByUserId(req.user!.id);
-      const teamIds = userTeams.map((team) => team.id);
-
-      // Check if survey is global (null teamId) or if user has access to any of the survey's teams
-      const surveyTeamIds = await SurveyModel.getTeams(surveyId);
-
-      // Allow access if:
-      // 1. Survey is global (teamId is null and no teams assigned)
-      // 2. User is part of any team the survey is assigned to
-      const isGlobalSurvey =
-        survey.teamId === null && surveyTeamIds.length === 0;
-      const hasTeamAccess = surveyTeamIds.some((teamId) =>
-        teamIds.includes(teamId),
-      );
-
-      if (!isGlobalSurvey && !hasTeamAccess) {
-        return res.status(403).json({
-          success: false,
-          message: "You don't have access to this survey",
-        });
-      }
-
-      return res.status(200).json({
-        success: true,
-        survey,
-      });
-    } catch (error) {
-      console.error(`Error getting survey ${req.params.id}:`, error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to retrieve survey",
-      });
-    }
-  }
-
-  static async getByTeamForUser(req: Request, res: Response) {
-    try {
-      const teamId = parseInt(req.params.teamId);
-      if (isNaN(teamId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid team ID",
-        });
-      }
-
-      // If the team ID is 0, we only want to get global surveys
-      if (teamId === 0) {
-        // Special case for global surveys (team ID null)
-        const surveys = await SurveyModel.getAll(0);
-
-        return res.status(200).json({
-          success: true,
-          surveys,
-        });
-      }
-
-      // For non-zero team IDs, verify access first
-      const userTeams = await TeamModel.getByUserId(req.user!.id);
-      const teamIds = userTeams.map((team) => team.id);
-
-      // Check if user has access to this team
-      if (!teamIds.includes(teamId)) {
-        return res.status(403).json({
-          success: false,
-          message: "You don't have access to this team's surveys",
-        });
-      }
-
-      // Get surveys for the team, including global surveys
-      const surveys = await SurveyModel.getAll(teamId);
-
-      return res.status(200).json({
-        success: true,
-        surveys,
-      });
-    } catch (error) {
-      console.error("Error getting surveys:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to retrieve surveys",
-      });
+      return ApiResponse.success(res, { survey });
+    } catch (error: any) {
+      return ApiResponse.internalError(res, error.message || "Failed to retrieve survey");
     }
   }
 
   static async create(req: Request, res: Response) {
     try {
-      if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          message: "CSV file is required",
-        });
+      // File validation handled by middleware
+
+      // Parse and transform data using service
+      const { data: surveyData, error } = SurveyService.parseSurveyCreationData(req);
+      
+      if (error) {
+        return ApiResponse.validationError(res, error);
       }
 
-      // Get form data
-      const { title, teamId, questionsCount, status } = req.body;
-
-      // Validate required fields
-      if (!title || !questionsCount) {
-        // Delete the uploaded file if validation fails
-        if (req.file && req.file.path) {
-          fs.unlinkSync(req.file.path);
-        }
-
-        return res.status(400).json({
-          success: false,
-          message:
-            "Missing required fields. Title and questionsCount are required.",
-        });
+      const newSurvey = await SurveyService.createSurvey(surveyData, req.file!.path);
+      return ApiResponse.success(res, { survey: newSurvey }, 201);
+    } catch (error: any) {
+      if (error instanceof ValidationError) {
+        return ApiResponse.validationError(res, { error: error.message }, error.message);
       }
-
-      // Optional teamId (null means global survey)
-      let teamIdNum = null;
-      if (teamId) {
-        teamIdNum = parseInt(teamId);
-        if (isNaN(teamIdNum)) {
-          // Non-empty but invalid teamId
-          // Delete the uploaded file if validation fails
-          if (req.file && req.file.path) {
-            fs.unlinkSync(req.file.path);
-          }
-
-          return res.status(400).json({
-            success: false,
-            message:
-              "Invalid team ID format. Must be a valid number or empty for global surveys.",
-          });
-        }
-      }
-
-      const questionsCountNum = parseInt(questionsCount);
-      if (isNaN(questionsCountNum)) {
-        if (req.file && req.file.path) {
-          fs.unlinkSync(req.file.path);
-        }
-        return res.status(400).json({
-          success: false,
-          message: "Invalid questions count format. Must be a valid number.",
-        });
-      }
-
-      // Process multiple teams
-      let selectedTeamIds: number[] = [];
-      if (req.body.teamIds) {
-        try {
-          if (req.body.teamIds === "global") {
-            selectedTeamIds = [];
-          } else {
-            selectedTeamIds = JSON.parse(req.body.teamIds);
-            if (!Array.isArray(selectedTeamIds)) {
-              throw new Error("teamIds must be an array");
-            }
-          }
-        } catch (error) {
-          console.error("Invalid teamIds format:", error);
-          if (req.file && req.file.path) {
-            fs.unlinkSync(req.file.path);
-          }
-          return res.status(400).json({
-            success: false,
-            message:
-              "Invalid teamIds format. Must be 'global' or a JSON array.",
-          });
-        }
-      }
-
-      // Handle completion limit
-      let completionLimitNum = null;
-      if (req.body.completionLimit) {
-        completionLimitNum = parseInt(req.body.completionLimit);
-        if (isNaN(completionLimitNum) || completionLimitNum < 1) {
-          if (req.file && req.file.path) {
-            fs.unlinkSync(req.file.path);
-          }
-          return res.status(400).json({
-            success: false,
-            message:
-              "Completion limit must be a positive number or null for unlimited.",
-          });
-        }
-      }
-
-      const surveyData = {
-        title,
-        questionsCount: questionsCountNum,
-        status: status || "draft",
-        fileReference: req.file.path,
-        authorId: req.user!.id,
-        completionLimit: completionLimitNum,
-      };
-
-      const newSurvey = await SurveyModel.create(surveyData);
-
-      // Assign teams if provided
-      if (selectedTeamIds.length > 0) {
-        await SurveyModel.updateTeams(newSurvey.id, selectedTeamIds);
-      }
-
-      return res.status(201).json({
-        success: true,
-        message: "Survey created successfully",
-        survey: newSurvey,
-      });
-    } catch (error) {
-      console.error("Error creating survey:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to create survey",
-      });
+      return ApiResponse.internalError(res, error.message || "Failed to create survey");
     }
   }
 
@@ -297,38 +90,16 @@ export class SurveyController {
     try {
       const surveyId = parseInt(req.params.id);
       if (isNaN(surveyId)) {
-        if (req.file && req.file.path) {
-          fs.unlinkSync(req.file.path);
+        if (req.file) {
+          SurveyService.cleanupFile(req.file.path);
         }
-        return res.status(400).json({
-          success: false,
-          message: "Invalid survey ID",
-        });
+        return ApiResponse.validationError(res, 
+          { surveyId: "Invalid survey ID" }, 
+          "Invalid survey ID"
+        );
       }
 
-      // Check if survey exists
-      const existingSurvey = await SurveyModel.getById(surveyId);
-      if (!existingSurvey) {
-        if (req.file && req.file.path) {
-          fs.unlinkSync(req.file.path);
-        }
-        return res.status(404).json({
-          success: false,
-          message: "Survey not found",
-        });
-      }
-
-      // Ensure the user is the author of the survey
-      if (existingSurvey.authorId !== req.user!.id) {
-        if (req.file && req.file.path) {
-          fs.unlinkSync(req.file.path);
-        }
-        return res.status(403).json({
-          success: false,
-          message: "Only the author can update this survey",
-        });
-      }
-
+      // req.body is already validated by middleware
       // Prepare update data
       const updateData: any = {};
 
@@ -344,108 +115,41 @@ export class SurveyController {
 
       // Update completion limit if provided
       if (req.body.completionLimit !== undefined) {
-        if (
-          req.body.completionLimit === null ||
-          req.body.completionLimit === ""
-        ) {
-          updateData.completionLimit = null;
-        } else {
-          const completionLimitNum = parseInt(req.body.completionLimit);
-          if (isNaN(completionLimitNum) || completionLimitNum < 1) {
-            if (req.file && req.file.path) {
-              fs.unlinkSync(req.file.path);
-            }
-            return res.status(400).json({
-              success: false,
-              message:
-                "Completion limit must be a positive number or null for unlimited.",
-            });
-          }
-          updateData.completionLimit = completionLimitNum;
-        }
+        updateData.completionLimit = req.body.completionLimit;
       }
 
       // Process team selection
-      let selectedTeamIds: number[] = [];
-      if (req.body.teamIds) {
-        try {
-          if (req.body.teamIds === "global") {
-            selectedTeamIds = [];
-          } else {
-            selectedTeamIds = JSON.parse(req.body.teamIds);
-            if (!Array.isArray(selectedTeamIds)) {
-              throw new Error("teamIds must be an array");
-            }
-          }
-        } catch (error) {
-          console.error("Invalid teamIds format:", error);
-          if (req.file && req.file.path) {
-            fs.unlinkSync(req.file.path);
-          }
-          return res.status(400).json({
-            success: false,
-            message:
-              "Invalid teamIds format. Must be 'global' or a JSON array.",
-          });
-        }
+      if (req.body.teamIds !== undefined) {
+        updateData.teamIds = req.body.teamIds;
       }
 
-      // If a new file was uploaded
+      // Handle file update
       if (req.file) {
-        // Delete the old file if it exists
-        if (
-          existingSurvey.fileReference &&
-          fs.existsSync(existingSurvey.fileReference)
-        ) {
-          try {
-            fs.unlinkSync(existingSurvey.fileReference);
-          } catch (fileError) {
-            console.error(
-              `Error deleting file ${existingSurvey.fileReference}:`,
-              fileError,
-            );
-          }
-        }
-
-        updateData.fileReference = req.file.path;
-
         // Update questions count if provided
         if (req.body.questionsCount) {
-          const questionsCountNum = parseInt(req.body.questionsCount);
-          if (isNaN(questionsCountNum)) {
-            try {
-              fs.unlinkSync(req.file.path);
-            } catch (fileError) {
-              console.error(`Error deleting file ${req.file.path}:`, fileError);
-            }
-            return res.status(400).json({
-              success: false,
-              message:
-                "Invalid questions count format. Must be a valid number.",
-            });
-          }
-          updateData.questionsCount = questionsCountNum;
+          updateData.questionsCount = req.body.questionsCount;
         }
       }
 
-      const updatedSurvey = await SurveyModel.update(surveyId, updateData);
+      const updatedSurvey = await SurveyService.updateSurvey(
+        surveyId,
+        updateData,
+        req.user!.id,
+        req.file?.path
+      );
 
-      // Update assigned teams if provided
-      if (req.body.teamIds) {
-        await SurveyModel.updateTeams(surveyId, selectedTeamIds);
+      return ApiResponse.success(res, { survey: updatedSurvey });
+    } catch (error: any) {
+      if (error instanceof NotFoundError) {
+        return ApiResponse.notFound(res, "Survey");
       }
-
-      return res.status(200).json({
-        success: true,
-        message: "Survey updated successfully",
-        survey: updatedSurvey,
-      });
-    } catch (error) {
-      console.error(`Error updating survey ${req.params.id}:`, error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to update survey",
-      });
+      if (error instanceof ForbiddenError) {
+        return ApiResponse.forbidden(res, error.message);
+      }
+      if (error instanceof ValidationError) {
+        return ApiResponse.validationError(res, { error: error.message }, error.message);
+      }
+      return ApiResponse.internalError(res, error.message || "Failed to update survey");
     }
   }
 
@@ -453,63 +157,27 @@ export class SurveyController {
     try {
       const surveyId = parseInt(req.params.id);
       if (isNaN(surveyId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid survey ID",
-        });
+        return ApiResponse.validationError(res, 
+          { surveyId: "Invalid survey ID" }, 
+          "Invalid survey ID"
+        );
       }
 
-      // Check if survey exists
-      const existingSurvey = await SurveyModel.getById(surveyId);
-      if (!existingSurvey) {
-        return res.status(404).json({
-          success: false,
-          message: "Survey not found",
-        });
-      }
-
-      // Ensure the user is the author of the survey
-      if (existingSurvey.authorId !== req.user!.id) {
-        return res.status(403).json({
-          success: false,
-          message: "Only the author can delete this survey",
-        });
-      }
-
-      // Delete the associated file if it exists
-      if (
-        existingSurvey.fileReference &&
-        fs.existsSync(existingSurvey.fileReference)
-      ) {
-        try {
-          fs.unlinkSync(existingSurvey.fileReference);
-        } catch (fileError) {
-          console.error(
-            `Error deleting file ${existingSurvey.fileReference}:`,
-            fileError,
-          );
-        }
-      }
-
-      const deleted = await SurveyModel.delete(surveyId);
+      const deleted = await SurveyService.deleteSurvey(surveyId, req.user!.id);
 
       if (!deleted) {
-        return res.status(500).json({
-          success: false,
-          message: "Failed to delete survey",
-        });
+        return ApiResponse.internalError(res, "Failed to delete survey");
       }
 
-      return res.status(200).json({
-        success: true,
-        message: "Survey deleted successfully",
-      });
-    } catch (error) {
-      console.error(`Error deleting survey ${req.params.id}:`, error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to delete survey",
-      });
+      return ApiResponse.success(res, { message: "Survey deleted successfully" });
+    } catch (error: any) {
+      if (error instanceof NotFoundError) {
+        return ApiResponse.notFound(res, "Survey");
+      }
+      if (error instanceof ForbiddenError) {
+        return ApiResponse.forbidden(res, error.message);
+      }
+      return ApiResponse.internalError(res, error.message || "Failed to delete survey");
     }
   }
 
@@ -517,37 +185,19 @@ export class SurveyController {
     try {
       const surveyId = parseInt(req.params.id);
       if (isNaN(surveyId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid survey ID",
-        });
+        return ApiResponse.validationError(res, 
+          { surveyId: "Invalid survey ID" }, 
+          "Invalid survey ID"
+        );
       }
 
-      // Check if survey exists
-      const survey = await SurveyModel.getById(surveyId);
-      if (!survey) {
-        return res.status(404).json({
-          success: false,
-          message: "Survey not found",
-        });
+      const teamIds = await SurveyService.getSurveyTeams(surveyId);
+      return ApiResponse.success(res, { teamIds });
+    } catch (error: any) {
+      if (error instanceof NotFoundError) {
+        return ApiResponse.notFound(res, "Survey");
       }
-
-      // Get teams associated with this survey
-      const teamIds = await SurveyModel.getTeams(surveyId);
-
-      return res.status(200).json({
-        success: true,
-        teamIds,
-      });
-    } catch (error) {
-      console.error(
-        `Error retrieving teams for survey ${req.params.id}:`,
-        error,
-      );
-      return res.status(500).json({
-        success: false,
-        message: "Failed to retrieve teams for survey",
-      });
+      return ApiResponse.internalError(res, error.message || "Failed to retrieve teams for survey");
     }
   }
 
@@ -558,31 +208,19 @@ export class SurveyController {
     try {
       const surveyId = parseInt(req.params.surveyId);
       if (isNaN(surveyId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid survey ID",
-        });
+        return ApiResponse.validationError(res, 
+          { surveyId: "Invalid survey ID" }, 
+          "Invalid survey ID"
+        );
       }
 
       const userId = req.user?.id;
       const guestEmail = req.body.guestEmail;
 
-      const result = await CompletionService.canUserTakeSurvey(
-        surveyId,
-        userId,
-        guestEmail,
-      );
-
-      return res.status(200).json({
-        success: true,
-        data: result,
-      });
-    } catch (error) {
-      console.error("Error checking completion eligibility:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to check completion eligibility",
-      });
+      const result = await SurveyService.checkCompletionEligibility(surveyId, userId, guestEmail);
+      return ApiResponse.success(res, result);
+    } catch (error: any) {
+      return ApiResponse.internalError(res, error.message || "Failed to check completion eligibility");
     }
   }
 
@@ -593,46 +231,50 @@ export class SurveyController {
     try {
       const userId = req.user?.id;
       if (!userId) {
-        return res.status(401).json({
-          success: false,
-          message: "User not authenticated",
-        });
+        return ApiResponse.unauthorized(res, "User not authenticated");
       }
 
-      // Get all public surveys that the user can access
-      const surveys = await SurveyModel.getAll(0); // Get global surveys
-      const completionStatus: {
-        [surveyId: number]: {
-          canTake: boolean;
-          completionCount: number;
-          completionLimit: number | null;
-        };
-      } = {};
+      const completionStatus = await SurveyService.getCompletionStatus(userId);
+      return ApiResponse.success(res, { completionStatus });
+    } catch (error: any) {
+      return ApiResponse.internalError(res, error.message || "Failed to get completion status");
+    }
+  }
 
-      for (const survey of surveys) {
-        const result = await CompletionService.canUserTakeSurvey(
-          survey.id,
-          userId,
-          undefined,
-        );
-
-        completionStatus[survey.id] = {
-          canTake: result.canTake,
-          completionCount: result.completionCount,
-          completionLimit: survey.completionLimit,
-        };
+  /**
+   * Get all surveys for assessment modal
+   */
+  static async getAllForAssessment(req: Request, res: Response) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return ApiResponse.unauthorized(res, "User not authenticated");
       }
 
-      return res.status(200).json({
-        success: true,
-        data: completionStatus,
+      const page = parseInt(req.query.page as string) || 1;
+      const pageSize = parseInt(req.query.pageSize as string) || 10;
+      const search = (req.query.search as string) || "";
+      const sortBy = (req.query.sortBy as string) || "updatedAt";
+      const sortOrder = (req.query.sortOrder as string) || "desc";
+
+      const result = await SurveyService.getAllSurveysForAssessment({
+        page,
+        pageSize,
+        limit: pageSize,
+        search,
+        sortBy,
+        sortOrder: sortOrder as "asc" | "desc",
       });
-    } catch (error) {
-      console.error("Error getting completion status:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to get completion status",
-      });
+
+      return ApiResponse.paginated(
+        res,
+        result.data,
+        result.pagination.page,
+        result.pagination.limit,
+        result.pagination.total
+      );
+    } catch (error: any) {
+      return ApiResponse.internalError(res, error.message || "Failed to get surveys for assessment");
     }
   }
 }

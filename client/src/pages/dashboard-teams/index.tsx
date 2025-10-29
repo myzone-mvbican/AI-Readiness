@@ -24,17 +24,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -54,14 +43,13 @@ import {
 import {
   Users,
   Plus,
-  UserMinus,
   Search,
-  Loader2,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { Team, TeamMember, TeamsResponse } from "./types";
+import { Team, TeamsResponse } from "./types";
 import { getColumns } from "./columns";
+import { MembersDialog } from "./components/members";
 
 export default function AdminTeamsPage() {
   const { toast } = useToast();
@@ -88,7 +76,7 @@ export default function AdminTeamsPage() {
 
   // Utility function to check if team can be hard deleted
   const canHardDelete = (team: Team & { memberCount: number }) => {
-    return team.name.includes('(deleted)') && team.memberCount === 0;
+    return Boolean(team.deletedAt) && team.memberCount === 0;
   };
 
   // Fetch all teams with members
@@ -108,10 +96,10 @@ export default function AdminTeamsPage() {
       const data = await res.json();
       return {
         success: data.success,
-        teams: data.teams,
-        total: data.teams.length,
-        page: page,
-        totalPages: Math.ceil(data.teams.length / pageSize),
+        teams: data.data || [],
+        total: data.metadata?.pagination?.totalItems || 0,
+        page: data.metadata?.pagination?.page || page,
+        totalPages: data.metadata?.pagination?.totalPages || 0,
       };
     },
   });
@@ -180,7 +168,7 @@ export default function AdminTeamsPage() {
   // Delete team mutation
   const deleteTeamMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await apiRequest("DELETE", `/api/admin/teams/${id}`);
+      const res = await apiRequest("DELETE", `/api/admin/teams/${id}`, {});
       return await res.json();
     },
     onSuccess: () => {
@@ -226,7 +214,7 @@ export default function AdminTeamsPage() {
   // Hard delete team mutation (only for soft-deleted teams with zero members)
   const hardDeleteTeamMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await apiRequest("DELETE", `/api/admin/teams/${id}/hard-delete`);
+      const res = await apiRequest("DELETE", `/api/admin/teams/${id}/hard-delete`, {});
       return await res.json();
     },
     onSuccess: () => {
@@ -256,10 +244,7 @@ export default function AdminTeamsPage() {
       teamId: number;
       userId: number;
     }) => {
-      const res = await apiRequest(
-        "DELETE",
-        `/api/admin/teams/${teamId}/users/${userId}`,
-      );
+      const res = await apiRequest("DELETE", `/api/admin/teams/${teamId}/users/${userId}`, {});
       return await res.json();
     },
     onSuccess: () => {
@@ -386,15 +371,15 @@ export default function AdminTeamsPage() {
 
   const handleUpdateRole = (teamId: number, userId: number, role: string) => {
     setUpdatingRoleUserId(userId);
-    
+
     // Optimistic update: immediately update the selectedTeam state
     if (selectedTeam && selectedTeam.id === teamId) {
-      const updatedMembers = selectedTeam.members.map(member => 
+      const updatedMembers = selectedTeam.members.map(member =>
         member.id === userId ? { ...member, role } : member
       );
       setSelectedTeam({ ...selectedTeam, members: updatedMembers });
     }
-    
+
     updateUserRoleMutation.mutate({ teamId, userId, role });
   };
 
@@ -451,7 +436,7 @@ export default function AdminTeamsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 space-y-3">
           <div className="col-span-1">
             <div className="col-span-1 flex items-center space-x-2">
-              <Users className="size-6 text-primary" />
+              <Users className="h-6 w-6 text-blue-500" />
               <h2 className="text-xl text-foreground font-semibold">
                 Manage Teams
               </h2>
@@ -548,9 +533,9 @@ export default function AdminTeamsPage() {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -675,105 +660,14 @@ export default function AdminTeamsPage() {
         </Dialog>
 
         {/* Team Members Dialog */}
-        <Dialog open={showMembersDialog} onOpenChange={setShowMembersDialog}>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <DialogTitle>Team Members - {selectedTeam?.name}</DialogTitle>
-              <DialogDescription>
-                Manage team members and their roles.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              {selectedTeam?.members.length === 0 ? (
-                <div className="text-center py-8">
-                  <Users className="size-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium">No members</h3>
-                  <p className="text-muted-foreground">
-                    This team doesn't have any members yet.
-                  </p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Company</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {selectedTeam?.members.map((member) => (
-                      <TableRow key={member.id}>
-                        <TableCell>
-                          <div className="font-medium">{member.name}</div>
-                        </TableCell>
-                        <TableCell>{member.email}</TableCell>
-                        <TableCell>{member.company || "—"}</TableCell>
-                        <TableCell>
-                          <Select
-                            value={member.role}
-                            disabled={updatingRoleUserId === member.id}
-                            onValueChange={(role) =>
-                              handleUpdateRole(selectedTeam.id, member.id, role)
-                            }
-                          >
-                            <SelectTrigger className="w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="member">Member</SelectItem>
-                              <SelectItem value="admin">Admin</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-red-600"
-                              >
-                                <UserMinus className="size-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Remove member?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This will remove {member.name} from the team.
-                                  They will lose access to team resources.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() =>
-                                    handleRemoveUser(selectedTeam.id, member.id)
-                                  }
-                                  className="bg-red-600 hover:bg-red-700"
-                                >
-                                  Remove Member
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </div>
-            <DialogFooter>
-              <Button onClick={() => setShowMembersDialog(false)}>Close</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <MembersDialog
+          open={showMembersDialog}
+          onOpenChange={setShowMembersDialog}
+          selectedTeam={selectedTeam}
+          updatingRoleUserId={updatingRoleUserId}
+          onUpdateRole={handleUpdateRole}
+          onRemoveUser={handleRemoveUser}
+        />
       </div>
     </DashboardLayout>
   );

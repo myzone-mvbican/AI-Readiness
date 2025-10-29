@@ -116,6 +116,20 @@ export type GuestAssessment = Omit<Assessment, "userId"> & {
   email: string;
 };
 
+/**
+ * Benchmark Data Types
+ */
+export interface BenchmarkData {
+  quarter: string;
+  industry: string;
+  categories: {
+    name: string;
+    userScore: number;
+    industryAverage: number | null;
+    globalAverage: number | null;
+  }[];
+}
+
 // Google OAuth decoded payload
 export interface GoogleUserPayload {
   iss: string;

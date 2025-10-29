@@ -1,44 +1,39 @@
-import nodemailer from "nodemailer";
+import nodemailer from 'nodemailer';
+import { env } from "server/utils/environment";
 
 export function createTransporter() {
   // Fallback to legacy email configuration
-  if (
-    process.env.EMAIL_HOST &&
-    process.env.EMAIL_USER &&
-    process.env.EMAIL_PASS
-  ) {
-    const port = parseInt(process.env.EMAIL_PORT || "587");
+  if (env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS) {
+    const port = parseInt(env.SMTP_PORT || '587');
     const secure = port === 465; // Use SSL for port 465, TLS for others
-
+    
     return nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
+      host: env.SMTP_HOST,
       port: port,
       secure: secure,
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: env.SMTP_USER,
+        pass: env.SMTP_PASS,
       },
       // Additional options for better compatibility
       tls: {
-        rejectUnauthorized: false,
-      },
+        rejectUnauthorized: false
+      }
     });
   }
 
   // Fallback for missing credentials
-  throw new Error(
-    "Email credentials not configured. Please provide Brevo SMTP environment variables.",
-  );
+  throw new Error('Email credentials not configured. Please provide Brevo SMTP environment variables.');
 }
 
 export function getEmailFromAddress(): string {
-  const fromName = process.env.EMAIL_FROM_NAME || "Keeran Networks AI";
+  const fromName = env.MAIL_FROM_NAME || 'MyZone AI';
   let fromEmail: string;
 
-  if (process.env.BREVO_SMTP_PASSWORD) {
-    fromEmail = process.env.BREVO_SENDER_EMAIL || "noreply@myzone.ai";
+  if (env.SMTP_PASS) {
+    fromEmail = env.MAIL_FROM || 'noreply@myzone.ai';
   } else {
-    fromEmail = process.env.EMAIL_FROM || "noreply@myzone.ai";
+    fromEmail = env.MAIL_FROM || 'noreply@myzone.ai';
   }
 
   return `${fromName} <${fromEmail}>`;

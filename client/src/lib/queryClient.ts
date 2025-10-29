@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { extractErrorMessage } from "./api";
 
 // Global event for handling unauthorized access
 export const UNAUTHORIZED_EVENT = "auth:unauthorized";
@@ -13,17 +14,44 @@ function handleUnauthorized(
   window.dispatchEvent(event);
 }
 
+// CSRF token management
+let csrfToken: string | null = null;
+
+// Get CSRF token from cookie
+function getCSRFTokenFromCookie(): string | null {
+  const cookies = document.cookie.split(';');
+  const csrfCookie = cookies.find(cookie =>
+    cookie.trim().startsWith('csrf-token=')
+  );
+
+  if (csrfCookie) {
+    return csrfCookie.split('=')[1];
+  }
+
+  return null;
+}
+
+// Get CSRF token from cookie or fallback to cache
+function getCachedCSRFToken(): string | null {
+  // First try the cookie (preferred method)
+  const cookieToken = getCSRFTokenFromCookie();
+  if (cookieToken) {
+    return cookieToken;
+  }
+
+  // Fallback to global cache (set by page components)
+  if ((window as any).__csrfToken) {
+    return (window as any).__csrfToken;
+  }
+
+  // Fallback to module-level cache
+  return csrfToken;
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    // Handle 401 Unauthorized responses globally
-    if (res.status === 401) {
-      const text = await res.text();
-      handleUnauthorized();
-      throw new Error(`Unauthorized: ${text || res.statusText}`);
-    }
-
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    const errorMessage = await extractErrorMessage(res);
+    throw new Error(errorMessage);
   }
 }
 
@@ -34,10 +62,7 @@ export async function apiRequest(
   isFormData: boolean = false,
   options: { headers?: Record<string, string> } = {},
 ): Promise<Response> {
-  // Get token from localStorage for each request
-  const token = localStorage.getItem("token");
-
-  // Set up headers with Authorization if token exists
+  // Set up headers - we use HttpOnly cookies for authentication
   const headers: Record<string, string> = { ...options.headers };
 
   // Set Content-Type only if not FormData (FormData will set its own)
@@ -45,9 +70,17 @@ export async function apiRequest(
     headers["Content-Type"] = "application/json";
   }
 
-  // Add Authorization header if not already provided in options
-  if (token && !headers["Authorization"]) {
-    headers["Authorization"] = `Bearer ${token}`;
+  // Add CSRF token for state-changing operations
+  const stateChangingMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
+  if (stateChangingMethods.includes(method.toUpperCase())) {
+    // Use cached CSRF token if available
+    const token = getCachedCSRFToken();
+    if (token) {
+      headers['x-csrf-token'] = token;
+      // CSRF token included in request
+    } else {
+      console.warn('No CSRF token available for request - should have been fetched on page load');
+    }
   }
 
   const fetchOptions: RequestInit = {
@@ -68,8 +101,11 @@ export async function apiRequest(
 
   try {
     const res = await fetch(url, fetchOptions);
+    
     await throwIfResNotOk(res);
+
     return res;
+
   } catch (error) {
     console.error(`API request to ${url} failed:`, error);
     throw error;
@@ -84,58 +120,45 @@ export const getQueryFn: <T>(options: {
   requiresAuth?: boolean;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior, headers = {}, forcedToken = null, requiresAuth = true }) =>
-  async ({ queryKey }) => {
-    // Get token from localStorage for each request, using forcedToken if provided
-    const token = forcedToken !== null ? forcedToken : localStorage.getItem("token");
-    
-    // If auth is required but no token exists, return null early
-    if (requiresAuth && !token && unauthorizedBehavior === "returnNull") {
-      return null;
-    }
+    async ({ queryKey }) => {
+      // We use HttpOnly cookies for authentication, so no need to check localStorage tokens
+      // The server will handle authentication via cookies
 
-    // Merge with any existing headers
-    const requestHeaders = { ...headers };
+      // Merge with any existing headers
+      const requestHeaders = { ...headers };
 
-    // Add Authorization header if token exists
-    if (token) {
-      requestHeaders["Authorization"] = `Bearer ${token}`;
-    }
+      try {
+        // Build the URL - if queryKey has more than one element, construct the URL with parameters
+        let url = queryKey[0] as string;
 
-    try {
-      // Build the URL - if queryKey has more than one element, construct the URL with parameters
-      let url = queryKey[0] as string;
-      
-      // If second element is a number or string, append it to the URL
-      if (queryKey.length > 1 && (typeof queryKey[1] === 'number' || typeof queryKey[1] === 'string')) {
-        url = `${url}/${queryKey[1]}`;
-      }
-      
-      const res = await fetch(url, {
-        credentials: "include",
-        headers: requestHeaders,
-      });
+        // If second element is a number or string, append it to the URL
+        if (queryKey.length > 1 && (typeof queryKey[1] === 'number' || typeof queryKey[1] === 'string')) {
+          url = `${url}/${queryKey[1]}`;
+        }
 
-      if (res.status === 401) {
-        if (unauthorizedBehavior === "returnNull") {
+        const res = await fetch(url, {
+          credentials: "include",
+          headers: requestHeaders,
+        });
+
+        if (res.status === 401) {
+          if (unauthorizedBehavior === "returnNull") {
+            return null;
+          }
+
+          // Handle unauthorized globally
+          handleUnauthorized();
           return null;
         }
 
-        // Handle unauthorized globally
-        handleUnauthorized();
-        return null;
-      }
+        await throwIfResNotOk(res);
 
-      await throwIfResNotOk(res);
-      return await res.json();
-    } catch (error) {
-      // If the request fails and auth is required but we have no token,
-      // return null instead of throwing if we're configured to return null on 401
-      if (requiresAuth && !token && unauthorizedBehavior === "returnNull") {
-        return null;
+        return await res.json();
+      } catch (error) {
+        // Handle errors normally - the server will return 401 if authentication fails
+        throw error;
       }
-      throw error;
-    }
-  };
+    };
 
 export const queryClient = new QueryClient({
   defaultOptions: {

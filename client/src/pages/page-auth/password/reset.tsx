@@ -35,7 +35,7 @@ export default function ResetPasswordPage() {
       if (!token) throw new Error("No token provided");
       const response = await apiRequest("GET", `/api/password/validate-token?token=${token}`);
       return response.json();
-    },
+    }, 
     enabled: !!token,
     retry: false,
   });
@@ -70,7 +70,7 @@ export default function ResetPasswordPage() {
     },
     onError: (error: any) => {
       form.setError("root", {
-        message: error.message || "An error occurred. Please try again.",
+        message: 'Something went wrong. Please try again.',
       });
     },
   });
@@ -124,7 +124,7 @@ export default function ResetPasswordPage() {
   }
 
   // Token validation error
-  if (tokenValidation.isError || !tokenValidation.data?.success) {
+  if (tokenValidation.isError || !tokenValidation.data?.data?.valid) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -160,8 +160,8 @@ export default function ResetPasswordPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-              <CheckCircle className="h-6 w-6 text-green-600" />
+            <div className="mx-auto mb-4 size-12 bg-green-100 rounded-full flex items-center justify-center">
+              <CheckCircle className="size-6 text-green-600" />
             </div>
             <CardTitle className="text-2xl">Password Reset Successful</CardTitle>
             <CardDescription>
@@ -222,9 +222,9 @@ export default function ResetPasswordPage() {
                           onClick={() => setShowPassword(!showPassword)}
                         >
                           {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
+                            <EyeOff className="size-4" />
                           ) : (
-                            <Eye className="h-4 w-4" />
+                            <Eye className="size-4" />
                           )}
                         </Button>
                       </div>
@@ -256,9 +256,9 @@ export default function ResetPasswordPage() {
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         >
                           {showConfirmPassword ? (
-                            <EyeOff className="h-4 w-4" />
+                            <EyeOff className="size-4" />
                           ) : (
-                            <Eye className="h-4 w-4" />
+                            <Eye className="size-4" />
                           )}
                         </Button>
                       </div>
@@ -283,7 +283,7 @@ export default function ResetPasswordPage() {
               >
                 {resetMutation.isPending ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="size-4 animate-spin" />
                     Updating Password...
                   </>
                 ) : (

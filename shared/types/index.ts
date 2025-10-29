@@ -29,3 +29,13 @@ export type {
   LegacyApiResponse,
   createApiResponse
 } from './api';
+// Export new standardized API response types
+export type {
+  SuccessResponse,
+  ErrorResponse,
+  ApiResponse as ApiResponseStandard,
+  PaginationMetadata,
+  ResponseMetadata,
+  ErrorCode,
+  ErrorCodes
+} from './api-standard';

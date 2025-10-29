@@ -67,6 +67,18 @@ export interface AssessmentsResponse extends ApiResponse {
   assessments?: Assessment[];
 }
 
+// NEW STANDARDIZED ASSESSMENT RESPONSES
+// These follow the new standard format (Option 4)
+import { SuccessResponse, ErrorResponse } from './api-standard';
+
+export type AssessmentsResponseStandard = 
+  | SuccessResponse<{ assessments: Assessment[] }>
+  | ErrorResponse;
+
+export type AssessmentResponseStandard = 
+  | SuccessResponse<{ assessment: Assessment }>
+  | ErrorResponse;
+
 /**
  * Guest Assessment responses
  * Specialized response types for guest assessment flows

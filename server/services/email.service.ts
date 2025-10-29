@@ -1,6 +1,7 @@
+import { render } from "@react-email/render"; 
 import { createTransporter, getEmailFromAddress } from "../config/email.config";
-import { render } from "@react-email/render";
-import { PasswordResetEmail } from "../emails/password-reset";
+import { PasswordResetEmail } from "../emails/password-reset"; 
+import { env } from "server/utils/environment";
 
 export class EmailService {
   private static transporter = createTransporter();
@@ -16,23 +17,21 @@ export class EmailService {
     name: string,
   ): Promise<boolean> {
     try {
-      const resetUrl = `${process.env.FRONTEND_URL || "https://ready.myzone.ai/auth"}/reset?token=${resetToken}`;
+      const resetUrl = `${env.FRONTEND_URL}/auth/reset?token=${resetToken}`;
 
       // Get formatted from address with name
       const fromAddress = getEmailFromAddress();
 
       // Render React Email template
-      const emailHtml = await render(
-        PasswordResetEmail({
-          userFirstName: name,
-          resetUrl: resetUrl,
-        }),
-      );
+      const emailHtml = await render(PasswordResetEmail({
+        userFirstName: name,
+        resetUrl: resetUrl
+      }));
 
       const emailText = `
 Hello ${name},
 
-We received a request to reset your password for your Keeran Networks AI account.
+We received a request to reset your password for your MyZone AI account.
 
 To reset your password, please visit the following link:
 ${resetUrl}
@@ -42,23 +41,24 @@ This link will expire in 30 minutes for security reasons.
 If you didn't request this password reset, you can safely ignore this email.
 
 Best regards,
-Keeran Networks AI Team
+The MyZone AI Team
       `.trim();
 
       const mailOptions = {
         from: fromAddress,
         to: email,
-        subject: "Reset Your Keeran Networks AI Password",
+        subject: "Reset Your MyZone AI Password",
         html: emailHtml,
         text: emailText,
       };
 
       // Send the actual email using the configured transporter
       const transporter = this.getTransporter();
-      const info = await transporter.sendMail(mailOptions);
-
+      const info = await transporter.sendMail(mailOptions); 
+      
       return true;
-    } catch (error) {
+    } catch (error) {  
+      console.error("Failed to send email:", error);
       return false;
     }
   }
@@ -68,7 +68,7 @@ Keeran Networks AI Team
     to,
     subject,
     html,
-    text,
+    text
   }: {
     to: string;
     subject: string;
@@ -91,10 +91,8 @@ Keeran Networks AI Team
       const transporter = this.getTransporter();
       const info = await transporter.sendMail(mailOptions);
 
-      console.log(`Email sent successfully to: ${to}`);
       return true;
     } catch (error) {
-      console.error("Error sending email:", error);
       return false;
     }
   }
@@ -102,31 +100,23 @@ Keeran Networks AI Team
   static async testConnection(): Promise<boolean> {
     try {
       // Test Brevo SMTP connection if configured
-      if (process.env.BREVO_SMTP_PASSWORD) {
+      if (env.SMTP_PASS) {
         const transporter = this.getTransporter();
         await transporter.verify();
-        console.log("✅ Brevo SMTP connection verified successfully");
         return true;
       }
 
       // Test legacy email configuration
-      if (
-        process.env.EMAIL_HOST &&
-        process.env.EMAIL_USER &&
-        process.env.EMAIL_PASS
-      ) {
+      if (env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS) {
         const transporter = this.getTransporter();
         await transporter.verify();
-        console.log("✅ Email SMTP connection verified successfully");
         return true;
       }
 
       // No email configuration found
-      console.warn("⚠️ No email configuration found");
       return false;
     } catch (error) {
-      console.error("❌ Email transporter verification failed:", error);
       return false;
     }
-  }
+  } 
 }

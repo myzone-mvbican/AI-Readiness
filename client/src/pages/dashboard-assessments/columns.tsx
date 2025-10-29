@@ -36,7 +36,7 @@ const DeleteAssessmentButton = ({ assessment }: { assessment: Assessment }) => {
       const response = await apiRequest("DELETE", `/api/assessments/${assessmentId}`);
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || "Failed to delete assessment");
+        throw new Error(error.error?.message || "Failed to delete assessment");
       }
       return response.json();
     },

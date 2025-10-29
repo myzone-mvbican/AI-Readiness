@@ -8,11 +8,11 @@ import logoPath from "@/assets/logo-keeran.svg";
 export const AssessmentPDFDownloadButton = ({
   assessment,
 }: {
-  assessment: Assessment;
+  assessment: any; // Using any to handle the extended assessment with survey data
 }) => {
   const today = new Date();
   const completed = new Date(assessment.completedOn || today);
-  const filename = `report-${assessment.id}-${completed.toLocaleDateString()}.pdf`;
+  const filename = `keeran-ai-readiness-report-${completed.toLocaleDateString()}.pdf`;
 
   return (
     <PDFDownloadLink

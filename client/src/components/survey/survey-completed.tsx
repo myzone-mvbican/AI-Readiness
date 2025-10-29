@@ -57,7 +57,7 @@ export default function SurveyCompleted({
 
   // Mutation for saving recommendations to the assessment
   const saveRecommendationsMutation = useMutation<
-    any,
+    { success: boolean; data?: { assessment: any } },
     Error,
     RecommendationPayload
   >({
@@ -105,7 +105,7 @@ export default function SurveyCompleted({
     // Only fetch recommendations if not already present
     // and if questions are available
     // and if not loading
-    if (isLoading || questions.length == 0 || assessment?.recommendations) {
+    if (isLoading || assessment?.recommendations) {
       return;
     }
 
@@ -113,31 +113,51 @@ export default function SurveyCompleted({
       try {
         setIsLoading(true);
 
-        // Same AI suggestions endpoint for both user types
+        // First, fetch the complete assessment data from the server
+        const assessmentEndpoint = isAuthenticated
+          ? `/api/assessments/${assessment.id}`
+          : `/api/public/assessments/${assessment.id}`;
+        
+        const assessmentResponse = await apiRequest("GET", assessmentEndpoint);
+        const assessmentData = await assessmentResponse.json();
+        
+        if (!assessmentData.success) {
+          throw new Error("Failed to fetch assessment data");
+        }
+
+        // Use the complete assessment data from the server
+        const completeAssessment = assessmentData.data.assessment;
+
+        // Now send the complete assessment to AI suggestions
         const response = await apiRequest("POST", "/api/ai-suggestions", {
-          assessment: assessment,
+          assessment: completeAssessment,
         });
 
         const result = await response.json();
-        if (!result.success || !result.recommendations) {
+        if (!result.success || !result.data?.recommendations) {
           throw new Error("Failed to generate recommendations");
         }
 
         // Create payload for saving recommendations
         const payload: RecommendationPayload = {
-          recommendations: result.recommendations,
+          recommendations: result.data.recommendations,
         };
 
         // Save recommendations
         await saveRecommendationsMutation.mutateAsync(payload);
 
         // Manually update assessment in local memory to prevent refetch
-        if (assessment && result.recommendations) {
-          assessment.recommendations = result.recommendations;
+        if (assessment && result.data.recommendations) {
+          assessment.recommendations = result.data.recommendations;
+          
+          // Update PDF path if PDF was generated
+          if (result.data.pdfGenerated && result.data.pdfPath) {
+            assessment.pdfPath = result.data.pdfPath;
+          }
         }
 
         // Show success message with PDF generation status
-        const pdfMessage = result.pdfGenerated
+        const pdfMessage = result.data.pdfGenerated
           ? "Recommendations generated and PDF saved automatically."
           : "Recommendations generated.";
 
@@ -157,8 +177,8 @@ export default function SurveyCompleted({
         });
 
         // Log PDF generation info for debugging
-        if (result.pdfGenerated) {
-          console.log("PDF automatically generated and saved:", result.pdfPath);
+        if (result.data.pdfGenerated) {
+          console.log("PDF automatically generated and saved:", result.data.pdfPath);
         }
       } catch (error) {
         console.error("Recommendations error:", error);

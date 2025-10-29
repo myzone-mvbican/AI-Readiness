@@ -40,17 +40,13 @@ export default function ForgotPasswordPage() {
 
   const resetMutation = useMutation({
     mutationFn: async (data: PasswordResetRequest) => {
-      const response = await apiRequest(
-        "POST",
-        "/api/password/reset-request",
-        data,
-      );
-      return response.json();
+      const response = await apiRequest("POST", "/api/password/reset-request", data);
+      return response;
     },
     onSuccess: () => {
       setIsSubmitted(true);
     },
-    onError: (error: any) => {
+    onError: (error: any) => { 
       form.setError("root", {
         message: error.message || "An error occurred. Please try again.",
       });
@@ -66,8 +62,8 @@ export default function ForgotPasswordPage() {
       <div className="grow bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-              <CheckCircle className="h-6 w-6 text-green-600" />
+            <div className="mx-auto mb-4 size-12 bg-green-100 rounded-full flex items-center justify-center">
+              <CheckCircle className="size-6 text-green-600" />
             </div>
             <CardTitle className="text-2xl">Check Your Email</CardTitle>
             <CardDescription>
@@ -76,7 +72,7 @@ export default function ForgotPasswordPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <Alert>
-              <Mail className="h-4 w-4" />
+              <Mail className="size-4" />
               <AlertDescription>
                 If you don't see the email in your inbox, please check your spam
                 folder. The reset link will expire in 30 minutes.
@@ -85,7 +81,7 @@ export default function ForgotPasswordPage() {
             <div className="text-center">
               <Link href="/login">
                 <Button variant="outline" className="w-full">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  <ArrowLeft className="size-4" />
                   Back to Login
                 </Button>
               </Link>
@@ -151,7 +147,7 @@ export default function ForgotPasswordPage() {
                 <div className="text-center">
                   <Link href="/login">
                     <Button variant="ghost" size="sm">
-                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      <ArrowLeft className="size-4" />
                       Back to Login
                     </Button>
                   </Link>

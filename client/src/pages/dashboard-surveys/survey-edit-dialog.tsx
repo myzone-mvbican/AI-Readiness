@@ -88,12 +88,16 @@ export default function SurveyEditDialog({
   const [isUploading, setIsUploading] = useState(false);
 
   // Fetch teams for the dropdown
-  const { data: teamsData } = useQuery({
+  const { data: teams } = useQuery({
     queryKey: ["/api/admin/teams"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/admin/teams");
+      const { data } = await res.json();
+      return data || [];
+    },
+    select: (data) => data.data || [],
     retry: false,
   });
-
-  const teams = (teamsData as any)?.teams || [];
 
   // Get team IDs directly from the survey.teams array
   const surveyTeamIds = (survey.teams || []).map((team) => team.id);
@@ -121,10 +125,7 @@ export default function SurveyEditDialog({
         title: survey.title,
         visibility: visibility,
         selectedTeams: teamIds.length > 0 ? teamIds : undefined,
-        status:
-          survey.status === "draft" || survey.status === "public"
-            ? survey.status
-            : "draft",
+        status: survey.status === "draft" || survey.status === "public" ? survey.status : "draft",
         completionType: survey.completionLimit ? "limited" : "unlimited",
         completionLimit: survey.completionLimit || undefined,
       };
@@ -147,12 +148,7 @@ export default function SurveyEditDialog({
   // Update an existing survey
   const updateSurveyMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await apiRequest(
-        "PUT",
-        `/api/admin/surveys/${survey.id}`,
-        formData,
-        true,
-      );
+      const response = await apiRequest("PUT", `/api/admin/surveys/${survey.id}`, formData, true);
 
       if (!response.ok) {
         const error = await response.json();
@@ -271,6 +267,8 @@ export default function SurveyEditDialog({
     } else {
       formData.append("teamIds", JSON.stringify([]));
     }
+
+    console.log(formData.get("teamIds"));
 
     // If a new file was uploaded, include it
     if (csvFile) {
@@ -408,8 +406,8 @@ export default function SurveyEditDialog({
                                     team.id,
                                   )
                                     ? field.value.filter(
-                                        (value: number) => value !== team.id,
-                                      )
+                                      (value: number) => value !== team.id,
+                                    )
                                     : [...(field.value || []), team.id];
 
                                   // Use setTimeout to avoid maximum update depth exceeded error
@@ -419,11 +417,10 @@ export default function SurveyEditDialog({
                                 }}
                               >
                                 <Check
-                                  className={`mr-2 h-4 w-4 ${
-                                    field.value?.includes(team.id)
+                                  className={`mr-2 h-4 w-4 ${field.value?.includes(team.id)
                                       ? "opacity-100"
                                       : "opacity-0"
-                                  }`}
+                                    }`}
                                 />
                                 {team.name}
                               </CommandItem>
