@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
 import { Minus } from "lucide-react";
+import { BenchmarkData } from "@shared/types";
 import {
   Card,
   CardHeader,
@@ -12,18 +13,6 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { getIndustryDisplayName } from "@/lib/industry-validation";
-
-interface BenchmarkData {
-  quarter: string;
-  surveyTemplateId: number;
-  industry: string;
-  categories: {
-    name: string;
-    userScore: number;
-    industryAverage: number | null;
-    globalAverage: number | null;
-  }[];
-}
 
 export function PerformanceSummaryCard() {
   const { user } = useAuth();
@@ -44,15 +33,20 @@ export function PerformanceSummaryCard() {
   });
 
   // Find the most recent completed assessment for benchmark comparison
-  const latestCompletedAssessment = assessments?.assessments
-    ?.filter((a) => a.status === "completed" && a.completedOn)
+  // NEW: Handle standardized response format
+  const assessmentsList = (assessments as any)?.success && (assessments as any)?.data?.assessments
+    ? (assessments as any).data.assessments
+    : (assessments as any)?.assessments || [];
+
+  const latestCompletedAssessment = assessmentsList
+    ?.filter((a: any) => a.status === "completed" && a.completedOn)
     ?.sort(
-      (a, b) =>
+      (a: any, b: any) =>
         new Date(b.completedOn!).getTime() - new Date(a.completedOn!).getTime(),
     )?.[0];
 
   const {
-    data: benchmarkData,
+    data: benchmarkResponse,
     isLoading,
     error,
   } = useQuery<{
@@ -83,7 +77,7 @@ export function PerformanceSummaryCard() {
     );
   }
 
-  if (error || !benchmarkData?.success || !benchmarkData?.data) {
+  if (error || !benchmarkResponse?.success || !benchmarkResponse?.data) {
     return (
       <Card className="col-span-1">
         <CardHeader>
@@ -103,7 +97,7 @@ export function PerformanceSummaryCard() {
     );
   }
 
-  const { data } = benchmarkData;
+  const { data } = benchmarkResponse;
 
   // Calculate statistics
   const hasIndustryData = data.categories.some(
@@ -116,9 +110,9 @@ export function PerformanceSummaryCard() {
 
   const avgIndustryScore = hasIndustryData
     ? data.categories
-        .filter((c) => c.industryAverage !== null)
-        .reduce((sum, c) => sum + (c.industryAverage || 0), 0) /
-      data.categories.filter((c) => c.industryAverage !== null).length
+      .filter((c) => c.industryAverage !== null)
+      .reduce((sum, c) => sum + (c.industryAverage || 0), 0) /
+    data.categories.filter((c) => c.industryAverage !== null).length
     : null;
 
   const avgGlobalScore =

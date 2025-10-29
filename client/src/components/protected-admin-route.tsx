@@ -1,6 +1,6 @@
-import { Redirect, Route } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
-import { Loader2 } from "lucide-react";
+import { Redirect, Route, useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth"; 
+import { useEffect } from "react";
 
 type AdminProtectedRouteProps = {
   path: string;
@@ -12,43 +12,17 @@ export function AdminProtectedRoute({
   component: Component,
 }: AdminProtectedRouteProps) {
   const { user, isLoading } = useAuth();
-  // const [selectedTeam, setSelectedTeam] = useState<{ role: string } | null>(
-  //   null,
-  // );
-  // const [isLoadingTeam, setIsLoadingTeam] = useState(true);
+  const [, setLocation] = useLocation();
 
-  // Load selected team from local storage
-  // useEffect(() => {
-  //   setIsLoadingTeam(true);
-  //   const savedTeam = localStorage.getItem("selectedTeam");
-  //   if (savedTeam) {
-  //     try {
-  //       setSelectedTeam(JSON.parse(savedTeam));
-  //     } catch (e) {
-  //       console.error("Error parsing saved team:", e);
-  //     }
-  //   }
-  //   setIsLoadingTeam(false);
-  // }, []);
+  useEffect(() => {
+    if (!isLoading && !user) {
+      setLocation("/auth");
+    }
+  }, [user, isLoading, setLocation]);
 
-  // If still loading user or team data, show loading spinner
-  if (isLoading) {
-    return (
-      <Route path={path}>
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-border" />
-        </div>
-      </Route>
-    );
-  }
-
-  // If not authenticated at all, redirect to login
+  // If not authenticated, redirect to the auth page
   if (!user) {
-    return (
-      <Route path={path}>
-        <Redirect to="/auth" />
-      </Route>
-    );
+    return null; // Will redirect in useEffect
   }
 
   // If authenticated but no team selected or not an admin team, redirect to dashboard

@@ -89,11 +89,6 @@ export class PDFGenerator {
       // Generate relative path for database storage
       const relativePath = this.getRelativePath(fileName, userId, guestEmail);
 
-      console.log(`PDF generated successfully for assessment ${assessment.id}`);
-      console.log(`File saved to: ${filePath}`);
-      console.log(`Relative path: ${relativePath}`);
-      console.log(`User ID: ${userId || "guest"} (type: ${typeof userId})`);
-      console.log(`Guest email: ${guestEmail || "none"}`);
 
       return {
         success: true,

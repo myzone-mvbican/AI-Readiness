@@ -1,3 +1,5 @@
+import fs from "fs"; 
+import path from "path"; 
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { AuthController } from "./controllers/auth.controller";
@@ -8,179 +10,262 @@ import { AssessmentController } from "./controllers/assessment.controller";
 import { AIController } from "./controllers/ai.controller";
 import { BenchmarkController } from "./controllers/benchmark.controller";
 import { PasswordResetController } from "./controllers/password-reset.controller";
-import { EmailService } from "./services/email.service";
+import {
+  insertUserSchema,
+  updateUserSchema,
+  loginSchema,
+  googleAuthSchema,
+  googleConnectSchema
+} from "@shared/validation/schemas";
 
 // Import middleware if needed for protected routes
 import { auth, requireAdmin } from "./middleware/auth";
 import { upload } from "./middleware/upload";
-import { ApiResponseUtil } from "./utils/api-response";
-import cors from "cors";
-import path from "path";
-import fs from "fs";
+import {
+  validateBody,
+  validateQuery,
+  validateParams,
+  validateSurveyCreation,
+  validateUrlAnalysis
+} from "./middleware/validation";
+import {
+  teamCreationSchema,
+  userTeamAssignmentSchema,
+  userRoleUpdateSchema,
+  userTeamsUpdateSchema,
+  assessmentCreationSchema,
+  assessmentUpdateSchema,
+  guestAssessmentCreationSchema,
+  guestAssessmentDataSchema,
+  guestAssessmentUpdateSchema,
+  surveyUpdateSchema,
+  completionEligibilitySchema,
+  aiSuggestionSchema,
+  passwordResetRequestSchema,
+  passwordResetConfirmSchema,
+  tokenQuerySchema,
+  emailQuerySchema,
+  userSearchByNameQuerySchema
+} from "./middleware/schemas";
+import {
+  generalLimiter,
+  authLimiter,
+  registrationLimiter,
+  passwordResetLimiter,
+  sensitiveOperationsLimiter,
+  progressiveDelay,
+  accountLockoutLimiter,
+  // Enhanced rate limiters
+  authProgressiveDelay,
+  authRateLimit,
+  sensitiveOperationsProgressiveDelay,
+  sensitiveOperationsRateLimit,
+  generalApiLimiter
+} from "./middleware/rateLimiting";
+import { 
+  validateCSRFToken
+} from "./middleware/csrf"; 
+import { requestSizeLimiter, requestSizeLimits } from "./middleware/requestSizeLimits"; 
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Enable CORS
-  app.use(cors());
+  // Health check endpoint (no rate limiting)
+  app.get("/api/health", (req, res) => {
+    res.json({ success: true, data: { status: "ok" } });
+  });
 
   // PDF download route - serve PDF files with correct headers
   app.get("/uploads/*", (req, res) => {
     const filePath = path.join(process.cwd(), "public", req.path);
-    
+
     // Check if file exists
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ error: "File not found" });
     }
-    
+
     // Check if it's a PDF file
     if (path.extname(filePath).toLowerCase() !== '.pdf') {
       return res.status(400).json({ error: "Only PDF files are allowed" });
     }
-    
+
     // Set proper headers for PDF download
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${path.basename(filePath)}"`);
-    
+
     // Stream the file
     const fileStream = fs.createReadStream(filePath);
     fileStream.pipe(res);
   });
 
   // API routes - path prefixed with /api
-  app.get("/api/health", (req, res) => {
-    res.json({ status: "ok", message: "Server is healthy" });
-  });
 
-  // Demonstration endpoint showing API response standardization
-  app.get("/api/demo/validation", (req, res) => {
-    try {
-      // Example of new standardized API response format
-      const demoData = {
-        validationSchemas: [
-          "authSchemas.login", 
-          "authSchemas.register", 
-          "surveySchemas.create"
-        ],
-        consolidatedValidators: [
-          "email", "password", "industry", "employeeCount"
-        ],
-        formUtils: [
-          "getIndustryOptions", "validateCsvFile", "transformIndustryForSubmission"
-        ]
-      };
-      
-      return ApiResponseUtil.legacy.dataSuccess(res, demoData, "Form validation consolidation active");
-    } catch (error) {
-      return ApiResponseUtil.legacy.error(res, "Failed to load validation demo", 500);
-    }
-  });
+  // Password strength endpoint
+  app.post("/api/password/strength", generalApiLimiter, AuthController.getPasswordStrength);
 
-  // Authentication routes
+  // Token refresh endpoint
+  app.post("/api/auth/refresh", generalApiLimiter, AuthController.refreshToken);
+
+  // Logout endpoint
+  app.post("/api/auth/logout", auth, generalApiLimiter, AuthController.logout);
+
+  // User JWT sessions endpoint
+  app.get("/api/auth/sessions", auth, generalApiLimiter, AuthController.getSessions);
+
+  // Authentication routes (with smaller size limits)
 
   // User signup endpoint (with support for both /signup and /register paths)
-  app.post(["/api/signup", "/api/register"], AuthController.register);
+  app.post(
+    ["/api/signup", "/api/register"],
+    requestSizeLimiter,
+    registrationLimiter,
+    validateBody(insertUserSchema),
+    AuthController.register
+  );
   // User login endpoint
-  app.post("/api/login", AuthController.login);
+  app.post("/api/login",
+    requestSizeLimiter,
+    authProgressiveDelay,
+    authRateLimit,
+    accountLockoutLimiter,
+    validateBody(loginSchema),
+    AuthController.login
+  );
   // Google OAuth login/signup endpoint
-  app.post("/api/auth/google/login", AuthController.loginGoogle);
-  app.post("/api/auth/microsoft/login", AuthController.loginMicrosoft);
+  app.post("/api/auth/google/login",
+    requestSizeLimiter,
+    authProgressiveDelay,
+    authRateLimit,
+    validateBody(googleAuthSchema),
+    AuthController.loginGoogle
+  );
 
-  // Password reset endpoints
-  app.post("/api/password/reset-request", PasswordResetController.requestReset);
-  app.post("/api/password/reset-confirm", PasswordResetController.confirmReset);
-  app.get("/api/password/validate-token", PasswordResetController.validateToken);
-
-  // Email test endpoint (admin only)
-  app.post("/api/admin/test-email", auth, requireAdmin, async (req, res) => {
-    try {
-      const { email } = req.body;
-      
-      if (!email) {
-        return res.status(400).json({
-          success: false,
-          message: "Email address is required"
-        });
-      }
-
-      // Test email connection first
-      const connectionTest = await EmailService.testConnection();
-      if (!connectionTest) {
-        return res.status(500).json({
-          success: false,
-          message: "Email service connection failed"
-        });
-      }
-
-      // Send test email
-      const emailSent = await EmailService.sendTestEmail(email);
-      
-      if (emailSent) {
-        return res.json({
-          success: true,
-          message: `Test email sent successfully to ${email}`
-        });
-      } else {
-        return res.status(500).json({
-          success: false,
-          message: "Failed to send test email"
-        });
-      }
-    } catch (error) {
-      console.error("Email test error:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Internal server error while testing email"
-      });
-    }
-  });
+  // Password reset endpoints (with auth size limits)
+  app.post("/api/password/reset-request",
+    requestSizeLimiter,
+    authProgressiveDelay,
+    passwordResetLimiter,
+    validateBody(passwordResetRequestSchema),
+    PasswordResetController.requestReset
+  );
+  app.post("/api/password/reset-confirm",
+    requestSizeLimiter,
+    authProgressiveDelay,
+    passwordResetLimiter,
+    validateBody(passwordResetConfirmSchema),
+    PasswordResetController.confirmReset
+  );
+  app.get("/api/password/validate-token",
+    passwordResetLimiter,
+    validateQuery(tokenQuerySchema),
+    PasswordResetController.validateToken
+  );
 
   // User profile endpoints (protected routes)
 
   // Get current user profile endpoint (protected route)
-  app.get("/api/user", auth, AuthController.profile);
+  app.get("/api/user", auth, generalApiLimiter, AuthController.profile);
   // Update user profile endpoint (protected route)
-  app.put("/api/user", auth, AuthController.update);
+  app.put(
+    "/api/user",
+    validateCSRFToken,
+    auth,
+    generalApiLimiter,
+    validateBody(updateUserSchema),
+    AuthController.update
+  );
   // Connect Google account to existing user (protected route)
-  app.post("/api/user/google/connect", auth, AuthController.connectGoogle);
+  app.post("/api/user/google/connect",
+    validateCSRFToken,
+    auth,
+    generalApiLimiter,
+    validateBody(googleConnectSchema),
+    AuthController.connectGoogle
+  );
   // Disconnect Google account from existing user (protected route)
   app.delete(
     "/api/user/google/disconnect",
+    validateCSRFToken,
     auth,
+    generalApiLimiter,
     AuthController.disconnectGoogle,
-  );
-  // Connect Microsoft account to existing user (protected route)
-  app.post("/api/user/microsoft/connect", auth, AuthController.connectMicrosoft);
-  // Disconnect Microsoft account from existing user (protected route)
-  app.delete(
-    "/api/user/microsoft/disconnect",
-    auth,
-    AuthController.disconnectMicrosoft,
   );
 
   // Team endpoints (all protected routes)
 
   // Get teams for current user
   // To do: move into AuthController.profile method
-  app.get("/api/teams", auth, TeamController.getTeams);
+  app.get("/api/teams", auth, generalApiLimiter, TeamController.getTeams);
   // Create a new team
-  app.post("/api/teams", auth, TeamController.create);
+  app.post(
+    "/api/teams",
+    requestSizeLimiter,
+    validateCSRFToken,
+    auth,
+    generalApiLimiter,
+    validateBody(teamCreationSchema),
+    TeamController.create
+  );
   // Add user to team
-  app.post("/api/teams/:teamId/users", auth, TeamController.addUser);
+  app.post(
+    "/api/teams/:teamId/users",
+    requestSizeLimiter,
+    validateCSRFToken,
+    auth,
+    generalApiLimiter,
+    validateBody(userTeamAssignmentSchema),
+    TeamController.addUser
+  );
   // Admin-only: Get all teams
-  app.get("/api/admin/teams", auth, requireAdmin, TeamController.getAll);
+  app.get(
+    "/api/admin/teams",
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
+    auth,
+    requireAdmin,
+    TeamController.getAll
+  );
 
   // Users endpoints (all protected routes)
 
   // Admin-only: Get all users
-  app.get("/api/admin/users", auth, requireAdmin, UserController.getAll);
+  app.get(
+    "/api/admin/users",
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
+    auth,
+    requireAdmin,
+    UserController.getAll
+  );
   // Admin-only: Update a user
-  app.put("/api/admin/users/:id", auth, requireAdmin, UserController.update);
+  app.put(
+    "/api/admin/users/:id",
+    requestSizeLimiter,
+    validateCSRFToken,
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
+    auth,
+    requireAdmin,
+    validateBody(updateUserSchema),
+    UserController.update
+  );
   // Admin-only: Delete a user
-  app.delete("/api/admin/users/:id", auth, requireAdmin, UserController.delete);
+  app.delete(
+    "/api/admin/users/:id",
+    validateCSRFToken,
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
+    auth,
+    requireAdmin,
+    UserController.delete
+  );
   // Admin-only: Update a user's team assignments
   app.patch(
     "/api/admin/users/:id/teams",
+    validateCSRFToken,
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
     auth,
     requireAdmin,
+    validateBody(userTeamsUpdateSchema),
     TeamController.updateUserTeams,
   );
 
@@ -190,20 +275,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get(
     "/api/surveys/completion-status",
     auth,
+    generalApiLimiter,
     SurveyController.getCompletionStatus,
   );
-  // Get surveys for current user's selected team
-  app.get("/api/surveys/:teamId", auth, SurveyController.getByTeamForUser);
-  // Original protected survey endpoint
-  app.get("/api/surveys/detail/:id", auth, SurveyController.getByIdForUser);
+  // Get all surveys for assessment modal
+  app.get(
+    "/api/surveys/all",
+    auth,
+    generalApiLimiter,
+    SurveyController.getAllForAssessment
+  );
   // Check completion eligibility for a survey
-  app.post("/api/surveys/:surveyId/completion-check", SurveyController.checkCompletionEligibility);
+  app.post(
+    "/api/surveys/:surveyId/completion-check",
+    requestSizeLimiter,
+    generalApiLimiter,
+    validateBody(completionEligibilitySchema),
+    SurveyController.checkCompletionEligibility
+  );
 
   // Survey Administration routes (admin only)
 
   // Get all surveys for a team
   app.get(
     "/api/admin/surveys/:teamId",
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
     auth,
     requireAdmin,
     SurveyController.getAll,
@@ -212,6 +309,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get a specific survey with author details
   app.get(
     "/api/admin/surveys/detail/:id",
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
     auth,
     requireAdmin,
     SurveyController.getById,
@@ -220,24 +319,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a new survey with file upload
   app.post(
     "/api/admin/surveys",
+    validateCSRFToken,
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
     auth,
     requireAdmin,
     upload.single("file"),
+    validateSurveyCreation,
     SurveyController.create,
   );
 
   // Update a survey with optional file upload
   app.put(
     "/api/admin/surveys/:id",
+    validateCSRFToken,
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
     auth,
     requireAdmin,
     upload.single("file"),
+    validateBody(surveyUpdateSchema),
     SurveyController.update,
   );
 
   // Get teams assigned to a survey
   app.get(
     "/api/admin/surveys/:id/teams",
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
     auth,
     requireAdmin,
     SurveyController.getTeams,
@@ -246,16 +355,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete a survey and its file
   app.delete(
     "/api/admin/surveys/:id",
+    validateCSRFToken,
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
     auth,
     requireAdmin,
     SurveyController.delete,
   );
 
   // Admin Team Management routes
-  
+
   // Get all teams with member details (admin only)
   app.get(
     "/api/admin/teams",
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
     auth,
     requireAdmin,
     TeamController.getAll,
@@ -264,14 +378,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update team (admin only)
   app.put(
     "/api/admin/teams/:id",
+    validateCSRFToken,
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
     auth,
     requireAdmin,
+    validateBody(teamCreationSchema),
     TeamController.update,
   );
 
   // Delete team (admin only)
   app.delete(
     "/api/admin/teams/:id",
+    validateCSRFToken,
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
     auth,
     requireAdmin,
     TeamController.delete,
@@ -280,6 +401,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Restore team (admin only)
   app.post(
     "/api/admin/teams/:id/restore",
+    validateCSRFToken,
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
     auth,
     requireAdmin,
     TeamController.restore,
@@ -288,6 +412,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Hard delete team (admin only) - only if soft-deleted and has zero members
   app.delete(
     "/api/admin/teams/:id/hard-delete",
+    validateCSRFToken,
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
     auth,
     requireAdmin,
     TeamController.hardDelete,
@@ -296,6 +423,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get team members (admin only)
   app.get(
     "/api/admin/teams/:id/members",
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
     auth,
     requireAdmin,
     TeamController.getMembers,
@@ -304,6 +433,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Remove user from team (admin only)
   app.delete(
     "/api/admin/teams/:teamId/users/:userId",
+    validateCSRFToken,
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
     auth,
     requireAdmin,
     TeamController.removeUser,
@@ -312,24 +444,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user role in team (admin only)
   app.patch(
     "/api/admin/teams/:teamId/users/:userId/role",
+    validateCSRFToken,
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
     auth,
     requireAdmin,
+    validateBody(userRoleUpdateSchema),
     TeamController.updateUserRole,
   );
 
   // Admin User Management routes
-  
+
   // Search users by name or email (admin only)
   app.get(
     "/api/admin/users/search",
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
     auth,
     requireAdmin,
+    validateQuery(userSearchByNameQuerySchema),
     UserController.searchUsers,
   );
 
   // Get assessments for a specific user (admin only)
   app.get(
     "/api/admin/users/:userId/assessments",
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
     auth,
     requireAdmin,
     UserController.getUserAssessments,
@@ -338,43 +479,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Assessment routes
 
   // Get all assessments for the current user
-  app.get("/api/assessments", auth, AssessmentController.getAll);
+  app.get("/api/assessments", auth, generalApiLimiter, AssessmentController.getAll);
   // Create a new assessment
-  app.post("/api/assessments", auth, AssessmentController.create);
+  app.post(
+    "/api/assessments",
+    requestSizeLimiter,
+    validateCSRFToken, 
+    auth,
+    generalApiLimiter,
+    validateBody(assessmentCreationSchema),
+    AssessmentController.create
+  );
   // Get a specific assessment by ID
-  app.get("/api/assessments/:id", auth, AssessmentController.getById);
+  app.get(
+    "/api/assessments/:id",
+    auth,
+    generalApiLimiter,
+    AssessmentController.getById
+  );
   // Update an assessment (for saving answers or changing status)
-  app.patch("/api/assessments/:id", auth, AssessmentController.update);
+  app.patch("/api/assessments/:id",
+    requestSizeLimiter,
+    validateCSRFToken,
+    auth,
+    generalApiLimiter,
+    validateBody(assessmentUpdateSchema),
+    AssessmentController.update
+  );
   // Delete an assessment
-  app.delete("/api/assessments/:id", auth, AssessmentController.delete);
+  app.delete(
+    "/api/assessments/:id",
+    validateCSRFToken,
+    auth,
+    generalApiLimiter,
+    AssessmentController.delete
+  );
   // Benchmark routes
   app.get(
     "/api/assessments/:id/benchmark",
     auth,
+    generalApiLimiter,
     BenchmarkController.getBenchmark,
   );
 
   // AI Suggestions endpoint
-  app.post("/api/ai-suggestions", AIController.generateSuggestions);
-  
-  // AI industry analysis endpoint
-  app.post("/api/analyze-industry", AIController.analyzeIndustry);
+  app.post(
+    "/api/ai-suggestions",
+    requestSizeLimiter,
+    validateCSRFToken,
+    generalApiLimiter,
+    validateBody(aiSuggestionSchema),
+    AIController.generateSuggestions
+  );
 
-  app.post( "/api/admin/benchmark/recalculate",
+  // AI industry analysis endpoint
+  app.post(
+    "/api/analyze-industry",
+    validateCSRFToken,
+    generalApiLimiter,
+    validateUrlAnalysis,
+    AIController.analyzeIndustry
+  );
+
+  // Recalculate benchmark stats (admin only)
+  app.post(
+    "/api/admin/benchmark/recalculate",
+    validateCSRFToken,
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
     auth,
     requireAdmin,
     BenchmarkController.recalculateStats,
   );
 
   // Public routes
-
   // Check if user email exists (public endpoint)
-  app.get("/api/public/users/exists", UserController.exists);
+  app.get("/api/public/users/exists", generalApiLimiter, validateQuery(emailQuerySchema), UserController.exists);
   // Create guest assessment (public endpoint)
-  app.post("/api/public/assessments", AssessmentController.createGuest);
-  app.patch("/api/public/assessments/:id", AssessmentController.updateGuest);
+  app.post("/api/public/assessments", generalApiLimiter, validateBody(guestAssessmentDataSchema), AssessmentController.createGuest);
+  // Get guest assessment (public endpoint)
+  app.get("/api/public/assessments/:id", generalApiLimiter, AssessmentController.getGuestById);
+  // Update guest assessment (public endpoint)
+  app.patch("/api/public/assessments/:id", generalApiLimiter, validateBody(guestAssessmentUpdateSchema), AssessmentController.updateGuest);
   // Public endpoint for guest users to access survey details
-  app.get("/api/public/surveys/detail/:id", SurveyController.getById);
+  app.get("/api/public/surveys/detail/:id", generalApiLimiter, SurveyController.getById);
 
   const httpServer = createServer(app);
 

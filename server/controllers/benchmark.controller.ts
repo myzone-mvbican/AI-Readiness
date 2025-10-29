@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { BenchmarkService } from "../services/benchmark.service";
+import { ApiResponse } from "../utils/apiResponse";
 
 export class BenchmarkController {
   /**
@@ -8,34 +9,41 @@ export class BenchmarkController {
    */
   static async getBenchmark(req: Request, res: Response) {
     try {
-      const id = parseInt(req.params.id);
-
-      if (isNaN(id)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid assessment ID",
-        });
+      // Validate assessment ID using service
+      const { validId: id, error } = BenchmarkService.validateAssessmentId(req.params.id);
+      
+      if (error) {
+        return ApiResponse.validationError(res, error);
       }
 
       const benchmarkData = await BenchmarkService.getBenchmarkData(id);
 
       if (!benchmarkData) {
-        return res.status(404).json({
-          success: false,
-          message: "Assessment not found or no benchmark data available",
-        });
+        // Check if assessment exists to provide more specific error
+        const { AssessmentService } = await import("../services/assessment.service");
+        const assessment = await AssessmentService.getAssessmentById(id);
+        
+        if (!assessment) {
+          return ApiResponse.notFound(res, "Assessment not found");
+        }
+        
+        if (!assessment.completedOn) {
+          return ApiResponse.notFound(res, "Assessment not completed yet - benchmark data unavailable");
+        }
+        
+        // Check if user has industry data
+        const industry = BenchmarkService.getUserIndustry(assessment, req.user);
+        if (!industry) {
+          return ApiResponse.notFound(res, "No industry data available for benchmarking - please update your profile");
+        }
+        
+        return ApiResponse.notFound(res, "No benchmark data available for your industry at this time");
       }
 
-      return res.status(200).json({
-        success: true,
-        data: benchmarkData,
-      });
+      return ApiResponse.success(res, benchmarkData);
     } catch (error) {
-      console.error("Error getting benchmark data:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to retrieve benchmark data",
-      });
+      console.error("Benchmark controller error:", error);
+      return ApiResponse.internalError(res, "Failed to retrieve benchmark data");
     }
   }
 
@@ -48,16 +56,9 @@ export class BenchmarkController {
     try {
       await BenchmarkService.recalculateSurveyStats();
 
-      return res.status(200).json({
-        success: true,
-        message: "Survey statistics recalculated successfully",
-      });
+      return ApiResponse.success(res, { message: "Survey statistics recalculated successfully" });
     } catch (error) {
-      console.error("Error recalculating survey statistics:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to recalculate survey statistics",
-      });
+      return ApiResponse.internalError(res, "Failed to recalculate survey statistics");
     }
   }
 }

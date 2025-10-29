@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { GoogleLogin } from "@react-oauth/google";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -17,59 +18,42 @@ import {
 } from "@/components/ui/select";
 import { IndustrySelect } from "@/components/industries";
 import { useAuth } from "@/hooks/use-auth";
-import { MicrosoftLoginButton } from "@/components/microsoft-login-button";
 import {
   loginSchema,
   signupSchema,
   type LoginFormValues,
   type SignupFormValues,
-} from "@/schemas/validation-schemas";
+} from "@shared/validation/validation-schemas";
 
 export default function AuthPage() {
   const { toast } = useToast();
-  const [_, setLocation] = useLocation();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [_, setLocation] = useLocation(); 
   const [activeTab, setActiveTab] = useState("login");
-  const { user, loginMutation, registerMutation, microsoftLoginMutation } =
-    useAuth();
+  const { user, isLoading, loginMutation, registerMutation, googleLoginMutation } = useAuth();
+  
+  // Check if Google OAuth is configured
+  const isGoogleAuthEnabled = !!import.meta.env.GOOGLE_CLIENT_ID;
 
-  // Microsoft login handlers
-  const handleMicrosoftSuccess = async (credentialResponse: any) => {
-    try {
-      setIsSubmitting(true);
-
-      // Use the microsoftLoginMutation from our auth hook
-      await microsoftLoginMutation.mutateAsync({
-        credential: credentialResponse.credential,
-      });
-    } catch (error) {
-      console.error("Error with Microsoft login:", error);
-      toast({
-        title: "Microsoft login failed",
-        description: "There was a problem with your Microsoft login.",
-        variant: "destructive",
-        duration: 3000,
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+  // Google login handlers
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    await googleLoginMutation.mutateAsync({ credential: credentialResponse.credential });
   };
 
-  const handleMicrosoftError = () => {
+  const handleGoogleError = () => {
     toast({
-      title: "Microsoft login failed",
-      description: "There was a problem with your Microsoft login.",
+      title: "Google login failed",
+      description: "There was a problem with your Google login.",
       variant: "destructive",
       duration: 3000,
     });
   };
 
-  // Redirect if user is already authenticated
+  // Redirect if user is authenticated
   useEffect(() => {
-    if (user) {
+    if (user && !isLoading) {
       setLocation("/dashboard");
     }
-  }, [user, setLocation]);
+  }, [user, isLoading, setLocation]);
 
   // Login form setup
   const {
@@ -97,57 +81,19 @@ export default function AuthPage() {
       name: "",
       email: "",
       company: "",
-      employeeCount: undefined,
-      industry: undefined,
+      employeeCount: "10-49",
+      industry: "",
       password: "",
       confirmPassword: "",
     },
   });
 
   const onLoginSubmit = async (data: LoginFormValues) => {
-    try {
-      setIsSubmitting(true);
-
-      // Use the loginMutation from our auth hook
-      await loginMutation.mutateAsync({
-        email: data.email,
-        password: data.password,
-      });
-
-      // Wait a moment for auth state to update, then redirect
-      setTimeout(() => {
-        setLocation("/dashboard");
-      }, 100);
-    } catch (error) {
-      console.error("Error submitting login form:", error);
-      // Error handling is done in the mutation
-    } finally {
-      setIsSubmitting(false);
-    }
+    await loginMutation.mutateAsync(data)
   };
 
   const onSignupSubmit = async (data: SignupFormValues) => {
-    try {
-      setIsSubmitting(true);
-
-      // Use the registerMutation from our auth hook
-      await registerMutation.mutateAsync({
-        name: data.name,
-        email: data.email,
-        company: data.company,
-        employeeCount: data.employeeCount,
-        industry: data.industry,
-        password: data.password,
-        confirmPassword: data.confirmPassword,
-      });
-
-      // Redirect happens automatically in useEffect when user is set
-    } catch (error) {
-      console.error("Error submitting registration form:", error);
-      // Error handling is done in the mutation
-    } finally {
-      setIsSubmitting(false);
-    }
+    await registerMutation.mutateAsync(data);
   };
 
   return (
@@ -156,7 +102,7 @@ export default function AuthPage() {
       <div className="w-full max-w-[600px] mx-auto py-8 flex flex-col flex-grow justify-center">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Welcome to Keeran Networks
+            Welcome to MyZone AI
           </h2>
           <p className="text-gray-600 mt-2">
             Your AI Readiness Assessment platform
@@ -176,27 +122,33 @@ export default function AuthPage() {
               </TabsList>
             </CardHeader>
             <CardContent className="pt-6">
-              {/* Microsoft Sign-In Option */}
-              <div className="w-full mb-6">
-                <MicrosoftLoginButton
-                  onSuccess={handleMicrosoftSuccess}
-                  onError={handleMicrosoftError}
-                  text={activeTab === "login" ? "signin_with" : "signup_with"}
-                  disabled={isSubmitting}
-                />
-              </div>
+              {/* Google Sign-In Option - Only show if configured */}
+              {isGoogleAuthEnabled ? (
+                <>
+                  <div className="w-full mb-6 flex justify-center">
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={handleGoogleError}
+                      theme="outline"
+                      size="large"
+                      text={activeTab === "login" ? "signin_with" : "signup_with"}
+                      width="100%"
+                    />
+                  </div>
 
-              {/* Divider */}
-              <div className="relative w-full mb-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300 dark:border-gray-900"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="w-7 h-7 grid place-items-center bg-white dark:bg-gray-900 rounded-full text-gray-500 leading-none">
-                    or
-                  </span>
-                </div>
-              </div>
+                  {/* Divider */}
+                  <div className="relative w-full mb-6">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-300 dark:border-gray-900"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="w-7 h-7 grid place-items-center bg-white dark:bg-gray-900 rounded-full text-gray-500 leading-none">
+                        or
+                      </span>
+                    </div>
+                  </div>
+                </>
+              ) : null}
 
               {/* LOGIN FORM */}
               <TabsContent value="login" className="mt-0">
@@ -258,10 +210,10 @@ export default function AuthPage() {
                   {/* Submit button */}
                   <Button
                     type="submit"
-                    disabled={isSubmitting}
-                    className="w-full bg-primary hover:primary text-white py-2 px-4 rounded-md transition-colors"
+                    disabled={loginMutation.isPending}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors"
                   >
-                    {isSubmitting ? "Signing in..." : "Sign in"}
+                    {(loginMutation.isPending) ? "Signing in..." : "Sign in"}
                   </Button>
                 </form>
               </TabsContent>
@@ -472,10 +424,10 @@ export default function AuthPage() {
                   {/* Submit button */}
                   <Button
                     type="submit"
-                    disabled={isSubmitting}
-                    className="w-full bg-primary hover:bg-primary text-white py-2 px-4 rounded-md transition-colors"
+                    disabled={registerMutation.isPending}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors"
                   >
-                    {isSubmitting ? "Creating account..." : "Create account"}
+                    {registerMutation.isPending ? "Creating account..." : "Create account"}
                   </Button>
                 </form>
               </TabsContent>

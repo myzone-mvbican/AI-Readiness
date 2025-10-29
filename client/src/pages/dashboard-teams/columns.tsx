@@ -44,7 +44,7 @@ export const getColumns = ({
     header: "Team Name",
     cell: ({ row }) => {
       const team = row.original;
-      const isDeleted = team.name.includes('(deleted)');
+      const isDeleted = !!team.deletedAt;
       return (
         <div className="flex items-center gap-2">
           <div className={`font-medium ${isDeleted ? 'text-muted-foreground line-through' : ''}`}>
@@ -90,7 +90,7 @@ export const getColumns = ({
     header: () => <div className="text-right">Actions</div>,
     cell: ({ row }) => {
       const team = row.original;
-      const isDeleted = team.name.includes('(deleted)');
+      const isDeleted = !!team.deletedAt;
 
       return (
         <div className="text-right py-2">

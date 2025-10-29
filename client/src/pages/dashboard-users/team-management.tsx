@@ -34,6 +34,17 @@ export function TeamManagement({
   const { data: teamsData, isLoading: isLoadingTeams } =
     useQuery<TeamsResponse>({
       queryKey: ["/api/admin/teams"],
+      queryFn: async () => {
+        const res = await apiRequest("GET", "/api/admin/teams");
+        const data = await res.json();
+        return {
+          success: data.success,
+          teams: data.data,
+          total: data.metadata?.pagination?.totalItems || 0,
+          page: 1,
+          totalPages: 1,
+        };
+      },
       enabled: isAdmin,
     });
 

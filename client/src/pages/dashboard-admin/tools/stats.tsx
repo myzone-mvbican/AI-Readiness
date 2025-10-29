@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,10 +48,7 @@ export function BenchmarkStatsTool() {
     try {
       addLog("Sending recalculation request to server...", "info");
 
-      const response = await apiRequest(
-        "POST",
-        "/api/admin/benchmark/recalculate",
-      );
+      const response = await apiRequest("POST", "/api/admin/benchmark/recalculate", {});
       const result = await response.json();
 
       if (result.success) {

@@ -1,6 +1,40 @@
 node_modules
 dist
-.DS_Store
 server/public
 vite.config.ts.*
+.DS_Store
 *.tar.gz
+
+# Environment variables
+.env
+.env.dev
+.env.prod
+.env.remote
+.env.local
+.env.production
+.env.development
+
+# Local development files
+.local
+
+# Configuration files (may contain sensitive data)
+.config
+.cursor
+
+# Attached assets
+attached_assets/
+
+# Database dumps and backups
+database/backups/
+*.sql
+*.dump
+
+# Docker files
+docker-compose.yml
+docker-compose.dev.yml
+docker-compose.prod.yml
+docker-compose.test.yml
+docker-compose.local.yml
+docker-compose.remote.yml
+docker-compose.local.yml
+Dockerfile

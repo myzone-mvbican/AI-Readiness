@@ -123,10 +123,10 @@ export function IndustrySelect({
       });
       const result = await response.json();
 
-      if (result.success && result.industryCode) {
+      if (result.success && result.data?.industryCode) {
         // Validate that the returned code exists in our industries data
         const foundIndustry = industries.find(
-          (industry) => String(industry.code) === String(result.industryCode),
+          (industry) => String(industry.code) === String(result.data.industryCode),
         );
 
         if (foundIndustry) {
@@ -148,7 +148,7 @@ export function IndustrySelect({
       } else {
         toast({
           title: "Error",
-          description: result.message || "Could not analyze the website",
+          description: result.error?.message || "Could not analyze the website",
           variant: "destructive",
         });
       }

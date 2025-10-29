@@ -15,6 +15,19 @@ interface BenchmarkData {
 
 export class BenchmarkService {
   /**
+   * Validate assessment ID parameter
+   */
+  static validateAssessmentId(id: string): { validId: number; error?: string } {
+    const parsedId = parseInt(id);
+    
+    if (isNaN(parsedId)) {
+      return { validId: 0, error: "Invalid assessment ID" };
+    }
+    
+    return { validId: parsedId };
+  }
+
+  /**
    * Get current quarter string in format "YYYY-QX"
    */
   static getCurrentQuarter(): string {
@@ -57,7 +70,6 @@ export class BenchmarkService {
 
       return false;
     } catch (error) {
-      console.error("Error parsing assessment answers:", error);
       return true;
     }
   }
@@ -112,12 +124,10 @@ export class BenchmarkService {
     for (const level of hierarchyLevels) {
       const statsForLevel = allStats.filter((s) => s.industry === level);
       if (statsForLevel.length > 0) {
-        console.log(`Found industry stats for ${industry} using hierarchy level: ${level}`);
         return statsForLevel;
       }
     }
     
-    console.log(`No industry stats found for ${industry} in any hierarchy level`);
     return [];
   }
 
@@ -131,7 +141,6 @@ export class BenchmarkService {
         const guestData = JSON.parse(assessment.guest);
         return guestData.industry || null;
       } catch (error) {
-        console.error("Error parsing guest data:", error);
         return null;
       }
     }
@@ -150,7 +159,6 @@ export class BenchmarkService {
         const guestData = JSON.parse(assessment.guest);
         return guestData.employeeCount || null;
       } catch (error) {
-        console.error("Error parsing guest data:", error);
         return null;
       }
     }
@@ -241,7 +249,6 @@ export class BenchmarkService {
    * Recalculate survey statistics for all industries and quarters
    */
   static async recalculateSurveyStats(): Promise<void> {
-    console.log("Starting survey statistics recalculation...");
 
     try {
       const currentQuarter = this.getCurrentQuarter();
@@ -264,23 +271,17 @@ export class BenchmarkService {
           ),
         );
 
-      console.log(
-        `Found ${completedAssessments.length} completed assessments in ${currentQuarter}`,
-      );
 
       // Filter out excluded assessments
       const validAssessments = completedAssessments.filter(
-        ({ assessment }) => !this.shouldExcludeAssessment(assessment),
+        ({ assessment }: { assessment: any }) => !this.shouldExcludeAssessment(assessment),
       );
 
-      console.log(
-        `${validAssessments.length} assessments passed quality filters`,
-      );
 
       // Group assessments by industry and survey template
       const groupedData: Record<string, Record<number, any[]>> = {};
 
-      validAssessments.forEach(({ assessment, user }) => {
+      validAssessments.forEach(({ assessment, user }: { assessment: any; user: any }) => {
         const industry = this.getUserIndustry(assessment, user) || "Unknown";
         const companySize = this.getUserCompanySize(assessment, user);
         const segmentKey = this.createSegmentKey(industry, companySize);
@@ -306,9 +307,6 @@ export class BenchmarkService {
 
           // Skip industries with less than 5 assessments (minimum for reliability)
           if (assessmentData.length < 5) {
-            console.log(
-              `Skipping ${industry} (${assessmentData.length} assessments, minimum 5 required)`,
-            );
             continue;
           }
 
@@ -324,7 +322,6 @@ export class BenchmarkService {
       // Calculate global fallback stats for industries that didn't meet threshold
       await this.calculateGlobalStats(validAssessments, currentQuarter);
 
-      console.log("Survey statistics recalculation completed successfully");
     } catch (error) {
       console.error("Error recalculating survey statistics:", error);
       throw error;
@@ -376,9 +373,6 @@ export class BenchmarkService {
       });
     }
 
-    console.log(
-      `Stored stats for ${industry}: ${Object.keys(categoryStats).length} categories, ${assessmentData.length} assessments`,
-    );
   }
 
   /**
@@ -487,7 +481,7 @@ export class BenchmarkService {
 
       // Try hierarchical fallback for industry stats
       const industryStats = await this.getIndustryStatsWithFallback(stats, industry);
-      const globalStats = stats.filter((s) => s.industry === "global");
+      const globalStats = stats.filter((s: any) => s.industry === "global");
 
       // Calculate user's category scores using real data
       let answers: any[] = [];
@@ -511,9 +505,9 @@ export class BenchmarkService {
       const categories = Object.entries(userCategoryScores).map(
         ([category, userScore]) => {
           const industryStat = industryStats.find(
-            (s) => s.category === category,
+            (s: any) => s.category === category,
           );
-          const globalStat = globalStats.find((s) => s.category === category);
+          const globalStat = globalStats.find((s: any) => s.category === category);
 
           return {
             name: category,
@@ -528,7 +522,6 @@ export class BenchmarkService {
       if (industryStats.length > 0) {
         const usedIndustryCode = industryStats[0].industry;
         if (usedIndustryCode !== industry) {
-          console.log(`Benchmark: Used hierarchy fallback from ${industry} to ${usedIndustryCode}`);
         }
       }
 

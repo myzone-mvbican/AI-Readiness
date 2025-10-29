@@ -24,18 +24,18 @@ export const PasswordResetEmail = ({
 }: PasswordResetEmailProps) => (
   <Html>
     <Head />
-    <Preview>Reset your Keeran Networks AI password</Preview>
+    <Preview>Reset your MyZone AI password</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={logoContainer}>
-          <Heading style={h1}>Keeran Networks AI</Heading>
+          <Heading style={h1}>MyZone AI</Heading>
         </Section>
         <Heading style={h2}>Reset Your Password</Heading>
         <Text style={text}>Hello {userFirstName},</Text>
         <Text style={text}>
-          We received a request to reset your password for your Keeran Networks
-          AI account. If you didn't make this request, you can safely ignore
-          this email.
+          We received a request to reset your password for your MyZone AI
+          account. If you didn't make this request, you can safely ignore this
+          email.
         </Text>
         <Text style={text}>
           To reset your password, click the button below:
@@ -65,7 +65,7 @@ export const PasswordResetEmail = ({
         <Text style={text}>
           Best regards,
           <br />
-          The Keeran Networks AI Team
+          The MyZone AI Team
         </Text>
         <Section style={footer}>
           <Text style={footerText}>
@@ -99,7 +99,7 @@ const container = {
 const logoContainer = {
   padding: "32px 20px",
   textAlign: "center" as const,
-  background: "#40bd56",
+  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
   color: "#ffffff",
 };
 
@@ -134,13 +134,13 @@ const buttonContainer = {
 };
 
 const button = {
-  backgroundColor: "#40bd56",
+  backgroundColor: "#667eea",
   borderRadius: "6px",
   color: "#fff",
   fontSize: "16px",
   fontWeight: "bold",
   textDecoration: "none",
-  lineHeight: "40px",
+  lineHeight: "2",
   textAlign: "center" as const,
   display: "block",
   height: "40px",
@@ -160,7 +160,7 @@ const warningBox = {
   borderRadius: "6px",
   margin: "20px 20px",
   padding: "15px",
-  width: "auto",
+  width: "auto"
 };
 
 const warningText = {

@@ -1,66 +1,24 @@
 import { Request, Response } from "express";
-import { UserModel } from "../models/user.model";
-import { UserService } from "../services/user.service";
-import { updateUserSchema } from "@shared/validation/schemas";
+import { UserService } from "server/services/user.service"; 
+import { ApiResponse } from "server/utils/apiResponse";
+import { PasswordSecurityService } from "server/services/password-security.service";
 
 export class UserController {
   static async getAll(req: Request, res: Response) {
     try {
-      // Parse pagination parameters
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const search = req.query.search as string;
-      const sortBy = (req.query.sortBy as string) || "createdAt";
-      const sortOrder = (req.query.sortOrder as string) || "desc";
-
-      // Validate pagination parameters
-      if (page < 1) {
-        return res.status(400).json({
-          success: false,
-          message: "Page must be greater than 0",
-        });
-      }
-
-      if (![10, 25, 50, 100, 500, 1000].includes(limit)) {
-        return res.status(400).json({
-          success: false,
-          message: "Limit must be 10, 25, 50, 100, 500, or 1000",
-        });
-      }
-
-      if (sortBy !== "createdAt") {
-        return res.status(400).json({
-          success: false,
-          message: "sortBy must be 'createdAt'",
-        });
-      }
-
-      if (!["asc", "desc"].includes(sortOrder)) {
-        return res.status(400).json({
-          success: false,
-          message: "sortOrder must be 'asc' or 'desc'",
-        });
+      // Parse and validate parameters using service
+      const { params, error } = UserService.parsePaginationParams(req);
+      
+      if (error) {
+        return ApiResponse.validationError(res, error);
       }
 
       // Get paginated users using the service
-      const result = await UserService.getAll({
-        page,
-        limit,
-        search,
-        sortBy: sortBy as "createdAt",
-        sortOrder: sortOrder as "asc" | "desc",
-      });
+      const result = await UserService.getAll(params);
 
-      return res.status(200).json({
-        success: true,
-        ...result,
-      });
+      return ApiResponse.paginated(res, result.users, params.page, params.limit, result.pagination.total);
     } catch (error) {
-      console.error("Get all users error:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to retrieve user list",
-      });
+      return ApiResponse.internalError(res, "Failed to retrieve user list");
     }
   }
 
@@ -71,53 +29,36 @@ export class UserController {
 
       // Prevent admins from modifying their own accounts through this endpoint
       if (userId === loggedInUserId) {
-        return res.status(403).json({
-          success: false,
-          message:
-            "You cannot modify your own account through this endpoint. Please use /api/user instead.",
-        });
-      }
-
-      // Validate data
-      const result = updateUserSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid update data",
-          errors: result.error.format(),
-        });
+        return ApiResponse.forbidden(res, "You cannot modify your own account through this endpoint. Please use /api/user instead.");
       }
 
       // If updating password, hash it first
-      let updateData = { ...req.body };
+      let updateData = { ...req.body }; // Already validated by middleware
       if (updateData.password) {
-        updateData.password = await UserModel.hashPassword(updateData.password);
+        updateData.password = await PasswordSecurityService.hashPassword(updateData.password);
       }
 
       // Update user
-      const updatedUser = await UserModel.update(userId, updateData);
+      const updatedUser = await UserService.update(userId, updateData);
 
       if (!updatedUser) {
-        return res.status(404).json({
-          success: false,
-          message: "User not found",
-        });
+        return ApiResponse.notFound(res, "User not found");
       }
 
-      // Return updated user without password
-      const { password, ...userWithoutPassword } = updatedUser;
+      // Sanitize user data - remove all sensitive fields
+      const { 
+        password, 
+        passwordHistory, 
+        resetToken, 
+        resetTokenExpiry, 
+        failedLoginAttempts, 
+        accountLockedUntil,
+        ...safeUser 
+      } = updatedUser;
 
-      return res.status(200).json({
-        success: true,
-        message: "User updated successfully",
-        user: userWithoutPassword,
-      });
+      return ApiResponse.success(res, { user: safeUser });
     } catch (error) {
-      console.error("Update user error:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to update user",
-      });
+      return ApiResponse.internalError(res, "Failed to update user");
     }
   }
 
@@ -128,112 +69,66 @@ export class UserController {
 
       // Prevent admins from deleting their own accounts
       if (userId === loggedInUserId) {
-        return res.status(403).json({
-          success: false,
-          message: "You cannot delete your own account",
-        });
+        return ApiResponse.forbidden(res, "You cannot delete your own account");
       }
 
       // Delete user
       try {
-        const success = await UserModel.delete(userId);
+        const success = await UserService.delete(userId);
 
         if (!success) {
-          return res.status(404).json({
-            success: false,
-            message: "User not found or could not be deleted",
-          });
+          return ApiResponse.notFound(res, "User not found or could not be deleted");
         }
 
-        return res.status(200).json({
-          success: true,
-          message: "User deleted successfully",
-        });
+        return ApiResponse.success(res, { message: "User deleted successfully" });
       } catch (err) {
         // Assert that err is an instance of an Error with a 'code' property
         if (err instanceof Error && (err as any).code === "23503") {
           // Foreign key constraint violation
-          return res.status(400).json({
-            success: false,
-            message:
-              "User could not be deleted because they still have associated data. Please contact an administrator.",
-          });
+          return ApiResponse.validationError(res, "User could not be deleted because they still have associated data. Please contact an administrator.");
         }
         throw err; // Re-throw for the outer catch block
       }
     } catch (error) {
-      console.error("Delete user error:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to delete user",
-      });
+      return ApiResponse.internalError(res, "Failed to delete user");
     }
   }
 
   static async exists(req: Request, res: Response) {
     try {
-      const { email } = req.query;
-
-      if (!email || typeof email !== "string") {
-        return res.status(400).json({
-          success: false,
-          message: "Email is required",
-        });
-      }
+      const { email } = req.query; // Already validated by middleware
 
       // Check if a user with this email exists
-      const user = await UserModel.getByEmail(email);
+      const user = await UserService.getByEmail(email as string);
 
       // Return whether the user exists, without exposing any user data
-      res.status(200).json({
-        success: true,
-        exists: !!user,
-      });
+      return ApiResponse.success(res, { exists: !!user });
     } catch (error) {
-      console.error("Error checking user email:", error);
-      res.status(500).json({
-        success: false,
-        message: "Error checking user email",
-      });
+      return ApiResponse.internalError(res, "Error checking user email");
     }
   }
 
   static async searchUsers(req: Request, res: Response) {
     try {
-      const { q } = req.query;
+      const { q } = req.query; // Already validated by middleware
 
-      if (!q || typeof q !== "string") {
-        return res.status(200).json({
-          success: true,
-          users: [],
-        });
+      // If no search term provided, return empty array
+      if (!q) {
+        return ApiResponse.success(res, { users: [] });
       }
 
-      const searchTerm = q.trim();
-      if (searchTerm.length < 2) {
-        return res.status(200).json({
-          success: true,
-          users: [],
-        });
-      }
+      const searchTerm = (q as string).trim();
 
       // Search users by name or email
-      const users = await UserModel.searchByNameOrEmail(searchTerm);
+      const users = await UserService.searchByNameOrEmail(searchTerm);
 
-      res.status(200).json({
-        success: true,
-        users: users.map(user => ({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        })),
-      });
+      return ApiResponse.success(res, users.map(user => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      })));
     } catch (error) {
-      console.error("Error searching users:", error);
-      res.status(500).json({
-        success: false,
-        message: "Error searching users",
-      });
+      return ApiResponse.internalError(res, "Error searching users");
     }
   }
 
@@ -242,39 +137,26 @@ export class UserController {
       const { userId } = req.params;
 
       if (!userId || isNaN(Number(userId))) {
-        return res.status(400).json({
-          success: false,
-          message: "Valid user ID is required",
-        });
+        return ApiResponse.validationError(res, "Valid user ID is required");
       }
 
       // Check if user exists
-      const user = await UserModel.getById(Number(userId));
+      const user = await UserService.getById(Number(userId));
       if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: "User not found",
-        });
+        return ApiResponse.notFound(res, "User not found");
       }
 
       // Get user's assessments
-      const assessments = await UserModel.getUserAssessments(Number(userId));
+      const assessments = await UserService.getUserAssessments(Number(userId));
 
-      res.status(200).json({
-        success: true,
-        assessments: assessments.map(assessment => ({
-          id: assessment.id,
-          surveyId: assessment.surveyId,
-          completedAt: assessment.completedAt,
-          createdAt: assessment.createdAt,
-        })),
-      });
+      return ApiResponse.success(res, assessments.map(assessment => ({
+        id: assessment.id,
+        surveyId: assessment.surveyId,
+        completedAt: assessment.completedAt,
+        createdAt: assessment.createdAt,
+      })));
     } catch (error) {
-      console.error("Error fetching user assessments:", error);
-      res.status(500).json({
-        success: false,
-        message: "Error fetching user assessments",
-      });
+      return ApiResponse.internalError(res, "Error fetching user assessments");
     }
   }
 }

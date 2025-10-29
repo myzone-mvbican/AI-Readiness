@@ -9,6 +9,7 @@ import {
   Download,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { apiRequest } from "@/lib/queryClient";
 import { DashboardLayout } from "@/components/layout/dashboard";
 import { Input } from "@/components/ui/input";
 import {
@@ -72,6 +73,8 @@ export default function UsersPage() {
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
+  // CSRF token is now read directly from cookie - no initialization needed
+
   // Fetch users with server-side pagination
   const { data: usersData, isLoading: isLoadingUsers } =
     useQuery<UsersResponse>({
@@ -88,15 +91,7 @@ export default function UsersPage() {
           params.append("search", search.trim());
         }
 
-        const response = await fetch(`/api/admin/users?${params}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch users");
-        }
+        const response = await apiRequest("GET", `/api/admin/users?${params}`);
 
         return response.json();
       },
@@ -123,7 +118,7 @@ export default function UsersPage() {
   });
 
   // Get properly typed users array
-  const users = usersData?.users || [];
+  const users = usersData?.data || [];
 
   // Set up table (client-side filtering only, pagination handled server-side)
   const table = useReactTable({
@@ -160,7 +155,7 @@ export default function UsersPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 space-y-3">
           <div className="col-span-1">
             <div className="col-span-1 flex items-center space-x-2">
-              <ShieldCheck className="size-6 text-primary" />
+              <ShieldCheck className="h-6 w-6 text-blue-500" />
               <h2 className="text-xl text-foreground font-semibold">
                 Manage Users
               </h2>
@@ -273,17 +268,17 @@ export default function UsersPage() {
         {/* Server-side Pagination */}
         <div className="flex items-center justify-between py-4">
           <div className="text-sm text-muted-foreground">
-            {usersData?.pagination && (
+            {usersData?.metadata?.pagination && (
               <>
                 Showing{" "}
-                {(usersData.pagination.page - 1) * usersData.pagination.limit +
+                {(usersData.metadata.pagination.page - 1) * usersData.metadata.pagination.pageSize +
                   1}{" "}
                 to{" "}
                 {Math.min(
-                  usersData.pagination.page * usersData.pagination.limit,
-                  usersData.pagination.total,
+                  usersData.metadata.pagination.page * usersData.metadata.pagination.pageSize,
+                  usersData.metadata.pagination.totalItems,
                 )}{" "}
-                of {usersData.pagination.total} users
+                of {usersData.metadata.pagination.totalItems} users
               </>
             )}
           </div>
@@ -293,7 +288,7 @@ export default function UsersPage() {
               variant="outline"
               size="sm"
               onClick={() => setPage(page - 1)}
-              disabled={!usersData?.pagination?.hasPrev || isLoadingUsers}
+              disabled={!usersData?.metadata?.pagination?.hasPrev || isLoadingUsers}
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
               Previous
@@ -301,8 +296,8 @@ export default function UsersPage() {
 
             <div className="flex items-center space-x-1">
               <span className="text-sm text-muted-foreground">
-                Page {usersData?.pagination?.page || 1} of{" "}
-                {usersData?.pagination?.totalPages || 1}
+                Page {usersData?.metadata?.pagination?.page || 1} of{" "}
+                {usersData?.metadata?.pagination?.totalPages || 1}
               </span>
             </div>
 
@@ -310,7 +305,7 @@ export default function UsersPage() {
               variant="outline"
               size="sm"
               onClick={() => setPage(page + 1)}
-              disabled={!usersData?.pagination?.hasNext || isLoadingUsers}
+              disabled={!usersData?.metadata?.pagination?.hasNext || isLoadingUsers}
             >
               Next
               <ChevronRight className="h-4 w-4 ml-1" />

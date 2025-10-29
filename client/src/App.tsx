@@ -6,9 +6,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { GoogleAuthProvider } from "@/components/google-auth-provider";
-import { MicrosoftAuthProvider } from "@/components/microsoft-auth-provider";
-import { AuthProvider } from "@/hooks/use-auth";
-// import { ThemeProvider } from "@/components/theme/provider";
+import { AuthProvider } from "@/hooks/use-auth"; 
 import { AssessmentProvider } from "@/components/assessment/assessment-provider";
 // Protected routes
 import { ProtectedRoute } from "@/components/protected-route";
@@ -111,14 +109,12 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <GoogleAuthProvider>
-          <MicrosoftAuthProvider>
-            <AuthProvider>
-              <Toaster />
-              <AssessmentProvider>
-                <Router />
-              </AssessmentProvider>
-            </AuthProvider>
-          </MicrosoftAuthProvider>
+          <AuthProvider>
+            <Toaster />
+            <AssessmentProvider>
+              <Router />
+            </AssessmentProvider>
+          </AuthProvider>
         </GoogleAuthProvider>
       </TooltipProvider>
     </QueryClientProvider>

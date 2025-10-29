@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,56 +14,87 @@ import {
 } from "@/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ColumnFiltersState,
   SortingState,
   VisibilityState,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import { getColumns } from "./columns";
-import { AssessmentsResponse } from "./types";
+import { apiRequest } from "@/lib/queryClient";
+import type { SuccessResponse, PaginationMetadata } from "@shared/types";
+import type { Assessment } from "@shared/types";
 
 export default function AssessmentsPage() {
   const assessmentCreateModal = useAssessment();
 
-  // State for sorting and filtering
+  // Server-side state for pagination, filtering, and sorting
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [globalFilter, setGlobalFilter] = useState("");
 
-  // Fetch assessments from the API
-  const { data, isLoading, error } = useQuery<AssessmentsResponse>({
-    queryKey: ["/api/assessments"],
-    staleTime: 1000 * 60, // 1 minute
+  // Debounce search input (wait 500ms after user stops typing)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1); // Reset to first page when search changes
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Build query parameters for the API
+  const queryParams = new URLSearchParams({
+    page: page.toString(),
+    pageSize: pageSize.toString(),
+    ...(debouncedSearch && { search: debouncedSearch }),
+    ...(sorting.length > 0 && {
+      sortBy: sorting[0].id,
+      sortOrder: sorting[0].desc ? "desc" : "asc",
+    }),
   });
 
-  const assessments = data?.assessments || [];
+  // Fetch assessments from the API with server-side filtering/pagination
+  const { data, isLoading, error } = useQuery<
+    SuccessResponse<Assessment[]>
+  >({
+    queryKey: ["/api/assessments", queryParams.toString()],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/assessments?${queryParams}`);
+      return res.json();
+    },
+    staleTime: 1000 * 30, // 30 seconds (shorter since we have pagination)
+  });
+
+  // Extract data and pagination metadata from response
+  const assessments = data?.success ? data.data : [];
+  const pagination = data?.metadata?.pagination;
 
   // Get columns configuration
   const columns = getColumns();
 
-  // Set up table
+  // Set up table for server-side mode
   const table = useReactTable({
     data: assessments,
     columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
+    manualPagination: true, // Tell React Table we're handling pagination
+    manualSorting: true, // Tell React Table we're handling sorting
+    pageCount: pagination?.totalPages ?? -1,
+    onSortingChange: (updater) => {
+      setSorting(updater);
+      setPage(1); // Reset to first page when sorting changes
+    },
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     state: {
       sorting,
-      columnFilters,
       columnVisibility,
-      globalFilter,
+      pagination: {
+        pageIndex: page - 1,
+        pageSize: pageSize,
+      },
     },
   });
 
@@ -93,6 +124,26 @@ export default function AssessmentsPage() {
           </div>
         </div>
 
+        {/* Search and filter controls - always visible */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="relative w-64">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search assessments..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8"
+            />
+          </div>
+          {pagination && !isLoading && (
+            <div className="text-sm text-muted-foreground">
+              Showing {Math.min((page - 1) * pageSize + 1, pagination.totalItems)} to{" "}
+              {Math.min(page * pageSize, pagination.totalItems)} of{" "}
+              {pagination.totalItems} assessments
+            </div>
+          )}
+        </div>
+
         {isLoading ? (
           <div className="flex items-center justify-center h-[400px]">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -112,18 +163,6 @@ export default function AssessmentsPage() {
           </div>
         ) : (
           <>
-            {/* Search and filter controls */}
-            <div className="flex items-center justify-between">
-              <div className="relative w-64">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search assessments..."
-                  value={globalFilter}
-                  onChange={(e) => setGlobalFilter(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-            </div>
 
             {/* Assessments data table */}
             <div className="relative rounded-md border overflow-auto">
@@ -175,26 +214,35 @@ export default function AssessmentsPage() {
               </Table>
             </div>
 
-            {/* Pagination controls */}
-            <div className="flex items-center justify-end space-x-2 py-4">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-muted-foreground"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-muted-foreground"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                Next
-              </Button>
+            {/* Server-side pagination controls */}
+            <div className="flex items-center justify-between py-4">
+              <div className="text-sm text-muted-foreground">
+                {pagination && (
+                  <>
+                    Page {pagination.page} of {pagination.totalPages}
+                  </>
+                )}
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-muted-foreground"
+                  onClick={() => setPage(page - 1)}
+                  disabled={!pagination?.hasPrev || isLoading}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-muted-foreground"
+                  onClick={() => setPage(page + 1)}
+                  disabled={!pagination?.hasNext || isLoading}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           </>
         )}

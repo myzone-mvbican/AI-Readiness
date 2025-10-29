@@ -30,14 +30,11 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 ## Key Components
 
 ### Authentication System
-- JWT-based authentication with secure token management  
-- **Microsoft OAuth integration as primary authentication method**
-- Google OAuth maintained as backup authentication option
-- Dual authentication provider system with connect/disconnect functionality
+- JWT-based authentication with secure token management
+- Google OAuth integration for social login
 - Password reset functionality with email notifications
 - Role-based access control (admin/client roles)
 - Guest assessment capabilities for unauthenticated users
-- Production-ready JWKS token verification for Microsoft authentication
 
 ### Assessment Engine
 - Multi-stage assessment workflow with progress tracking
@@ -76,9 +73,7 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 - **@radix-ui/**: Accessible UI component primitives
 - **OpenAI**: AI-powered recommendation generation
 - **SendGrid**: Email service for password resets and notifications
-- **@azure/msal-browser & @azure/msal-react**: Microsoft authentication integration (primary)
-- **Google OAuth**: Social authentication integration (backup)
-- **jose**: Secure JWT token verification with JWKS support
+- **Google OAuth**: Social authentication integration
 
 ### Development Tools
 - **Drizzle Kit**: Database schema management and migrations
@@ -110,10 +105,6 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
-- September 18, 2025. Successfully implemented Microsoft authentication as primary login method - complete system with secure JWKS token verification, database schema updates (microsoftId field), dual authentication provider architecture, connect/disconnect functionality, updated UI components, and profile completion widget integration. Google OAuth maintained as backup authentication option.
--
-- July 29, 2025. Fixed team creation bug caused by PostgreSQL sequence not updating after manual inserts - reset teams_id_seq to correct value and fixed TypeScript errors in team model
-- July 22, 2025. Successfully integrated PostgreSQL database using Neon - database schema pushed and models updated to use database storage instead of memory storage
 - July 13, 2025. Implemented hierarchical NAICS fallback system for benchmark statistics - when specific industry codes have no data, system progressively searches broader categories until statistics are found
 - July 13, 2025. Created comprehensive export users feature for admins - supports CSV/Excel formats with configurable field selection, progress indicators, and smart filename generation
 - July 13, 2025. Implemented comprehensive hard delete system for teams with strict validation - teams can only be permanently deleted if soft-deleted AND have zero members, includes database transactions and conditional UI controls
