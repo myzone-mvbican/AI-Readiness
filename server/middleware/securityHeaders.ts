@@ -127,11 +127,11 @@ const helmetConfig = {
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      // scriptSrc: env.NODE_ENV === 'production'
-      //   ? ["'self'"]
-      //   : ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://accounts.google.com"],
-      // styleSrc: ["'self'", "'unsafe-inline'", "https://use.typekit.net", "https://p.typekit.net", "https://fonts.googleapis.com", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:"],
+      scriptSrc: env.NODE_ENV === 'production'
+        ? ["'self'", "https://accounts.google.com", "https://login.microsoftonline.com"]
+        : ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://accounts.google.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://use.typekit.net", "https://p.typekit.net", "https://fonts.googleapis.com", "https://fonts.gstatic.com"],
       fontSrc: [
         "'self'",
         "data:",
@@ -153,10 +153,10 @@ const helmetConfig = {
   hsts:
     env.NODE_ENV === "production"
       ? {
-          maxAge: 31536000,
-          includeSubDomains: true,
-          preload: true,
-        }
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+      }
       : false,
 
   // Frame Options
