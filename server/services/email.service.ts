@@ -1,6 +1,6 @@
-import { render } from "@react-email/render"; 
+import { render } from "@react-email/render";
 import { createTransporter, getEmailFromAddress } from "../config/email.config";
-import { PasswordResetEmail } from "../emails/password-reset"; 
+import { PasswordResetEmail } from "../emails/password-reset";
 import { env } from "server/utils/environment";
 
 export class EmailService {
@@ -23,15 +23,17 @@ export class EmailService {
       const fromAddress = getEmailFromAddress();
 
       // Render React Email template
-      const emailHtml = await render(PasswordResetEmail({
-        userFirstName: name,
-        resetUrl: resetUrl
-      }));
+      const emailHtml = await render(
+        PasswordResetEmail({
+          userFirstName: name,
+          resetUrl: resetUrl,
+        }),
+      );
 
       const emailText = `
 Hello ${name},
 
-We received a request to reset your password for your MyZone AI account.
+We received a request to reset your password for your Keeran AI account.
 
 To reset your password, please visit the following link:
 ${resetUrl}
@@ -41,23 +43,23 @@ This link will expire in 30 minutes for security reasons.
 If you didn't request this password reset, you can safely ignore this email.
 
 Best regards,
-The MyZone AI Team
+The Keeran AI Team
       `.trim();
 
       const mailOptions = {
         from: fromAddress,
         to: email,
-        subject: "Reset Your MyZone AI Password",
+        subject: "Reset Your Keeran AI Password",
         html: emailHtml,
         text: emailText,
       };
 
       // Send the actual email using the configured transporter
       const transporter = this.getTransporter();
-      const info = await transporter.sendMail(mailOptions); 
-      
+      const info = await transporter.sendMail(mailOptions);
+
       return true;
-    } catch (error) {  
+    } catch (error) {
       console.error("Failed to send email:", error);
       return false;
     }
@@ -68,7 +70,7 @@ The MyZone AI Team
     to,
     subject,
     html,
-    text
+    text,
   }: {
     to: string;
     subject: string;
@@ -118,5 +120,5 @@ The MyZone AI Team
     } catch (error) {
       return false;
     }
-  } 
+  }
 }

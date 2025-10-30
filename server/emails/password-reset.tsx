@@ -24,16 +24,16 @@ export const PasswordResetEmail = ({
 }: PasswordResetEmailProps) => (
   <Html>
     <Head />
-    <Preview>Reset your MyZone AI password</Preview>
+    <Preview>Reset your Keeran AI password</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={logoContainer}>
-          <Heading style={h1}>MyZone AI</Heading>
+          <Heading style={h1}>Keeran AI</Heading>
         </Section>
         <Heading style={h2}>Reset Your Password</Heading>
         <Text style={text}>Hello {userFirstName},</Text>
         <Text style={text}>
-          We received a request to reset your password for your MyZone AI
+          We received a request to reset your password for your Keeran AI
           account. If you didn't make this request, you can safely ignore this
           email.
         </Text>
@@ -65,7 +65,7 @@ export const PasswordResetEmail = ({
         <Text style={text}>
           Best regards,
           <br />
-          The MyZone AI Team
+          The Keeran AI Team
         </Text>
         <Section style={footer}>
           <Text style={footerText}>
@@ -160,7 +160,7 @@ const warningBox = {
   borderRadius: "6px",
   margin: "20px 20px",
   padding: "15px",
-  width: "auto"
+  width: "auto",
 };
 
 const warningText = {

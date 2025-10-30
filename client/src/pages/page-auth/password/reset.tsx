@@ -3,12 +3,28 @@ import { Link, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { passwordResetConfirmSchema, type PasswordResetConfirm } from "@shared/types/auth";
+import {
+  passwordResetConfirmSchema,
+  type PasswordResetConfirm,
+} from "@shared/types/auth";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, CheckCircle, XCircle, Eye, EyeOff } from "lucide-react";
 
@@ -33,9 +49,12 @@ export default function ResetPasswordPage() {
     queryKey: ["/api/password/validate-token", token],
     queryFn: async () => {
       if (!token) throw new Error("No token provided");
-      const response = await apiRequest("GET", `/api/password/validate-token?token=${token}`);
+      const response = await apiRequest(
+        "GET",
+        `/api/password/validate-token?token=${token}`,
+      );
       return response.json();
-    }, 
+    },
     enabled: !!token,
     retry: false,
   });
@@ -58,7 +77,11 @@ export default function ResetPasswordPage() {
 
   const resetMutation = useMutation({
     mutationFn: async (data: PasswordResetConfirm) => {
-      const response = await apiRequest("POST", "/api/password/reset-confirm", data);
+      const response = await apiRequest(
+        "POST",
+        "/api/password/reset-confirm",
+        data,
+      );
       return response.json();
     },
     onSuccess: () => {
@@ -70,7 +93,7 @@ export default function ResetPasswordPage() {
     },
     onError: (error: any) => {
       form.setError("root", {
-        message: 'Something went wrong. Please try again.',
+        message: "Something went wrong. Please try again.",
       });
     },
   });
@@ -124,7 +147,7 @@ export default function ResetPasswordPage() {
   }
 
   // Token validation error
-  if (tokenValidation.isError || !tokenValidation.data?.data?.valid) {
+  if (tokenValidation.isError) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -163,7 +186,9 @@ export default function ResetPasswordPage() {
             <div className="mx-auto mb-4 size-12 bg-green-100 rounded-full flex items-center justify-center">
               <CheckCircle className="size-6 text-green-600" />
             </div>
-            <CardTitle className="text-2xl">Password Reset Successful</CardTitle>
+            <CardTitle className="text-2xl">
+              Password Reset Successful
+            </CardTitle>
             <CardDescription>
               Your password has been successfully updated.
             </CardDescription>
@@ -253,7 +278,9 @@ export default function ResetPasswordPage() {
                           variant="ghost"
                           size="sm"
                           className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
                         >
                           {showConfirmPassword ? (
                             <EyeOff className="size-4" />

@@ -20,33 +20,37 @@ export const TestEmail = ({
 }: TestEmailProps) => (
   <Html>
     <Head />
-    <Preview>MyZone AI - Email Configuration Test</Preview>
+    <Preview>Keeran AI - Email Configuration Test</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={logoContainer}>
-          <Heading style={h1}>MyZone AI</Heading>
+          <Heading style={h1}>Keeran AI</Heading>
         </Section>
         <Heading style={h2}>Email Configuration Test</Heading>
         <Text style={text}>
-          This is a test email to verify that your Brevo email configuration is working correctly.
+          This is a test email to verify that your Brevo email configuration is
+          working correctly.
         </Text>
         <Text style={text}>
-          If you received this email at <strong>{recipientEmail}</strong>, your email service is properly configured!
+          If you received this email at <strong>{recipientEmail}</strong>, your
+          email service is properly configured!
         </Text>
         <Section style={successBox}>
           <Text style={successText}>
-            ✅ Email delivery successful<br />
-            ✅ SMTP connection verified<br />
-            ✅ Sender authentication working
+            ✅ Email delivery successful
+            <br />
+            ✅ SMTP connection verified
+            <br />✅ Sender authentication working
           </Text>
         </Section>
         <Text style={text}>
-          Best regards,<br />
-          MyZone AI Team
+          Best regards,
+          <br />
+          Keeran AI Team
         </Text>
         <Section style={footer}>
           <Text style={footerText}>
-            This is an automated test email from your MyZone AI application.
+            This is an automated test email from your Keeran AI application.
           </Text>
         </Section>
       </Container>

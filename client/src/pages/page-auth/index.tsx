@@ -27,16 +27,24 @@ import {
 
 export default function AuthPage() {
   const { toast } = useToast();
-  const [_, setLocation] = useLocation(); 
+  const [_, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("login");
-  const { user, isLoading, loginMutation, registerMutation, googleLoginMutation } = useAuth();
-  
+  const {
+    user,
+    isLoading,
+    loginMutation,
+    registerMutation,
+    googleLoginMutation,
+  } = useAuth();
+
   // Check if Google OAuth is configured
   const isGoogleAuthEnabled = !!import.meta.env.GOOGLE_CLIENT_ID;
 
   // Google login handlers
   const handleGoogleSuccess = async (credentialResponse: any) => {
-    await googleLoginMutation.mutateAsync({ credential: credentialResponse.credential });
+    await googleLoginMutation.mutateAsync({
+      credential: credentialResponse.credential,
+    });
   };
 
   const handleGoogleError = () => {
@@ -89,7 +97,7 @@ export default function AuthPage() {
   });
 
   const onLoginSubmit = async (data: LoginFormValues) => {
-    await loginMutation.mutateAsync(data)
+    await loginMutation.mutateAsync(data);
   };
 
   const onSignupSubmit = async (data: SignupFormValues) => {
@@ -102,7 +110,7 @@ export default function AuthPage() {
       <div className="w-full max-w-[600px] mx-auto py-8 flex flex-col flex-grow justify-center">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Welcome to MyZone AI
+            Welcome to Keeran AI
           </h2>
           <p className="text-gray-600 mt-2">
             Your AI Readiness Assessment platform
@@ -131,7 +139,9 @@ export default function AuthPage() {
                       onError={handleGoogleError}
                       theme="outline"
                       size="large"
-                      text={activeTab === "login" ? "signin_with" : "signup_with"}
+                      text={
+                        activeTab === "login" ? "signin_with" : "signup_with"
+                      }
                       width="100%"
                     />
                   </div>
@@ -211,9 +221,9 @@ export default function AuthPage() {
                   <Button
                     type="submit"
                     disabled={loginMutation.isPending}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors"
+                    className="w-full py-2 px-4 rounded-md transition-colors"
                   >
-                    {(loginMutation.isPending) ? "Signing in..." : "Sign in"}
+                    {loginMutation.isPending ? "Signing in..." : "Sign in"}
                   </Button>
                 </form>
               </TabsContent>
@@ -425,9 +435,11 @@ export default function AuthPage() {
                   <Button
                     type="submit"
                     disabled={registerMutation.isPending}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors"
+                    className="w-full text-white py-2 px-4 rounded-md transition-colors"
                   >
-                    {registerMutation.isPending ? "Creating account..." : "Create account"}
+                    {registerMutation.isPending
+                      ? "Creating account..."
+                      : "Create account"}
                   </Button>
                 </form>
               </TabsContent>

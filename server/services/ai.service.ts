@@ -96,7 +96,9 @@ Return only the NAICS code that best represents this business.`;
       const industryCode = completion.choices[0]?.message?.content?.trim();
 
       if (!industryCode || industryCode === "UNKNOWN") {
-        throw new ValidationError("Could not determine industry from the provided URL");
+        throw new ValidationError(
+          "Could not determine industry from the provided URL",
+        );
       }
 
       // Validate that the code contains only digits
@@ -109,21 +111,20 @@ Return only the NAICS code that best represents this business.`;
       if (error instanceof ValidationError) {
         throw error;
       }
-      throw new InternalServerError(`Failed to analyze website industry: ${error.message || 'Unknown error'}`);
+      throw new InternalServerError(
+        `Failed to analyze website industry: ${error.message || "Unknown error"}`,
+      );
     }
   }
 
   /**
    * Generate AI suggestions for an assessment
    */
-  static async generateSuggestions(assessment: any): Promise<AISuggestionsResult> {
+  static async generateSuggestions(
+    assessment: any,
+  ): Promise<AISuggestionsResult> {
     try {
-      const {
-        guest,
-        userId,
-        answers,
-        surveyTemplateId,
-      } = assessment;
+      const { guest, userId, answers, surveyTemplateId } = assessment;
 
       // If assessment doesn't have survey questions, fetch them
       let assessmentWithSurvey = assessment;
@@ -138,7 +139,7 @@ Return only the NAICS code that best represents this business.`;
               questionsCount: survey.questionsCount,
               completionLimit: survey.completionLimit,
               questions: survey.questions,
-            }
+            },
           };
         }
       }
@@ -204,7 +205,12 @@ Return only the NAICS code that best represents this business.`;
       try {
         // For logged-in users: use userId, for guests: use undefined (will use guest email)
         const pdfUserId = userId || undefined;
-        pdfResult = await this.generateAndSavePDF(assessmentWithSurvey, content, pdfUserId, guest);
+        pdfResult = await this.generateAndSavePDF(
+          assessmentWithSurvey,
+          content,
+          pdfUserId,
+          guest,
+        );
       } catch (pdfError) {
         console.error("Error during PDF generation:", pdfError);
         // Continue even if PDF generation fails
@@ -216,19 +222,27 @@ Return only the NAICS code that best represents this business.`;
         pdfPath: pdfResult?.filePath,
       };
     } catch (error: any) {
-      if (error instanceof ValidationError || error instanceof InternalServerError) {
+      if (
+        error instanceof ValidationError ||
+        error instanceof InternalServerError
+      ) {
         throw error;
       }
-      throw new InternalServerError(error.message || "Failed to generate AI suggestions");
+      throw new InternalServerError(
+        error.message || "Failed to generate AI suggestions",
+      );
     }
   }
 
   /**
    * Get company data from guest or user
    */
-  private static async getCompanyData(guest: string | null, userId: number | null): Promise<CompanyData | null> {
+  private static async getCompanyData(
+    guest: string | null,
+    userId: number | null,
+  ): Promise<CompanyData | null> {
     let company = null;
-    
+
     if (guest) {
       try {
         const guestData = JSON.parse(guest);
@@ -237,8 +251,7 @@ Return only the NAICS code that best represents this business.`;
           employeeCount: guestData.employeeCount || "",
           industry: guestData.industry || "",
         };
-      } catch (error) {
-      }
+      } catch (error) {}
     } else if (userId) {
       // Get user from database with a fresh query
       const user = await UserService.getById(userId);
@@ -261,8 +274,13 @@ Return only the NAICS code that best represents this business.`;
     assessment: Assessment,
     content: string,
     userId: number | undefined,
-    guest: string | null
-  ): Promise<{ success: boolean; filePath?: string; relativePath?: string; error?: string } | null> {
+    guest: string | null,
+  ): Promise<{
+    success: boolean;
+    filePath?: string;
+    relativePath?: string;
+    error?: string;
+  } | null> {
     try {
       // Extract guest email if available
       let guestEmail = null;
@@ -270,8 +288,7 @@ Return only the NAICS code that best represents this business.`;
         try {
           const guestData = JSON.parse(guest);
           guestEmail = guestData.email;
-        } catch (error) {
-        }
+        } catch (error) {}
       }
 
       // Generate PDF with recommendations
@@ -296,9 +313,17 @@ Return only the NAICS code that best represents this business.`;
 
         // Send email with PDF download link
         try {
-          await this.sendAssessmentCompleteEmail(assessment, pdfResult.relativePath!, guest, userId);
+          await this.sendAssessmentCompleteEmail(
+            assessment,
+            pdfResult.relativePath!,
+            guest,
+            userId,
+          );
         } catch (emailError) {
-          console.error("Error sending assessment completion email:", emailError);
+          console.error(
+            "Error sending assessment completion email:",
+            emailError,
+          );
           // Don't fail the entire operation if email fails
         }
       }
@@ -317,7 +342,7 @@ Return only the NAICS code that best represents this business.`;
     assessment: Assessment,
     pdfRelativePath: string,
     guest: string | null,
-    userId: number | undefined
+    userId: number | undefined,
   ): Promise<void> {
     try {
       let recipientEmail = null;
@@ -329,7 +354,8 @@ Return only the NAICS code that best represents this business.`;
         try {
           const guestData = JSON.parse(guest);
           recipientEmail = guestData.email;
-          recipientName = guestData.name || guestData.firstName || "Valued User";
+          recipientName =
+            guestData.name || guestData.firstName || "Valued User";
           companyName = guestData.company || "your organization";
         } catch (error) {
           console.error("Error parsing guest data for email:", error);
@@ -344,24 +370,25 @@ Return only the NAICS code that best represents this business.`;
       }
 
       if (recipientEmail) {
-        // Build download URL - use REPLIT_DOMAINS if available, otherwise localhost 
+        // Build download URL - use REPLIT_DOMAINS if available, otherwise localhost
         const downloadUrl = `${env.FRONTEND_URL}${pdfRelativePath}`;
 
         // Render email template
-        const emailHtml = await render(AssessmentCompleteEmail({
-          recipientName,
-          recipientEmail,
-          downloadUrl,
-          companyName,
-        }));
+        const emailHtml = await render(
+          AssessmentCompleteEmail({
+            recipientName,
+            recipientEmail,
+            downloadUrl,
+            companyName,
+          }),
+        );
 
         // Send email
         await EmailService.sendEmail({
           to: recipientEmail,
-          subject: "Your MyZone AI Readiness Assessment Results Are Ready!",
+          subject: "Your Keeran AI Readiness Assessment Results Are Ready!",
           html: emailHtml,
         });
-
       } else {
       }
     } catch (emailError) {
@@ -528,4 +555,3 @@ Let this be your turning point.
 `;
   }
 }
-

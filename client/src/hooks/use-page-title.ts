@@ -85,7 +85,7 @@ export const usePageTitle = (customTitle?: string) => {
 
   return {
     setTitle: (title: string) => {
-      document.title = `${title} - MyZone AI`;
+      document.title = `${title} - Keeran AI`;
     },
   };
 };
