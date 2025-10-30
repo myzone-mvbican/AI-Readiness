@@ -8,18 +8,21 @@ import { registerRoutes } from "server/routes";
 // Middlewares
 import {
   requestSizeLimiter,
-  validateContentType
+  validateContentType,
 } from "server/middleware/requestSizeLimits";
 import {
   enforceHttps,
   securityHeaders,
   httpsSecurityHeaders,
   validateHttpsCertificate,
-  validateSecurityConfig
+  validateSecurityConfig,
 } from "server/middleware/securityHeaders";
 import { corsMiddleware } from "server/middleware/cors";
 import { generateCSRFToken } from "server/middleware/csrf";
-import { generalApiLimiter, progressiveDelay } from "server/middleware/rateLimiting";
+import {
+  generalApiLimiter,
+  progressiveDelay,
+} from "server/middleware/rateLimiting";
 import { generateRequestId } from "server/middleware/requestId";
 // Session middleware removed - using JWT tokens instead
 
@@ -53,13 +56,13 @@ app.use(generateRequestId);
 
 // 2. HTTPS ENFORCEMENT (must be early in production)
 // Redirects HTTP to HTTPS in production only
-// app.use(enforceHttps);
-// app.use(validateHttpsCertificate);
+app.use(enforceHttps);
+app.use(validateHttpsCertificate);
 
 // 3. SECURITY HEADERS (Helmet.js + custom)
 // Sets comprehensive security headers using Helmet.js with environment-aware configuration
-// app.use(securityHeaders);
-// app.use(httpsSecurityHeaders);
+app.use(securityHeaders);
+app.use(httpsSecurityHeaders);
 
 // 4. CORS (must be before request parsing for preflight requests)
 // Handles cross-origin requests and OPTIONS preflight requests
@@ -92,11 +95,13 @@ app.use(generateCSRFToken);
 // Logs API requests and responses with timing and request ID correlation
 app.use((req, res, next) => {
   const start = Date.now();
-  const requestId = req.traceId || 'unknown';
+  const requestId = req.traceId || "unknown";
 
   // Log incoming requests
   if (req.path.startsWith("/api")) {
-    log(`🚀 [${requestId}] ${req.method} ${req.path} - ${req.ip || 'unknown-ip'}`);
+    log(
+      `🚀 [${requestId}] ${req.method} ${req.path} - ${req.ip || "unknown-ip"}`,
+    );
   }
 
   // Log response when finished
@@ -104,8 +109,10 @@ app.use((req, res, next) => {
     if (req.path.startsWith("/api")) {
       const ms = Date.now() - start;
       const status = res.statusCode;
-      const statusIcon = status >= 400 ? '❌' : status >= 300 ? '⚠️ ' : '✅';
-      log(`${statusIcon} [${requestId}] ${req.method} ${req.path} ${status} ${ms}ms`);
+      const statusIcon = status >= 400 ? "❌" : status >= 300 ? "⚠️ " : "✅";
+      log(
+        `${statusIcon} [${requestId}] ${req.method} ${req.path} ${status} ${ms}ms`,
+      );
     }
   });
 
@@ -113,7 +120,9 @@ app.use((req, res, next) => {
   res.on("error", (err) => {
     if (req.path.startsWith("/api")) {
       const ms = Date.now() - start;
-      log(`💥 [${requestId}] ${req.method} ${req.path} ERROR ${ms}ms - ${err.message}`);
+      log(
+        `💥 [${requestId}] ${req.method} ${req.path} ERROR ${ms}ms - ${err.message}`,
+      );
     }
   });
 

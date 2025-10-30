@@ -390,12 +390,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Microsoft authentication mutation
   const microsoftLoginMutation = useMutation({
     mutationFn: async (data: MicrosoftLoginData) => {
-      // TODO: Replace with actual Microsoft login endpoint when backend is ready
-      // const res = await apiRequest("POST", "/api/auth/microsoft/login", data);
-      // return await res.json();
-      
-      // For now, simulate a failed response since backend endpoint doesn't exist yet
-      throw new Error("Microsoft login endpoint not implemented yet");
+      const res = await apiRequest("POST", "/api/auth/microsoft/login", data);
+      return await res.json();
     },
     onSuccess: (data: LoginResponse) => {
       if (data.success && data.data?.user) {

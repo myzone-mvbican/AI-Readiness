@@ -140,6 +140,38 @@ export class AuthController {
     }
   }
 
+  static async loginMicrosoft(req: Request, res: Response) {
+    try {
+      // req.body is already validated by middleware
+      const { credential } = req.body;
+      const userAgent = req.get('User-Agent');
+      const ipAddress = req.ip || req.connection.remoteAddress;
+
+      const { user, tokens } = await AuthController.authService.loginWithMicrosoft(credential, userAgent, ipAddress);
+
+      // Sanitize user data - remove all sensitive fields
+      const {
+        password,
+        passwordHistory,
+        resetToken,
+        resetTokenExpiry,
+        failedLoginAttempts,
+        accountLockedUntil,
+        ...safeUser
+      } = user;
+
+      // Set HttpOnly cookies
+      TokenService.setTokenCookies(res, tokens);
+
+      return ApiResponse.success(res, { user: safeUser });
+    } catch (error) {
+      if (error instanceof UnauthorizedError) {
+        return ApiResponse.unauthorized(res, error.message);
+      }
+      return ApiResponse.internalError(res, "Microsoft authentication failed due to an unexpected error");
+    }
+  }
+
   static async register(req: Request, res: Response) {
     try {
       // req.body is already validated by middleware

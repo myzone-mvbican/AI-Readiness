@@ -42,6 +42,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   employeeCount: true,
   industry: true,
   googleId: true,
+  microsoftId: true,
 });
 
 export const loginSchema = z.object({
@@ -57,6 +58,7 @@ export const updateUserSchema = createInsertSchema(users)
     industry: true,
     password: true,
     googleId: true,
+    microsoftId: true,
     passwordStrength: true,
     lastPasswordChange: true,
     passwordHistory: true,
@@ -77,6 +79,14 @@ export const googleAuthSchema = z.object({
 });
 
 export const googleConnectSchema = z.object({
+  credential: z.string(),
+});
+
+/**
+ * Microsoft OAuth Authentication Schemas
+ * Schemas for handling Microsoft sign-in
+ */
+export const microsoftAuthSchema = z.object({
   credential: z.string(),
 });
 

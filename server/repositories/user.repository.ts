@@ -105,6 +105,18 @@ export class UserRepository implements BaseRepository<User> {
   }
 
   /**
+   * Get user by Microsoft ID
+   */
+  async getByMicrosoftId(microsoftId: string, tx?: Transaction): Promise<User | null> {
+    const db = tx || this.database;
+    const result = await db
+      .select()
+      .from(users)
+      .where(eq(users.microsoftId, microsoftId));
+    return result[0] || null;
+  }
+
+  /**
    * Search users with pagination
    */
   async searchUsers(
@@ -247,6 +259,24 @@ export class UserRepository implements BaseRepository<User> {
    */
   async disconnectGoogleAccount(userId: number, tx?: Transaction): Promise<User> {
     return await this.update(userId, { googleId: null }, tx);
+  }
+
+  /**
+   * Connect Microsoft account
+   */
+  async connectMicrosoftAccount(
+    userId: number,
+    microsoftId: string,
+    tx?: Transaction
+  ): Promise<User> {
+    return await this.update(userId, { microsoftId }, tx);
+  }
+
+  /**
+   * Disconnect Microsoft account
+   */
+  async disconnectMicrosoftAccount(userId: number, tx?: Transaction): Promise<User> {
+    return await this.update(userId, { microsoftId: null }, tx);
   }
 
   /**

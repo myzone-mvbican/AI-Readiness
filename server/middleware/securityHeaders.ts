@@ -130,9 +130,15 @@ const helmetConfig = {
       // scriptSrc: env.NODE_ENV === 'production'
       //   ? ["'self'"]
       //   : ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://accounts.google.com"],
-      // styleSrc: ["'self'", "'unsafe-inline'", "https://use.typekit.net", "https://p.typekit.net", "https://fonts.googleapis.com"],
+      // styleSrc: ["'self'", "'unsafe-inline'", "https://use.typekit.net", "https://p.typekit.net", "https://fonts.googleapis.com", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:"],
-      // fontSrc: ["'self'", "data:", "https://use.typekit.net", "https://fonts.googleapis.com"],
+      fontSrc: [
+        "'self'",
+        "data:",
+        "https://use.typekit.net",
+        "https://fonts.googleapis.com",
+        "https://fonts.gstatic.com",
+      ],
       connectSrc: ["'self'"],
       mediaSrc: ["'self'"], // Allow media access for microphone
       frameAncestors: ["'none'"],
