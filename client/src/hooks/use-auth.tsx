@@ -94,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem("selectedTeam");
 
       // Clear any session storage items that might have stale state
-      sessionStorage.clear(); 
+      sessionStorage.clear();
 
       toast({
         title: "Session expired",
@@ -122,7 +122,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [toast, navigate]);
 
   // Use useQuery for automatic user authentication checking
-  const { data: authResponse, isLoading } = useQuery<ApiResponse<{ user: User }>>({
+  const { data: authResponse, isLoading } = useQuery<
+    ApiResponse<{ user: User }>
+  >({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: true,
@@ -134,7 +136,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   // Extract user from response
-  const user: User | null = authResponse?.success ? authResponse.data?.user || null : null;
+  const user: User | null = authResponse?.success
+    ? authResponse.data?.user || null
+    : null;
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
@@ -212,7 +216,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         toast({
           title: "Registration failed",
-          description: data.error?.message || "An error occurred during registration.",
+          description:
+            data.error?.message || "An error occurred during registration.",
           variant: "destructive",
         });
       }
@@ -297,7 +302,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         toast({
           title: "Google login failed",
-          description: data.error?.message || "An error occurred during Google login.",
+          description:
+            data.error?.message || "An error occurred during Google login.",
           variant: "destructive",
         });
       }
@@ -332,7 +338,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         toast({
           title: "Google connect failed",
-          description: data.error?.message || "Failed to connect Google account.",
+          description:
+            data.error?.message || "Failed to connect Google account.",
           variant: "destructive",
         });
       }
@@ -349,7 +356,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Disconnect Google account from existing user
   const googleDisconnectMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("DELETE", "/api/user/google/disconnect");
+      const res = await apiRequest("DELETE", "/api/user/google/disconnect", {});
       return await res.json();
     },
     onSuccess: (data: LoginResponse) => {
@@ -368,7 +375,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         toast({
           title: "Google disconnect failed",
-          description: data.error?.message || "Failed to disconnect Google account.",
+          description:
+            data.error?.message || "Failed to disconnect Google account.",
           variant: "destructive",
         });
       }
