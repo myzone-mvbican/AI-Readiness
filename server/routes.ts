@@ -1,5 +1,5 @@
-import fs from "fs"; 
-import path from "path"; 
+import fs from "fs";
+import path from "path";
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { AuthController } from "./controllers/auth.controller";
@@ -16,7 +16,7 @@ import {
   loginSchema,
   googleAuthSchema,
   googleConnectSchema,
-  microsoftAuthSchema
+  microsoftAuthSchema,
 } from "@shared/validation/schemas";
 
 // Import middleware if needed for protected routes
@@ -27,7 +27,7 @@ import {
   validateQuery,
   validateParams,
   validateSurveyCreation,
-  validateUrlAnalysis
+  validateUrlAnalysis,
 } from "./middleware/validation";
 import {
   teamCreationSchema,
@@ -46,7 +46,7 @@ import {
   passwordResetConfirmSchema,
   tokenQuerySchema,
   emailQuerySchema,
-  userSearchByNameQuerySchema
+  userSearchByNameQuerySchema,
 } from "./middleware/schemas";
 import {
   generalLimiter,
@@ -61,12 +61,13 @@ import {
   authRateLimit,
   sensitiveOperationsProgressiveDelay,
   sensitiveOperationsRateLimit,
-  generalApiLimiter
+  generalApiLimiter,
 } from "./middleware/rateLimiting";
-import { 
-  validateCSRFToken
-} from "./middleware/csrf"; 
-import { requestSizeLimiter, requestSizeLimits } from "./middleware/requestSizeLimits"; 
+import { validateCSRFToken } from "./middleware/csrf";
+import {
+  requestSizeLimiter,
+  requestSizeLimits,
+} from "./middleware/requestSizeLimits";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint (no rate limiting)
@@ -84,13 +85,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     // Check if it's a PDF file
-    if (path.extname(filePath).toLowerCase() !== '.pdf') {
+    if (path.extname(filePath).toLowerCase() !== ".pdf") {
       return res.status(400).json({ error: "Only PDF files are allowed" });
     }
 
     // Set proper headers for PDF download
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${path.basename(filePath)}"`);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${path.basename(filePath)}"`,
+    );
 
     // Stream the file
     const fileStream = fs.createReadStream(filePath);
@@ -100,7 +104,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API routes - path prefixed with /api
 
   // Password strength endpoint
-  app.post("/api/password/strength", generalApiLimiter, AuthController.getPasswordStrength);
+  app.post(
+    "/api/password/strength",
+    generalApiLimiter,
+    AuthController.getPasswordStrength,
+  );
 
   // Token refresh endpoint
   app.post("/api/auth/refresh", generalApiLimiter, AuthController.refreshToken);
@@ -109,7 +117,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/logout", auth, generalApiLimiter, AuthController.logout);
 
   // User JWT sessions endpoint
-  app.get("/api/auth/sessions", auth, generalApiLimiter, AuthController.getSessions);
+  app.get(
+    "/api/auth/sessions",
+    auth,
+    generalApiLimiter,
+    AuthController.getSessions,
+  );
 
   // Authentication routes (with smaller size limits)
 
@@ -119,54 +132,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     requestSizeLimiter,
     registrationLimiter,
     validateBody(insertUserSchema),
-    AuthController.register
+    AuthController.register,
   );
   // User login endpoint
-  app.post("/api/login",
+  app.post(
+    "/api/login",
     requestSizeLimiter,
     authProgressiveDelay,
     authRateLimit,
     accountLockoutLimiter,
     validateBody(loginSchema),
-    AuthController.login
+    AuthController.login,
   );
   // Google OAuth login/signup endpoint
-  app.post("/api/auth/google/login",
+  app.post(
+    "/api/auth/google/login",
     requestSizeLimiter,
     authProgressiveDelay,
     authRateLimit,
     validateBody(googleAuthSchema),
-    AuthController.loginGoogle
+    AuthController.loginGoogle,
   );
-  
+
   // Microsoft OAuth login/signup endpoint
-  app.post("/api/auth/microsoft/login",
+  app.post(
+    "/api/auth/microsoft/login",
     requestSizeLimiter,
     authProgressiveDelay,
     authRateLimit,
     validateBody(microsoftAuthSchema),
-    AuthController.loginMicrosoft
+    AuthController.loginMicrosoft,
   );
 
   // Password reset endpoints (with auth size limits)
-  app.post("/api/password/reset-request",
+  app.post(
+    "/api/password/reset-request",
     requestSizeLimiter,
     authProgressiveDelay,
     passwordResetLimiter,
     validateBody(passwordResetRequestSchema),
-    PasswordResetController.requestReset
+    PasswordResetController.requestReset,
   );
-  app.post("/api/password/reset-confirm",
+  app.post(
+    "/api/password/reset-confirm",
     requestSizeLimiter,
     authProgressiveDelay,
     passwordResetLimiter,
     validateBody(passwordResetConfirmSchema),
-    PasswordResetController.confirmReset
+    PasswordResetController.confirmReset,
   );
-  app.get("/api/password/validate-token",
+  app.get(
+    "/api/password/validate-token",
     passwordResetLimiter,
     validateQuery(tokenQuerySchema),
-    PasswordResetController.validateToken
+    PasswordResetController.validateToken,
   );
 
   // User profile endpoints (protected routes)
@@ -180,15 +199,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     auth,
     generalApiLimiter,
     validateBody(updateUserSchema),
-    AuthController.update
+    AuthController.update,
   );
   // Connect Google account to existing user (protected route)
-  app.post("/api/user/google/connect",
+  app.post(
+    "/api/user/google/connect",
     validateCSRFToken,
     auth,
     generalApiLimiter,
     validateBody(googleConnectSchema),
-    AuthController.connectGoogle
+    AuthController.connectGoogle,
   );
   // Disconnect Google account from existing user (protected route)
   app.delete(
@@ -212,7 +232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     auth,
     generalApiLimiter,
     validateBody(teamCreationSchema),
-    TeamController.create
+    TeamController.create,
   );
   // Add user to team
   app.post(
@@ -222,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     auth,
     generalApiLimiter,
     validateBody(userTeamAssignmentSchema),
-    TeamController.addUser
+    TeamController.addUser,
   );
   // Admin-only: Get all teams
   app.get(
@@ -231,7 +251,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     sensitiveOperationsRateLimit,
     auth,
     requireAdmin,
-    TeamController.getAll
+    TeamController.getAll,
   );
 
   // Users endpoints (all protected routes)
@@ -243,7 +263,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     sensitiveOperationsRateLimit,
     auth,
     requireAdmin,
-    UserController.getAll
+    UserController.getAll,
   );
   // Admin-only: Update a user
   app.put(
@@ -255,7 +275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     auth,
     requireAdmin,
     validateBody(updateUserSchema),
-    UserController.update
+    UserController.update,
   );
   // Admin-only: Delete a user
   app.delete(
@@ -265,7 +285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     sensitiveOperationsRateLimit,
     auth,
     requireAdmin,
-    UserController.delete
+    UserController.delete,
   );
   // Admin-only: Update a user's team assignments
   app.patch(
@@ -293,7 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/surveys/all",
     auth,
     generalApiLimiter,
-    SurveyController.getAllForAssessment
+    SurveyController.getAllForAssessment,
   );
   // Check completion eligibility for a survey
   app.post(
@@ -301,7 +321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     requestSizeLimiter,
     generalApiLimiter,
     validateBody(completionEligibilitySchema),
-    SurveyController.checkCompletionEligibility
+    SurveyController.checkCompletionEligibility,
   );
 
   // Survey Administration routes (admin only)
@@ -489,32 +509,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Assessment routes
 
   // Get all assessments for the current user
-  app.get("/api/assessments", auth, generalApiLimiter, AssessmentController.getAll);
+  app.get(
+    "/api/assessments",
+    auth,
+    generalApiLimiter,
+    AssessmentController.getAll,
+  );
   // Create a new assessment
   app.post(
     "/api/assessments",
     requestSizeLimiter,
-    validateCSRFToken, 
+    validateCSRFToken,
     auth,
     generalApiLimiter,
     validateBody(assessmentCreationSchema),
-    AssessmentController.create
+    AssessmentController.create,
   );
   // Get a specific assessment by ID
   app.get(
     "/api/assessments/:id",
     auth,
     generalApiLimiter,
-    AssessmentController.getById
+    AssessmentController.getById,
   );
   // Update an assessment (for saving answers or changing status)
-  app.patch("/api/assessments/:id",
+  app.patch(
+    "/api/assessments/:id",
     requestSizeLimiter,
     validateCSRFToken,
     auth,
     generalApiLimiter,
     validateBody(assessmentUpdateSchema),
-    AssessmentController.update
+    AssessmentController.update,
   );
   // Delete an assessment
   app.delete(
@@ -522,7 +548,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     validateCSRFToken,
     auth,
     generalApiLimiter,
-    AssessmentController.delete
+    AssessmentController.delete,
   );
   // Benchmark routes
   app.get(
@@ -539,7 +565,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     validateCSRFToken,
     generalApiLimiter,
     validateBody(aiSuggestionSchema),
-    AIController.generateSuggestions
+    AIController.generateSuggestions,
   );
 
   // AI industry analysis endpoint
@@ -548,7 +574,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     validateCSRFToken,
     generalApiLimiter,
     validateUrlAnalysis,
-    AIController.analyzeIndustry
+    AIController.analyzeIndustry,
   );
 
   // Recalculate benchmark stats (admin only)
@@ -564,15 +590,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Public routes
   // Check if user email exists (public endpoint)
-  app.get("/api/public/users/exists", generalApiLimiter, validateQuery(emailQuerySchema), UserController.exists);
+  app.get(
+    "/api/public/users/exists",
+    generalApiLimiter,
+    validateQuery(emailQuerySchema),
+    UserController.exists,
+  );
   // Create guest assessment (public endpoint)
-  app.post("/api/public/assessments", generalApiLimiter, validateBody(guestAssessmentDataSchema), AssessmentController.createGuest);
+  app.post(
+    "/api/public/assessments",
+    generalApiLimiter,
+    validateBody(guestAssessmentDataSchema),
+    AssessmentController.createGuest,
+  );
   // Get guest assessment (public endpoint)
-  app.get("/api/public/assessments/:id", generalApiLimiter, AssessmentController.getGuestById);
+  app.get(
+    "/api/public/assessments/:id",
+    generalApiLimiter,
+    AssessmentController.getGuestById,
+  );
   // Update guest assessment (public endpoint)
-  app.patch("/api/public/assessments/:id", generalApiLimiter, validateBody(guestAssessmentUpdateSchema), AssessmentController.updateGuest);
+  app.patch(
+    "/api/public/assessments/:id",
+    generalApiLimiter,
+    validateBody(guestAssessmentUpdateSchema),
+    AssessmentController.updateGuest,
+  );
   // Public endpoint for guest users to access survey details
-  app.get("/api/public/surveys/detail/:id", generalApiLimiter, SurveyController.getById);
+  app.get(
+    "/api/public/surveys/detail/:id",
+    generalApiLimiter,
+    SurveyController.getById,
+  );
 
   const httpServer = createServer(app);
 

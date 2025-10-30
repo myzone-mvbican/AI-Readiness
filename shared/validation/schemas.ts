@@ -145,6 +145,7 @@ export const updateSurveySchema = createInsertSchema(surveys)
   .extend({
     title: z.string().min(3, "Title must be at least 3 characters").optional(),
     status: surveyStatusSchema.optional(),
+    questionsCount: z.coerce.number().positive().optional(),
   });
 
 /**
