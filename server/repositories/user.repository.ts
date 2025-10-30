@@ -105,6 +105,18 @@ export class UserRepository implements BaseRepository<User> {
   }
 
   /**
+   * Get user by Microsoft ID
+   */
+  async getByMicrosoftId(microsoftId: string, tx?: Transaction): Promise<User | null> {
+    const db = tx || this.database;
+    const result = await db
+      .select()
+      .from(users)
+      .where(eq(users.microsoftId, microsoftId));
+    return result[0] || null;
+  }
+
+  /**
    * Search users with pagination
    */
   async searchUsers(
