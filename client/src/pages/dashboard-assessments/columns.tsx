@@ -1,5 +1,13 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Eye, CheckCircle, Clock, Edit3, Trash2, Download } from "lucide-react";
+import {
+  ArrowUpDown,
+  Eye,
+  CheckCircle,
+  Clock,
+  Edit3,
+  Trash2,
+  Download,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
@@ -33,7 +41,11 @@ const DeleteAssessmentButton = ({ assessment }: { assessment: Assessment }) => {
 
   const deleteMutation = useMutation({
     mutationFn: async (assessmentId: number) => {
-      const response = await apiRequest("DELETE", `/api/assessments/${assessmentId}`);
+      const response = await apiRequest(
+        "DELETE",
+        `/api/assessments/${assessmentId}`,
+        {},
+      );
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error?.message || "Failed to delete assessment");
@@ -48,7 +60,9 @@ const DeleteAssessmentButton = ({ assessment }: { assessment: Assessment }) => {
       // Invalidate and refetch assessments list
       queryClient.invalidateQueries({ queryKey: ["/api/assessments"] });
       // Invalidate completion status to update survey availability
-      queryClient.invalidateQueries({ queryKey: ["/api/surveys/completion-status"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/surveys/completion-status"],
+      });
       setIsOpen(false);
     },
     onError: (error: Error) => {
@@ -75,7 +89,9 @@ const DeleteAssessmentButton = ({ assessment }: { assessment: Assessment }) => {
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Assessment</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete "{assessment.title}"? This action cannot be undone and will permanently remove all assessment data and results.
+            Are you sure you want to delete "{assessment.title}"? This action
+            cannot be undone and will permanently remove all assessment data and
+            results.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
