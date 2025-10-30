@@ -30,7 +30,7 @@ export default function GuestSurvey({
   setQuestions,
 }: GuestSurveyProps) {
   // Default survey template ID
-  const defaultSurveyId = 1;
+  const defaultSurveyId = 2;
 
   const { toast } = useToast();
 
@@ -199,7 +199,9 @@ export default function GuestSurvey({
             ? "in-progress"
             : "draft",
         }}
-        surveyTitle={surveyData?.data?.survey?.title || "AI Readiness Assessment"}
+        surveyTitle={
+          surveyData?.data?.survey?.title || "AI Readiness Assessment"
+        }
         questions={questions}
         answers={answers}
         onAnswerChange={handleAnswerChange}

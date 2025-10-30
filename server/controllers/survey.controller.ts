@@ -1,16 +1,22 @@
 import { Request, Response } from "express";
 import { ApiResponse } from "../utils/apiResponse";
 import { SurveyService } from "../services/survey.service";
-import { ValidationError, NotFoundError, ForbiddenError, InternalServerError } from "../utils/errors";
+import {
+  ValidationError,
+  NotFoundError,
+  ForbiddenError,
+  InternalServerError,
+} from "../utils/errors";
 
 export class SurveyController {
   static async getAll(req: Request, res: Response) {
     try {
       const teamId = parseInt(req.params.teamId);
       if (isNaN(teamId)) {
-        return ApiResponse.validationError(res, 
-          { teamId: "Invalid team ID" }, 
-          "Invalid team ID"
+        return ApiResponse.validationError(
+          res,
+          { teamId: "Invalid team ID" },
+          "Invalid team ID",
         );
       }
 
@@ -38,10 +44,13 @@ export class SurveyController {
         result.data,
         page,
         pageSize,
-        result.pagination.total
+        result.pagination.total,
       );
     } catch (error: any) {
-      return ApiResponse.internalError(res, error.message || "Failed to retrieve surveys");
+      return ApiResponse.internalError(
+        res,
+        error.message || "Failed to retrieve surveys",
+      );
     }
   }
 
@@ -49,9 +58,10 @@ export class SurveyController {
     try {
       const surveyId = parseInt(req.params.id);
       if (isNaN(surveyId)) {
-        return ApiResponse.validationError(res, 
-          { surveyId: "Invalid survey ID" }, 
-          "Invalid survey ID"
+        return ApiResponse.validationError(
+          res,
+          { surveyId: "Invalid survey ID" },
+          "Invalid survey ID",
         );
       }
 
@@ -61,7 +71,10 @@ export class SurveyController {
       }
       return ApiResponse.success(res, { survey });
     } catch (error: any) {
-      return ApiResponse.internalError(res, error.message || "Failed to retrieve survey");
+      return ApiResponse.internalError(
+        res,
+        error.message || "Failed to retrieve survey",
+      );
     }
   }
 
@@ -70,19 +83,30 @@ export class SurveyController {
       // File validation handled by middleware
 
       // Parse and transform data using service
-      const { data: surveyData, error } = SurveyService.parseSurveyCreationData(req);
-      
+      const { data: surveyData, error } =
+        SurveyService.parseSurveyCreationData(req);
+
       if (error) {
         return ApiResponse.validationError(res, error);
       }
 
-      const newSurvey = await SurveyService.createSurvey(surveyData, req.file!.path);
+      const newSurvey = await SurveyService.createSurvey(
+        surveyData,
+        req.file!.path,
+      );
       return ApiResponse.success(res, { survey: newSurvey }, 201);
     } catch (error: any) {
       if (error instanceof ValidationError) {
-        return ApiResponse.validationError(res, { error: error.message }, error.message);
+        return ApiResponse.validationError(
+          res,
+          { error: error.message },
+          error.message,
+        );
       }
-      return ApiResponse.internalError(res, error.message || "Failed to create survey");
+      return ApiResponse.internalError(
+        res,
+        error.message || "Failed to create survey",
+      );
     }
   }
 
@@ -93,9 +117,10 @@ export class SurveyController {
         if (req.file) {
           SurveyService.cleanupFile(req.file.path);
         }
-        return ApiResponse.validationError(res, 
-          { surveyId: "Invalid survey ID" }, 
-          "Invalid survey ID"
+        return ApiResponse.validationError(
+          res,
+          { surveyId: "Invalid survey ID" },
+          "Invalid survey ID",
         );
       }
 
@@ -127,7 +152,7 @@ export class SurveyController {
       if (req.file) {
         // Update questions count if provided
         if (req.body.questionsCount) {
-          updateData.questionsCount = req.body.questionsCount;
+          updateData.questionsCount = parseInt(req.body.questionsCount);
         }
       }
 
@@ -135,7 +160,7 @@ export class SurveyController {
         surveyId,
         updateData,
         req.user!.id,
-        req.file?.path
+        req.file?.path,
       );
 
       return ApiResponse.success(res, { survey: updatedSurvey });
@@ -147,9 +172,16 @@ export class SurveyController {
         return ApiResponse.forbidden(res, error.message);
       }
       if (error instanceof ValidationError) {
-        return ApiResponse.validationError(res, { error: error.message }, error.message);
+        return ApiResponse.validationError(
+          res,
+          { error: error.message },
+          error.message,
+        );
       }
-      return ApiResponse.internalError(res, error.message || "Failed to update survey");
+      return ApiResponse.internalError(
+        res,
+        error.message || "Failed to update survey",
+      );
     }
   }
 
@@ -157,9 +189,10 @@ export class SurveyController {
     try {
       const surveyId = parseInt(req.params.id);
       if (isNaN(surveyId)) {
-        return ApiResponse.validationError(res, 
-          { surveyId: "Invalid survey ID" }, 
-          "Invalid survey ID"
+        return ApiResponse.validationError(
+          res,
+          { surveyId: "Invalid survey ID" },
+          "Invalid survey ID",
         );
       }
 
@@ -169,7 +202,9 @@ export class SurveyController {
         return ApiResponse.internalError(res, "Failed to delete survey");
       }
 
-      return ApiResponse.success(res, { message: "Survey deleted successfully" });
+      return ApiResponse.success(res, {
+        message: "Survey deleted successfully",
+      });
     } catch (error: any) {
       if (error instanceof NotFoundError) {
         return ApiResponse.notFound(res, "Survey");
@@ -177,7 +212,10 @@ export class SurveyController {
       if (error instanceof ForbiddenError) {
         return ApiResponse.forbidden(res, error.message);
       }
-      return ApiResponse.internalError(res, error.message || "Failed to delete survey");
+      return ApiResponse.internalError(
+        res,
+        error.message || "Failed to delete survey",
+      );
     }
   }
 
@@ -185,9 +223,10 @@ export class SurveyController {
     try {
       const surveyId = parseInt(req.params.id);
       if (isNaN(surveyId)) {
-        return ApiResponse.validationError(res, 
-          { surveyId: "Invalid survey ID" }, 
-          "Invalid survey ID"
+        return ApiResponse.validationError(
+          res,
+          { surveyId: "Invalid survey ID" },
+          "Invalid survey ID",
         );
       }
 
@@ -197,7 +236,10 @@ export class SurveyController {
       if (error instanceof NotFoundError) {
         return ApiResponse.notFound(res, "Survey");
       }
-      return ApiResponse.internalError(res, error.message || "Failed to retrieve teams for survey");
+      return ApiResponse.internalError(
+        res,
+        error.message || "Failed to retrieve teams for survey",
+      );
     }
   }
 
@@ -208,19 +250,27 @@ export class SurveyController {
     try {
       const surveyId = parseInt(req.params.surveyId);
       if (isNaN(surveyId)) {
-        return ApiResponse.validationError(res, 
-          { surveyId: "Invalid survey ID" }, 
-          "Invalid survey ID"
+        return ApiResponse.validationError(
+          res,
+          { surveyId: "Invalid survey ID" },
+          "Invalid survey ID",
         );
       }
 
       const userId = req.user?.id;
       const guestEmail = req.body.guestEmail;
 
-      const result = await SurveyService.checkCompletionEligibility(surveyId, userId, guestEmail);
+      const result = await SurveyService.checkCompletionEligibility(
+        surveyId,
+        userId,
+        guestEmail,
+      );
       return ApiResponse.success(res, result);
     } catch (error: any) {
-      return ApiResponse.internalError(res, error.message || "Failed to check completion eligibility");
+      return ApiResponse.internalError(
+        res,
+        error.message || "Failed to check completion eligibility",
+      );
     }
   }
 
@@ -237,7 +287,10 @@ export class SurveyController {
       const completionStatus = await SurveyService.getCompletionStatus(userId);
       return ApiResponse.success(res, { completionStatus });
     } catch (error: any) {
-      return ApiResponse.internalError(res, error.message || "Failed to get completion status");
+      return ApiResponse.internalError(
+        res,
+        error.message || "Failed to get completion status",
+      );
     }
   }
 
@@ -271,10 +324,13 @@ export class SurveyController {
         result.data,
         result.pagination.page,
         result.pagination.limit,
-        result.pagination.total
+        result.pagination.total,
       );
     } catch (error: any) {
-      return ApiResponse.internalError(res, error.message || "Failed to get surveys for assessment");
+      return ApiResponse.internalError(
+        res,
+        error.message || "Failed to get surveys for assessment",
+      );
     }
   }
 }

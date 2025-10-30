@@ -30,7 +30,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   const { toast } = useToast();
 
   // Default survey template ID
-  const defaultSurveyId = 1;
+  const defaultSurveyId = 2;
 
   // Current stage of the assessment process
   const [stage, setStage] = useState<AssessmentStage>(
@@ -92,7 +92,10 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to submit assessment. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to submit assessment. Please try again.",
         variant: "destructive",
       });
     } finally {

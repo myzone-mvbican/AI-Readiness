@@ -64,7 +64,10 @@ const editSurveySchema = z.object({
   selectedTeams: z.array(z.number()).optional(),
   status: z.enum(["draft", "public"]).default("draft"),
   completionType: z.enum(["unlimited", "limited"]).default("unlimited"),
-  completionLimit: z.number().min(1, "Completion limit must be at least 1").optional(),
+  completionLimit: z
+    .number()
+    .min(1, "Completion limit must be at least 1")
+    .optional(),
 });
 
 type EditSurveyFormValues = z.infer<typeof editSurveySchema>;
@@ -125,7 +128,10 @@ export default function SurveyEditDialog({
         title: survey.title,
         visibility: visibility,
         selectedTeams: teamIds.length > 0 ? teamIds : undefined,
-        status: survey.status === "draft" || survey.status === "public" ? survey.status : "draft",
+        status:
+          survey.status === "draft" || survey.status === "public"
+            ? survey.status
+            : "draft",
         completionType: survey.completionLimit ? "limited" : "unlimited",
         completionLimit: survey.completionLimit || undefined,
       };
@@ -148,7 +154,12 @@ export default function SurveyEditDialog({
   // Update an existing survey
   const updateSurveyMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await apiRequest("PUT", `/api/admin/surveys/${survey.id}`, formData, true);
+      const response = await apiRequest(
+        "PUT",
+        `/api/admin/surveys/${survey.id}`,
+        formData,
+        true,
+      );
 
       if (!response.ok) {
         const error = await response.json();
@@ -397,34 +408,39 @@ export default function SurveyEditDialog({
                           <CommandInput placeholder="Search teams..." />
                           <CommandEmpty>No teams found.</CommandEmpty>
                           <CommandGroup>
-                            {teams.filter((team: any) => !team.name.includes('(deleted)')).map((team: any) => (
-                              <CommandItem
-                                key={team.id}
-                                value={team.name}
-                                onSelect={() => {
-                                  const newValue = field.value?.includes(
-                                    team.id,
-                                  )
-                                    ? field.value.filter(
-                                      (value: number) => value !== team.id,
+                            {teams
+                              .filter(
+                                (team: any) => !team.name.includes("(deleted)"),
+                              )
+                              .map((team: any) => (
+                                <CommandItem
+                                  key={team.id}
+                                  value={team.name}
+                                  onSelect={() => {
+                                    const newValue = field.value?.includes(
+                                      team.id,
                                     )
-                                    : [...(field.value || []), team.id];
+                                      ? field.value.filter(
+                                          (value: number) => value !== team.id,
+                                        )
+                                      : [...(field.value || []), team.id];
 
-                                  // Use setTimeout to avoid maximum update depth exceeded error
-                                  setTimeout(() => {
-                                    form.setValue("selectedTeams", newValue);
-                                  }, 0);
-                                }}
-                              >
-                                <Check
-                                  className={`mr-2 h-4 w-4 ${field.value?.includes(team.id)
-                                      ? "opacity-100"
-                                      : "opacity-0"
+                                    // Use setTimeout to avoid maximum update depth exceeded error
+                                    setTimeout(() => {
+                                      form.setValue("selectedTeams", newValue);
+                                    }, 0);
+                                  }}
+                                >
+                                  <Check
+                                    className={`mr-2 h-4 w-4 ${
+                                      field.value?.includes(team.id)
+                                        ? "opacity-100"
+                                        : "opacity-0"
                                     }`}
-                                />
-                                {team.name}
-                              </CommandItem>
-                            ))}
+                                  />
+                                  {team.name}
+                                </CommandItem>
+                              ))}
                           </CommandGroup>
                         </Command>
                       </PopoverContent>
@@ -486,8 +502,12 @@ export default function SurveyEditDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="unlimited">Unlimited - Users can take this survey multiple times</SelectItem>
-                        <SelectItem value="limited">Limited - Restrict number of completions per user</SelectItem>
+                        <SelectItem value="unlimited">
+                          Unlimited - Users can take this survey multiple times
+                        </SelectItem>
+                        <SelectItem value="limited">
+                          Limited - Restrict number of completions per user
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -511,7 +531,9 @@ export default function SurveyEditDialog({
                           value={field.value || ""}
                           onChange={(e) => {
                             const value = e.target.value;
-                            field.onChange(value ? parseInt(value, 10) : undefined);
+                            field.onChange(
+                              value ? parseInt(value, 10) : undefined,
+                            );
                           }}
                         />
                       </FormControl>

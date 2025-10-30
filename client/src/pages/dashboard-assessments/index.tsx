@@ -118,7 +118,7 @@ export default function AssessmentsPage() {
               className="w-full md:w-auto"
               onClick={assessmentCreateModal.onOpen}
             >
-              <PlusCircle className="mr-2 h-4 w-4" />
+              <PlusCircle className="size-4" />
               Start New Assessment
             </Button>
           </div>
