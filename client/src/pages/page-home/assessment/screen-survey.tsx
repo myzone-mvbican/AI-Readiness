@@ -58,8 +58,9 @@ export default function GuestSurvey({
 
   // Format questions when data is loaded
   useEffect(() => {
-    const { survey, success } = surveyData || {};
-    if (success && survey.questions) {
+    const { data, success } = surveyData || {};
+    const survey = data?.survey;
+    if (success && survey?.questions) {
       setQuestions(survey.questions);
 
       // Load saved answers first if available
@@ -198,7 +199,7 @@ export default function GuestSurvey({
             ? "in-progress"
             : "draft",
         }}
-        surveyTitle={surveyData.survey.title || "AI Readiness Assessment"}
+        surveyTitle={surveyData?.data?.survey?.title || "AI Readiness Assessment"}
         questions={questions}
         answers={answers}
         onAnswerChange={handleAnswerChange}

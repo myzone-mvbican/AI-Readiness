@@ -23,8 +23,9 @@ export default function Home() {
   const { user } = useAuth();
   const assessmentCreateModal = useAssessment();
   const [showGuestAssessment, setShowGuestAssessment] = useState(false);
-  const [hash, setHash] = useState(window.location.hash);
-  const [showGuestDialog, setShowGuestDialog] = useState(hash === "#start");
+  const [showGuestDialog, setShowGuestDialog] = useState(
+    window.location.hash === "#start"
+  );
 
   const handleAssessmentStart = () => {
     if (user) {
@@ -36,16 +37,32 @@ export default function Home() {
     }
   };
 
+  // Listen for hash changes (e.g., from header button)
   useEffect(() => {
-    // Function to handle hash change
     const handleHashChange = () => {
-      if (hash) {
-        handleAssessmentStart();
+      if (window.location.hash === "#start") {
+        if (user) {
+          // If user is logged in, use the existing assessment modal
+          assessmentCreateModal.onOpen();
+        } else {
+          // If no user is logged in, show the guest dialog
+          setShowGuestDialog(true);
+        }
+        // Clear hash after opening dialog
+        window.history.replaceState(null, "", window.location.pathname);
       }
     };
 
+    // Check on mount
     handleHashChange();
-  }, [hash]);
+
+    // Listen for hash changes
+    window.addEventListener("hashchange", handleHashChange);
+    
+    return () => {
+      window.removeEventListener("hashchange", handleHashChange);
+    };
+  }, [user, assessmentCreateModal]); // Re-run when user or modal changes
 
   return (
     <>

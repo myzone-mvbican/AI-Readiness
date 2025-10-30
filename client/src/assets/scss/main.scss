@@ -2,7 +2,7 @@
 
 // Font family and weights
 * {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Elza', 'Inter', sans-serif;
 }
 
 // Body text - font weight 400
@@ -12,22 +12,22 @@ body, p, span, div, label, input, textarea, select {
 
 // Headings - font weight 700
 h1, h2, h3, h4, h5, h6, .section__title {
-  font-weight: 600;
+  font-weight: 700;
 } 
 
 :root {
   --background: 0 0% 100%;
-  --foreground: 200.38 76.81% 13.53%;
+  --foreground: 222.2 84% 4.9%;
   --card: 0 0% 100%;
   --card-foreground: 222.2 84% 4.9%;
   --popover: 0 0% 100%;
   --popover-foreground: 222.2 84% 4.9%;
-  --primary: 130.56 49.41% 49.61%;
+  --primary: 221.2 83.2% 53.3%;
   --primary-foreground: 210 40% 98%;
   --secondary: 210 40% 96.1%;
   --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%; 
-  --muted-foreground: 200.38 76.81% 13.53%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
   --accent: 210 40% 96.1%;
   --accent-foreground: 222.2 47.4% 11.2%;
   --destructive: 0 84.2% 60.2%;
@@ -94,24 +94,8 @@ h1, h2, h3, h4, h5, h6, .section__title {
   @apply py-16 md:py-24 xl:py-32;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  @apply font-semibold !leading-[1.1];
-}
-
-h1 {
-  @apply text-4xl md:text-4xl lg:text-[52px];
-}
-
-h2 {
-  @apply text-2xl md:text-3xl lg:text-[40px];
-}
-
-h3 {
-  @apply text-xl md:text-2xl lg:text-[32px];
-}
-
-h4 {
-  @apply text-lg md:text-xl lg:text-[24px];
+.section__title {
+  @apply text-3xl md:text-4xl font-extrabold;
 }
 
 // Custom button styles that extend Tailwind
