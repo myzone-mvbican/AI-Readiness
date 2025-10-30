@@ -57,13 +57,13 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
       const assessmentResult: {
         title: string;
         guestData: any;
-        surveyId: number;
+        surveyId: string;
         answers: AssessmentAnswer[];
         status: string;
       } = {
         title: `${guestUser?.company || guestUser?.name}'s AI Readiness Assessment`,
         guestData: guestUser, // Send the complete guest user data
-        surveyId: defaultSurveyId,
+        surveyId: defaultSurveyId.toString(), // Convert to string for validation
         answers: answers,
         status: "completed",
       };
@@ -77,14 +77,14 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
         body: JSON.stringify(assessmentResult),
       });
 
-      const { success, assessment, message } = await response.json();
+      const { success, data, error } = await response.json();
 
       if (!success) {
-        throw new Error(message || "Failed to save assessment");
+        throw new Error(error?.message || "Failed to save assessment");
       }
 
       // Move to completed stage
-      setSurveyData(assessment);
+      setSurveyData(data.assessment);
       setStage(AssessmentStage.COMPLETED);
 
       // Clear the answers from localStorage now that we've saved it

@@ -34,7 +34,7 @@ import {
   GuestUser as StorageGuestUser,
   clearGuestAssessmentData,
 } from "@/lib/localStorage";
-import { SignupFormValues, signupSchema } from "@/schemas/validation-schemas";
+import { SignupFormValues, signupSchema } from "@shared/validation/validation-schemas";
 import { IndustryCode } from "@/lib/industry-validation";
 import { navigate } from "wouter/use-browser-location";
 
