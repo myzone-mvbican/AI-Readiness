@@ -226,6 +226,97 @@ export class AuthService {
   }
 
   /**
+   * Login with Microsoft OAuth
+   */
+  async loginWithMicrosoft(credential: string, userAgent?: string, ipAddress?: string): Promise<{ user: User; tokens: { accessToken: string; refreshToken: string } }> {
+    try {
+      // Verify Microsoft token
+      const microsoftUserData = await this.verifyMicrosoftToken(credential);
+      if (!microsoftUserData) {
+        throw new UnauthorizedError("Invalid Microsoft token");
+      }
+
+      // Check if user exists with Microsoft ID
+      let user = await this.userRepository.getByMicrosoftId(microsoftUserData.sub);
+
+      if (!user) {
+        // Check if user exists with email
+        user = await this.userRepository.getByEmail(microsoftUserData.email);
+
+        if (!user) {
+          // Create new user
+          const randomPassword = this.generateRandomPassword();
+          const userData: InsertUser = {
+            name: microsoftUserData.name,
+            email: microsoftUserData.email,
+            password: randomPassword,
+            microsoftId: microsoftUserData.sub,
+          };
+
+          // Create user with default team
+          const isMyZoneEmail = microsoftUserData.email.endsWith("@myzone.ai");
+          const defaultTeamName = isMyZoneEmail ? "MyZone" : "Client";
+          
+          let defaultTeam = await TeamService.getByName(defaultTeamName);
+          if (!defaultTeam) {
+            // Create the default team if it doesn't exist
+            try {
+              defaultTeam = await TeamRepository.create({ name: defaultTeamName });
+            } catch (error) {
+              // If we can't create the team, try to get it again in case it was created by another request
+              defaultTeam = await TeamService.getByName(defaultTeamName);
+              if (!defaultTeam) {
+                throw new InternalServerError(`Failed to create or find default team '${defaultTeamName}'`);
+              }
+            }
+          }
+
+          const { user: newUser } = await this.userRepository.createWithDefaultTeam(
+            userData,
+            defaultTeam.id,
+            "client"
+          );
+
+          // Transfer guest assessments
+          try {
+            await this.userRepository.transferGuestAssessmentsToUser(
+              newUser.email,
+              newUser.id
+            );
+          } catch (error) {
+          }
+
+          user = newUser;
+        } else {
+          // Connect Microsoft ID to existing user
+          user = await this.userRepository.connectMicrosoftAccount(
+            user.id,
+            microsoftUserData.sub
+          );
+        }
+      }
+
+      // Generate session ID and token pair
+      const sessionId = TokenService.generateSessionId();
+      const tokens = await TokenService.generateTokenPair(
+        user.id,
+        user.role || "client",
+        sessionId,
+        userAgent,
+        ipAddress
+      );
+
+      return { user, tokens };
+    } catch (error) {
+      if (error instanceof UnauthorizedError || error instanceof InternalServerError) {
+        throw error;
+      }
+      console.error("Microsoft authentication error:", error);
+      throw new InternalServerError("Microsoft authentication failed due to an unexpected error");
+    }
+  }
+
+  /**
    * Connect Google account to existing user
    */
   async connectGoogle(userId: number, credential: string): Promise<User> {
@@ -482,6 +573,84 @@ export class AuthService {
       } as GoogleUserPayload;
     } catch (error) {
       console.error("Error verifying Google token:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Verify Microsoft token using OIDC/JWKS
+   */
+  private async verifyMicrosoftToken(token: string): Promise<GoogleUserPayload | null> {
+    try {
+      const microsoftClientId = env.MICROSOFT_CLIENT_ID;
+      if (!microsoftClientId) {
+        console.error("Microsoft Client ID not configured");
+        return null;
+      }
+
+      // Decode token without verification to extract issuer
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        console.error("Invalid JWT format");
+        return null;
+      }
+
+      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64url').toString());
+      const issuer = payload.iss;
+      
+      if (!issuer) {
+        console.error("No issuer found in token");
+        return null;
+      }
+
+      // Fetch OIDC metadata to get the correct JWKS URI
+      const metadataUrl = `${issuer}/.well-known/openid-configuration`;
+      const metadataResponse = await fetch(metadataUrl);
+      
+      if (!metadataResponse.ok) {
+        console.error("Failed to fetch OIDC metadata");
+        return null;
+      }
+      
+      const metadata = await metadataResponse.json();
+      const jwksUri = metadata.jwks_uri;
+      
+      if (!jwksUri) {
+        console.error("No jwks_uri found in OIDC metadata");
+        return null;
+      }
+
+      // Import jose and verify token
+      const { jwtVerify, createRemoteJWKSet } = await import('jose');
+      const JWKS = createRemoteJWKSet(new URL(jwksUri));
+
+      const { payload: verifiedPayload } = await jwtVerify(token, JWKS, {
+        issuer: issuer,
+        audience: microsoftClientId,
+        clockTolerance: '60s'
+      });
+
+      // Extract user information
+      const microsoftId = verifiedPayload.sub || verifiedPayload.oid as string;
+      const email = verifiedPayload.email as string || verifiedPayload.preferred_username as string || '';
+      const name = verifiedPayload.name as string || '';
+
+      if (!microsoftId || !email) {
+        console.error("Missing required fields in Microsoft token");
+        return null;
+      }
+
+      // Return in GoogleUserPayload format for compatibility
+      return {
+        sub: microsoftId,
+        email: email.toLowerCase(),
+        name: name,
+        picture: '',
+        email_verified: verifiedPayload.email_verified !== false,
+      } as GoogleUserPayload;
+
+    } catch (error) {
+      console.error("Error verifying Microsoft token:", error instanceof Error ? error.message : error);
       return null;
     }
   }

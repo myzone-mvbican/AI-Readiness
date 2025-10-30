@@ -15,7 +15,8 @@ import {
   updateUserSchema,
   loginSchema,
   googleAuthSchema,
-  googleConnectSchema
+  googleConnectSchema,
+  microsoftAuthSchema
 } from "@shared/validation/schemas";
 
 // Import middleware if needed for protected routes
@@ -136,6 +137,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     authRateLimit,
     validateBody(googleAuthSchema),
     AuthController.loginGoogle
+  );
+  
+  // Microsoft OAuth login/signup endpoint
+  app.post("/api/auth/microsoft/login",
+    requestSizeLimiter,
+    authProgressiveDelay,
+    authRateLimit,
+    validateBody(microsoftAuthSchema),
+    AuthController.loginMicrosoft
   );
 
   // Password reset endpoints (with auth size limits)

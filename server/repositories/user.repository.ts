@@ -262,6 +262,24 @@ export class UserRepository implements BaseRepository<User> {
   }
 
   /**
+   * Connect Microsoft account
+   */
+  async connectMicrosoftAccount(
+    userId: number,
+    microsoftId: string,
+    tx?: Transaction
+  ): Promise<User> {
+    return await this.update(userId, { microsoftId }, tx);
+  }
+
+  /**
+   * Disconnect Microsoft account
+   */
+  async disconnectMicrosoftAccount(userId: number, tx?: Transaction): Promise<User> {
+    return await this.update(userId, { microsoftId: null }, tx);
+  }
+
+  /**
    * Set password reset token
    */
   async setResetToken(
