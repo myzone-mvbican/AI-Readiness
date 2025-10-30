@@ -285,7 +285,7 @@ export const surveyUpdateSchema = z.object({
     }
     return val;
   }),
-  questionsCount: z.number().positive("Questions count must be positive").optional()
+  questionsCount: z.coerce.number().positive("Questions count must be positive").optional()
 });
 
 /**
