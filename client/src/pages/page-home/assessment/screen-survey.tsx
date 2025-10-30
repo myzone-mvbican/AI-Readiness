@@ -30,7 +30,7 @@ export default function GuestSurvey({
   setQuestions,
 }: GuestSurveyProps) {
   // Default survey template ID
-  const defaultSurveyId = 2;
+  const defaultSurveyId = 1;
 
   const { toast } = useToast();
 
