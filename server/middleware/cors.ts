@@ -14,7 +14,8 @@ export const corsMiddleware = cors({
 
     // Define allowed origins
     const allowedOrigins = [
-      // Add production domains here
+      // Add domains here
+      'https://abfd7d50-659f-4b18-b01c-1598baef61ec-00-39eptfts4f6nz.picard.replit.dev',
       env.FRONTEND_URL
     ].filter(Boolean); // Remove undefined values
 
