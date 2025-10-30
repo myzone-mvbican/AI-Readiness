@@ -75,7 +75,7 @@ export class PDFGenerator {
 
       const logoPath = path.join(
         process.cwd(),
-        "client/src/assets/logo-myzone-ai.png",
+        "client/src/assets/logo-keeran.png",
       );
 
       // Generate PDF using React PDF
