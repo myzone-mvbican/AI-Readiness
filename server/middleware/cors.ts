@@ -23,11 +23,11 @@ export const corsMiddleware = cors({
       env.FRONTEND_URL,
     ].filter(Boolean); // Remove undefined values
 
-    // In development, allow all localhost origins
+    // In development, allow all localhost and 127.0.0.1 origins
     if (
       env.NODE_ENV !== "production" &&
       origin &&
-      origin.startsWith("http://localhost:")
+      (origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:"))
     ) {
       callback(null, true);
       return;
