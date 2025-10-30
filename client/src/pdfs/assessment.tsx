@@ -213,7 +213,7 @@ export const AssessmentPDF = ({
 
   const chartData = getRadarChartData(assessment);
 
-  const logoPath = logoUrl || "@/assets/logo-keeran.svg";
+  const logoPath = logoUrl || "@/assets/logo-keeran-ai.png";
 
   return (
     <Document>
