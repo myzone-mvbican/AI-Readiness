@@ -30,7 +30,7 @@ export function GuestAssessment({ onClose }: GuestAssessmentProps) {
   const { toast } = useToast();
 
   // Default survey template ID
-  const defaultSurveyId = 19;
+  const defaultSurveyId = 1;
 
   // Current stage of the assessment process
   const [stage, setStage] = useState<AssessmentStage>(
