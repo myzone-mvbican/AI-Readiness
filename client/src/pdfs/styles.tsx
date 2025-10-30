@@ -9,12 +9,12 @@ export const styles = StyleSheet.create({
   },
   coverPage: {
     flexDirection: "column",
-    backgroundColor: "#3361FF",
+    backgroundColor: "#00b141",
     padding: 30,
     height: "100%",
   },
   logoContainer: {
-    backgroundColor: "white",
+    backgroundColor: "#002b3c",
     borderRadius: 8,
     alignItems: "center",
     marginTop: 20,
@@ -96,6 +96,7 @@ export const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
+    backgroundColor: "#002b3c",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 20,
