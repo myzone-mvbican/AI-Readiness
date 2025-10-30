@@ -34,6 +34,7 @@ export default function SurveyDeleteDialog({
       const response = await apiRequest(
         "DELETE",
         `/api/admin/surveys/${survey.id}`,
+        {},
       );
 
       if (!response.ok) {
