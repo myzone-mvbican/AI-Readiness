@@ -36,6 +36,7 @@ type AuthContextType = {
     GoogleLoginData
   >;
   googleDisconnectMutation: UseMutationResult<LoginResponse, Error, void>;
+  microsoftLoginMutation: UseMutationResult<LoginResponse, Error, MicrosoftLoginData>;
 };
 
 type LoginData = {
@@ -75,6 +76,10 @@ type RegisterResponse = {
 };
 
 type GoogleLoginData = {
+  credential: string;
+};
+
+type MicrosoftLoginData = {
   credential: string;
 };
 
@@ -382,6 +387,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // Microsoft authentication mutation
+  const microsoftLoginMutation = useMutation({
+    mutationFn: async (data: MicrosoftLoginData) => {
+      // TODO: Replace with actual Microsoft login endpoint when backend is ready
+      // const res = await apiRequest("POST", "/api/auth/microsoft/login", data);
+      // return await res.json();
+      
+      // For now, simulate a failed response since backend endpoint doesn't exist yet
+      throw new Error("Microsoft login endpoint not implemented yet");
+    },
+    onSuccess: (data: LoginResponse) => {
+      if (data.success && data.data?.user) {
+        // Update user query data directly
+        queryClient.setQueryData(["/api/user"], {
+          success: true,
+          data: { user: data.data.user },
+        });
+
+        // Invalidate teams query to ensure we get fresh data
+        queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
+
+        // Clear any previously selected team to force auto-selection
+        localStorage.removeItem("selectedTeam");
+
+        // Clear any guest assessment data
+        clearGuestAssessmentData();
+
+        toast({
+          title: "Microsoft login successful",
+          description: "You have been logged in successfully with Microsoft.",
+        });
+      } else {
+        toast({
+          title: "Microsoft login failed",
+          description: data.error?.message || "An error occurred during Microsoft login.",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Microsoft login failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return (
     <AuthContext.Provider
       value={{
@@ -393,6 +446,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         googleLoginMutation,
         googleConnectMutation,
         googleDisconnectMutation,
+        microsoftLoginMutation,
       }}
     >
       {children}

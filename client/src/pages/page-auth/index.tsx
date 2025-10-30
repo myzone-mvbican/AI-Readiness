@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { GoogleLogin } from "@react-oauth/google";
+import { MicrosoftLoginButton } from "@/components/microsoft-login-button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -35,10 +36,14 @@ export default function AuthPage() {
     loginMutation,
     registerMutation,
     googleLoginMutation,
+    microsoftLoginMutation,
   } = useAuth();
 
   // Check if Google OAuth is configured
   const isGoogleAuthEnabled = !!import.meta.env.GOOGLE_CLIENT_ID;
+  
+  // Check if Microsoft OAuth is configured
+  const isMicrosoftAuthEnabled = !!import.meta.env.VITE_MICROSOFT_CLIENT_ID;
 
   // Google login handlers
   const handleGoogleSuccess = async (credentialResponse: any) => {
@@ -51,6 +56,22 @@ export default function AuthPage() {
     toast({
       title: "Google login failed",
       description: "There was a problem with your Google login.",
+      variant: "destructive",
+      duration: 3000,
+    });
+  };
+
+  // Microsoft login handlers
+  const handleMicrosoftSuccess = async (credentialResponse: any) => {
+    await microsoftLoginMutation.mutateAsync({
+      credential: credentialResponse.credential,
+    });
+  };
+
+  const handleMicrosoftError = () => {
+    toast({
+      title: "Microsoft login failed",
+      description: "There was a problem with your Microsoft login.",
       variant: "destructive",
       duration: 3000,
     });
@@ -118,6 +139,31 @@ export default function AuthPage() {
         </div>
 
         <Card className="border-0 shadow-none">
+          {/* Microsoft Sign-In Option - Only show if configured */}
+          {isMicrosoftAuthEnabled ? (
+            <>
+              <div className="w-full mb-6 flex justify-center px-6 pt-6">
+                <MicrosoftLoginButton
+                  onSuccess={handleMicrosoftSuccess}
+                  onError={handleMicrosoftError}
+                  text={activeTab === "login" ? "signin_with" : "signup_with"}
+                />
+              </div>
+
+              {/* Divider */}
+              <div className="relative w-full mb-6 px-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300 dark:border-gray-900"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="w-7 h-7 grid place-items-center bg-white dark:bg-gray-900 rounded-full text-gray-500 leading-none">
+                    or
+                  </span>
+                </div>
+              </div>
+            </>
+          ) : null}
+
           <Tabs
             defaultValue="login"
             className="w-full"

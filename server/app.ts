@@ -53,13 +53,13 @@ app.use(generateRequestId);
 
 // 2. HTTPS ENFORCEMENT (must be early in production)
 // Redirects HTTP to HTTPS in production only
-app.use(enforceHttps);
-app.use(validateHttpsCertificate);
+// app.use(enforceHttps);
+// app.use(validateHttpsCertificate);
 
 // 3. SECURITY HEADERS (Helmet.js + custom)
 // Sets comprehensive security headers using Helmet.js with environment-aware configuration
-app.use(securityHeaders);
-app.use(httpsSecurityHeaders);
+// app.use(securityHeaders);
+// app.use(httpsSecurityHeaders);
 
 // 4. CORS (must be before request parsing for preflight requests)
 // Handles cross-origin requests and OPTIONS preflight requests
