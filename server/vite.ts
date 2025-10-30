@@ -21,7 +21,7 @@ export function log(message: string, source = "express") {
 
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
-    allowedHosts: true,
+    allowedHosts: ["localhost", "127.0.0.1"],
     middlewareMode: true,
     hmr: { server },
   };
