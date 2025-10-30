@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import { env } from "server/utils/environment";
-import { RedisCache } from "server/cache";
 
 // CSRF token management for JWT authentication
 
@@ -11,54 +10,30 @@ import { RedisCache } from "server/cache";
  * Uses Redis for token storage with 1-hour TTL
  */
 
-// CSRF token TTL (1 hour in seconds)
-const CSRF_TOKEN_TTL = 60 * 60;
+// CSRF token TTL (1 hour in milliseconds)
+const CSRF_TOKEN_TTL_MS = 60 * 60 * 1000;
+
+// Cookie name used for CSRF token
+const CSRF_COOKIE_NAME = 'csrf-token';
 
 /**
  * Generate CSRF token for JWT authentication
  */
 export const generateCSRFToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Use IP address as fallback identifier (no sessions in JWT auth)
-    const sessionId = req.ip || 'unknown';
+    // If a CSRF cookie already exists, keep it; otherwise issue a new token
+    const existing = req.cookies?.[CSRF_COOKIE_NAME];
+    const token = existing || crypto.randomBytes(32).toString('hex');
 
-    // Check if we already have a valid token for this IP
-    const existingTokenStr = await RedisCache.getWithNamespace('csrf', sessionId);
-    if (existingTokenStr) {
-      const existingToken = JSON.parse(existingTokenStr);
-      if (existingToken.expires > Date.now()) {
-        // Token already exists and is valid, just set the cookie
-        res.cookie('csrf-token', existingToken.token, {
-          httpOnly: false,
-          secure: env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          maxAge: 60 * 60 * 1000
-        });
-
-        return next();
-      }
-    }
-
-    // Generate a new token only if none exists or it's expired
-    const token = crypto.randomBytes(32).toString('hex');
-
-    // Store token with 1 hour expiry in Redis
-    const tokenData = {
-      token,
-      expires: Date.now() + (60 * 60 * 1000) // 1 hour
-    };
-    
-    await RedisCache.setWithNamespace('csrf', sessionId, JSON.stringify(tokenData), CSRF_TOKEN_TTL);
-
-    // Set CSRF token in cookie
-    res.cookie('csrf-token', token, {
-      httpOnly: false, // Allow client-side access for form submission
+    // Set/refresh CSRF token in cookie
+    res.cookie(CSRF_COOKIE_NAME, token, {
+      httpOnly: false, // Client must read it to send header (double-submit pattern)
       secure: env.NODE_ENV === 'production',
-      sameSite: 'lax', // Always allow client-side access
-      maxAge: 60 * 60 * 1000 // 1 hour
+      sameSite: 'lax',
+      maxAge: CSRF_TOKEN_TTL_MS,
     });
 
-    // Add token to response for API clients
+    // Expose for server-side rendered contexts if needed
     res.locals.csrfToken = token;
 
     next();
@@ -92,36 +67,9 @@ export const validateCSRFToken = async (req: Request, res: Response, next: NextF
       return next();
     }
 
-    // Use IP address as fallback identifier (no sessions in JWT auth)
-    const sessionId = req.ip || 'unknown';
-    const storedTokenStr = await RedisCache.getWithNamespace('csrf', sessionId);
-
-    if (!storedTokenStr) {
-      return res.status(403).json({
-        success: false,
-        error: {
-          code: 'CSRF_TOKEN_MISSING',
-          message: 'CSRF token not found. Please refresh the page and try again.'
-        }
-      });
-    }
-
-    const storedToken = JSON.parse(storedTokenStr);
-
-    // Check if token is expired
-    if (storedToken.expires < Date.now()) {
-      await RedisCache.delWithNamespace('csrf', sessionId);
-      return res.status(403).json({
-        success: false,
-        error: {
-          code: 'CSRF_TOKEN_EXPIRED',
-          message: 'CSRF token has expired. Please refresh the page and try again.'
-        }
-      });
-    }
-
-    // Get token from request (header or body)
-    const tokenFromRequest = req.headers['x-csrf-token'] as string || req.body._csrf;
+    // Read token from header/body and compare to cookie (double-submit cookie pattern)
+    const tokenFromRequest = (req.headers['x-csrf-token'] as string) || req.body?._csrf;
+    const tokenFromCookie = req.cookies?.[CSRF_COOKIE_NAME];
 
     if (!tokenFromRequest) {
       return res.status(403).json({
@@ -133,8 +81,18 @@ export const validateCSRFToken = async (req: Request, res: Response, next: NextF
       });
     }
 
-    // Check only Redis-stored token (no session-based tokens in JWT auth)
-    const isValidToken = tokenFromRequest === storedToken.token;
+    if (!tokenFromCookie) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'CSRF_TOKEN_MISSING',
+          message: 'CSRF token cookie is missing. Please refresh the page and try again.'
+        }
+      });
+    }
+
+    // Compare header/body token with cookie token
+    const isValidToken = tokenFromRequest === tokenFromCookie;
 
     if (!isValidToken) {
       return res.status(403).json({
