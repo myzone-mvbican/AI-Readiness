@@ -82,33 +82,67 @@ export class CsvParser {
       // Resolve the file path - handle both absolute and relative paths
       let resolvedPath = filePath;
       
-      // Normalize path separators
+      // Normalize path separators (convert backslashes to forward slashes)
       const normalizedPath = filePath.replace(/\\/g, '/');
       
-      // If the absolute path doesn't exist, try to resolve it relative to current working directory
-      if (!fs.existsSync(filePath)) {
-        // Extract just the filename part if it's a full path
+      // Check if the path exists as-is (could be absolute)
+      if (fs.existsSync(filePath)) {
+        resolvedPath = filePath;
+      } else {
+        // Path doesn't exist, try to resolve it
         const filename = path.basename(filePath);
+        const cwd = process.cwd();
         
-        // Try common locations
-        const possiblePaths = [
-          path.join(process.cwd(), normalizedPath), // Try as-is relative to cwd
-          path.join(process.cwd(), 'public', 'uploads', filename), // Try in uploads folder with just filename
-          // If the path contains 'public', try it relative to cwd
-          normalizedPath.includes('public') 
-            ? path.join(process.cwd(), normalizedPath.startsWith('/') ? normalizedPath.substring(1) : normalizedPath)
-            : null,
-          // Try removing leading slash if present
-          normalizedPath.startsWith('/') 
-            ? path.join(process.cwd(), normalizedPath.substring(1))
-            : null,
-        ].filter(Boolean) as string[];
+        // Build list of possible paths to try
+        const possiblePaths: string[] = [];
         
-        // Find the first path that exists
-        resolvedPath = possiblePaths.find(p => fs.existsSync(p)) || filePath;
+        // 1. Try as relative path from cwd (most common case: "public/uploads/file.csv")
+        if (!normalizedPath.startsWith('/')) {
+          possiblePaths.push(path.join(cwd, normalizedPath));
+        }
+        
+        // 2. Try with leading slash removed (in case it's stored with leading slash)
+        if (normalizedPath.startsWith('/')) {
+          possiblePaths.push(path.join(cwd, normalizedPath.substring(1)));
+        }
+        
+        // 3. Try just the filename in the uploads directory (fallback)
+        possiblePaths.push(path.join(cwd, 'public', 'uploads', filename));
+        
+        // 4. If path contains 'public/uploads', ensure we handle it correctly
+        if (normalizedPath.includes('public/uploads') || normalizedPath.includes('public\\uploads')) {
+          const uploadsIndex = normalizedPath.indexOf('public');
+          const relativePath = normalizedPath.substring(normalizedPath.indexOf('public'));
+          possiblePaths.push(path.join(cwd, relativePath));
+        }
+        
+        // Remove duplicates and find the first existing path
+        const uniquePaths = [...new Set(possiblePaths)];
+        resolvedPath = uniquePaths.find(p => fs.existsSync(p)) || filePath;
         
         if (!fs.existsSync(resolvedPath)) {
-          const errorMsg = `File not found: ${filePath}. Tried paths: ${possiblePaths.join(', ')}. Current working directory: ${process.cwd()}`;
+          // Before throwing, list all directories that DO exist for debugging
+          const uploadsDir = path.join(cwd, 'public', 'uploads');
+          const uploadsExists = fs.existsSync(uploadsDir);
+          const publicDir = path.join(cwd, 'public');
+          const publicExists = fs.existsSync(publicDir);
+          
+          let debugInfo = `Current working directory: ${cwd}\n`;
+          debugInfo += `Public directory exists: ${publicExists} (${publicDir})\n`;
+          debugInfo += `Uploads directory exists: ${uploadsExists} (${uploadsDir})\n`;
+          
+          if (uploadsExists) {
+            try {
+              const files = fs.readdirSync(uploadsDir);
+              debugInfo += `Files in uploads directory (first 10): ${files.slice(0, 10).join(', ')}\n`;
+            } catch (e) {
+              debugInfo += `Could not read uploads directory: ${e}\n`;
+            }
+          }
+          
+          const errorMsg = `File not found: ${filePath}\n` +
+            `Tried paths:\n${uniquePaths.map(p => `  - ${p}`).join('\n')}\n` +
+            debugInfo;
           console.error(errorMsg);
           throw new Error(errorMsg);
         }

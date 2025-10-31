@@ -169,8 +169,16 @@ export class SurveyService {
         }
       }
 
+      // Verify the file exists before storing the path
+      if (!fs.existsSync(filePath)) {
+        throw new ValidationError(`Uploaded file not found at path: ${filePath}`);
+      }
+
       // Store relative path from project root for portability
       const relativePath = filePath.replace(process.cwd(), '').replace(/\\/g, '/').replace(/^\//, '');
+      
+      // Log for debugging
+      console.log(`Storing survey file reference: ${relativePath} (original: ${filePath}, cwd: ${process.cwd()})`);
       
       const surveyRecord = {
         title: surveyData.title,
