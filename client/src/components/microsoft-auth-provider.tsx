@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { MsalProvider } from "@azure/msal-react";
 import { PublicClientApplication, Configuration, LogLevel } from "@azure/msal-browser";
 
@@ -66,6 +66,19 @@ export const MicrosoftAuthProvider: React.FC<MicrosoftAuthProviderProps> = ({
     
     return instance;
   }, [msalConfig]);
+
+  // Handle redirect promise on mount
+  useEffect(() => {
+    const handleRedirect = async () => {
+      try {
+        await msalInstance.handleRedirectPromise();
+      } catch (error) {
+        console.error("[MSAL] Error handling redirect:", error);
+      }
+    };
+    
+    handleRedirect();
+  }, [msalInstance]);
 
   return (
     <MsalProvider instance={msalInstance}>
