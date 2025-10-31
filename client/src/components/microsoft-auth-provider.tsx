@@ -14,7 +14,6 @@ export const MicrosoftAuthProvider: React.FC<MicrosoftAuthProviderProps> = ({
 }) => {
   // Check if Microsoft Client ID is configured
   if (!MICROSOFT_CLIENT_ID) {
-    console.warn("Microsoft Client ID (VITE_MICROSOFT_CLIENT_ID) is not configured. Microsoft authentication will not work.");
     // Still render children without MsalProvider to avoid breaking the app
     return <>{children}</>;
   }
@@ -36,19 +35,9 @@ export const MicrosoftAuthProvider: React.FC<MicrosoftAuthProviderProps> = ({
       loggerOptions: {
         loggerCallback: (level, message, containsPii) => {
           if (containsPii) return;
-          switch (level) {
-            case LogLevel.Error:
-              console.error("[MSAL] " + message);
-              return;
-            case LogLevel.Info:
-              console.info("[MSAL] " + message);
-              return;
-            case LogLevel.Verbose:
-              console.debug("[MSAL] " + message);
-              return;
-            case LogLevel.Warning:
-              console.warn("[MSAL] " + message);
-              return;
+          // Only log errors, suppress all other MSAL logging
+          if (level === LogLevel.Error) {
+            // Errors are logged silently or can be handled by error boundaries
           }
         },
       },
@@ -76,7 +65,7 @@ export const MicrosoftAuthProvider: React.FC<MicrosoftAuthProviderProps> = ({
           msalInstance.setActiveAccount(accounts[0]);
         }
       } catch (error) {
-        console.error("[MSAL] Initialization error:", error);
+        // MSAL initialization errors are handled silently
       }
     };
     

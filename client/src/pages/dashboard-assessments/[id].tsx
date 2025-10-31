@@ -109,7 +109,6 @@ export default function AssessmentDetailPage() {
         }
       }
 
-      console.error("Assessment loading error:", error);
       toast({
         title: "Error Loading Assessment",
         description: errorMessage,

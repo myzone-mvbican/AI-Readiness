@@ -150,10 +150,6 @@ export class CsvParser {
         }
       }
 
-      // Log successful path resolution for debugging
-      if (resolvedPath !== filePath) {
-        console.log(`Resolved CSV path: ${filePath} -> ${resolvedPath}`);
-      }
 
       const fileContent = fs.readFileSync(resolvedPath, "utf8");
 

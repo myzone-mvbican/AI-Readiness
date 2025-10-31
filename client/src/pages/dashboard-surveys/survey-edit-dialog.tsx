@@ -279,7 +279,6 @@ export default function SurveyEditDialog({
       formData.append("teamIds", JSON.stringify([]));
     }
 
-    console.log(formData.get("teamIds"));
 
     // If a new file was uploaded, include it
     if (csvFile) {

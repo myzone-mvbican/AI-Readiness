@@ -179,9 +179,6 @@ export class SurveyService {
       const projectRoot = getProjectRoot();
       const relativePath = filePath.replace(projectRoot, '').replace(/\\/g, '/').replace(/^\//, '');
       
-      // Log for debugging
-      console.log(`Storing survey file reference: ${relativePath} (original: ${filePath}, project root: ${projectRoot})`);
-      
       const surveyRecord = {
         title: surveyData.title,
         questionsCount: surveyData.questionsCount,
