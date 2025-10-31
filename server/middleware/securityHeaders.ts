@@ -139,7 +139,14 @@ const helmetConfig = {
         "https://fonts.googleapis.com",
         "https://fonts.gstatic.com",
       ],
-      connectSrc: ["'self'"],
+      connectSrc: [
+        "'self'",
+        "https://login.microsoftonline.com",
+        "https://*.microsoftonline.com",
+        "https://graph.microsoft.com",
+        "https://accounts.google.com",
+        "https://*.googleapis.com"
+      ],
       mediaSrc: ["'self'"], // Allow media access for microphone
       frameAncestors: ["'none'"],
       baseUri: ["'self'"],
