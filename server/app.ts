@@ -56,7 +56,7 @@ app.use(generateRequestId);
 
 // 2. HTTPS ENFORCEMENT (must be early in production)
 // Redirects HTTP to HTTPS in production only
-app.use(enforceHttps);
+// app.use(enforceHttps);
 app.use(validateHttpsCertificate);
 
 // 3. SECURITY HEADERS (Helmet.js + custom)
