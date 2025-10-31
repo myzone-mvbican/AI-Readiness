@@ -75,17 +75,15 @@ export default function GuestSurvey({
         }
       }
 
-      // Initialize answers only if none exist and no saved data
-      if (answers.length === 0) {
-        const initialAnswers = survey.questions.map(
-          (question: CsvQuestion) => ({
-            q: question.id,
-            a: null,
-          }),
-        );
+      // Initialize answers to match questions
+      const initialAnswers = survey.questions.map(
+        (question: CsvQuestion) => ({
+          q: question.id,
+          a: null,
+        }),
+      );
 
-        setAnswers(initialAnswers);
-      }
+      setAnswers(initialAnswers);
     }
   }, [surveyData, hasSavedAnswers, surveyId]);
 

@@ -90,15 +90,21 @@ export default function AssessmentDetailPage() {
   // Set questions/answers from fetched data
   useEffect(() => {
     if (assessment) {
-      // Load any existing saved answers from the assessment
-      if (assessment.answers && assessment.answers.length > 0) {
-        // Make sure to set the state
-        setAnswers(assessment.answers);
-      }
-
-      // Get survey template information
+      // Get survey template information first
       if (assessment.survey && assessment.survey.questions.length > 0) {
         setQuestions(assessment.survey.questions);
+
+        // Load any existing saved answers from the assessment
+        if (assessment.answers && assessment.answers.length > 0) {
+          setAnswers(assessment.answers);
+        } else {
+          // Initialize empty answers array to match questions
+          const initialAnswers = assessment.survey.questions.map((question: CsvQuestion) => ({
+            q: question.id,
+            a: null,
+          }));
+          setAnswers(initialAnswers);
+        }
       } else {
         toast({
           title: "Assessment Error",
