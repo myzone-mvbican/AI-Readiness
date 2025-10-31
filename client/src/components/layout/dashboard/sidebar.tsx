@@ -182,7 +182,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu className="p-2 mt-0">
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="bg-primary hover:bg-accent"
+              className="bg-primary text-white hover:bg-green-600 hover:text-white"
               tooltip="Start New Assessment"
               onClick={assessmentCreateModal.onOpen}
             >
