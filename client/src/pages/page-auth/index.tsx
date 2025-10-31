@@ -45,6 +45,21 @@ export default function AuthPage() {
   // Check if Microsoft OAuth is configured
   const isMicrosoftAuthEnabled = !!import.meta.env.VITE_MICROSOFT_CLIENT_ID;
 
+  // Detect if we're in a popup window (opened by MSAL)
+  const isPopup = window.opener && window.opener !== window;
+  
+  // If we're in a popup, show loading state while MSAL handles the callback
+  if (isPopup) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Completing sign-in...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Google login handlers
   const handleGoogleSuccess = async (credentialResponse: any) => {
     await googleLoginMutation.mutateAsync({
