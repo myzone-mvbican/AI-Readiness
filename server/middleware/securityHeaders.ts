@@ -77,8 +77,6 @@ export function enforceHttps(req: Request, res: Response, next: NextFunction) {
   // Get HTTPS URL for redirect
   const httpsUrl = getHttpsUrl(req);
 
-  // Log the redirect for monitoring
-  console.log(`HTTPS redirect: ${req.method} ${req.url} -> ${httpsUrl}`);
 
   // Redirect to HTTPS with 301 (permanent redirect)
   return res.redirect(301, httpsUrl);
