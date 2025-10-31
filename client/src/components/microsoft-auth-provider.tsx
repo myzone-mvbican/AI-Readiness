@@ -24,7 +24,7 @@ export const MicrosoftAuthProvider: React.FC<MicrosoftAuthProviderProps> = ({
     auth: {
       clientId: MICROSOFT_CLIENT_ID,
       authority: "https://login.microsoftonline.com/common", // Multi-tenant
-      redirectUri: window.location.origin, // Use current origin
+      redirectUri: window.location.origin + '/auth',
       postLogoutRedirectUri: window.location.origin,
       navigateToLoginRequestUrl: false,
     },
