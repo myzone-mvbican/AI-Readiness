@@ -1,5 +1,6 @@
 // server/utils/envValidation.ts
 import { z } from "zod";
+import path from "path";
 
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
@@ -91,3 +92,32 @@ export function validateEnv(): EnvConfig {
 
 // Export validated config
 export const env = validateEnv();
+
+/**
+ * Get the project root directory path
+ * Since server code is in server/, we go up one level to reach project root
+ * This works reliably regardless of where the process is started from
+ */
+export function getProjectRoot(): string {
+  // Use import.meta.dirname if available (Node 20.11+)
+  if (typeof import.meta.dirname !== 'undefined') {
+    // From server/utils/environment.ts, go up 2 levels to project root
+    return path.resolve(import.meta.dirname, '..', '..');
+  }
+  
+  // Fallback: use import.meta.url
+  const currentFile = import.meta.url;
+  const fileUrl = new URL(currentFile);
+  let filePath = fileUrl.pathname;
+  
+  // Handle Windows file:// URLs (they have /C:/... format)
+  if (process.platform === 'win32' && filePath.match(/^\/[A-Z]:\//)) {
+    filePath = filePath.substring(1);
+  }
+  
+  // Remove 'file://' prefix and convert to path
+  const currentDir = path.dirname(filePath);
+  
+  // Go up from server/utils/ to project root
+  return path.resolve(currentDir, '..', '..');
+}

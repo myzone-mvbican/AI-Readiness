@@ -3,6 +3,7 @@ import path from "path";
 import { SurveyRepository } from "../repositories/survey.repository"; 
 import { CompletionService } from "./completion.service";
 import { ValidationError, NotFoundError, ForbiddenError, InternalServerError } from "../utils/errors";
+import { getProjectRoot } from "../utils/environment";
 
 export interface CreateSurveyData {
   title: string;
@@ -175,10 +176,11 @@ export class SurveyService {
       }
 
       // Store relative path from project root for portability
-      const relativePath = filePath.replace(process.cwd(), '').replace(/\\/g, '/').replace(/^\//, '');
+      const projectRoot = getProjectRoot();
+      const relativePath = filePath.replace(projectRoot, '').replace(/\\/g, '/').replace(/^\//, '');
       
       // Log for debugging
-      console.log(`Storing survey file reference: ${relativePath} (original: ${filePath}, cwd: ${process.cwd()})`);
+      console.log(`Storing survey file reference: ${relativePath} (original: ${filePath}, project root: ${projectRoot})`);
       
       const surveyRecord = {
         title: surveyData.title,
@@ -267,7 +269,8 @@ export class SurveyService {
         }
 
         // Store relative path from project root for portability
-        const relativePath = newFilePath.replace(process.cwd(), '').replace(/\\/g, '/').replace(/^\//, '');
+        const projectRoot = getProjectRoot();
+        const relativePath = newFilePath.replace(projectRoot, '').replace(/\\/g, '/').replace(/^\//, '');
         updateFields.fileReference = relativePath;
       }
 
@@ -572,14 +575,15 @@ export class SurveyService {
     }
     
     // If it's a relative path, resolve from project root
-    const absolutePath = path.join(process.cwd(), filePath);
+    const projectRoot = getProjectRoot();
+    const absolutePath = path.join(projectRoot, filePath);
     if (fs.existsSync(absolutePath)) {
       return absolutePath;
     }
     
     // If the path contains the filename, try to find it in uploads
     const filename = path.basename(filePath);
-    const uploadsPath = path.join(process.cwd(), 'public', 'uploads', filename);
+    const uploadsPath = path.join(projectRoot, 'public', 'uploads', filename);
     if (fs.existsSync(uploadsPath)) {
       return uploadsPath;
     }

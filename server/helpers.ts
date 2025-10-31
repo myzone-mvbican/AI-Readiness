@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import Papa from "papaparse";
 import { CsvParseResult, CsvValidationResult } from "@shared/types";
+import { getProjectRoot } from "./utils/environment";
 
 export class CsvParser {
   static readonly REQUIRED_COLUMNS = [
@@ -91,43 +92,44 @@ export class CsvParser {
       } else {
         // Path doesn't exist, try to resolve it
         const filename = path.basename(filePath);
-        const cwd = process.cwd();
+        const projectRoot = getProjectRoot();
         
         // Build list of possible paths to try
         const possiblePaths: string[] = [];
         
-        // 1. Try as relative path from cwd (most common case: "public/uploads/file.csv")
+        // 1. Try as relative path from project root (most common case: "public/uploads/file.csv")
         if (!normalizedPath.startsWith('/')) {
-          possiblePaths.push(path.join(cwd, normalizedPath));
+          possiblePaths.push(path.join(projectRoot, normalizedPath));
         }
         
         // 2. Try with leading slash removed (in case it's stored with leading slash)
         if (normalizedPath.startsWith('/')) {
-          possiblePaths.push(path.join(cwd, normalizedPath.substring(1)));
+          possiblePaths.push(path.join(projectRoot, normalizedPath.substring(1)));
         }
         
         // 3. Try just the filename in the uploads directory (fallback)
-        possiblePaths.push(path.join(cwd, 'public', 'uploads', filename));
+        possiblePaths.push(path.join(projectRoot, 'public', 'uploads', filename));
         
         // 4. If path contains 'public/uploads', ensure we handle it correctly
         if (normalizedPath.includes('public/uploads') || normalizedPath.includes('public\\uploads')) {
           const uploadsIndex = normalizedPath.indexOf('public');
           const relativePath = normalizedPath.substring(normalizedPath.indexOf('public'));
-          possiblePaths.push(path.join(cwd, relativePath));
+          possiblePaths.push(path.join(projectRoot, relativePath));
         }
         
         // Remove duplicates and find the first existing path
-        const uniquePaths = [...new Set(possiblePaths)];
+        const uniquePaths = Array.from(new Set(possiblePaths));
         resolvedPath = uniquePaths.find(p => fs.existsSync(p)) || filePath;
         
         if (!fs.existsSync(resolvedPath)) {
           // Before throwing, list all directories that DO exist for debugging
-          const uploadsDir = path.join(cwd, 'public', 'uploads');
+          const uploadsDir = path.join(projectRoot, 'public', 'uploads');
           const uploadsExists = fs.existsSync(uploadsDir);
-          const publicDir = path.join(cwd, 'public');
+          const publicDir = path.join(projectRoot, 'public');
           const publicExists = fs.existsSync(publicDir);
           
-          let debugInfo = `Current working directory: ${cwd}\n`;
+          let debugInfo = `Project root: ${projectRoot}\n`;
+          debugInfo += `Process cwd: ${process.cwd()}\n`;
           debugInfo += `Public directory exists: ${publicExists} (${publicDir})\n`;
           debugInfo += `Uploads directory exists: ${uploadsExists} (${uploadsDir})\n`;
           

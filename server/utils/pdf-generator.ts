@@ -4,6 +4,7 @@ import path from "path";
 import { Assessment } from "@shared/types";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { AssessmentPDF } from "../../client/src/pdfs/assessment";
+import { getProjectRoot } from "./environment";
 
 export interface PDFGenerationResult {
   success: boolean;
@@ -30,7 +31,7 @@ export class PDFGenerator {
     userId?: string | number,
     guestEmail?: string,
   ): string {
-    const baseUploadPath = path.join(process.cwd(), "public", "uploads");
+    const baseUploadPath = path.join(getProjectRoot(), "public", "uploads");
 
     if (userId) {
       // Convert userId to string if it's a number
