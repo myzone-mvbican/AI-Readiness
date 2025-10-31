@@ -55,29 +55,32 @@ export const MicrosoftAuthProvider: React.FC<MicrosoftAuthProviderProps> = ({
     },
   }), []);
 
-  // Initialize MSAL instance
+  // Initialize MSAL instance with proper initialization
   const msalInstance = useMemo(() => {
-    const instance = new PublicClientApplication(msalConfig);
-    
-    // Handle account selection
-    if (!instance.getActiveAccount() && instance.getAllAccounts().length > 0) {
-      instance.setActiveAccount(instance.getAllAccounts()[0]);
-    }
-    
-    return instance;
+    return new PublicClientApplication(msalConfig);
   }, [msalConfig]);
 
-  // Handle redirect promise on mount
+  // Initialize MSAL and handle redirect promise
   useEffect(() => {
-    const handleRedirect = async () => {
+    const initializeMsal = async () => {
       try {
+        // Initialize MSAL before any operations
+        await msalInstance.initialize();
+        
+        // Handle redirect promise (for popup callback)
         await msalInstance.handleRedirectPromise();
+        
+        // Handle account selection
+        const accounts = msalInstance.getAllAccounts();
+        if (!msalInstance.getActiveAccount() && accounts.length > 0) {
+          msalInstance.setActiveAccount(accounts[0]);
+        }
       } catch (error) {
-        console.error("[MSAL] Error handling redirect:", error);
+        console.error("[MSAL] Initialization error:", error);
       }
     };
     
-    handleRedirect();
+    initializeMsal();
   }, [msalInstance]);
 
   return (
