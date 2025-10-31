@@ -183,15 +183,12 @@ const helmetConfig = {
   // Hide X-Powered-By header
   hidePoweredBy: true,
 
-  // Cross-Origin Embedder Policy (only in production)
-  crossOriginEmbedderPolicy:
-    env.NODE_ENV === "production"
-      ? { policy: "credentialless" as const }
-      : false,
+  // Cross-Origin Embedder Policy (disabled to allow OAuth popups)
+  crossOriginEmbedderPolicy: false,
 
-  // Cross-Origin Opener Policy (only in production)
-  crossOriginOpenerPolicy:
-    env.NODE_ENV === "production" ? { policy: "same-origin" as const } : false,
+  // Cross-Origin Opener Policy (disabled to allow OAuth popup communication)
+  // Note: Setting this to "same-origin" breaks Microsoft/Google OAuth popup flows
+  crossOriginOpenerPolicy: false,
 
   // Cross-Origin Resource Policy (only in production)
   crossOriginResourcePolicy:
