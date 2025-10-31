@@ -64,13 +64,44 @@ export class SurveyService {
 
       // Load questions from CSV file
       const { CsvParser } = await import("../helpers");
-      const { questions } = CsvParser.parse(survey.fileReference);
+      const parseResult = CsvParser.parse(survey.fileReference);
+
+      // Check if parsing was successful
+      if (!parseResult.isValid) {
+        const errorMessage = parseResult.errors.length > 0 
+          ? parseResult.errors.join('; ') 
+          : 'CSV file parsing failed';
+        
+        console.error(`Failed to parse CSV for survey ${surveyId}:`, {
+          fileReference: survey.fileReference,
+          errors: parseResult.errors,
+        });
+        
+        throw new InternalServerError(
+          `Failed to load survey questions: ${errorMessage}`
+        );
+      }
+
+      // Ensure questions array is not empty
+      if (!parseResult.questions || parseResult.questions.length === 0) {
+        console.error(`No questions found in CSV for survey ${surveyId}:`, {
+          fileReference: survey.fileReference,
+        });
+        throw new InternalServerError(
+          'Survey CSV file contains no valid questions'
+        );
+      }
 
       return {
         ...survey,
-        questions,
+        questions: parseResult.questions,
       };
-    } catch (error) {
+    } catch (error: any) {
+      // Re-throw InternalServerError as-is
+      if (error instanceof InternalServerError) {
+        throw error;
+      }
+      console.error("Error getting survey by ID:", error);
       throw new InternalServerError("Failed to get survey by ID");
     }
   } 

@@ -82,6 +82,9 @@ export class CsvParser {
       // Resolve the file path - handle both absolute and relative paths
       let resolvedPath = filePath;
       
+      // Normalize path separators
+      const normalizedPath = filePath.replace(/\\/g, '/');
+      
       // If the absolute path doesn't exist, try to resolve it relative to current working directory
       if (!fs.existsSync(filePath)) {
         // Extract just the filename part if it's a full path
@@ -89,18 +92,31 @@ export class CsvParser {
         
         // Try common locations
         const possiblePaths = [
-          path.join(process.cwd(), 'public', 'uploads', filename),
-          path.join(process.cwd(), filePath),
-          // If the path contains 'public/uploads', extract from there
-          filePath.includes('public') ? path.join(process.cwd(), filePath.substring(filePath.indexOf('public'))) : null,
+          path.join(process.cwd(), normalizedPath), // Try as-is relative to cwd
+          path.join(process.cwd(), 'public', 'uploads', filename), // Try in uploads folder with just filename
+          // If the path contains 'public', try it relative to cwd
+          normalizedPath.includes('public') 
+            ? path.join(process.cwd(), normalizedPath.startsWith('/') ? normalizedPath.substring(1) : normalizedPath)
+            : null,
+          // Try removing leading slash if present
+          normalizedPath.startsWith('/') 
+            ? path.join(process.cwd(), normalizedPath.substring(1))
+            : null,
         ].filter(Boolean) as string[];
         
         // Find the first path that exists
         resolvedPath = possiblePaths.find(p => fs.existsSync(p)) || filePath;
         
         if (!fs.existsSync(resolvedPath)) {
-          throw new Error(`File not found: ${filePath}. Tried: ${possiblePaths.join(', ')}`);
+          const errorMsg = `File not found: ${filePath}. Tried paths: ${possiblePaths.join(', ')}. Current working directory: ${process.cwd()}`;
+          console.error(errorMsg);
+          throw new Error(errorMsg);
         }
+      }
+
+      // Log successful path resolution for debugging
+      if (resolvedPath !== filePath) {
+        console.log(`Resolved CSV path: ${filePath} -> ${resolvedPath}`);
       }
 
       const fileContent = fs.readFileSync(resolvedPath, "utf8");
