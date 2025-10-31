@@ -75,7 +75,7 @@ export default function AssessmentDetailPage() {
   // Fetch assessment data
   const { data, isLoading, error } = useQuery<{
     success: boolean;
-    data?: { assessment: AssessmentResponse["assessment"] & { survey: Survey } };
+    data?: { assessment: AssessmentResponse["assessment"] & { survey: Survey & { questions?: CsvQuestion[] } } };
   }>({
     queryKey: [`/api/assessments/${assessmentId}`],
     enabled: !!assessmentId,
@@ -87,27 +87,64 @@ export default function AssessmentDetailPage() {
   // Is assessment completed?
   const isCompleted = assessment?.status === "completed";
 
+  // Handle errors from API
+  useEffect(() => {
+    if (error) {
+      let errorMessage = "Failed to load assessment data";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (error && typeof error === 'object') {
+        const err = error as { message?: string };
+        if (err.message) {
+          errorMessage = String(err.message);
+        }
+      }
+      
+      toast({
+        title: "Error Loading Assessment",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
+
   // Set questions/answers from fetched data
   useEffect(() => {
     if (assessment) {
       // Load any existing saved answers from the assessment
       if (assessment.answers && assessment.answers.length > 0) {
-        // Make sure to set the state
-        setAnswers(assessment.answers);
+        // Make sure to set the state - filter to only valid AssessmentAnswer types
+        const validAnswers = assessment.answers.filter(
+          (answer): answer is AssessmentAnswer => 
+            answer !== null && 
+            typeof answer === 'object' && 
+            'q' in answer
+        ) as AssessmentAnswer[];
+        setAnswers(validAnswers);
       }
 
       // Get survey template information
-      if (assessment.survey && assessment.survey.questions.length > 0) {
-        setQuestions(assessment.survey.questions);
+      if (assessment.survey) {
+        const surveyWithQuestions = assessment.survey as Survey & { questions?: CsvQuestion[] };
+        if (surveyWithQuestions.questions && surveyWithQuestions.questions.length > 0) {
+          setQuestions(surveyWithQuestions.questions);
+        } else {
+          toast({
+            title: "Assessment Error",
+            description: "This assessment doesn't have a valid survey template. The CSV file may be missing or invalid.",
+            variant: "destructive",
+          });
+        }
       } else {
         toast({
           title: "Assessment Error",
-          description: "This assessment doesn't have a valid survey template.",
+          description: "This assessment doesn't have an associated survey template.",
           variant: "destructive",
         });
       }
     }
-  }, [assessment]);
+  }, [assessment, toast]);
 
   // Find first unanswered question and navigate to it
   useEffect(() => {
