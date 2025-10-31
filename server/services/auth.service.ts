@@ -380,6 +380,69 @@ export class AuthService {
   }
 
   /**
+   * Connect Microsoft account to existing user
+   */
+  async connectMicrosoft(userId: number, credential: string): Promise<User> {
+    try {
+      // Verify Microsoft token
+      const microsoftUserData = await this.verifyMicrosoftToken(credential);
+      if (!microsoftUserData) {
+        throw new UnauthorizedError("Invalid Microsoft token");
+      }
+
+      // Check if Microsoft account is already connected to another user
+      const existingUser = await this.userRepository.getByMicrosoftId(microsoftUserData.sub);
+      if (existingUser && existingUser.id !== userId) {
+        throw new ConflictError("This Microsoft account is already connected to another user");
+      }
+
+      // Connect Microsoft account
+      const updatedUser = await this.userRepository.connectMicrosoftAccount(
+        userId,
+        microsoftUserData.sub
+      );
+
+      return updatedUser;
+    } catch (error) {
+      if (error instanceof UnauthorizedError || error instanceof ConflictError) {
+        throw error;
+      }
+      console.error("Microsoft connect error:", error);
+      throw new InternalServerError("Failed to connect Microsoft account");
+    }
+  }
+
+  /**
+   * Disconnect Microsoft account from user
+   */
+  async disconnectMicrosoft(userId: number): Promise<User> {
+    try {
+      const user = await this.userRepository.getById(userId);
+      if (!user) {
+        throw new NotFoundError("User");
+      }
+
+      if (!user.microsoftId) {
+        throw new ValidationError("No Microsoft account is connected to this user");
+      }
+
+      // Ensure user has a password before disconnecting Microsoft
+      if (!user.password) {
+        throw new ValidationError("Cannot disconnect Microsoft account without a password set");
+      }
+
+      const updatedUser = await this.userRepository.disconnectMicrosoftAccount(userId);
+      return updatedUser;
+    } catch (error) {
+      if (error instanceof NotFoundError || error instanceof ValidationError) {
+        throw error;
+      }
+      console.error("Microsoft disconnect error:", error);
+      throw new InternalServerError("Failed to disconnect Microsoft account");
+    }
+  }
+
+  /**
    * Update user profile
    */
   async updateProfile(userId: number, profileData: UpdateUser): Promise<User> {

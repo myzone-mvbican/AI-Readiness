@@ -268,6 +268,55 @@ export class AuthController {
     }
   }
 
+  static async connectMicrosoft(req: Request, res: Response) {
+    try {
+      // req.body is already validated by middleware
+      const userId = req.user!.id;
+      const { credential } = req.body;
+
+      const updatedUser = await AuthController.authService.connectMicrosoft(userId, credential);
+
+      // Sanitize user data - remove all sensitive fields
+      const {
+        password,
+        passwordHistory,
+        resetToken,
+        resetTokenExpiry,
+        failedLoginAttempts,
+        accountLockedUntil,
+        ...safeUser
+      } = updatedUser;
+
+      return ApiResponse.success(res, { user: safeUser });
+    } catch (error) {
+      if (error instanceof UnauthorizedError) {
+        return ApiResponse.unauthorized(res, error.message);
+      }
+      if (error instanceof ConflictError) {
+        return ApiResponse.conflict(res, error.message);
+      }
+      return ApiResponse.internalError(res, "Failed to connect Microsoft account");
+    }
+  }
+
+  static async disconnectMicrosoft(req: Request, res: Response) {
+    try {
+      const userId = req.user!.id;
+      const updatedUser = await AuthController.authService.disconnectMicrosoft(userId);
+      const { password, ...userWithoutPassword } = updatedUser;
+
+      return ApiResponse.success(res, { user: userWithoutPassword });
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        return ApiResponse.notFound(res, error.message);
+      }
+      if (error instanceof ValidationError) {
+        return ApiResponse.validationError(res, error.message, error.details);
+      }
+      return ApiResponse.internalError(res, error instanceof Error ? error.message : "Failed to disconnect Microsoft account");
+    }
+  }
+
   static async getPasswordStrength(req: Request, res: Response) {
     try {
       const { password } = req.body;
