@@ -67,6 +67,9 @@ const envSchema = z.object({
 
   // Google OAuth
   GOOGLE_CLIENT_ID: z.string().min(1, "GOOGLE_CLIENT_ID is required"),
+  
+  // Microsoft OAuth
+  MICROSOFT_CLIENT_ID: z.string().optional(),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

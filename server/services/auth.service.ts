@@ -747,7 +747,7 @@ export class AuthService {
    * Refresh access token using refresh token
    */
   async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string }> {
-    const newAccessToken = TokenService.refreshAccessToken(refreshToken);
+    const newAccessToken = await TokenService.refreshAccessToken(refreshToken);
     if (!newAccessToken) {
       throw new UnauthorizedError("Invalid or expired refresh token");
     }
@@ -765,7 +765,7 @@ export class AuthService {
    * Logout from specific session
    */
   async logoutSession(refreshToken: string): Promise<void> {
-    const decoded = TokenService.verifyRefreshToken(refreshToken);
+    const decoded = await TokenService.verifyRefreshToken(refreshToken);
     if (decoded) {
       TokenService.revokeRefreshToken(decoded.tokenId);
     }
