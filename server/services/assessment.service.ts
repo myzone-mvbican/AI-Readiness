@@ -113,10 +113,17 @@ export class AssessmentService {
       }
       return assessment;
     } catch (error: any) {
+      // Re-throw known error types as-is
       if (error instanceof NotFoundError) {
         throw error;
       }
-      throw new InternalServerError("Failed to retrieve assessment");
+      // Preserve InternalServerError messages for better debugging
+      if (error instanceof InternalServerError) {
+        throw error;
+      }
+      throw new InternalServerError(
+        error?.message || "Failed to retrieve assessment"
+      );
     }
   }
 
@@ -137,10 +144,17 @@ export class AssessmentService {
 
       return assessment;
     } catch (error: any) {
+      // Re-throw known error types as-is
       if (error instanceof NotFoundError || error instanceof ForbiddenError) {
         throw error;
       }
-      throw new InternalServerError("Failed to retrieve assessment");
+      // Preserve InternalServerError messages for better debugging
+      if (error instanceof InternalServerError) {
+        throw error;
+      }
+      throw new InternalServerError(
+        error?.message || "Failed to retrieve assessment"
+      );
     }
   }
 

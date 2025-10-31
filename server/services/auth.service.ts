@@ -401,7 +401,6 @@ export class AuthService {
       try {
         passwordHistory = JSON.parse(user.passwordHistory || '[]');
       } catch (error) {
-        console.warn('Failed to parse password history, starting fresh');
         passwordHistory = [];
       }
 

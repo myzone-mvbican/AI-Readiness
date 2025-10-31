@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import Papa from "papaparse";
 import { CsvParseResult, CsvValidationResult } from "@shared/types";
+import { getProjectRoot } from "./utils/environment";
 
 export class CsvParser {
   static readonly REQUIRED_COLUMNS = [
@@ -82,24 +83,45 @@ export class CsvParser {
       // Resolve the file path - handle both absolute and relative paths
       let resolvedPath = filePath;
       
-      // If the absolute path doesn't exist, try to resolve it relative to current working directory
-      if (!fs.existsSync(filePath)) {
-        // Extract just the filename part if it's a full path
+      // Normalize path separators (convert backslashes to forward slashes)
+      const normalizedPath = filePath.replace(/\\/g, '/');
+      
+      // Check if the path exists as-is (could be absolute)
+      if (fs.existsSync(filePath)) {
+        resolvedPath = filePath;
+      } else {
+        // Path doesn't exist, try to resolve it
         const filename = path.basename(filePath);
+        const projectRoot = getProjectRoot();
         
-        // Try common locations
-        const possiblePaths = [
-          path.join(process.cwd(), 'public', 'uploads', filename),
-          path.join(process.cwd(), filePath),
-          // If the path contains 'public/uploads', extract from there
-          filePath.includes('public') ? path.join(process.cwd(), filePath.substring(filePath.indexOf('public'))) : null,
-        ].filter(Boolean) as string[];
+        // Build list of possible paths to try
+        const possiblePaths: string[] = [];
         
-        // Find the first path that exists
-        resolvedPath = possiblePaths.find(p => fs.existsSync(p)) || filePath;
+        // 1. Try as relative path from project root (most common case: "public/uploads/file.csv")
+        if (!normalizedPath.startsWith('/')) {
+          possiblePaths.push(path.join(projectRoot, normalizedPath));
+        }
+        
+        // 2. Try with leading slash removed (in case it's stored with leading slash)
+        if (normalizedPath.startsWith('/')) {
+          possiblePaths.push(path.join(projectRoot, normalizedPath.substring(1)));
+        }
+        
+        // 3. Try just the filename in the uploads directory (fallback)
+        possiblePaths.push(path.join(projectRoot, 'public', 'uploads', filename));
+        
+        // 4. If path contains 'public/uploads', ensure we handle it correctly
+        if (normalizedPath.includes('public/uploads') || normalizedPath.includes('public\\uploads')) {
+          const relativePath = normalizedPath.substring(normalizedPath.indexOf('public'));
+          possiblePaths.push(path.join(projectRoot, relativePath));
+        }
+        
+        // Remove duplicates and find the first existing path
+        const uniquePaths = Array.from(new Set(possiblePaths));
+        resolvedPath = uniquePaths.find(p => fs.existsSync(p)) || filePath;
         
         if (!fs.existsSync(resolvedPath)) {
-          throw new Error(`File not found: ${filePath}. Tried: ${possiblePaths.join(', ')}`);
+          throw new Error(`File not found: ${filePath}. Tried paths: ${uniquePaths.join(', ')}`);
         }
       }
 

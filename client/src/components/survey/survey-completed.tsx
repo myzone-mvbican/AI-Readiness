@@ -176,12 +176,7 @@ export default function SurveyCompleted({
           ) : undefined,
         });
 
-        // Log PDF generation info for debugging
-        if (result.data.pdfGenerated) {
-          console.log("PDF automatically generated and saved:", result.data.pdfPath);
-        }
       } catch (error) {
-        console.error("Recommendations error:", error);
         toast({
           title: "Error",
           description: "Failed to generate recommendations.",

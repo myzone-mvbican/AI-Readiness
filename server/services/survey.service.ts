@@ -3,6 +3,7 @@ import path from "path";
 import { SurveyRepository } from "../repositories/survey.repository"; 
 import { CompletionService } from "./completion.service";
 import { ValidationError, NotFoundError, ForbiddenError, InternalServerError } from "../utils/errors";
+import { getProjectRoot } from "../utils/environment";
 
 export interface CreateSurveyData {
   title: string;
@@ -64,13 +65,35 @@ export class SurveyService {
 
       // Load questions from CSV file
       const { CsvParser } = await import("../helpers");
-      const { questions } = CsvParser.parse(survey.fileReference);
+      const parseResult = CsvParser.parse(survey.fileReference);
+
+      // Check if parsing was successful
+      if (!parseResult.isValid) {
+        const errorMessage = parseResult.errors.length > 0 
+          ? parseResult.errors.join('; ') 
+          : 'CSV file parsing failed';
+        
+        throw new InternalServerError(
+          `Failed to load survey questions: ${errorMessage}`
+        );
+      }
+
+      // Ensure questions array is not empty
+      if (!parseResult.questions || parseResult.questions.length === 0) {
+        throw new InternalServerError(
+          'Survey CSV file contains no valid questions'
+        );
+      }
 
       return {
         ...survey,
-        questions,
+        questions: parseResult.questions,
       };
-    } catch (error) {
+    } catch (error: any) {
+      // Re-throw InternalServerError as-is
+      if (error instanceof InternalServerError) {
+        throw error;
+      }
       throw new InternalServerError("Failed to get survey by ID");
     }
   } 
@@ -138,8 +161,14 @@ export class SurveyService {
         }
       }
 
+      // Verify the file exists before storing the path
+      if (!fs.existsSync(filePath)) {
+        throw new ValidationError(`Uploaded file not found at path: ${filePath}`);
+      }
+
       // Store relative path from project root for portability
-      const relativePath = filePath.replace(process.cwd(), '').replace(/\\/g, '/').replace(/^\//, '');
+      const projectRoot = getProjectRoot();
+      const relativePath = filePath.replace(projectRoot, '').replace(/\\/g, '/').replace(/^\//, '');
       
       const surveyRecord = {
         title: surveyData.title,
@@ -227,8 +256,9 @@ export class SurveyService {
           }
         }
 
-        // Store relative path from project root for portability
-        const relativePath = newFilePath.replace(process.cwd(), '').replace(/\\/g, '/').replace(/^\//, '');
+         // Store relative path from project root for portability
+         const projectRoot = getProjectRoot();
+         const relativePath = newFilePath.replace(projectRoot, '').replace(/\\/g, '/').replace(/^\//, '');
         updateFields.fileReference = relativePath;
       }
 
@@ -533,14 +563,15 @@ export class SurveyService {
     }
     
     // If it's a relative path, resolve from project root
-    const absolutePath = path.join(process.cwd(), filePath);
+    const projectRoot = getProjectRoot();
+    const absolutePath = path.join(projectRoot, filePath);
     if (fs.existsSync(absolutePath)) {
       return absolutePath;
     }
     
     // If the path contains the filename, try to find it in uploads
     const filename = path.basename(filePath);
-    const uploadsPath = path.join(process.cwd(), 'public', 'uploads', filename);
+    const uploadsPath = path.join(projectRoot, 'public', 'uploads', filename);
     if (fs.existsSync(uploadsPath)) {
       return uploadsPath;
     }

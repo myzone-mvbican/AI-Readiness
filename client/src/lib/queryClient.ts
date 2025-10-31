@@ -78,8 +78,6 @@ export async function apiRequest(
     if (token) {
       headers['x-csrf-token'] = token;
       // CSRF token included in request
-    } else {
-      console.warn('No CSRF token available for request - should have been fetched on page load');
     }
   }
 

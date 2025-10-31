@@ -100,7 +100,6 @@ export function Assessment() {
             if (validTeam) {
               setSelectedTeam(parsedTeam);
             } else {
-              console.warn("Selected team not found in teams data, clearing...");
               localStorage.removeItem("selectedTeam");
               setSelectedTeam(null);
             }
@@ -109,7 +108,6 @@ export function Assessment() {
             setSelectedTeam(parsedTeam);
           }
         } catch (e) {
-          console.warn("Invalid team data in localStorage, clearing...");
           localStorage.removeItem("selectedTeam");
           setSelectedTeam(null);
         }

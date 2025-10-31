@@ -65,7 +65,8 @@ import {
 import { 
   validateCSRFToken
 } from "./middleware/csrf"; 
-import { requestSizeLimiter, requestSizeLimits } from "./middleware/requestSizeLimits"; 
+import { requestSizeLimiter, requestSizeLimits } from "./middleware/requestSizeLimits";
+import { getProjectRoot } from "./utils/environment"; 
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint (no rate limiting)
@@ -75,7 +76,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // PDF download route - serve PDF files with correct headers
   app.get("/uploads/*", (req, res) => {
-    const filePath = path.join(process.cwd(), "public", req.path);
+    const filePath = path.join(getProjectRoot(), "public", req.path);
 
     // Check if file exists
     if (!fs.existsSync(filePath)) {

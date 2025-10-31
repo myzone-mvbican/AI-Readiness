@@ -76,7 +76,6 @@ export const auth = async (req: Request, res: Response, next: NextFunction) => {
       }
     } catch (e) {
       // Fallback to client if there's any error
-      console.warn("Error determining user role, defaulting to client", e);
     }
 
     req.user = {

@@ -14,7 +14,6 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({
 }) => {
   // Check if Google Client ID is configured
   if (!GOOGLE_CLIENT_ID) {
-    console.warn("Google Client ID (GOOGLE_CLIENT_ID) is not configured. Google authentication will not work.");
     // Still render children without GoogleOAuthProvider to avoid breaking the app
     return <>{children}</>;
   }
@@ -22,8 +21,8 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({
   return (
     <GoogleOAuthProvider 
       clientId={GOOGLE_CLIENT_ID}
-      onScriptLoadError={() => console.error("Google OAuth script failed to load")}
-      onScriptLoadSuccess={() => console.log("Google OAuth script loaded successfully")}
+      onScriptLoadError={() => {}}
+      onScriptLoadSuccess={() => {}}
     >
       {children}
     </GoogleOAuthProvider>
