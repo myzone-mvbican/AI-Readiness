@@ -96,15 +96,20 @@ export default function AssessmentDetailPage() {
     if (error) {
       let errorMessage = "Failed to load assessment data";
 
+      // React Query errors are typically Error instances
       if (error instanceof Error) {
-        errorMessage = error.message;
+        errorMessage = error.message || errorMessage;
       } else if (error && typeof error === "object") {
-        const err = error as { message?: string };
-        if (err.message) {
+        // Try to extract message from error object
+        const err = error as { message?: string; error?: { message?: string } };
+        if (err.error?.message) {
+          errorMessage = err.error.message;
+        } else if (err.message) {
           errorMessage = String(err.message);
         }
       }
 
+      console.error("Assessment loading error:", error);
       toast({
         title: "Error Loading Assessment",
         description: errorMessage,
