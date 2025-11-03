@@ -57,7 +57,7 @@ export const userTeams = pgTable("user_teams", {
 export const surveys = pgTable("surveys", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  fileReference: text("file_reference").notNull(),
+  fileReference: text("file_reference"), // Nullable - no longer used since we store questions in database
   questionsCount: integer("questions_count").notNull(),
   questions: jsonb("questions").$type<Array<{ id: number; question: string; category: string; details: string }>>(), // JSONB array of CsvQuestion objects
   authorId: integer("author_id").notNull().references(() => users.id),
