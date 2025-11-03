@@ -1,9 +1,6 @@
-import fs from "fs";
-import path from "path";
 import { SurveyRepository } from "../repositories/survey.repository"; 
 import { CompletionService } from "./completion.service";
 import { ValidationError, NotFoundError, ForbiddenError, InternalServerError } from "../utils/errors";
-import { getProjectRoot } from "../utils/environment";
 
 export interface CreateSurveyData {
   title: string;
@@ -136,7 +133,7 @@ export class SurveyService {
    */
   static async createSurvey(
     surveyData: CreateSurveyData,
-    filePath: string
+    fileBuffer: Buffer
   ): Promise<any> {
     try {
       // Validate required fields
@@ -156,14 +153,13 @@ export class SurveyService {
         }
       }
 
-      // Verify the file exists before storing the path
-      if (!fs.existsSync(filePath)) {
-        throw new ValidationError(`Uploaded file not found at path: ${filePath}`);
+      if (!fileBuffer || !Buffer.isBuffer(fileBuffer)) {
+        throw new ValidationError("CSV file buffer is required");
       }
 
-      // Parse CSV file to extract questions
+      // Parse CSV file buffer to extract questions
       const { CsvParser } = await import("../helpers");
-      const parseResult = CsvParser.parse(filePath);
+      const parseResult = CsvParser.parseFromContent(fileBuffer);
 
       if (!parseResult.isValid) {
         const errorMessage = parseResult.errors.length > 0 
@@ -181,17 +177,13 @@ export class SurveyService {
       if (surveyData.questionsCount !== actualQuestionsCount) {
         console.warn(`Questions count mismatch: provided ${surveyData.questionsCount}, parsed ${actualQuestionsCount}. Using parsed count.`);
       }
-
-      // Store relative path from project root for portability
-      const projectRoot = getProjectRoot();
-      const relativePath = filePath.replace(projectRoot, '').replace(/\\/g, '/').replace(/^\//, '');
       
       const surveyRecord = {
         title: surveyData.title,
         questionsCount: actualQuestionsCount,
         questions: parseResult.questions, // Store questions as JSONB
         status: surveyData.status || "draft",
-        fileReference: relativePath,
+        fileReference: null, // No longer storing file paths
         authorId: surveyData.authorId,
         completionLimit: surveyData.completionLimit,
       };
@@ -201,17 +193,6 @@ export class SurveyService {
       // Assign teams if provided
       if (surveyData.teamIds && surveyData.teamIds.length > 0) {
         await this.surveyRepository.updateTeams(newSurvey.id, surveyData.teamIds);
-      }
-
-      // Delete CSV file after successful parsing and storage
-      try {
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-          console.log(`Deleted CSV file after parsing: ${filePath}`);
-        }
-      } catch (fileError) {
-        console.error(`Warning: Failed to delete CSV file ${filePath}:`, fileError);
-        // Don't throw - survey was created successfully, file cleanup can happen later
       }
 
       return newSurvey;
@@ -231,7 +212,7 @@ export class SurveyService {
     surveyId: number,
     updateData: UpdateSurveyData,
     userId: number,
-    newFilePath?: string
+    newFileBuffer?: Buffer
   ): Promise<any> {
     try {
       // Check if survey exists
@@ -271,15 +252,14 @@ export class SurveyService {
       }
 
       // Handle file update
-      if (newFilePath) {
-        // Verify the file exists before processing
-        if (!fs.existsSync(newFilePath)) {
-          throw new ValidationError(`Uploaded file not found at path: ${newFilePath}`);
+      if (newFileBuffer) {
+        if (!Buffer.isBuffer(newFileBuffer)) {
+          throw new ValidationError("Invalid file buffer");
         }
 
-        // Parse CSV file to extract questions
+        // Parse CSV file buffer to extract questions
         const { CsvParser } = await import("../helpers");
-        const parseResult = CsvParser.parse(newFilePath);
+        const parseResult = CsvParser.parseFromContent(newFileBuffer);
 
         if (!parseResult.isValid) {
           const errorMessage = parseResult.errors.length > 0 
@@ -296,34 +276,7 @@ export class SurveyService {
         const actualQuestionsCount = parseResult.questions.length;
         updateFields.questionsCount = actualQuestionsCount;
         updateFields.questions = parseResult.questions; // Store questions as JSONB
-
-        // Delete the old file if it exists
-        if (existingSurvey.fileReference) {
-          try {
-            const oldFilePath = this.resolveFilePath(existingSurvey.fileReference);
-            if (fs.existsSync(oldFilePath)) {
-              fs.unlinkSync(oldFilePath);
-            }
-          } catch (fileError) {
-            console.error(`Error deleting old file ${existingSurvey.fileReference}:`, fileError);
-          }
-        }
-
-        // Store relative path from project root for portability
-        const projectRoot = getProjectRoot();
-        const relativePath = newFilePath.replace(projectRoot, '').replace(/\\/g, '/').replace(/^\//, '');
-        updateFields.fileReference = relativePath;
-
-        // Delete the new CSV file after successful parsing and storage
-        try {
-          if (fs.existsSync(newFilePath)) {
-            fs.unlinkSync(newFilePath);
-            console.log(`Deleted CSV file after parsing: ${newFilePath}`);
-          }
-        } catch (fileError) {
-          console.error(`Warning: Failed to delete CSV file ${newFilePath}:`, fileError);
-          // Don't throw - survey was updated successfully, file cleanup can happen later
-        }
+        updateFields.fileReference = null; // No longer storing file paths
       } else if (updateData.questionsCount) {
         // Only allow questionsCount update if no new file is provided
         // (questions count should match actual questions array length)
@@ -366,18 +319,6 @@ export class SurveyService {
       // Ensure the user is the author of the survey
       if (existingSurvey.authorId !== userId) {
         throw new ForbiddenError("Only the author can delete this survey");
-      }
-
-      // Delete the associated file if it exists
-      if (existingSurvey.fileReference) {
-        try {
-          const filePath = this.resolveFilePath(existingSurvey.fileReference);
-          if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-          }
-        } catch (fileError) {
-          console.error(`Error deleting file ${existingSurvey.fileReference}:`, fileError);
-        }
       }
 
       return await this.surveyRepository.delete(surveyId);
@@ -470,15 +411,15 @@ export class SurveyService {
   }
 
   /**
-   * Process CSV file and validate its content
+   * Process CSV buffer and validate its content
    */
-  static async processCsvFile(filePath: string): Promise<{ questionsCount: number; isValid: boolean }> {
+  static async processCsvBuffer(fileBuffer: Buffer): Promise<{ questionsCount: number; isValid: boolean }> {
     try {
-      if (!fs.existsSync(filePath)) {
-        throw new ValidationError("CSV file not found");
+      if (!fileBuffer || !Buffer.isBuffer(fileBuffer)) {
+        throw new ValidationError("CSV file buffer is required");
       }
 
-      const fileContent = fs.readFileSync(filePath, 'utf-8');
+      const fileContent = fileBuffer.toString('utf-8');
       const lines = fileContent.split('\n').filter(line => line.trim());
       
       if (lines.length === 0) {
@@ -500,7 +441,7 @@ export class SurveyService {
       if (error instanceof ValidationError) {
         throw error;
       }
-      console.error("Error processing CSV file:", error);
+      console.error("Error processing CSV buffer:", error);
       throw new InternalServerError("Failed to process CSV file");
     }
   }
@@ -582,7 +523,7 @@ export class SurveyService {
         title,
         questionsCount: questionsCountNum,
         status: status || "draft",
-        fileReference: req.file.path, // This will be overridden by the service
+        fileReference: '', // Not used anymore, kept for interface compatibility
         authorId: req.user!.id,
         completionLimit: completionLimitNum,
         teamIds: selectedTeamIds,
@@ -594,55 +535,4 @@ export class SurveyService {
     }
   }
 
-  /**
-   * Generate unique filename
-   */
-  static generateUniqueFilename(originalName: string): string {
-    const timestamp = Date.now();
-    const randomSuffix = Math.random().toString(36).substring(2, 8);
-    const extension = path.extname(originalName);
-    const baseName = path.basename(originalName, extension);
-    
-    return `${baseName}-${timestamp}-${randomSuffix}${extension}`;
-  }
-
-  /**
-   * Clean up temporary file
-   */
-  static cleanupFile(filePath: string): void {
-    try {
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-    } catch (error) {
-      console.error(`Error cleaning up file ${filePath}:`, error);
-    }
-  }
-
-  /**
-   * Resolve a file path that might be absolute or relative
-   */
-  private static resolveFilePath(filePath: string): string {
-    // If it's already an absolute path that exists, return it
-    if (path.isAbsolute(filePath) && fs.existsSync(filePath)) {
-      return filePath;
-    }
-    
-    // If it's a relative path, resolve from project root
-    const projectRoot = getProjectRoot();
-    const absolutePath = path.join(projectRoot, filePath);
-    if (fs.existsSync(absolutePath)) {
-      return absolutePath;
-    }
-    
-    // If the path contains the filename, try to find it in uploads
-    const filename = path.basename(filePath);
-    const uploadsPath = path.join(projectRoot, 'public', 'uploads', filename);
-    if (fs.existsSync(uploadsPath)) {
-      return uploadsPath;
-    }
-    
-    // Return the original path if nothing else works
-    return filePath;
-  }
 }

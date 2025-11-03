@@ -1,8 +1,5 @@
-import fs from "fs";
-import path from "path";
 import Papa from "papaparse";
 import { CsvParseResult, CsvValidationResult } from "@shared/types";
-import { getProjectRoot } from "./utils/environment";
 
 export class CsvParser {
   static readonly REQUIRED_COLUMNS = [
@@ -78,82 +75,17 @@ export class CsvParser {
     };
   }
 
-  static parse(filePath: string): CsvParseResult {
+  /**
+   * Parse CSV from file buffer or string content
+   */
+  static parseFromContent(fileContent: string | Buffer): CsvParseResult {
     try {
-      // Resolve the file path - handle both absolute and relative paths
-      let resolvedPath = filePath;
-      
-      // Normalize path separators (convert backslashes to forward slashes)
-      const normalizedPath = filePath.replace(/\\/g, '/');
-      
-      // Check if the path exists as-is (could be absolute)
-      if (fs.existsSync(filePath)) {
-        resolvedPath = filePath;
-      } else {
-        // Path doesn't exist, try to resolve it
-        const filename = path.basename(filePath);
-        const projectRoot = getProjectRoot();
-        
-        // Build list of possible paths to try
-        const possiblePaths: string[] = [];
-        
-        // 1. Try as relative path from project root (most common case: "public/uploads/file.csv")
-        if (!normalizedPath.startsWith('/')) {
-          possiblePaths.push(path.join(projectRoot, normalizedPath));
-        }
-        
-        // 2. Try with leading slash removed (in case it's stored with leading slash)
-        if (normalizedPath.startsWith('/')) {
-          possiblePaths.push(path.join(projectRoot, normalizedPath.substring(1)));
-        }
-        
-        // 3. Try just the filename in the uploads directory (fallback)
-        possiblePaths.push(path.join(projectRoot, 'public', 'uploads', filename));
-        
-        // 4. If path contains 'public/uploads', ensure we handle it correctly
-        if (normalizedPath.includes('public/uploads') || normalizedPath.includes('public\\uploads')) {
-          const uploadsIndex = normalizedPath.indexOf('public');
-          const relativePath = normalizedPath.substring(normalizedPath.indexOf('public'));
-          possiblePaths.push(path.join(projectRoot, relativePath));
-        }
-        
-        // Remove duplicates and find the first existing path
-        const uniquePaths = Array.from(new Set(possiblePaths));
-        resolvedPath = uniquePaths.find(p => fs.existsSync(p)) || filePath;
-        
-        if (!fs.existsSync(resolvedPath)) {
-          // Before throwing, list all directories that DO exist for debugging
-          const uploadsDir = path.join(projectRoot, 'public', 'uploads');
-          const uploadsExists = fs.existsSync(uploadsDir);
-          const publicDir = path.join(projectRoot, 'public');
-          const publicExists = fs.existsSync(publicDir);
-          
-          let debugInfo = `Project root: ${projectRoot}\n`;
-          debugInfo += `Process cwd: ${process.cwd()}\n`;
-          debugInfo += `Public directory exists: ${publicExists} (${publicDir})\n`;
-          debugInfo += `Uploads directory exists: ${uploadsExists} (${uploadsDir})\n`;
-          
-          if (uploadsExists) {
-            try {
-              const files = fs.readdirSync(uploadsDir);
-              debugInfo += `Files in uploads directory (first 10): ${files.slice(0, 10).join(', ')}\n`;
-            } catch (e) {
-              debugInfo += `Could not read uploads directory: ${e}\n`;
-            }
-          }
-          
-          const errorMsg = `File not found: ${filePath}\n` +
-            `Tried paths:\n${uniquePaths.map(p => `  - ${p}`).join('\n')}\n` +
-            debugInfo;
-          console.error(errorMsg);
-          throw new Error(errorMsg);
-        }
-      }
+      // Convert buffer to string if needed
+      const content = Buffer.isBuffer(fileContent)
+        ? fileContent.toString('utf-8')
+        : fileContent;
 
-
-      const fileContent = fs.readFileSync(resolvedPath, "utf8");
-
-      const validation = this.validate(fileContent);
+      const validation = this.validate(content);
 
       if (!validation.isValid) {
         return {
@@ -163,7 +95,7 @@ export class CsvParser {
         };
       }
 
-      const parsedData = Papa.parse(fileContent, {
+      const parsedData = Papa.parse(content, {
         header: true,
         skipEmptyLines: true,
         dynamicTyping: false, // Keep everything as strings
@@ -185,10 +117,10 @@ export class CsvParser {
         questions,
       };
     } catch (error) {
-      console.error("Error parsing CSV file:", error);
+      console.error("Error parsing CSV content:", error);
       return {
         isValid: false,
-        errors: [`Error parsing CSV file: ${error}`],
+        errors: [`Error parsing CSV content: ${error}`],
         questions: [],
       };
     }

@@ -92,7 +92,7 @@ export class SurveyController {
 
       const newSurvey = await SurveyService.createSurvey(
         surveyData,
-        req.file!.path,
+        req.file!.buffer,
       );
       return ApiResponse.success(res, { survey: newSurvey }, 201);
     } catch (error: any) {
@@ -114,9 +114,6 @@ export class SurveyController {
     try {
       const surveyId = parseInt(req.params.id);
       if (isNaN(surveyId)) {
-        if (req.file) {
-          SurveyService.cleanupFile(req.file.path);
-        }
         return ApiResponse.validationError(
           res,
           { surveyId: "Invalid survey ID" },
@@ -160,7 +157,7 @@ export class SurveyController {
         surveyId,
         updateData,
         req.user!.id,
-        req.file?.path,
+        req.file?.buffer,
       );
 
       return ApiResponse.success(res, { survey: updatedSurvey });
