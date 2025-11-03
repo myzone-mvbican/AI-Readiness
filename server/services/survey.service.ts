@@ -6,7 +6,7 @@ export interface CreateSurveyData {
   title: string;
   questionsCount: number;
   status?: string;
-  fileReference: string;
+  fileReference?: string;
   authorId: number;
   completionLimit?: number | null;
   teamIds?: number[];
