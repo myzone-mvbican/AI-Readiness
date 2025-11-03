@@ -11,6 +11,7 @@ export interface Survey {
   updatedAt: Date;
   fileReference: string;
   questionsCount: number;
+  questions?: Array<{ id: number; question: string; category: string; details: string }> | null;
   authorId: number;
   status: string;
   completionLimit: number | null;

@@ -63,39 +63,25 @@ export class SurveyService {
         return null;
       }
 
-      // Load questions from CSV file
-      const { CsvParser } = await import("../helpers");
-      const parseResult = CsvParser.parse(survey.fileReference);
-
-      // Check if parsing was successful
-      if (!parseResult.isValid) {
-        const errorMessage = parseResult.errors.length > 0 
-          ? parseResult.errors.join('; ') 
-          : 'CSV file parsing failed';
-        
-        console.error(`Failed to parse CSV for survey ${surveyId}:`, {
-          fileReference: survey.fileReference,
-          errors: parseResult.errors,
-        });
-        
+      // Read questions directly from database JSONB field
+      if (!survey.questions || !Array.isArray(survey.questions)) {
+        console.error(`Survey ${surveyId} has no questions in database. Migration may be incomplete.`);
         throw new InternalServerError(
-          `Failed to load survey questions: ${errorMessage}`
+          'Survey questions not found in database. Please contact administrator.'
         );
       }
 
       // Ensure questions array is not empty
-      if (!parseResult.questions || parseResult.questions.length === 0) {
-        console.error(`No questions found in CSV for survey ${surveyId}:`, {
-          fileReference: survey.fileReference,
-        });
+      if (survey.questions.length === 0) {
+        console.error(`Survey ${surveyId} has empty questions array`);
         throw new InternalServerError(
-          'Survey CSV file contains no valid questions'
+          'Survey contains no questions'
         );
       }
 
       return {
         ...survey,
-        questions: parseResult.questions,
+        questions: survey.questions, // Questions already parsed from JSONB
       };
     } catch (error: any) {
       // Re-throw InternalServerError as-is
@@ -175,13 +161,35 @@ export class SurveyService {
         throw new ValidationError(`Uploaded file not found at path: ${filePath}`);
       }
 
+      // Parse CSV file to extract questions
+      const { CsvParser } = await import("../helpers");
+      const parseResult = CsvParser.parse(filePath);
+
+      if (!parseResult.isValid) {
+        const errorMessage = parseResult.errors.length > 0 
+          ? parseResult.errors.join('; ') 
+          : 'CSV file parsing failed';
+        throw new ValidationError(`Failed to parse CSV file: ${errorMessage}`);
+      }
+
+      if (!parseResult.questions || parseResult.questions.length === 0) {
+        throw new ValidationError("CSV file contains no valid questions");
+      }
+
+      // Use actual questions count from parsed data
+      const actualQuestionsCount = parseResult.questions.length;
+      if (surveyData.questionsCount !== actualQuestionsCount) {
+        console.warn(`Questions count mismatch: provided ${surveyData.questionsCount}, parsed ${actualQuestionsCount}. Using parsed count.`);
+      }
+
       // Store relative path from project root for portability
       const projectRoot = getProjectRoot();
       const relativePath = filePath.replace(projectRoot, '').replace(/\\/g, '/').replace(/^\//, '');
       
       const surveyRecord = {
         title: surveyData.title,
-        questionsCount: surveyData.questionsCount,
+        questionsCount: actualQuestionsCount,
+        questions: parseResult.questions, // Store questions as JSONB
         status: surveyData.status || "draft",
         fileReference: relativePath,
         authorId: surveyData.authorId,
@@ -193,6 +201,17 @@ export class SurveyService {
       // Assign teams if provided
       if (surveyData.teamIds && surveyData.teamIds.length > 0) {
         await this.surveyRepository.updateTeams(newSurvey.id, surveyData.teamIds);
+      }
+
+      // Delete CSV file after successful parsing and storage
+      try {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+          console.log(`Deleted CSV file after parsing: ${filePath}`);
+        }
+      } catch (fileError) {
+        console.error(`Warning: Failed to delete CSV file ${filePath}:`, fileError);
+        // Don't throw - survey was created successfully, file cleanup can happen later
       }
 
       return newSurvey;
@@ -253,6 +272,31 @@ export class SurveyService {
 
       // Handle file update
       if (newFilePath) {
+        // Verify the file exists before processing
+        if (!fs.existsSync(newFilePath)) {
+          throw new ValidationError(`Uploaded file not found at path: ${newFilePath}`);
+        }
+
+        // Parse CSV file to extract questions
+        const { CsvParser } = await import("../helpers");
+        const parseResult = CsvParser.parse(newFilePath);
+
+        if (!parseResult.isValid) {
+          const errorMessage = parseResult.errors.length > 0 
+            ? parseResult.errors.join('; ') 
+            : 'CSV file parsing failed';
+          throw new ValidationError(`Failed to parse CSV file: ${errorMessage}`);
+        }
+
+        if (!parseResult.questions || parseResult.questions.length === 0) {
+          throw new ValidationError("CSV file contains no valid questions");
+        }
+
+        // Use actual questions count from parsed data
+        const actualQuestionsCount = parseResult.questions.length;
+        updateFields.questionsCount = actualQuestionsCount;
+        updateFields.questions = parseResult.questions; // Store questions as JSONB
+
         // Delete the old file if it exists
         if (existingSurvey.fileReference) {
           try {
@@ -261,7 +305,7 @@ export class SurveyService {
               fs.unlinkSync(oldFilePath);
             }
           } catch (fileError) {
-            console.error(`Error deleting file ${existingSurvey.fileReference}:`, fileError);
+            console.error(`Error deleting old file ${existingSurvey.fileReference}:`, fileError);
           }
         }
 
@@ -269,13 +313,26 @@ export class SurveyService {
         const projectRoot = getProjectRoot();
         const relativePath = newFilePath.replace(projectRoot, '').replace(/\\/g, '/').replace(/^\//, '');
         updateFields.fileReference = relativePath;
-      }
 
-      if (updateData.questionsCount) {
+        // Delete the new CSV file after successful parsing and storage
+        try {
+          if (fs.existsSync(newFilePath)) {
+            fs.unlinkSync(newFilePath);
+            console.log(`Deleted CSV file after parsing: ${newFilePath}`);
+          }
+        } catch (fileError) {
+          console.error(`Warning: Failed to delete CSV file ${newFilePath}:`, fileError);
+          // Don't throw - survey was updated successfully, file cleanup can happen later
+        }
+      } else if (updateData.questionsCount) {
+        // Only allow questionsCount update if no new file is provided
+        // (questions count should match actual questions array length)
         if (isNaN(updateData.questionsCount)) {
           throw new ValidationError("Questions count must be a valid number");
         }
-        updateFields.questionsCount = updateData.questionsCount;
+        // Note: We're not updating questionsCount separately if questions array exists
+        // It should match the questions array length
+        console.warn("Questions count update requested without new CSV. Using existing questions array length.");
       }
 
       // Update assigned teams if provided

@@ -7,6 +7,7 @@ import {
   boolean,
   uniqueIndex,
   unique,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 // Database schema definition
@@ -58,6 +59,7 @@ export const surveys = pgTable("surveys", {
   title: text("title").notNull(),
   fileReference: text("file_reference").notNull(),
   questionsCount: integer("questions_count").notNull(),
+  questions: jsonb("questions").$type<Array<{ id: number; question: string; category: string; details: string }>>(), // JSONB array of CsvQuestion objects
   authorId: integer("author_id").notNull().references(() => users.id),
   teamId: integer("team_id").references(() => teams.id),
   status: text("status").default("draft").notNull(),
