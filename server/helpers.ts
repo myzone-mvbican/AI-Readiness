@@ -78,6 +78,61 @@ export class CsvParser {
     };
   }
 
+  /**
+   * Parse CSV from file buffer or string content
+   */
+  static parseFromContent(fileContent: string | Buffer): CsvParseResult {
+    try {
+      // Convert buffer to string if needed
+      const content = Buffer.isBuffer(fileContent)
+        ? fileContent.toString('utf-8')
+        : fileContent;
+
+      const validation = this.validate(content);
+
+      if (!validation.isValid) {
+        return {
+          isValid: false,
+          errors: validation.errors,
+          questions: [],
+        };
+      }
+
+      const parsedData = Papa.parse(content, {
+        header: true,
+        skipEmptyLines: true,
+        dynamicTyping: false, // Keep everything as strings
+        transform: (value) => value?.trim(), // Trim whitespace
+      });
+
+      const questions = parsedData.data
+        .filter((row: any) => row["Question Summary"]?.trim())
+        .map((row: any, index: number) => ({
+          id: row["Question Number"] || index + 1,
+          question: row["Question Summary"],
+          category: row["Category"],
+          details: row["Question Details"],
+        }));
+
+      return {
+        isValid: true,
+        errors: [],
+        questions,
+      };
+    } catch (error) {
+      console.error("Error parsing CSV content:", error);
+      return {
+        isValid: false,
+        errors: [`Error parsing CSV content: ${error}`],
+        questions: [],
+      };
+    }
+  }
+
+  /**
+   * Parse CSV from file path (kept for backward compatibility with migration script)
+   * @deprecated Use parseFromContent instead for new uploads
+   */
   static parse(filePath: string): CsvParseResult {
     try {
       // Resolve the file path - handle both absolute and relative paths
@@ -126,38 +181,7 @@ export class CsvParser {
       }
 
       const fileContent = fs.readFileSync(resolvedPath, "utf8");
-
-      const validation = this.validate(fileContent);
-
-      if (!validation.isValid) {
-        return {
-          isValid: false,
-          errors: validation.errors,
-          questions: [],
-        };
-      }
-
-      const parsedData = Papa.parse(fileContent, {
-        header: true,
-        skipEmptyLines: true,
-        dynamicTyping: false, // Keep everything as strings
-        transform: (value) => value?.trim(), // Trim whitespace
-      });
-
-      const questions = parsedData.data
-        .filter((row: any) => row["Question Summary"]?.trim())
-        .map((row: any, index: number) => ({
-          id: row["Question Number"] || index + 1,
-          question: row["Question Summary"],
-          category: row["Category"],
-          details: row["Question Details"],
-        }));
-
-      return {
-        isValid: true,
-        errors: [],
-        questions,
-      };
+      return this.parseFromContent(fileContent);
     } catch (error) {
       console.error("Error parsing CSV file:", error);
       return {
