@@ -397,7 +397,7 @@ export class BenchmarkService {
     )) {
       const surveyId = parseInt(surveyIdStr);
 
-      if (surveyAssessments.length >= 5) {
+      if (surveyAssessments.length >= 2) {
         await this.calculateAndStoreCategoryStats(
           surveyAssessments,
           "global",
