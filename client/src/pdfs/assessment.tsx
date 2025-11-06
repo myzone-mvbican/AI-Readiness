@@ -405,7 +405,7 @@ export const AssessmentPDF = ({
             {pageAnswers.map((answer: any, index: number) => {
               const actualIndex = pageIndex * 10 + index;
               const question = questions.find(
-                (q: CsvQuestion) => Number(q.id) === answer.q,
+                (q: CsvQuestion) => String(q.id) === String(answer.q),
               );
               const { text: answerText, style: answerStyle } = getAnswerText(
                 answer.a,
