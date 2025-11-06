@@ -65,6 +65,11 @@ export class PDFGenerator {
     guestEmail?: string,
   ): Promise<PDFGenerationResult> {
     try {
+      // Debug logging
+      console.log("PDF Generator - Received assessment with survey?", !!(assessment as any).survey);
+      console.log("PDF Generator - Survey questions count:", ((assessment as any).survey?.questions?.length || 0));
+      console.log("PDF Generator - First question:", ((assessment as any).survey?.questions?.[0]));
+      
       // Generate file name
       const fileName = this.generateFileName(assessment);
 

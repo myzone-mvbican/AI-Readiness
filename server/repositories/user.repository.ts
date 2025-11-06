@@ -228,7 +228,9 @@ export class UserRepository implements BaseRepository<User> {
   ): Promise<void> {
     const db = tx || this.database;
     
-    await db
+    console.log(`🔄 Transferring guest assessments for email: ${email} to user ID: ${userId}`);
+    
+    const result = await db
       .update(assessments)
       .set({ 
         userId,
@@ -237,10 +239,13 @@ export class UserRepository implements BaseRepository<User> {
       })
       .where(
         and(
-          sql`${assessments.guest}->>'email' = ${email}`, // PostgreSQL JSON syntax
+          sql`${assessments.guest}::jsonb->>'email' = ${email}`, // Cast text to jsonb for JSON extraction
           isNull(assessments.userId)
         )
-      );
+      )
+      .returning({ id: assessments.id });
+    
+    console.log(`✅ Transferred ${result.length} guest assessment(s):`, result.map(r => r.id));
   }
 
   /**
