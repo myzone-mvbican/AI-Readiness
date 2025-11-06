@@ -237,7 +237,7 @@ export class UserRepository implements BaseRepository<User> {
       })
       .where(
         and(
-          sql`JSON_EXTRACT(guest, '$.email') = ${email}`, // Extract email from JSON
+          sql`${assessments.guest}->>'email' = ${email}`, // PostgreSQL JSON syntax
           isNull(assessments.userId)
         )
       );
