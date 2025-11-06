@@ -27,6 +27,7 @@
     "migrate:passwords": "tsx server/scripts/migrate-passwords.js"
   },
   "dependencies": {
+    "@azure/identity": "^4.13.0",
     "@azure/msal-browser": "^4.26.0",
     "@azure/msal-react": "^3.0.21",
     "@hookform/resolvers": "^3.10.0",

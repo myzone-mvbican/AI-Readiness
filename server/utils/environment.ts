@@ -71,6 +71,12 @@ const envSchema = z.object({
   
   // Microsoft OAuth
   MICROSOFT_CLIENT_ID: z.string().optional(),
+  
+  // Microsoft Graph (Email via Graph API)
+  MS_TENANT_ID: z.string().optional(),
+  MS_CLIENT_ID: z.string().optional(),
+  MS_SECRET: z.string().optional(),
+  MS_SENDER_EMAIL: z.string().email().optional(),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;
