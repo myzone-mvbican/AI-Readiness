@@ -30,7 +30,6 @@
     "@azure/identity": "^4.13.0",
     "@azure/msal-browser": "^4.26.0",
     "@azure/msal-react": "^3.0.21",
-    "@google-cloud/storage": "^7.17.3",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
     "@neondatabase/serverless": "^0.10.4",
