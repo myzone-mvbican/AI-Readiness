@@ -291,6 +291,11 @@ Return only the NAICS code that best represents this business.`;
         } catch (error) {}
       }
 
+      // Log for debugging
+      console.log("PDF Generation - Assessment has survey?", !!(assessment as any).survey);
+      console.log("PDF Generation - Survey has questions?", !!((assessment as any).survey?.questions));
+      console.log("PDF Generation - Questions count:", ((assessment as any).survey?.questions?.length || 0));
+
       // Generate PDF with recommendations
       const updatedAssessment = { ...assessment, recommendations: content };
       const pdfResult = await PDFGenerator.generateAndSavePDF(

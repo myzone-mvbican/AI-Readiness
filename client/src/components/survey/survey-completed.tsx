@@ -229,17 +229,38 @@ export default function SurveyCompleted({
                 </TooltipContent>
               </Tooltip>
             ) : (
-              <a
-                className="flex items-center justify-center gap-2 h-10 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"
-                style={{ textDecoration: "none" }}
-                download="download"
-                href={assessment.pdfPath || "#"}
+              <Button
+                onClick={async () => {
+                  if (!assessment.pdfPath) return;
+                  
+                  try {
+                    const response = await fetch(assessment.pdfPath);
+                    if (!response.ok) {
+                      throw new Error("Failed to download PDF");
+                    }
+                    
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `assessment-report-${assessment.id}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                  } catch (error) {
+                    toast({
+                      title: "Error",
+                      description: "Failed to download PDF. Please try again.",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+                disabled={!assessment.pdfPath}
               >
-                <>
-                  <Download className="size-4" />
-                  {!assessment.pdfPath ? "Preparing PDF..." : "Download PDF"}
-                </>
-              </a>
+                <Download className="size-4" />
+                {!assessment.pdfPath ? "Preparing PDF..." : "Download PDF"}
+              </Button>
             )}
           </div>
         </div>
