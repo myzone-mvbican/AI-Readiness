@@ -1,16 +1,13 @@
 import { render } from "@react-email/render";
-import { createTransporter, getEmailFromAddress } from "../config/email.config";
 import { PasswordResetEmail } from "../emails/password-reset";
+import { GraphEmailService } from "./graph-email.service";
 import { env } from "server/utils/environment";
 
+/**
+ * Email Service - Sends emails via Microsoft Graph API
+ * Replaces previous SMTP/nodemailer implementation
+ */
 export class EmailService {
-  private static transporter = createTransporter();
-
-  // Reinitialize transporter to ensure latest config
-  private static getTransporter() {
-    return createTransporter();
-  }
-
   static async sendPasswordResetEmail(
     email: string,
     resetToken: string,
@@ -18,9 +15,6 @@ export class EmailService {
   ): Promise<boolean> {
     try {
       const resetUrl = `${env.FRONTEND_URL}/auth/reset?token=${resetToken}`;
-
-      // Get formatted from address with name
-      const fromAddress = getEmailFromAddress();
 
       // Render React Email template
       const emailHtml = await render(
@@ -46,21 +40,15 @@ Best regards,
 The Keeran AI Team
       `.trim();
 
-      const mailOptions = {
-        from: fromAddress,
+      // Send via Microsoft Graph API
+      return await GraphEmailService.sendEmail({
         to: email,
         subject: "Reset Your Keeran AI Password",
         html: emailHtml,
         text: emailText,
-      };
-
-      // Send the actual email using the configured transporter
-      const transporter = this.getTransporter();
-      const info = await transporter.sendMail(mailOptions);
-
-      return true;
+      });
     } catch (error) {
-      console.error("Failed to send email:", error);
+      console.error("Failed to send password reset email:", error);
       return false;
     }
   }
@@ -71,53 +59,38 @@ The Keeran AI Team
     subject,
     html,
     text,
+    attachments,
   }: {
     to: string;
     subject: string;
     html?: string;
     text?: string;
+    attachments?: Array<{
+      name: string;
+      contentType: string;
+      contentBytes: string;
+    }>;
   }): Promise<boolean> {
     try {
-      // Get formatted from address with name
-      const fromAddress = getEmailFromAddress();
-
-      const mailOptions = {
-        from: fromAddress,
-        to: to,
-        subject: subject,
-        html: html,
-        text: text,
-      };
-
-      // Send the actual email using the configured transporter
-      const transporter = this.getTransporter();
-      const info = await transporter.sendMail(mailOptions);
-
-      return true;
+      // Send via Microsoft Graph API
+      return await GraphEmailService.sendEmail({
+        to,
+        subject,
+        html,
+        text,
+        attachments,
+      });
     } catch (error) {
+      console.error("Failed to send email:", error);
       return false;
     }
   }
 
   static async testConnection(): Promise<boolean> {
     try {
-      // Test Brevo SMTP connection if configured
-      if (env.SMTP_PASS) {
-        const transporter = this.getTransporter();
-        await transporter.verify();
-        return true;
-      }
-
-      // Test legacy email configuration
-      if (env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS) {
-        const transporter = this.getTransporter();
-        await transporter.verify();
-        return true;
-      }
-
-      // No email configuration found
-      return false;
+      return await GraphEmailService.testConnection();
     } catch (error) {
+      console.error("Email connection test failed:", error);
       return false;
     }
   }
