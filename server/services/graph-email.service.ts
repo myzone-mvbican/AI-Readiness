@@ -85,6 +85,12 @@ export class GraphEmailService {
             contentType: message.html ? "HTML" : "Text",
             content: message.html || message.text || "",
           },
+          from: {
+            emailAddress: {
+              name: "Keeran AI",
+              address: env.MS_SENDER_EMAIL,
+            },
+          },
           toRecipients: [
             {
               emailAddress: {
