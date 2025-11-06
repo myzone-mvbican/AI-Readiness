@@ -37,7 +37,11 @@ export function ProfileCompletionCard() {
           value: user.employeeCount,
           label: "Team Size",
         },
-        { name: "googleId", value: user.googleId, label: "Google Account" },
+        {
+          name: "microsoftId",
+          value: user.microsoftId,
+          label: "Microsoft Account",
+        },
       ];
 
       const completed = fieldsToCheck.filter((field) => !!field.value);

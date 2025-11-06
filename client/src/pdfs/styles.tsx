@@ -19,6 +19,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 20,
     marginBottom: 20,
+    padding: 10,
   },
   logoBox: {
     width: 180,
@@ -99,13 +100,15 @@ export const styles = StyleSheet.create({
     backgroundColor: "#002b3c",
     justifyContent: "space-between",
     alignItems: "center",
+    margin: -30,
     marginBottom: 20,
     borderBottom: "1px solid #E2E8F0",
-    paddingBottom: 10,
+    padding: 30,
+    paddingBottom: 20,
   },
   headerTitle: {
     fontSize: 12,
-    color: "#475569",
+    color: "#fff",
   },
   sectionTitle: {
     fontSize: 16,

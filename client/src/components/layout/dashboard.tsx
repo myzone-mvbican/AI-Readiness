@@ -63,7 +63,7 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage className="text-xs lg:text-base">
+                  <BreadcrumbPage className="text-xs lg:text-sm">
                     {pageName}
                   </BreadcrumbPage>
                 </BreadcrumbItem>
