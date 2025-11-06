@@ -114,12 +114,13 @@ const container = {
 };
 
 const logoContainer = {
+  backgroundColor: "#40bd56",
+  color: "#ffffff!important",
   margin: "32px 0",
   textAlign: "center" as const,
 };
 
-const h1 = {
-  color: "#1d4ed8",
+const h1 = { 
   fontSize: "36px",
   fontWeight: "700",
   margin: "30px 0",
@@ -175,7 +176,7 @@ const buttonContainer = {
 };
 
 const button = {
-  backgroundColor: "#1d4ed8",
+  backgroundColor: "#40bd56",
   borderRadius: "6px",
   color: "#ffffff",
   fontSize: "16px",

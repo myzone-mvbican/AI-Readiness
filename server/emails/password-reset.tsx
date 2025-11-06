@@ -99,12 +99,11 @@ const container = {
 const logoContainer = {
   padding: "32px 20px",
   textAlign: "center" as const,
-  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  background: "#40bd56",
   color: "#ffffff",
 };
 
-const h1 = {
-  color: "#ffffff",
+const h1 = { 
   fontSize: "28px",
   fontWeight: "bold",
   margin: "0",
@@ -134,13 +133,13 @@ const buttonContainer = {
 };
 
 const button = {
-  backgroundColor: "#667eea",
+  backgroundColor: "#40bd56",
   borderRadius: "6px",
   color: "#fff",
   fontSize: "16px",
   fontWeight: "bold",
   textDecoration: "none",
-  lineHeight: "2",
+  lineHeight: "40px",
   textAlign: "center" as const,
   display: "block",
   height: "40px",
