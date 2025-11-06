@@ -105,9 +105,10 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
+- November 6, 2025. Fixed guest PDF download path returning absolute filesystem path instead of relative URL path by using relativePath instead of filePath in AIService response
+- November 6, 2025. Fixed guest PDF showing "Unknown Question" by changing question ID comparison from Number(q.id) === answer.q to String(q.id) === String(answer.q) to handle type mismatch
 - November 6, 2025. Fixed guest assessment linking bug by adding ::jsonb cast to PostgreSQL JSON query - guest assessments now properly transfer to new user accounts upon registration
 - November 6, 2025. Fixed PDF download filename from "assessment-report-{id}.pdf" to "report-{id}.pdf" to match server-generated files
-- November 6, 2025. Added comprehensive diagnostic logging to PDF generation pipeline to debug guest PDF question rendering issues
 - July 13, 2025. Implemented hierarchical NAICS fallback system for benchmark statistics - when specific industry codes have no data, system progressively searches broader categories until statistics are found
 - July 13, 2025. Created comprehensive export users feature for admins - supports CSV/Excel formats with configurable field selection, progress indicators, and smart filename generation
 - July 13, 2025. Implemented comprehensive hard delete system for teams with strict validation - teams can only be permanently deleted if soft-deleted AND have zero members, includes database transactions and conditional UI controls
