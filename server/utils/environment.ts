@@ -27,21 +27,6 @@ const envSchema = z.object({
   // PII Encryption
   PII_ENCRYPTION_KEY: z.string().min(32, "PII_ENCRYPTION_KEY must be at least 32 characters").optional(),
 
-  // Email (optional) 
-  SMTP_HOST: z.string().optional(),
-  SMTP_PORT: z.string().optional(),
-  SMTP_SECURE: z.string().optional(),
-  SMTP_USER: z.string().optional(),
-  SMTP_PASS: z.string().optional(),
-  SMTP_POOL: z.string().optional(),
-  
-  DKIM_DOMAIN: z.string().optional(),
-  DKIM_SELECTOR: z.string().optional(),
-  DKIM_PRIVATE_KEY: z.string().optional(),
-
-  MAIL_FROM: z.string().email().optional(),
-  MAIL_FROM_NAME: z.string().optional(),
-
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: z.string().transform(Number).default("900000"), // 15 minutes
   RATE_LIMIT_MAX_REQUESTS: z.string().transform(Number).default("100"),
