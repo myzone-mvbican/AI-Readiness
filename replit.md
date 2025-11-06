@@ -105,6 +105,9 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
+- November 6, 2025. Fixed guest assessment linking bug by correcting PostgreSQL JSON syntax from MySQL's JSON_EXTRACT to PostgreSQL's ->> operator in transferGuestAssessmentsToUser method
+- November 6, 2025. Added diagnostic logging to PDF generation to track survey question availability for debugging empty guest PDFs
+- November 6, 2025. Fixed PDF download for guest assessments by replacing anchor link with proper blob download handler to prevent HTML file downloads
 - July 13, 2025. Implemented hierarchical NAICS fallback system for benchmark statistics - when specific industry codes have no data, system progressively searches broader categories until statistics are found
 - July 13, 2025. Created comprehensive export users feature for admins - supports CSV/Excel formats with configurable field selection, progress indicators, and smart filename generation
 - July 13, 2025. Implemented comprehensive hard delete system for teams with strict validation - teams can only be permanently deleted if soft-deleted AND have zero members, includes database transactions and conditional UI controls
