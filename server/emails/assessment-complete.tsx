@@ -31,7 +31,7 @@ export const AssessmentCompleteEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Section style={logoContainer}>
-          <Heading style={h1}>Keeran</Heading>
+          <Heading style={h1}>Keeran Networks</Heading>
         </Section>
 
         <Heading style={h2}>Your AI Readiness Assessment is Complete!</Heading>
@@ -39,9 +39,9 @@ export const AssessmentCompleteEmail = ({
         <Text style={text}>Hello {recipientName},</Text>
 
         <Text style={text}>
-          Thank you for completing the AI Readiness Assessment. 
-          We noticed a couple of important AI readiness considerations that you scored low on, 
-          and we would love to discuss these with you.
+          Thank you for completing the AI Readiness Assessment. We noticed a
+          couple of important AI readiness considerations that you scored low
+          on, and we would love to discuss these with you.
         </Text>
 
         <Section style={highlightBox}>
@@ -54,8 +54,7 @@ export const AssessmentCompleteEmail = ({
             • Personalized recommendations powered by AI
             <br />
             • Visual radar chart showing your strengths and opportunities
-            <br />
-            • Actionable next steps for AI implementation
+            <br />• Actionable next steps for AI implementation
           </Text>
         </Section>
 
@@ -66,14 +65,18 @@ export const AssessmentCompleteEmail = ({
         </Section>
 
         <Text style={text}>
-          Thanks again. We hope you found this useful and would love to help {companyName} on its path to becoming an AI-ready organization.
+          Thanks again. We hope you found this useful and would love to help{" "}
+          {companyName} on its path to becoming an AI-ready organization.
         </Text>
 
         <Text style={text}>
-          If you'd like to schedule a call with one of our AI/IT experts to review your assessment, you can book a time here:
+          If you'd like to schedule a call with one of our AI/IT experts to
+          review your assessment, you can book a time here:
         </Text>
         <Section style={buttonContainer}>
-          <Button style={button} href="https://calendly.com/mikeschwarz">Book a Call</Button>
+          <Button style={button} href="https://calendly.com/mikeschwarz">
+            Book a Call
+          </Button>
         </Section>
 
         <Text style={text}>
@@ -120,7 +123,7 @@ const logoContainer = {
   textAlign: "center" as const,
 };
 
-const h1 = { 
+const h1 = {
   fontSize: "36px",
   fontWeight: "700",
   margin: "30px 0",
