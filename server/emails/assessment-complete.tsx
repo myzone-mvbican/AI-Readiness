@@ -71,8 +71,10 @@ export const AssessmentCompleteEmail = ({
 
         <Text style={text}>
           If you'd like to schedule a call with one of our AI/IT experts to review your assessment, you can book a time here:
-          <Button style={button} href="https://calendly.com/mikeschwarz">Book a Call</Button>
         </Text>
+        <Section style={buttonContainer}>
+          <Button style={button} href="https://calendly.com/mikeschwarz">Book a Call</Button>
+        </Section>
 
         <Text style={text}>
           Best regards,
