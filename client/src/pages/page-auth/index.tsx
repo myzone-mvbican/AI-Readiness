@@ -146,7 +146,7 @@ export default function AuthPage() {
       <div className="w-full max-w-[600px] mx-auto py-8 flex flex-col flex-grow justify-center">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Welcome to Keeran AI
+            Welcome to Keeran
           </h2>
           <p className="text-gray-600 mt-2">
             Your AI Readiness Assessment platform

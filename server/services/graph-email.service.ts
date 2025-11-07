@@ -87,7 +87,7 @@ export class GraphEmailService {
           },
           from: {
             emailAddress: {
-              name: "Keeran AI",
+              name: "Keeran",
               address: env.MS_SENDER_EMAIL,
             },
           },
