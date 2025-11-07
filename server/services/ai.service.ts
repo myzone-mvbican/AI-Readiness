@@ -372,7 +372,6 @@ Return only the NAICS code that best represents this business.`;
       if (recipientEmail) {
         // Build download URL - use REPLIT_DOMAINS if available, otherwise localhost
         const downloadUrl = `${env.FRONTEND_URL}${pdfRelativePath}`;
-        const logoUrl = `${env.FRONTEND_URL}/logo-keeran.png`;
 
         // Render email template
         const emailHtml = await render(
@@ -381,7 +380,6 @@ Return only the NAICS code that best represents this business.`;
             recipientEmail,
             downloadUrl,
             companyName,
-            logoUrl,
           }),
         );
 

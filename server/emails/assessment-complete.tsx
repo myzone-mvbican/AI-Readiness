@@ -5,7 +5,6 @@ import {
   Head,
   Heading,
   Html,
-  Img,
   Link,
   Preview,
   Section,
@@ -18,7 +17,6 @@ interface AssessmentCompleteEmailProps {
   recipientEmail?: string;
   downloadUrl?: string;
   companyName?: string;
-  logoUrl?: string;
 }
 
 export const AssessmentCompleteEmail = ({
@@ -26,7 +24,6 @@ export const AssessmentCompleteEmail = ({
   recipientEmail = "user@example.com",
   downloadUrl = "#",
   companyName = "your organization",
-  logoUrl = "",
 }: AssessmentCompleteEmailProps) => (
   <Html>
     <Head />
@@ -34,11 +31,7 @@ export const AssessmentCompleteEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Section style={logoContainer}>
-          {logoUrl ? (
-            <Img src={logoUrl} alt="Keeran Networks" style={logoImage} />
-          ) : (
-            <Heading style={h1}>Keeran Networks</Heading>
-          )}
+          <Heading style={h1}>Keeran Networks</Heading>
         </Section>
 
         <Heading style={h2}>Your AI Readiness Assessment is Complete!</Heading>
@@ -124,18 +117,10 @@ const container = {
 };
 
 const logoContainer = {
-  backgroundColor: "#002b3c",
+  backgroundColor: "#40bd56",
   color: "#ffffff!important",
   margin: "32px 0",
   textAlign: "center" as const,
-  padding: "20px",
-};
-
-const logoImage = {
-  height: "48px",
-  width: "auto",
-  margin: "10px auto",
-  display: "block",
 };
 
 const h1 = {

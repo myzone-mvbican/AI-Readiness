@@ -102,21 +102,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     fileStream.pipe(res);
   });
 
-  // Serve logo and other static assets from public folder
-  app.get("/logo-keeran.png", (req, res) => {
-    const filePath = path.join(getProjectRoot(), "public", "logo-keeran.png");
-
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: "Logo not found" });
-    }
-
-    res.setHeader("Content-Type", "image/png");
-    res.setHeader("Cache-Control", "public, max-age=31536000");
-
-    const fileStream = fs.createReadStream(filePath);
-    fileStream.pipe(res);
-  });
-
   // API routes - path prefixed with /api
 
   // Password strength endpoint
