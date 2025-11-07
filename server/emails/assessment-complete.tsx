@@ -4,6 +4,7 @@ import {
   Container,
   Head,
   Heading,
+  Img,
   Html,
   Link,
   Preview,
@@ -30,8 +31,8 @@ export const AssessmentCompleteEmail = ({
     <Preview>Your Keeran AI Readiness Assessment Results Are Ready</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Section style={logoContainer}>
-          <Heading style={h1}>Keeran Networks</Heading>
+        <Section style={logoContainer}> 
+          <Img src="https://www.keeran.ca/wp-content/uploads/2023/05/keeran_logo_inverted_rgb_400px@72ppi.png.webp" alt="Keeran Networks" width="185" height="38" />
         </Section>
 
         <Heading style={h2}>Your AI Readiness Assessment is Complete!</Heading>
