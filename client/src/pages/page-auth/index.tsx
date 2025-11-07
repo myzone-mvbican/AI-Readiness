@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password";
 import { useToast } from "@/hooks/use-toast";
 import { GoogleLogin } from "@react-oauth/google";
@@ -18,6 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { IndustrySelect } from "@/components/industries";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -101,11 +108,7 @@ export default function AuthPage() {
   }, [user, isLoading, setLocation]);
 
   // Login form setup
-  const {
-    register: registerLogin,
-    handleSubmit: handleLoginSubmit,
-    formState: { errors: loginErrors },
-  } = useForm<LoginFormValues>({
+  const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
@@ -114,13 +117,7 @@ export default function AuthPage() {
   });
 
   // Signup form setup
-  const {
-    register: registerSignup,
-    handleSubmit: handleSignupSubmit,
-    formState: { errors: signupErrors },
-    setValue,
-    control,
-  } = useForm<SignupFormValues>({
+  const signupForm = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
       name: "",
@@ -236,284 +233,256 @@ export default function AuthPage() {
 
               {/* LOGIN FORM */}
               <TabsContent value="login" className="mt-0">
-                <form
-                  onSubmit={handleLoginSubmit(onLoginSubmit)}
-                  className="space-y-4"
-                >
-                  {/* Email field */}
-                  <div className="space-y-1">
-                    <Label
-                      htmlFor="login-email"
-                      className="text-sm font-medium text-gray-700"
-                    >
-                      Email
-                    </Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      placeholder="you@example.com"
-                      {...registerLogin("email")}
-                      className={loginErrors.email ? "border-red-500" : ""}
-                    />
-                    {loginErrors.email && (
-                      <p className="text-sm text-red-500">
-                        {loginErrors.email.message}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Password field */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between">
-                      <Label
-                        htmlFor="login-password"
-                        className="text-sm font-medium text-gray-700"
-                      >
-                        Password
-                      </Label>
-                      <Link href="/auth/forgot">
-                        <a className="text-sm text-blue-600 hover:underline">
-                          Forgot password?
-                        </a>
-                      </Link>
-                    </div>
-                    <PasswordInput
-                      id="login-password"
-                      placeholder="••••••••"
-                      {...registerLogin("password")}
-                      className={loginErrors.password ? "border-red-500" : ""}
-                    />
-                    {loginErrors.password && (
-                      <p className="text-sm text-red-500">
-                        {loginErrors.password.message}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Submit button */}
-                  <Button
-                    type="submit"
-                    disabled={loginMutation.isPending}
-                    className="w-full py-2 px-4 rounded-md transition-colors"
+                <Form {...loginForm}>
+                  <form
+                    onSubmit={loginForm.handleSubmit(onLoginSubmit)}
+                    className="space-y-4"
                   >
-                    {loginMutation.isPending ? "Signing in..." : "Sign in"}
-                  </Button>
-                </form>
+                    {/* Email field */}
+                    <FormField
+                      control={loginForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium text-gray-700">
+                            Email
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              placeholder="you@example.com"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Password field */}
+                    <FormField
+                      control={loginForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex justify-between items-center">
+                            <FormLabel className="text-sm font-medium text-gray-700">
+                              Password
+                            </FormLabel>
+                            <Link href="/auth/forgot">
+                              <a className="text-sm text-blue-600 hover:underline">
+                                Forgot password?
+                              </a>
+                            </Link>
+                          </div>
+                          <FormControl>
+                            <PasswordInput
+                              placeholder="••••••••"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Submit button */}
+                    <Button
+                      type="submit"
+                      disabled={loginMutation.isPending}
+                      className="w-full py-2 px-4 rounded-md transition-colors"
+                    >
+                      {loginMutation.isPending ? "Signing in..." : "Sign in"}
+                    </Button>
+                  </form>
+                </Form>
               </TabsContent>
 
               {/* SIGNUP FORM */}
               <TabsContent value="signup" className="mt-0">
-                <form
-                  onSubmit={handleSignupSubmit(onSignupSubmit)}
-                  className="space-y-4"
-                >
-                  {/* Name field */}
-                  <div className="space-y-1">
-                    <Label
-                      htmlFor="signup-name"
-                      className="text-sm font-medium text-gray-700"
-                    >
-                      Full Name
-                    </Label>
-                    <Input
-                      id="signup-name"
-                      type="text"
-                      placeholder="John Doe"
-                      {...registerSignup("name")}
-                      className={signupErrors.name ? "border-red-500" : ""}
-                    />
-                    {signupErrors.name && (
-                      <p className="text-sm text-red-500">
-                        {signupErrors.name.message}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Email field */}
-                  <div className="space-y-1">
-                    <Label
-                      htmlFor="signup-email"
-                      className="text-sm font-medium text-gray-700"
-                    >
-                      Email
-                    </Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="you@example.com"
-                      {...registerSignup("email")}
-                      className={signupErrors.email ? "border-red-500" : ""}
-                    />
-                    {signupErrors.email && (
-                      <p className="text-sm text-red-500">
-                        {signupErrors.email.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Company field */}
-                    <div className="space-y-1">
-                      <Label
-                        htmlFor="signup-company"
-                        className="text-sm font-medium text-gray-700"
-                      >
-                        Company
-                      </Label>
-                      <Input
-                        id="signup-company"
-                        type="text"
-                        placeholder="Your Company"
-                        {...registerSignup("company")}
-                        className={signupErrors.company ? "border-red-500" : ""}
-                      />
-                      {signupErrors.company && (
-                        <p className="text-sm text-red-500">
-                          {signupErrors.company.message}
-                        </p>
+                <Form {...signupForm}>
+                  <form
+                    onSubmit={signupForm.handleSubmit(onSignupSubmit)}
+                    className="space-y-4"
+                  >
+                    {/* Name field */}
+                    <FormField
+                      control={signupForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium text-gray-700">
+                            Full Name
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="text"
+                              placeholder="John Doe"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                    </div>
+                    />
 
-                    {/* Company Size field */}
-                    <div className="space-y-1">
-                      <Label
-                        htmlFor="signup-employee-count"
-                        className="text-sm font-medium text-gray-700"
-                      >
-                        Company Size
-                      </Label>
-                      <Controller
-                        control={control}
-                        name="employeeCount"
+                    {/* Email field */}
+                    <FormField
+                      control={signupForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium text-gray-700">
+                            Email
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              placeholder="you@example.com"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Company field */}
+                      <FormField
+                        control={signupForm.control}
+                        name="company"
                         render={({ field }) => (
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <SelectTrigger
-                              id="signup-employee-count"
-                              className={
-                                signupErrors.employeeCount
-                                  ? "border-red-500"
-                                  : ""
-                              }
-                            >
-                              <SelectValue placeholder="Select company size" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="1-9">1-9 employees</SelectItem>
-                              <SelectItem value="10-49">
-                                10-49 employees
-                              </SelectItem>
-                              <SelectItem value="50-249">
-                                50-249 employees
-                              </SelectItem>
-                              <SelectItem value="250-999">
-                                250-999 employees
-                              </SelectItem>
-                              <SelectItem value="1000+">
-                                1000+ employees
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">
+                              Company
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="text"
+                                placeholder="Your Company"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
                         )}
                       />
-                      {signupErrors.employeeCount && (
-                        <p className="text-sm text-red-500">
-                          {signupErrors.employeeCount.message}
-                        </p>
-                      )}
-                    </div>
-                  </div>
 
-                  {/* Industry field */}
-                  <div className="space-y-1">
-                    <Label
-                      htmlFor="signup-industry"
-                      className="text-sm font-medium text-gray-700"
-                    >
-                      Industry
-                    </Label>
-                    <Controller
-                      control={control}
+                      {/* Company Size field */}
+                      <FormField
+                        control={signupForm.control}
+                        name="employeeCount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">
+                              Company Size
+                            </FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select company size" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="1-9">
+                                  1-9 employees
+                                </SelectItem>
+                                <SelectItem value="10-49">
+                                  10-49 employees
+                                </SelectItem>
+                                <SelectItem value="50-249">
+                                  50-249 employees
+                                </SelectItem>
+                                <SelectItem value="250-999">
+                                  250-999 employees
+                                </SelectItem>
+                                <SelectItem value="1000+">
+                                  1000+ employees
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* Industry field */}
+                    <FormField
+                      control={signupForm.control}
                       name="industry"
                       render={({ field }) => (
-                        <IndustrySelect
-                          field={field}
-                          className={
-                            signupErrors.industry ? "border-red-500" : ""
-                          }
-                        />
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium text-gray-700">
+                            Industry
+                          </FormLabel>
+                          <FormControl>
+                            <IndustrySelect field={field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
                       )}
                     />
-                    {signupErrors.industry && (
-                      <p className="text-sm text-red-500">
-                        {signupErrors.industry.message}
-                      </p>
-                    )}
-                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Password field */}
-                    <div className="space-y-1">
-                      <Label
-                        htmlFor="signup-password"
-                        className="text-sm font-medium text-gray-700"
-                      >
-                        Password
-                      </Label>
-                      <PasswordInput
-                        id="signup-password"
-                        placeholder="••••••••"
-                        {...registerSignup("password")}
-                        showStrengthMeter={true}
-                        className={
-                          signupErrors.password ? "border-red-500" : ""
-                        }
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Password field */}
+                      <FormField
+                        control={signupForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">
+                              Password
+                            </FormLabel>
+                            <FormControl>
+                              <PasswordInput
+                                placeholder="••••••••"
+                                showStrengthMeter={true}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                      {signupErrors.password && (
-                        <p className="text-sm text-red-500">
-                          {signupErrors.password.message}
-                        </p>
-                      )}
+
+                      {/* Confirm Password field */}
+                      <FormField
+                        control={signupForm.control}
+                        name="confirmPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">
+                              Confirm Password
+                            </FormLabel>
+                            <FormControl>
+                              <PasswordInput
+                                placeholder="••••••••"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
 
-                    {/* Confirm Password field */}
-                    <div className="space-y-1">
-                      <Label
-                        htmlFor="signup-confirmPassword"
-                        className="text-sm font-medium text-gray-700"
-                      >
-                        Confirm Password
-                      </Label>
-                      <PasswordInput
-                        id="signup-confirmPassword"
-                        placeholder="••••••••"
-                        {...registerSignup("confirmPassword")}
-                        value={}
-                        className={
-                          signupErrors.confirmPassword ? "border-red-500" : ""
-                        }
-                      />
-                      {signupErrors.confirmPassword && (
-                        <p className="text-sm text-red-500">
-                          {signupErrors.confirmPassword.message}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Submit button */}
-                  <Button
-                    type="submit"
-                    disabled={registerMutation.isPending}
-                    className="w-full text-white py-2 px-4 rounded-md transition-colors"
-                  >
-                    {registerMutation.isPending
-                      ? "Creating account..."
-                      : "Create account"}
-                  </Button>
-                </form>
+                    {/* Submit button */}
+                    <Button
+                      type="submit"
+                      disabled={registerMutation.isPending}
+                      className="w-full text-white py-2 px-4 rounded-md transition-colors"
+                    >
+                      {registerMutation.isPending
+                        ? "Creating account..."
+                        : "Create account"}
+                    </Button>
+                  </form>
+                </Form>
               </TabsContent>
             </CardContent>
           </Tabs>
