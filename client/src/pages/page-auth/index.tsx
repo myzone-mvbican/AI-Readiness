@@ -42,13 +42,13 @@ export default function AuthPage() {
 
   // Check if Google OAuth is configured
   const isGoogleAuthEnabled = !!import.meta.env.GOOGLE_CLIENT_ID;
-  
+
   // Check if Microsoft OAuth is configured
   const isMicrosoftAuthEnabled = !!import.meta.env.VITE_MICROSOFT_CLIENT_ID;
 
   // Detect if we're in a popup window (opened by MSAL)
   const isPopup = window.opener && window.opener !== window;
-  
+
   // If we're in a popup, show loading state while MSAL handles the callback
   if (isPopup) {
     return (
@@ -490,6 +490,7 @@ export default function AuthPage() {
                         id="signup-confirmPassword"
                         placeholder="••••••••"
                         {...registerSignup("confirmPassword")}
+                        value={}
                         className={
                           signupErrors.confirmPassword ? "border-red-500" : ""
                         }
