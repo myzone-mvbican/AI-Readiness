@@ -28,12 +28,19 @@ import { IndustrySelect } from "@/components/industries";
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  const { user, googleConnectMutation, googleDisconnectMutation, microsoftConnectMutation, microsoftDisconnectMutation } = useAuth();
+  const {
+    user,
+    googleConnectMutation,
+    googleDisconnectMutation,
+    microsoftConnectMutation,
+    microsoftDisconnectMutation,
+  } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isConnectingGoogle, setIsConnectingGoogle] = useState(false);
   const [isDisconnectingGoogle, setIsDisconnectingGoogle] = useState(false);
   const [isConnectingMicrosoft, setIsConnectingMicrosoft] = useState(false);
-  const [isDisconnectingMicrosoft, setIsDisconnectingMicrosoft] = useState(false);
+  const [isDisconnectingMicrosoft, setIsDisconnectingMicrosoft] =
+    useState(false);
   const [initialFormData, setInitialFormData] =
     useState<SettingsFormValues | null>(null);
 
@@ -124,7 +131,6 @@ export default function SettingsPage() {
   // Load user data when available
   useEffect(() => {
     if (user) {
-
       const formData = {
         name: user.name || "",
         company: user.company || "",
@@ -308,7 +314,8 @@ export default function SettingsPage() {
                     id="password"
                     placeholder="Leave blank to keep current password"
                     {...register("password")}
-                    showStrengthMeter={true}
+                    value={password}
+                    showStrengthMeter={!!password}
                     className={errors.password ? "border-red-500" : ""}
                   />
                   {errors.password && (
@@ -442,11 +449,7 @@ export default function SettingsPage() {
                     <Controller
                       name="industry"
                       control={control}
-                      render={({ field }) => (
-                        <IndustrySelect
-                          field={field}
-                        />
-                      )}
+                      render={({ field }) => <IndustrySelect field={field} />}
                     />
                     {errors.industry && (
                       <p className="text-sm text-red-500">
@@ -590,9 +593,15 @@ export default function SettingsPage() {
                               className="w-5 h-5"
                             >
                               <path fill="#f25022" d="M0 0h11.377v11.372H0z" />
-                              <path fill="#00a4ef" d="M12.623 0H24v11.372H12.623z" />
+                              <path
+                                fill="#00a4ef"
+                                d="M12.623 0H24v11.372H12.623z"
+                              />
                               <path fill="#7fba00" d="M0 12.628h11.377V24H0z" />
-                              <path fill="#ffb900" d="M12.623 12.628H24V24H12.623z" />
+                              <path
+                                fill="#ffb900"
+                                d="M12.623 12.628H24V24H12.623z"
+                              />
                             </svg>
                           </div>
                           <div>
@@ -602,7 +611,8 @@ export default function SettingsPage() {
                                   Microsoft account connected
                                 </div>
                                 <div className="text-xs text-muted-foreground">
-                                  You can use Microsoft to sign in to your account
+                                  You can use Microsoft to sign in to your
+                                  account
                                 </div>
                               </div>
                             ) : (
@@ -659,7 +669,8 @@ export default function SettingsPage() {
 
                   {!hasGoogleOAuth && !hasMicrosoftOAuth && (
                     <div className="text-sm text-muted-foreground">
-                      No OAuth providers configured. Contact your administrator to enable Google or Microsoft sign-in.
+                      No OAuth providers configured. Contact your administrator
+                      to enable Google or Microsoft sign-in.
                     </div>
                   )}
                 </div>

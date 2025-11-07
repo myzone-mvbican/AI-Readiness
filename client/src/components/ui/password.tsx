@@ -11,8 +11,10 @@ export interface PasswordInputProps
 }
 
 const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
-  ({ className, showStrengthMeter = false, value, onChange, ...props }, ref) => {
-
+  (
+    { className, showStrengthMeter = false, value, onChange, ...props },
+    ref,
+  ) => {
     const id = useId();
     const [isVisible, setIsVisible] = useState<boolean>(false);
 
@@ -54,7 +56,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
     };
 
     return (
-      <div className="min-w-[300px]">
+      <div className="min-w-[200px]">
         <div className="space-y-2">
           <div className="relative">
             <Input
@@ -102,7 +104,10 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
               ></div>
             </div>
 
-            <p id={`${id}-description`} className="mb-2 text-sm font-medium text-foreground">
+            <p
+              id={`${id}-description`}
+              className="mb-2 text-sm font-medium text-foreground"
+            >
               {getStrengthText(strengthScore)}. Must contain:
             </p>
 
@@ -110,14 +115,26 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
               {strength.map((req, index) => (
                 <li key={index} className="flex items-center gap-2">
                   {req.met ? (
-                    <Check size={16} className="text-emerald-500" aria-hidden="true" />
+                    <Check
+                      size={16}
+                      className="text-emerald-500"
+                      aria-hidden="true"
+                    />
                   ) : (
-                    <X size={16} className="text-muted-foreground/80" aria-hidden="true" />
+                    <X
+                      size={16}
+                      className="text-muted-foreground/80"
+                      aria-hidden="true"
+                    />
                   )}
-                  <span className={`text-xs ${req.met ? "text-emerald-600" : "text-muted-foreground"}`}>
+                  <span
+                    className={`text-xs ${req.met ? "text-emerald-600" : "text-muted-foreground"}`}
+                  >
                     {req.text}
                     <span className="sr-only">
-                      {req.met ? " - Requirement met" : " - Requirement not met"}
+                      {req.met
+                        ? " - Requirement met"
+                        : " - Requirement not met"}
                     </span>
                   </span>
                 </li>
@@ -127,7 +144,8 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
         )}
       </div>
     );
-  });
+  },
+);
 
 PasswordInput.displayName = "PasswordInput";
 
