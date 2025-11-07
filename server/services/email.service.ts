@@ -27,7 +27,7 @@ export class EmailService {
       const emailText = `
 Hello ${name},
 
-We received a request to reset your password for your Keeran - AI Readiness Platform account.
+We received a request to reset your password for your Keeran Networks - AI Readiness Platform account.
 
 To reset your password, please visit the following link:
 ${resetUrl}
@@ -37,13 +37,13 @@ This link will expire in 30 minutes for security reasons.
 If you didn't request this password reset, you can safely ignore this email.
 
 Best regards,
-The Keeran Team
+The Keeran Networks Team
       `.trim();
 
       // Send via Microsoft Graph API
       return await GraphEmailService.sendEmail({
         to: email,
-        subject: "Reset Your Keeran - AI Readiness Platform Password",
+        subject: "Reset Your Keeran Networks - AI Readiness Platform Password",
         html: emailHtml,
         text: emailText,
       });

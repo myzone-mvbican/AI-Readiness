@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "wouter";
 
 const getTitleForRoute = (path: string): string => {
-  const baseTitle = "Keeran - AI Readiness Platform";
+  const baseTitle = "Keeran Networks - AI Readiness Platform";
 
   // Handle dynamic routes with parameters
   if (path.startsWith("/dashboard/assessments/")) {

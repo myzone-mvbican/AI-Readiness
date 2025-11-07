@@ -24,7 +24,7 @@ export const PasswordResetEmail = ({
 }: PasswordResetEmailProps) => (
   <Html>
     <Head />
-    <Preview>Reset your Keeran - AI Readiness Platform password</Preview>
+    <Preview>Reset your Keeran Networks - AI Readiness Platform password</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={logoContainer}>
@@ -33,7 +33,7 @@ export const PasswordResetEmail = ({
         <Heading style={h2}>Reset Your Password</Heading>
         <Text style={text}>Hello {userFirstName},</Text>
         <Text style={text}>
-          We received a request to reset your password for your Keeran - AI Readiness Platform
+          We received a request to reset your password for your Keeran Networks - AI Readiness Platform
           account. If you didn't make this request, you can safely ignore this
           email.
         </Text>
@@ -65,7 +65,7 @@ export const PasswordResetEmail = ({
         <Text style={text}>
           Best regards,
           <br />
-          The Keeran Team
+          The Keeran Networks Team
         </Text>
         <Section style={footer}>
           <Text style={footerText}>

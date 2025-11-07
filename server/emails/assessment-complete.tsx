@@ -79,7 +79,7 @@ export const AssessmentCompleteEmail = ({
         <Text style={text}>
           Best regards,
           <br />
-          The Keeran Team
+          The Keeran Networks Team
         </Text>
 
         <Section style={footer}>
@@ -88,7 +88,7 @@ export const AssessmentCompleteEmail = ({
             you received this email in error, please contact our support team.
           </Text>
           <Text style={footerText}>
-            © 2025 Keeran. All rights reserved.
+            © 2025 Keeran Networks. All rights reserved.
           </Text>
         </Section>
       </Container>

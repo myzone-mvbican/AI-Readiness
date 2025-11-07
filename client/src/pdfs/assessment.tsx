@@ -275,7 +275,7 @@ export const AssessmentPDF = ({
         )}
 
         <View style={styles.footer}>
-          <Text style={styles.pageNumber}>© {year} Keeran</Text>
+          <Text style={styles.pageNumber}>© {year} Keeran Networks</Text>
           <Text style={styles.pageNumber}>Page 2 of {totalPages}</Text>
         </View>
       </Page>
@@ -325,7 +325,7 @@ export const AssessmentPDF = ({
               <RecommendationsContent markdown={pageContent} />
 
               <View style={styles.footer}>
-                <Text style={styles.pageNumber}>© {year} Keeran</Text>
+                <Text style={styles.pageNumber}>© {year} Keeran Networks</Text>
                 <Text style={styles.pageNumber}>
                   Page {index + 3} of {totalPages}
                 </Text>
@@ -366,12 +366,12 @@ export const AssessmentPDF = ({
                 }}
               >
                 For a complete AI readiness strategy customized to your
-                organization's specific needs, please contact the Keeran team
+                organization's specific needs, please contact the Keeran Networks team
                 for a comprehensive consultation.
               </Text>
 
               <View style={styles.footer}>
-                <Text style={styles.pageNumber}>© {year} Keeran</Text>
+                <Text style={styles.pageNumber}>© {year} Keeran Networks</Text>
                 <Text style={styles.pageNumber}>Page 3 of {totalPages}</Text>
               </View>
             </Page>
@@ -430,7 +430,7 @@ export const AssessmentPDF = ({
             })}
 
             <View style={styles.footer}>
-              <Text style={styles.pageNumber}>© {year} Keeran</Text>
+              <Text style={styles.pageNumber}>© {year} Keeran Networks</Text>
               <Text style={styles.pageNumber}>
                 Page {currentIndex} of {totalPages}
               </Text>
