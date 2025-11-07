@@ -6,6 +6,7 @@ import { ToastAction } from "@/components/ui/toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password";
 import { IndustrySelect } from "@/components/industries";
 import {
   Select,
@@ -260,10 +261,10 @@ export default function DialogUserExists({
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
+                      <PasswordInput
                         placeholder="Create a password"
                         {...field}
+                        showStrengthMeter={true}
                       />
                     </FormControl>
                     <FormMessage />
@@ -278,8 +279,7 @@ export default function DialogUserExists({
                   <FormItem>
                     <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
+                      <PasswordInput
                         placeholder="Confirm your password"
                         {...field}
                       />

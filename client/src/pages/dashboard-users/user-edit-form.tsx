@@ -16,6 +16,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password";
 import {
   Select,
   SelectContent,
@@ -142,10 +143,10 @@ export function UserEditForm({ editingUser, onClose }: UserEditFormProps) {
                   <FormItem>
                     <FormLabel>New Password</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
+                      <PasswordInput
                         {...field}
                         value={field.value || ""}
+                        showStrengthMeter={true}
                       />
                     </FormControl>
                     <FormDescription>
@@ -164,8 +165,7 @@ export function UserEditForm({ editingUser, onClose }: UserEditFormProps) {
                     <FormItem>
                       <FormLabel>Confirm Password</FormLabel>
                       <FormControl>
-                        <Input
-                          type="password"
+                        <PasswordInput
                           {...field}
                           value={field.value || ""}
                         />

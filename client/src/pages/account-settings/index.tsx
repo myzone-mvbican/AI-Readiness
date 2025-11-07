@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent } from "@/components/ui/card";
@@ -303,11 +304,11 @@ export default function SettingsPage() {
                   >
                     New Password
                   </Label>
-                  <Input
+                  <PasswordInput
                     id="password"
-                    type="password"
                     placeholder="Leave blank to keep current password"
                     {...register("password")}
+                    showStrengthMeter={true}
                     className={errors.password ? "border-red-500" : ""}
                   />
                   {errors.password && (
@@ -326,9 +327,8 @@ export default function SettingsPage() {
                     >
                       Confirm New Password
                     </Label>
-                    <Input
+                    <PasswordInput
                       id="confirmPassword"
-                      type="password"
                       placeholder="Confirm your new password"
                       {...register("confirmPassword")}
                       className={errors.confirmPassword ? "border-red-500" : ""}

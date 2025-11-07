@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password";
 import { useToast } from "@/hooks/use-toast";
 import { GoogleLogin } from "@react-oauth/google";
 import { MicrosoftLoginButton } from "@/components/microsoft-login-button";
@@ -264,9 +265,8 @@ export default function AuthPage() {
                         </a>
                       </Link>
                     </div>
-                    <Input
+                    <PasswordInput
                       id="login-password"
-                      type="password"
                       placeholder="••••••••"
                       {...registerLogin("password")}
                       className={loginErrors.password ? "border-red-500" : ""}
@@ -451,11 +451,11 @@ export default function AuthPage() {
                       >
                         Password
                       </Label>
-                      <Input
+                      <PasswordInput
                         id="signup-password"
-                        type="password"
                         placeholder="••••••••"
                         {...registerSignup("password")}
+                        showStrengthMeter={true}
                         className={
                           signupErrors.password ? "border-red-500" : ""
                         }
@@ -475,9 +475,8 @@ export default function AuthPage() {
                       >
                         Confirm Password
                       </Label>
-                      <Input
+                      <PasswordInput
                         id="signup-confirmPassword"
-                        type="password"
                         placeholder="••••••••"
                         {...registerSignup("confirmPassword")}
                         className={

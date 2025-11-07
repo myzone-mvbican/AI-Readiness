@@ -10,6 +10,7 @@ import {
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password";
 import {
   Card,
   CardContent,
@@ -26,14 +27,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, CheckCircle, XCircle, Eye, EyeOff } from "lucide-react";
+import { Loader2, CheckCircle, XCircle } from "lucide-react";
 
 export default function ResetPasswordPage() {
   const [, setLocation] = useLocation();
   const [token, setToken] = useState<string>("");
   const [isSuccess, setIsSuccess] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Extract token from URL
   useEffect(() => {
@@ -232,27 +231,12 @@ export default function ResetPasswordPage() {
                   <FormItem>
                     <FormLabel>New Password</FormLabel>
                     <FormControl>
-                      <div className="relative">
-                        <Input
-                          {...field}
-                          type={showPassword ? "text" : "password"}
-                          placeholder="Enter your new password"
-                          disabled={resetMutation.isPending}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="size-4" />
-                          ) : (
-                            <Eye className="size-4" />
-                          )}
-                        </Button>
-                      </div>
+                      <PasswordInput
+                        {...field}
+                        placeholder="Enter your new password"
+                        disabled={resetMutation.isPending}
+                        showStrengthMeter={true}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -266,29 +250,11 @@ export default function ResetPasswordPage() {
                   <FormItem>
                     <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
-                      <div className="relative">
-                        <Input
-                          {...field}
-                          type={showConfirmPassword ? "text" : "password"}
-                          placeholder="Confirm your new password"
-                          disabled={resetMutation.isPending}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() =>
-                            setShowConfirmPassword(!showConfirmPassword)
-                          }
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff className="size-4" />
-                          ) : (
-                            <Eye className="size-4" />
-                          )}
-                        </Button>
-                      </div>
+                      <PasswordInput
+                        {...field}
+                        placeholder="Confirm your new password"
+                        disabled={resetMutation.isPending}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
