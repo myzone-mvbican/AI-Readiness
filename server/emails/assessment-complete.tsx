@@ -18,6 +18,7 @@ interface AssessmentCompleteEmailProps {
   recipientEmail?: string;
   downloadUrl?: string;
   companyName?: string;
+  logoUrl?: string;
 }
 
 export const AssessmentCompleteEmail = ({
@@ -25,6 +26,7 @@ export const AssessmentCompleteEmail = ({
   recipientEmail = "user@example.com",
   downloadUrl = "#",
   companyName = "your organization",
+  logoUrl = "https://www.keeran.ca/wp-content/uploads/2023/05/keeran_logo_inverted_rgb_400px@72ppi.png",
 }: AssessmentCompleteEmailProps) => (
   <Html>
     <Head />
@@ -32,7 +34,11 @@ export const AssessmentCompleteEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Section style={logoContainer}> 
-          <Img src="https://www.keeran.ca/wp-content/uploads/2023/05/keeran_logo_inverted_rgb_400px@72ppi.png.webp" alt="Keeran Networks" width="185" height="38" />
+          <Img 
+            style={{ width: "185px", height: "38px", margin: "0 auto", padding: "20px" }}
+            src={logoUrl} 
+            alt="Keeran Networks" 
+          />
         </Section>
 
         <Heading style={h2}>Your AI Readiness Assessment is Complete!</Heading>
@@ -118,7 +124,7 @@ const container = {
 };
 
 const logoContainer = {
-  backgroundColor: "#40bd56",
+  backgroundColor: "#002b3c",
   color: "#ffffff!important",
   margin: "32px 0",
   textAlign: "center" as const,
