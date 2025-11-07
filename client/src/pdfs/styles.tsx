@@ -22,9 +22,8 @@ export const styles = StyleSheet.create({
     padding: 10,
   },
   logoBox: {
-    width: 155,
-    height: 40,
-    padding: 10,
+    width: 185,
+    height: 38, 
   },
   logoBoxSmall: {
     width: 145,

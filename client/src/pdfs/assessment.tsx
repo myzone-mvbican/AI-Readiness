@@ -1,7 +1,7 @@
 import React from "react";
 import { Document, Page, Text, View, Image } from "@react-pdf/renderer";
 import { formatDate, getRadarChartData } from "@/lib/utils";
-import { Assessment, CsvQuestion } from "@shared/types";
+import { CsvQuestion } from "@shared/types";
 import styles from "./styles";
 import RadarChart from "./radar";
 import { getAnswerText, getReadinessLevel, getRecommendations } from "./utils";

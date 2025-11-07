@@ -39,9 +39,9 @@ export const AssessmentCompleteEmail = ({
         <Text style={text}>Hello {recipientName},</Text>
 
         <Text style={text}>
-          Great news! We've completed the analysis of {companyName}'s AI
-          readiness assessment and generated your personalized recommendations
-          report.
+          Thank you for completing the AI Readiness Assessment. 
+          We noticed a couple of important AI readiness considerations that you scored low on, 
+          and we would love to discuss these with you.
         </Text>
 
         <Section style={highlightBox}>
@@ -54,7 +54,8 @@ export const AssessmentCompleteEmail = ({
             • Personalized recommendations powered by AI
             <br />
             • Visual radar chart showing your strengths and opportunities
-            <br />• Actionable next steps for AI implementation
+            <br />
+            • Actionable next steps for AI implementation
           </Text>
         </Section>
 
@@ -65,15 +66,12 @@ export const AssessmentCompleteEmail = ({
         </Section>
 
         <Text style={text}>
-          Your report contains valuable insights to help guide your
-          organization's AI transformation journey. We recommend sharing these
-          findings with your leadership team and using them to develop your AI
-          strategy.
+          Thanks again. We hope you found this useful and would love to help {companyName} on its path to becoming an AI-ready organization.
         </Text>
 
         <Text style={text}>
-          If you have any questions about your results or need assistance
-          interpreting the recommendations, our team is here to help.
+          If you'd like to schedule a call with one of our AI/IT experts to review your assessment, you can book a time here:
+          <Button style={button} href="https://calendly.com/mikeschwarz">Book a Call</Button>
         </Text>
 
         <Text style={text}>
