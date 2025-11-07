@@ -490,7 +490,7 @@ export default function AuthPage() {
 
         <div className="mt-6 text-center text-sm text-gray-500">
           <p>
-            By continuing, you agree to our Terms of Service and Privacy Policy.
+            By continuing, you agree to our <a className="hover:text-primary" href="https://www.keeran.ca/privacy-policy/" target="_blank">Terms of Service and Privacy Policy</a>.
           </p>
         </div>
       </div>
