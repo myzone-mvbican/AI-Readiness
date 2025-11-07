@@ -134,11 +134,23 @@ export default function AuthPage() {
   });
 
   const onLoginSubmit = async (data: LoginFormValues) => {
-    await loginMutation.mutateAsync(data);
+    // Normalize email (trim and lowercase) before submission
+    const normalizedData = {
+      ...data,
+      email: data.email.trim().toLowerCase(),
+    };
+    await loginMutation.mutateAsync(normalizedData);
   };
 
   const onSignupSubmit = async (data: SignupFormValues) => {
-    await registerMutation.mutateAsync(data);
+    // Normalize form data (trim strings, lowercase email) before submission
+    const normalizedData = {
+      ...data,
+      name: data.name.trim(),
+      email: data.email.trim().toLowerCase(),
+      company: data.company.trim(),
+    };
+    await registerMutation.mutateAsync(normalizedData);
   };
 
   return (
@@ -376,7 +388,7 @@ export default function AuthPage() {
                         render={({ field }) => (
                           <Select
                             onValueChange={field.onChange}
-                            defaultValue={field.value}
+                            value={field.value}
                           >
                             <SelectTrigger
                               id="signup-employee-count"
@@ -428,7 +440,6 @@ export default function AuthPage() {
                       render={({ field }) => (
                         <IndustrySelect
                           field={field}
-                          error={!!signupErrors.industry}
                           className={
                             signupErrors.industry ? "border-red-500" : ""
                           }
