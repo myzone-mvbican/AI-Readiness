@@ -22,11 +22,11 @@ export const styles = StyleSheet.create({
     padding: 10,
   },
   logoBox: {
-    width: 185,
-    height: 38, 
+    width: 175,
+    height: 38,
   },
   logoBoxSmall: {
-    width: 145,
+    width: 140,
     height: 30,
   },
   title: {
