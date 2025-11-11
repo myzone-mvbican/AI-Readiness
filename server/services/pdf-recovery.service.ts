@@ -22,7 +22,9 @@ export class PdfRecoveryService {
    */
   private static doesFileExist(relativePath: string): boolean {
     try {
-      const fullPath = path.join(getProjectRoot(), "public", relativePath);
+      // Remove leading slash to prevent path.join from treating it as absolute
+      const cleanPath = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath;
+      const fullPath = path.join(getProjectRoot(), "public", cleanPath);
       return fs.existsSync(fullPath);
     } catch (error) {
       return false;
@@ -194,8 +196,9 @@ export class PdfRecoveryService {
     error?: string;
   }> {
     try {
-      // Check if file exists
-      const fullPath = path.join(getProjectRoot(), "public", requestPath);
+      // Remove leading slash to prevent path.join from treating it as absolute
+      const cleanPath = requestPath.startsWith('/') ? requestPath.slice(1) : requestPath;
+      const fullPath = path.join(getProjectRoot(), "public", cleanPath);
       
       if (fs.existsSync(fullPath)) {
         return {

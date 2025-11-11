@@ -79,7 +79,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // PDF download route - serve PDF files with correct headers and auto-recovery
   app.get("/uploads/*", async (req, res) => {
     try {
-      const requestedPath = req.path;
+      // Remove leading slash to prevent path.join from treating it as absolute
+      const requestedPath = req.path.startsWith('/') ? req.path.slice(1) : req.path;
       const filePath = path.join(getProjectRoot(), "public", requestedPath);
 
       // Check if it's a PDF file request
