@@ -76,30 +76,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ success: true, data: { status: "ok" } });
   });
 
-  // PDF download route - serve PDF files with correct headers
-  app.get("/uploads/*", (req, res) => {
-    const filePath = path.join(getProjectRoot(), "public", req.path);
+  // PDF download route - serve PDF files with correct headers and auto-recovery
+  app.get("/uploads/*", async (req, res) => {
+    try {
+      const requestedPath = req.path;
+      const filePath = path.join(getProjectRoot(), "public", requestedPath);
 
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: "File not found" });
+      // Check if it's a PDF file request
+      if (path.extname(filePath).toLowerCase() !== ".pdf") {
+        return res.status(400).json({ error: "Only PDF files are allowed" });
+      }
+
+      // Check if file exists, attempt recovery if missing
+      if (!fs.existsSync(filePath)) {
+        console.log(`[PDF Download] File not found, attempting recovery: ${requestedPath}`);
+        
+        const { PdfRecoveryService } = await import("./services/pdf-recovery.service");
+        const recoveryResult = await PdfRecoveryService.checkAndRecover(requestedPath);
+
+        if (recoveryResult.filePath && fs.existsSync(recoveryResult.filePath)) {
+          console.log(`[PDF Download] Recovery successful, serving regenerated file`);
+          
+          // Set proper headers for PDF download
+          res.setHeader("Content-Type", "application/pdf");
+          res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="${path.basename(recoveryResult.filePath)}"`,
+          );
+
+          // Stream the recovered file
+          const fileStream = fs.createReadStream(recoveryResult.filePath);
+          fileStream.pipe(res);
+          return;
+        }
+
+        // Recovery failed, return 404 with details
+        console.error(`[PDF Download] Recovery failed: ${recoveryResult.error}`);
+        return res.status(404).json({ 
+          error: "File not found",
+          details: recoveryResult.error,
+          recoveryAttempted: true
+        });
+      }
+
+      // File exists, serve it normally
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${path.basename(filePath)}"`,
+      );
+
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.pipe(res);
+
+    } catch (error) {
+      console.error("[PDF Download] Error serving PDF:", error);
+      return res.status(500).json({ 
+        error: "Failed to serve PDF file",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
     }
-
-    // Check if it's a PDF file
-    if (path.extname(filePath).toLowerCase() !== ".pdf") {
-      return res.status(400).json({ error: "Only PDF files are allowed" });
-    }
-
-    // Set proper headers for PDF download
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="${path.basename(filePath)}"`,
-    );
-
-    // Stream the file
-    const fileStream = fs.createReadStream(filePath);
-    fileStream.pipe(res);
   });
 
   // API routes - path prefixed with /api
