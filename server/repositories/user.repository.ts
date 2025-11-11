@@ -4,7 +4,6 @@ import { users, userTeams, teams, assessments } from "@shared/schema";
 import { User, Team } from "@shared/types";
 import { InsertUser, UpdateUser } from "@shared/types/requests";
 import { BaseRepository, PaginationOptions, PaginatedResult, FilterOptions } from "./base.repository";
-import type { Transaction } from "drizzle-orm";
 
 /**
  * UserRepository - Data access layer for User operations
@@ -16,7 +15,7 @@ export class UserRepository implements BaseRepository<User> {
   /**
    * Create a new user
    */
-  async create(data: InsertUser, tx?: Transaction): Promise<User> {
+  async create(data: InsertUser, tx?: any): Promise<User> {
     const db = tx || this.database;
     const [user] = await db.insert(users).values(data).returning();
     return user;
@@ -25,7 +24,7 @@ export class UserRepository implements BaseRepository<User> {
   /**
    * Get user by ID
    */
-  async getById(id: number, tx?: Transaction): Promise<User | null> {
+  async getById(id: number, tx?: any): Promise<User | null> {
     const db = tx || this.database;
     const result = await db.select().from(users).where(eq(users.id, id));
     return result[0] || null;
@@ -34,7 +33,7 @@ export class UserRepository implements BaseRepository<User> {
   /**
    * Update user by ID
    */
-  async update(id: number, data: UpdateUser, tx?: Transaction): Promise<User> {
+  async update(id: number, data: UpdateUser, tx?: any): Promise<User> {
     const db = tx || this.database;
     const [user] = await db
       .update(users)
@@ -47,7 +46,7 @@ export class UserRepository implements BaseRepository<User> {
   /**
    * Delete user by ID
    */
-  async delete(id: number, tx?: Transaction): Promise<boolean> {
+  async delete(id: number, tx?: any): Promise<boolean> {
     const db = tx || this.database;
     try {
       // Delete user teams first
@@ -64,7 +63,7 @@ export class UserRepository implements BaseRepository<User> {
   /**
    * Get all users with optional filters
    */
-  async getAll(filters?: FilterOptions, tx?: Transaction): Promise<User[]> {
+  async getAll(filters?: FilterOptions, tx?: any): Promise<User[]> {
     const db = tx || this.database;
     let query = db.select().from(users);
 
@@ -83,7 +82,7 @@ export class UserRepository implements BaseRepository<User> {
   /**
    * Get user by email
    */
-  async getByEmail(email: string, tx?: Transaction): Promise<User | null> {
+  async getByEmail(email: string, tx?: any): Promise<User | null> {
     const db = tx || this.database;
     const result = await db
       .select()
@@ -95,7 +94,7 @@ export class UserRepository implements BaseRepository<User> {
   /**
    * Get user by Google ID
    */
-  async getByGoogleId(googleId: string, tx?: Transaction): Promise<User | null> {
+  async getByGoogleId(googleId: string, tx?: any): Promise<User | null> {
     const db = tx || this.database;
     const result = await db
       .select()
@@ -107,7 +106,7 @@ export class UserRepository implements BaseRepository<User> {
   /**
    * Get user by Microsoft ID
    */
-  async getByMicrosoftId(microsoftId: string, tx?: Transaction): Promise<User | null> {
+  async getByMicrosoftId(microsoftId: string, tx?: any): Promise<User | null> {
     const db = tx || this.database;
     const result = await db
       .select()
@@ -122,7 +121,7 @@ export class UserRepository implements BaseRepository<User> {
   async searchUsers(
     searchTerm: string, 
     pagination: PaginationOptions,
-    tx?: Transaction
+    tx?: any
   ): Promise<PaginatedResult<User>> {
     const db = tx || this.database;
     const { page, limit, sortBy = 'createdAt', sortOrder = 'desc' } = pagination;
@@ -169,7 +168,7 @@ export class UserRepository implements BaseRepository<User> {
   /**
    * Get user's teams
    */
-  async getUserTeams(userId: number, tx?: Transaction): Promise<Team[]> {
+  async getUserTeams(userId: number, tx?: any): Promise<Team[]> {
     const db = tx || this.database;
     const result = await db
       .select({
@@ -193,7 +192,7 @@ export class UserRepository implements BaseRepository<User> {
     userData: InsertUser,
     teamId: number,
     role: string = 'client',
-    tx?: Transaction
+    tx?: any
   ): Promise<{ user: User; team: Team }> {
     const db = tx || this.database;
     
@@ -224,7 +223,7 @@ export class UserRepository implements BaseRepository<User> {
   async transferGuestAssessmentsToUser(
     email: string,
     userId: number,
-    tx?: Transaction
+    tx?: any
   ): Promise<void> {
     const db = tx || this.database;
     
@@ -245,7 +244,7 @@ export class UserRepository implements BaseRepository<User> {
       )
       .returning({ id: assessments.id });
     
-    console.log(`✅ Transferred ${result.length} guest assessment(s):`, result.map(r => r.id));
+    console.log(`✅ Transferred ${result.length} guest assessment(s):`, result.map((r: any) => r.id));
   }
 
   /**
@@ -254,7 +253,7 @@ export class UserRepository implements BaseRepository<User> {
   async connectGoogleAccount(
     userId: number,
     googleId: string,
-    tx?: Transaction
+    tx?: any
   ): Promise<User> {
     return await this.update(userId, { googleId }, tx);
   }
@@ -262,7 +261,7 @@ export class UserRepository implements BaseRepository<User> {
   /**
    * Disconnect Google account
    */
-  async disconnectGoogleAccount(userId: number, tx?: Transaction): Promise<User> {
+  async disconnectGoogleAccount(userId: number, tx?: any): Promise<User> {
     return await this.update(userId, { googleId: null }, tx);
   }
 
@@ -272,7 +271,7 @@ export class UserRepository implements BaseRepository<User> {
   async connectMicrosoftAccount(
     userId: number,
     microsoftId: string,
-    tx?: Transaction
+    tx?: any
   ): Promise<User> {
     return await this.update(userId, { microsoftId }, tx);
   }
@@ -280,7 +279,7 @@ export class UserRepository implements BaseRepository<User> {
   /**
    * Disconnect Microsoft account
    */
-  async disconnectMicrosoftAccount(userId: number, tx?: Transaction): Promise<User> {
+  async disconnectMicrosoftAccount(userId: number, tx?: any): Promise<User> {
     return await this.update(userId, { microsoftId: null }, tx);
   }
 
@@ -291,7 +290,7 @@ export class UserRepository implements BaseRepository<User> {
     userId: number,
     token: string,
     expiry: Date,
-    tx?: Transaction
+    tx?: any
   ): Promise<void> {
     const db = tx || this.database;
     
@@ -308,7 +307,7 @@ export class UserRepository implements BaseRepository<User> {
   /**
    * Clear password reset token
    */
-  async clearResetToken(userId: number, tx?: Transaction): Promise<void> {
+  async clearResetToken(userId: number, tx?: any): Promise<void> {
     const db = tx || this.database;
     
     await db
@@ -324,7 +323,7 @@ export class UserRepository implements BaseRepository<User> {
   /**
    * Get user by reset token
    */
-  async getByResetToken(token: string, tx?: Transaction): Promise<User | null> {
+  async getByResetToken(token: string, tx?: any): Promise<User | null> {
     const db = tx || this.database;
     
     // Use database time for comparison to avoid timezone issues

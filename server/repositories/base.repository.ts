@@ -1,15 +1,13 @@
-import { Transaction } from "drizzle-orm";
-
 /**
  * Base repository interface providing common CRUD operations
  * All repositories should extend this interface for consistency
  */
 export interface BaseRepository<T> {
-  create(data: any, tx?: Transaction): Promise<T>;
-  getById(id: number, tx?: Transaction): Promise<T | null>;
-  update(id: number, data: any, tx?: Transaction): Promise<T>;
-  delete(id: number, tx?: Transaction): Promise<boolean>;
-  getAll(filters?: any, tx?: Transaction): Promise<T[]>;
+  create(data: any, tx?: any): Promise<T>;
+  getById(id: number, tx?: any): Promise<T | null>;
+  update(id: number, data: any, tx?: any): Promise<T>;
+  delete(id: number, tx?: any): Promise<boolean>;
+  getAll(filters?: any, tx?: any): Promise<T[]>;
 }
 
 /**
