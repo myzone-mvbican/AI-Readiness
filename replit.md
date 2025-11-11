@@ -105,6 +105,9 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
+- November 11, 2025. Implemented automatic PDF recovery system to handle missing files after redeployment - PDFs are regenerated on-demand when requested but file missing, using existing assessment data and recommendations from database
+- November 11, 2025. Fixed password validation consistency - updated frontend PasswordInput component to display all 5 requirements (8+ chars, uppercase, lowercase, number, special character) with proper strength meter (5/5 scale)
+- November 11, 2025. Updated all password validation schemas across client, shared, and common validators to require special characters matching backend requirements
 - November 6, 2025. Fixed guest PDF download path returning absolute filesystem path instead of relative URL path by using relativePath instead of filePath in AIService response
 - November 6, 2025. Fixed guest PDF showing "Unknown Question" by changing question ID comparison from Number(q.id) === answer.q to String(q.id) === String(answer.q) to handle type mismatch
 - November 6, 2025. Fixed guest assessment linking bug by adding ::jsonb cast to PostgreSQL JSON query - guest assessments now properly transfer to new user accounts upon registration
