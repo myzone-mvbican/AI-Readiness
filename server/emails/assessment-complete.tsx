@@ -81,7 +81,7 @@ export const AssessmentCompleteEmail = ({
           review your assessment, you can book a time here:
         </Text>
         <Section style={buttonContainer}>
-          <Button style={button} href="https://calendly.com/mikeschwarz">
+          <Button style={button} href="https://calendly.com/keeranmfj/30min">
             Book a Call
           </Button>
         </Section>
