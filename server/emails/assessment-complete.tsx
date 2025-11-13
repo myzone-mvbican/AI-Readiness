@@ -35,7 +35,7 @@ export const AssessmentCompleteEmail = ({
       <Container style={container}>
         <Section style={logoContainer}> 
           <Img 
-            style={{ width: "185px", height: "38px", margin: "0 auto", padding: "20px" }}
+            style={{ width: "185px", margin: "0 auto", padding: "20px" }}
             src={logoUrl} 
             alt="Keeran Networks" 
           />
