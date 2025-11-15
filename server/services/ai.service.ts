@@ -282,13 +282,19 @@ Return only the NAICS code that best represents this business.`;
     error?: string;
   } | null> {
     try {
-      // Extract guest email if available
+      // Extract guest email and company name if available
       let guestEmail = null;
+      let companyName = null;
       if (guest) {
         try {
           const guestData = JSON.parse(guest);
           guestEmail = guestData.email;
+          companyName = guestData.company;
         } catch (error) {}
+      } else if (userId) {
+        // Get user company name
+        const user = await UserService.getById(userId);
+        companyName = user?.company;
       }
 
       // Generate PDF with recommendations
@@ -297,6 +303,7 @@ Return only the NAICS code that best represents this business.`;
         updatedAssessment,
         userId,
         guestEmail,
+        companyName,
       );
 
       if (pdfResult.success) {

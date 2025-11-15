@@ -22,10 +22,24 @@ export class PDFGenerator {
     }
   }
 
-  private static generateFileName(assessment: Assessment): string {
-    // const today = new Date();
-    // const completed = new Date(assessment.completedOn || today);
-    return `report-${assessment.id}.pdf`;
+  private static generateFileName(assessment: Assessment, companyName?: string): string {
+    // Use assessment completion date if available, otherwise use today
+    // This ensures regenerated PDFs keep the same filename
+    const dateToUse = assessment.completedOn ? new Date(assessment.completedOn) : new Date();
+    const year = dateToUse.getFullYear();
+    const month = String(dateToUse.getMonth() + 1).padStart(2, '0');
+    const day = String(dateToUse.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    
+    // Format company name: lowercase, replace spaces with dashes, remove special chars
+    const formattedCompany = companyName
+      ? companyName
+          .toLowerCase()
+          .replace(/\s+/g, '-')
+          .replace(/[^a-z0-9-]/g, '')
+      : 'assessment';
+    
+    return `${formattedCompany}-${dateStr}.pdf`;
   }
 
   private static getUploadPath(
@@ -64,6 +78,7 @@ export class PDFGenerator {
     assessment: Assessment,
     userId?: string | number,
     guestEmail?: string,
+    companyName?: string,
   ): Promise<PDFGenerationResult> {
     try {
       // Debug logging
@@ -72,7 +87,7 @@ export class PDFGenerator {
       console.log("PDF Generator - First question:", ((assessment as any).survey?.questions?.[0]));
       
       // Generate file name
-      const fileName = this.generateFileName(assessment);
+      const fileName = this.generateFileName(assessment, companyName);
 
       // Get upload path
       const uploadDir = this.getUploadPath(userId, guestEmail);

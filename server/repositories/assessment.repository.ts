@@ -130,6 +130,43 @@ export class AssessmentRepository implements BaseRepository<Assessment> {
     };
   }
 
+  async getByPdfPath(pdfPath: string, tx?: any): Promise<Assessment | null> {
+    const db = tx || this.drizzleDb;
+    const [assessment] = await db
+      .select()
+      .from(assessments)
+      .where(eq(assessments.pdfPath, pdfPath))
+      .limit(1);
+    
+    if (!assessment) return null;
+
+    // Parse answers
+    let parsedAnswers;
+    if (Array.isArray(assessment.answers)) {
+      parsedAnswers = assessment.answers;
+    } else if (typeof assessment.answers === 'string') {
+      parsedAnswers = JSON.parse(assessment.answers);
+      
+      if (parsedAnswers && typeof parsedAnswers === 'object' && !Array.isArray(parsedAnswers)) {
+        const answerArray = [];
+        for (const key in parsedAnswers) {
+          const parsedKey = JSON.parse(key);
+          if (parsedKey && typeof parsedKey === 'object') {
+            answerArray.push(parsedKey);
+          }
+        }
+        parsedAnswers = answerArray;
+      }
+    } else {
+      parsedAnswers = [];
+    }
+
+    return {
+      ...assessment,
+      answers: parsedAnswers
+    };
+  }
+
   async update(id: number, data: any, tx?: any): Promise<Assessment> {
     const db = tx || this.drizzleDb;
     

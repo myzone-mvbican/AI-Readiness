@@ -4,6 +4,7 @@ import { AssessmentRepository } from "../repositories/assessment.repository";
 import { PDFGenerator } from "../utils/pdf-generator";
 import { getProjectRoot } from "../utils/environment";
 import { NotFoundError, InternalServerError } from "../utils/errors";
+import { UserService } from "./user.service";
 
 export interface RecoveryResult {
   success: boolean;
@@ -126,15 +127,24 @@ export class PdfRecoveryService {
       // Step 3: Determine user context (authenticated user or guest)
       let userId: number | undefined;
       let guestEmail: string | undefined;
+      let companyName: string | undefined;
 
       if (assessment.userId) {
         userId = assessment.userId;
+        // Get company name from user via UserService
+        try {
+          const user = await UserService.getById(userId);
+          companyName = user?.company;
+        } catch (error) {
+          console.error("[PDF Recovery] Failed to get user company:", error);
+        }
       } else if (assessment.guest) {
         try {
           const guestData = typeof assessment.guest === 'string' 
             ? JSON.parse(assessment.guest) 
             : assessment.guest;
           guestEmail = guestData?.email;
+          companyName = guestData?.company;
         } catch (error) {
           console.error("[PDF Recovery] Failed to parse guest data:", error);
           return {
@@ -149,7 +159,8 @@ export class PdfRecoveryService {
       const pdfResult = await PDFGenerator.generateAndSavePDF(
         assessment as any,
         userId,
-        guestEmail
+        guestEmail,
+        companyName
       );
 
       if (!pdfResult.success || !pdfResult.filePath || !pdfResult.relativePath) {
@@ -209,13 +220,28 @@ export class PdfRecoveryService {
 
       console.log(`[PDF Recovery] File not found: ${fullPath}, attempting recovery...`);
 
-      // Extract assessment ID from path
-      const assessmentId = this.extractAssessmentIdFromPath(requestPath);
+      // Try to find assessment by PDF path first (for new format filenames)
+      let assessmentId: number | null = null;
+      
+      // Convert to relative path format (e.g., /uploads/123/company-2025-11-16.pdf)
+      const relativePath = requestPath.startsWith('/') ? requestPath : `/${requestPath}`;
+      const assessmentByPath = await this.assessmentRepository.getByPdfPath(relativePath);
+      
+      if (assessmentByPath) {
+        assessmentId = assessmentByPath.id;
+        console.log(`[PDF Recovery] Found assessment ${assessmentId} by pdfPath lookup`);
+      } else {
+        // Fall back to legacy regex extraction for old filenames (report-{id}.pdf)
+        assessmentId = this.extractAssessmentIdFromPath(requestPath);
+        if (assessmentId) {
+          console.log(`[PDF Recovery] Found assessment ${assessmentId} by legacy filename parsing`);
+        }
+      }
       
       if (!assessmentId) {
         return {
           needsRecovery: false,
-          error: "Could not extract assessment ID from filename"
+          error: "Could not find assessment for this PDF"
         };
       }
 
