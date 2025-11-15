@@ -311,11 +311,13 @@ Return only the NAICS code that best represents this business.`;
           // Don't fail the entire operation if PDF path update fails
         }
 
-        // Send email with PDF download link
+        // Send email with PDF download link and attachment
         try {
           await this.sendAssessmentCompleteEmail(
             assessment,
             pdfResult.relativePath!,
+            pdfResult.buffer,
+            pdfResult.fileName!,
             guest,
             userId,
           );
@@ -341,6 +343,8 @@ Return only the NAICS code that best represents this business.`;
   private static async sendAssessmentCompleteEmail(
     assessment: Assessment,
     pdfRelativePath: string,
+    pdfBuffer: Buffer | undefined,
+    fileName: string,
     guest: string | null,
     userId: number | undefined,
   ): Promise<void> {
@@ -383,12 +387,24 @@ Return only the NAICS code that best represents this business.`;
           }),
         );
 
-        // Send email with BCC to sales team
+        // Prepare attachments if buffer is available
+        const attachments = pdfBuffer
+          ? [
+              {
+                name: fileName,
+                contentType: "application/pdf",
+                contentBytes: pdfBuffer.toString("base64"),
+              },
+            ]
+          : undefined;
+
+        // Send email with BCC to sales team and PDF attachment
         await EmailService.sendEmail({
           to: recipientEmail,
           subject: "Your Keeran AI Readiness Assessment Results Are Ready!",
           html: emailHtml,
           bcc: "sales@keeran.ca",
+          attachments,
         });
       } else {
       }
