@@ -65,14 +65,8 @@ export const AssessmentCompleteEmail = ({
           </Text>
         </Section>
 
-        <Section style={buttonContainer}>
-          <Button style={button} href={downloadUrl}>
-            Download Report
-          </Button>
-        </Section>
-
         <Text style={text}>
-          Thanks again. We hope you found this useful and would love to help{" "}
+          Your detailed assessment report is attached to this email. Thanks again. We hope you found this useful and would love to help{" "}
           {companyName} on its path to becoming an AI-ready organization.
         </Text>
 
