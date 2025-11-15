@@ -105,6 +105,9 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
+- November 15, 2025. Changed PDF filename format from report-{id}.pdf to {company-name}-{date}.pdf with stable completion dates for deterministic regeneration
+- November 15, 2025. Updated PDF recovery system to support new filename format via pdfPath database lookup with legacy format fallback
+- November 15, 2025. Removed download button from assessment completion emails - PDFs now only available as email attachment
 - November 15, 2025. Added PDF attachment to assessment completion emails - PDFs now attached directly to emails while maintaining download link as backup option
 - November 15, 2025. Implemented dual email delivery for assessment completion notifications - client receives email with PDF download link while sales@keeran.ca receives BCC copy for lead tracking and follow-up
 - November 11, 2025. Implemented automatic PDF recovery system to handle missing files after redeployment - PDFs are regenerated on-demand when requested but file missing, using existing assessment data and recommendations from database
