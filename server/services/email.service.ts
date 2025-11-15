@@ -59,12 +59,14 @@ The Keeran Networks Team
     subject,
     html,
     text,
+    bcc,
     attachments,
   }: {
     to: string;
     subject: string;
     html?: string;
     text?: string;
+    bcc?: string | string[];
     attachments?: Array<{
       name: string;
       contentType: string;
@@ -78,6 +80,7 @@ The Keeran Networks Team
         subject,
         html,
         text,
+        bcc,
         attachments,
       });
     } catch (error) {

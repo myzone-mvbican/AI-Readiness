@@ -383,11 +383,12 @@ Return only the NAICS code that best represents this business.`;
           }),
         );
 
-        // Send email
+        // Send email with BCC to sales team
         await EmailService.sendEmail({
           to: recipientEmail,
           subject: "Your Keeran AI Readiness Assessment Results Are Ready!",
           html: emailHtml,
+          bcc: "sales@keeran.ca",
         });
       } else {
       }

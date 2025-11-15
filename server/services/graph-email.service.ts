@@ -6,6 +6,7 @@ interface EmailMessage {
   subject: string;
   html?: string;
   text?: string;
+  bcc?: string | string[]; // BCC recipients
   attachments?: Array<{
     name: string;
     contentType: string;
@@ -101,6 +102,16 @@ export class GraphEmailService {
         },
         saveToSentItems: false, // Don't save to sent items to avoid clutter
       };
+
+      // Add BCC recipients if provided
+      if (message.bcc) {
+        const bccAddresses = Array.isArray(message.bcc) ? message.bcc : [message.bcc];
+        emailBody.message.bccRecipients = bccAddresses.map((bccEmail) => ({
+          emailAddress: {
+            address: bccEmail,
+          },
+        }));
+      }
 
       // Add attachments if provided
       if (message.attachments && message.attachments.length > 0) {
