@@ -11,6 +11,7 @@ export interface PDFGenerationResult {
   filePath?: string;
   relativePath?: string;
   fileName?: string;
+  buffer?: Buffer;
   error?: string;
 }
 
@@ -101,6 +102,7 @@ export class PDFGenerator {
         filePath,
         relativePath,
         fileName,
+        buffer: pdfBuffer,
       };
     } catch (error) {
       console.error("Error generating PDF:", error);
