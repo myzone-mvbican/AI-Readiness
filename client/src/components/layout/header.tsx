@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAssessment } from "@/hooks/use-assessment";
 import { useAuth } from "@/hooks/use-auth";
@@ -8,6 +8,7 @@ import logoPath from "@/assets/logo-keeran.svg";
 export default function Header() {
   const { user } = useAuth();
   const assessmentCreateModal = useAssessment();
+  const [location] = useLocation();
 
   const handleAssessmentStart = () => {
     if (user) {
@@ -15,7 +16,14 @@ export default function Header() {
       assessmentCreateModal.onOpen();
     } else {
       // If no user is logged in, show the guest dialog
-      navigate("/#start");
+      // Check if we're already on the homepage
+      if (location === "/") {
+        // Trigger hash change event manually by setting and immediately clearing hash
+        window.location.hash = "start";
+      } else {
+        // Navigate to homepage with hash
+        navigate("/#start");
+      }
     }
   };
 
