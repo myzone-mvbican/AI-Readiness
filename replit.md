@@ -105,6 +105,7 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
+- November 15, 2025. Implemented dual email delivery for assessment completion notifications - client receives email with PDF download link while sales@keeran.ca receives BCC copy for lead tracking and follow-up
 - November 11, 2025. Implemented automatic PDF recovery system to handle missing files after redeployment - PDFs are regenerated on-demand when requested but file missing, using existing assessment data and recommendations from database
 - November 11, 2025. Fixed password validation consistency - updated frontend PasswordInput component to display all 5 requirements (8+ chars, uppercase, lowercase, number, special character) with proper strength meter (5/5 scale)
 - November 11, 2025. Updated all password validation schemas across client, shared, and common validators to require special characters matching backend requirements
