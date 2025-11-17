@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { LLMLog } from "../types";
 import { formatDistanceToNow } from "date-fns";
 
@@ -161,32 +162,84 @@ export default function Details({
             </div>
             <div>
               <h4 className="text-sm font-semibold mb-2">Messages</h4>
-              <div className="space-y-2">
-                {log.request.messages?.map((message, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-muted p-3 rounded-md border-l-4 border-blue-500"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <Badge variant="outline">{message.role}</Badge>
-                      {message.redactionStatus && (
-                        <Badge
-                          variant={
-                            message.redactionStatus === "redacted"
-                              ? "destructive"
-                              : "outline"
-                          }
+              <Tabs defaultValue="system" className="w-full">
+                <TabsList>
+                  <TabsTrigger value="system">System Prompt</TabsTrigger>
+                  <TabsTrigger value="user">User Prompt</TabsTrigger>
+                </TabsList>
+                <TabsContent value="system" className="space-y-2 mt-4">
+                  {log.request.messages && log.request.messages.filter((msg) => msg.role === "system").length > 0 ? (
+                    log.request.messages!
+                      .filter((msg) => msg.role === "system")
+                      .map((message, idx) => (
+                        <div
+                          key={idx}
+                          className="bg-muted p-3 rounded-md border-l-4 border-blue-500"
                         >
-                          {message.redactionStatus}
-                        </Badge>
-                      )}
+                          <div className="flex justify-between items-start mb-2">
+                            <Badge variant="outline">{message.role}</Badge>
+                            {message.redactionStatus && (
+                              <Badge
+                                variant={
+                                  message.redactionStatus === "redacted"
+                                    ? "destructive"
+                                    : "outline"
+                                }
+                              >
+                                {message.redactionStatus}
+                              </Badge>
+                            )}
+                          </div>
+                          <ScrollArea className="h-[300px] w-full rounded-md">
+                            <pre className="text-xs whitespace-pre-wrap break-words pr-4">
+                              {message.content}
+                            </pre>
+                          </ScrollArea>
+                        </div>
+                      ))
+                  ) : (
+                    <div className="text-muted-foreground text-sm py-4">
+                      No system prompts found
                     </div>
-                    <pre className="text-xs whitespace-pre-wrap break-words">
-                      {message.content}
-                    </pre>
-                  </div>
-                ))}
-              </div>
+                  )}
+                </TabsContent>
+                <TabsContent value="user" className="space-y-2 mt-4">
+                  {log.request.messages && log.request.messages.filter((msg) => msg.role === "user").length > 0 ? (
+                    log.request.messages!
+                      .filter((msg) => msg.role === "user")
+                      .map((message, idx) => (
+                        <div
+                          key={idx}
+                          className="bg-muted p-3 rounded-md border-l-4 border-green-500"
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <Badge variant="outline">{message.role}</Badge>
+                            {message.redactionStatus && (
+                              <Badge
+                                variant={
+                                  message.redactionStatus === "redacted"
+                                    ? "destructive"
+                                    : "outline"
+                                }
+                              >
+                                {message.redactionStatus}
+                              </Badge>
+                            )}
+                          </div>
+                          <ScrollArea className="h-[300px] w-full rounded-md">
+                            <pre className="text-xs whitespace-pre-wrap break-words pr-4">
+                              {message.content}
+                            </pre>
+                          </ScrollArea>
+                        </div>
+                      ))
+                  ) : (
+                    <div className="text-muted-foreground text-sm py-4">
+                      No user prompts found
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             </div>
           </TabsContent>
 
@@ -339,18 +392,22 @@ export default function Details({
               <div>
                 <h4 className="text-sm font-semibold mb-2">Stable Trace</h4>
                 <div className="bg-muted p-4 rounded-md">
-                  <pre className="text-xs overflow-auto">
-                    {JSON.stringify(log.stableTrace, null, 2)}
-                  </pre>
+                  <ScrollArea className="h-[300px] w-full rounded-md">
+                    <pre className="text-xs whitespace-pre-wrap break-words pr-4">
+                      {JSON.stringify(log.stableTrace, null, 2)}
+                    </pre>
+                  </ScrollArea>
                 </div>
               </div>
             )}
             <div>
               <h4 className="text-sm font-semibold mb-2">Full Request JSON</h4>
               <div className="bg-muted p-4 rounded-md">
-                <pre className="text-xs overflow-auto">
-                  {JSON.stringify(log.request, null, 2)}
-                </pre>
+                <ScrollArea className="h-[300px] w-full rounded-md">
+                  <pre className="text-xs whitespace-pre-wrap break-words pr-4">
+                    {JSON.stringify(log.request, null, 2)}
+                  </pre>
+                </ScrollArea>
               </div>
             </div>
           </TabsContent>
