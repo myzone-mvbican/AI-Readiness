@@ -15,6 +15,7 @@ import {
 export function NavMain({
   items,
   adminItems,
+  llmItems,
   isRouteActive,
 }: {
   items: {
@@ -25,6 +26,12 @@ export function NavMain({
     disabled?: boolean;
   }[];
   adminItems?: {
+    title: string;
+    url: string;
+    icon?: LucideIcon;
+    isActive?: boolean;
+  }[];
+  llmItems?: {
     title: string;
     url: string;
     icon?: LucideIcon;
@@ -67,6 +74,31 @@ export function NavMain({
           <SidebarGroupLabel>Admin Tools</SidebarGroupLabel>
           <SidebarMenu>
             {adminItems.map((item) => (
+              <SidebarMenuItem key={item.url}>
+                <SidebarMenuButton tooltip={item.title} asChild>
+                  <Link
+                    href={item.url}
+                    className={cn(
+                      "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                      isRouteActive(item.url) && "bg-accent",
+                    )}
+                  >
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroup>
+      )}
+
+      {/* Only render LLM's section if there are LLM items */}
+      {llmItems && llmItems.length > 0 && (
+        <SidebarGroup>
+          <SidebarGroupLabel>LLM's</SidebarGroupLabel>
+          <SidebarMenu>
+            {llmItems.map((item) => (
               <SidebarMenuItem key={item.url}>
                 <SidebarMenuButton tooltip={item.title} asChild>
                   <Link

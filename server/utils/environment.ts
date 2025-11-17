@@ -26,6 +26,9 @@ const envSchema = z.object({
 
   // PII Encryption
   PII_ENCRYPTION_KEY: z.string().min(32, "PII_ENCRYPTION_KEY must be at least 32 characters").optional(),
+  
+  // LLM API Key Encryption (64 hex characters = 32 bytes for AES-256)
+  LLM_ENCRYPTION_KEY: z.string().length(64, "LLM_ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes)").optional(),
 
   // Email (optional) 
   SMTP_HOST: z.string().optional(),

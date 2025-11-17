@@ -12,6 +12,10 @@ import { EmailService } from "./email.service";
 import AssessmentCompleteEmail from "../emails/assessment-complete";
 import { ValidationError, InternalServerError } from "../utils/errors";
 import { env } from "server/utils/environment";
+import { LLMLogService } from "./llm-log.service";
+import { redactMessages } from "../utils/pii-redaction";
+import { getTokenUsageFromResponse, getLlmUsageCost } from "../utils/llmUsage";
+import { randomBytes } from "crypto";
 
 // Define interface for request body
 interface AIRequestBody {
@@ -52,12 +56,17 @@ export class AIService {
   /**
    * Analyze a website URL and determine its NAICS industry code
    */
-  static async analyzeIndustry(url: string): Promise<IndustryAnalysisResult> {
-    try {
-      const openai = this.getOpenAI();
+  static async analyzeIndustry(url: string, userId?: number): Promise<IndustryAnalysisResult> {
+    const startTime = Date.now();
+    const requestId = randomBytes(16).toString("hex");
+    const model = "gpt-4.1";
+    const provider = "openai";
+    const endpoint = "chat.completions";
+    const route = "/api/analyze-industry";
+    const featureName = "analyze_industry";
 
-      // System prompt for industry analysis
-      const systemPrompt = `You are an expert industry analyst. Your task is to analyze a website URL and determine the most appropriate NAICS (North American Industry Classification System) industry code.
+    // System prompt for industry analysis
+    const systemPrompt = `You are an expert industry analyst. Your task is to analyze a website URL and determine the most appropriate NAICS (North American Industry Classification System) industry code.
 
 Guidelines:
 1. Analyze the website content, business model, primary products/services, and target market
@@ -72,7 +81,7 @@ Examples of valid responses:
 - 236220 (Commercial and Institutional Building Construction)
 - 523110 (Investment Banking and Securities Dealing)`;
 
-      const userPrompt = `Analyze this website and determine its NAICS industry code: ${url}
+    const userPrompt = `Analyze this website and determine its NAICS industry code: ${url}
 
 Please visit the website (if accessible) and analyze:
 - Main business activities
@@ -83,16 +92,23 @@ Please visit the website (if accessible) and analyze:
 
 Return only the NAICS code that best represents this business.`;
 
+    // Prepare request messages for logging (before PII redaction)
+    const requestMessages = [
+      { role: "system" as const, content: systemPrompt },
+      { role: "user" as const, content: userPrompt },
+    ];
+
+    try {
+      const openai = this.getOpenAI();
+
       const completion = await openai.chat.completions.create({
-        model: "gpt-4.1",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
+        model,
+        messages: requestMessages,
         max_tokens: 250,
         temperature: 0.1,
       });
 
+      const latencyMs = Date.now() - startTime;
       const industryCode = completion.choices[0]?.message?.content?.trim();
 
       if (!industryCode || industryCode === "UNKNOWN") {
@@ -104,8 +120,125 @@ Return only the NAICS code that best represents this business.`;
         throw new ValidationError("Invalid industry code format detected");
       }
 
+      // Get token usage from response
+      const tokenUsage = getTokenUsageFromResponse(completion);
+      const estimatedCostUsd = tokenUsage.promptTokens && tokenUsage.completionTokens
+        ? getLlmUsageCost(provider, model, tokenUsage.promptTokens, tokenUsage.completionTokens)
+        : undefined;
+
+      // Apply PII redaction to messages before logging
+      const redactionResult = redactMessages(requestMessages);
+      const redactedRequest = {
+        provider,
+        model,
+        endpoint,
+        messages: redactionResult.redacted,
+        temperature: 0.1,
+        maxTokens: 250,
+        metadata: {
+          featureName,
+          route,
+        },
+      };
+
+      // Log successful interaction
+      await LLMLogService.createLog({
+        userId: userId || undefined,
+        environment: env.NODE_ENV || "development",
+        route,
+        featureName,
+        provider,
+        model,
+        endpoint,
+        request: redactedRequest,
+        response: {
+          status: "success" as const,
+          httpStatus: 200,
+          completion: {
+            messages: [
+              {
+                role: "assistant" as const,
+                content: industryCode,
+              },
+            ],
+            finishReason: completion.choices[0]?.finish_reason,
+          },
+        },
+        metrics: {
+          latencyMs,
+          promptTokens: tokenUsage.promptTokens,
+          completionTokens: tokenUsage.completionTokens,
+          totalTokens: tokenUsage.totalTokens,
+          estimatedCostUsd,
+        },
+        retries: 0,
+        security: {
+          redactionRules: redactionResult.appliedRules,
+        },
+        redactionStatus: redactionResult.redactionStatus as "pending" | "completed" | "failed",
+        debug: {
+          requestId,
+        },
+      }).catch((logError) => {
+        // Don't fail the request if logging fails
+        console.error("Failed to log LLM interaction:", logError);
+      });
+
       return { industryCode };
     } catch (error: any) {
+      const latencyMs = Date.now() - startTime;
+
+      // Apply PII redaction to messages before logging error
+      const redactionResult = redactMessages(requestMessages);
+      const redactedRequest = {
+        provider,
+        model,
+        endpoint,
+        messages: redactionResult.redacted,
+        temperature: 0.1,
+        maxTokens: 250,
+        metadata: {
+          featureName,
+          route,
+        },
+      };
+
+      // Log error interaction
+      await LLMLogService.createLog({
+        userId: userId || undefined,
+        environment: env.NODE_ENV || "development",
+        route,
+        featureName,
+        provider,
+        model,
+        endpoint,
+        request: redactedRequest,
+        response: {
+          status: "error" as const,
+          httpStatus: error instanceof ValidationError ? 400 : 500,
+          error: {
+            type: error?.name || "UnknownError",
+            message: error?.message || "Failed to analyze website industry",
+            code: error?.code,
+            retryable: false,
+          },
+        },
+        metrics: {
+          latencyMs,
+        },
+        retries: 0,
+        security: {
+          redactionRules: redactionResult.appliedRules,
+        },
+        redactionStatus: redactionResult.redactionStatus as "pending" | "completed" | "failed",
+        debug: {
+          requestId,
+        },
+      }).catch((logError) => {
+        // Don't fail the request if logging fails
+        console.error("Failed to log LLM error:", logError);
+      });
+
       if (error instanceof ValidationError) {
         throw error;
       }
@@ -116,7 +249,15 @@ Return only the NAICS code that best represents this business.`;
   /**
    * Generate AI suggestions for an assessment
    */
-  static async generateSuggestions(assessment: any): Promise<AISuggestionsResult> {
+  static async generateSuggestions(assessment: any, requestUserId?: number): Promise<AISuggestionsResult> {
+    const startTime = Date.now();
+    const requestId = randomBytes(16).toString("hex");
+    const model = "gpt-4.1";
+    const provider = "openai";
+    const endpoint = "chat.completions";
+    const route = "/api/ai-suggestions";
+    const featureName = "generate_suggestions";
+
     try {
       const {
         guest,
@@ -124,6 +265,9 @@ Return only the NAICS code that best represents this business.`;
         answers,
         surveyTemplateId,
       } = assessment;
+
+      // Use requestUserId if provided (from authenticated request), otherwise use assessment userId
+      const logUserId = requestUserId || userId || undefined;
 
       // If assessment doesn't have survey questions, fetch them
       let assessmentWithSurvey = assessment;
@@ -170,16 +314,21 @@ Return only the NAICS code that best represents this business.`;
         ...(company && { company }),
       });
 
+      // Prepare request messages for logging (before PII redaction)
+      const requestMessages = [
+        { role: "system" as const, content: systemPrompt },
+        { role: "user" as const, content: userPayload },
+      ];
+
       // Make API request to OpenAI
       const completion = await openai.chat.completions.create({
-        model: "gpt-4.1",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPayload },
-        ],
+        model,
+        messages: requestMessages,
         temperature: 0.7,
         max_tokens: 16000,
       });
+
+      const latencyMs = Date.now() - startTime;
 
       // Get the response content
       const content = completion.choices[0]?.message?.content;
@@ -187,6 +336,70 @@ Return only the NAICS code that best represents this business.`;
       if (!content) {
         throw new InternalServerError("No content returned from AI");
       }
+
+      // Get token usage from response
+      const tokenUsage = getTokenUsageFromResponse(completion);
+      const estimatedCostUsd = tokenUsage.promptTokens && tokenUsage.completionTokens
+        ? getLlmUsageCost(provider, model, tokenUsage.promptTokens, tokenUsage.completionTokens)
+        : undefined;
+
+      // Apply PII redaction to messages before logging
+      const redactionResult = redactMessages(requestMessages);
+      const redactedRequest = {
+        provider,
+        model,
+        endpoint,
+        messages: redactionResult.redacted,
+        temperature: 0.7,
+        maxTokens: 16000,
+        metadata: {
+          featureName,
+          route,
+        },
+      };
+
+      // Log successful interaction
+      await LLMLogService.createLog({
+        userId: logUserId,
+        environment: env.NODE_ENV || "development",
+        route,
+        featureName,
+        provider,
+        model,
+        endpoint,
+        request: redactedRequest,
+        response: {
+          status: "success" as const,
+          httpStatus: 200,
+          completion: {
+            messages: [
+              {
+                role: "assistant" as const,
+                content: content.substring(0, 1000), // Log first 1000 chars to avoid huge logs
+              },
+            ],
+            finishReason: completion.choices[0]?.finish_reason,
+          },
+        },
+        metrics: {
+          latencyMs,
+          promptTokens: tokenUsage.promptTokens,
+          completionTokens: tokenUsage.completionTokens,
+          totalTokens: tokenUsage.totalTokens,
+          estimatedCostUsd,
+        },
+        retries: 0,
+        security: {
+          redactionRules: redactionResult.appliedRules,
+        },
+        redactionStatus: redactionResult.redactionStatus as "pending" | "completed" | "failed",
+        debug: {
+          requestId,
+        },
+      }).catch((logError) => {
+        // Don't fail the request if logging fails
+        console.error("Failed to log LLM interaction:", logError);
+      });
 
       // Extract guest email if available
       let guestEmail = null;
@@ -216,6 +429,75 @@ Return only the NAICS code that best represents this business.`;
         pdfPath: pdfResult?.filePath,
       };
     } catch (error: any) {
+      const latencyMs = Date.now() - startTime;
+
+      // Prepare request messages for error logging
+      let requestMessages: Array<{ role: "system" | "user"; content: string }> = [];
+      try {
+        // Try to reconstruct request messages for error logging
+        const systemPrompt = this.getIntroText() + this.getSectionText() + this.getRocksText() + this.getEnsureText() + this.getBookContext();
+        requestMessages = [
+          { role: "system" as const, content: systemPrompt },
+          { role: "user" as const, content: "Assessment data" }, // Simplified for error case
+        ];
+      } catch {
+        // If we can't reconstruct, use empty array
+      }
+
+      // Apply PII redaction to messages before logging error
+      const redactionResult = requestMessages.length > 0
+        ? redactMessages(requestMessages)
+        : { redacted: [], appliedRules: [], redactionStatus: "pending" as const };
+
+      const redactedRequest = {
+        provider,
+        model,
+        endpoint,
+        messages: redactionResult.redacted,
+        temperature: 0.7,
+        maxTokens: 16000,
+        metadata: {
+          featureName,
+          route,
+        },
+      };
+
+      // Log error interaction
+      await LLMLogService.createLog({
+        userId: requestUserId || assessment?.userId || undefined,
+        environment: env.NODE_ENV || "development",
+        route,
+        featureName,
+        provider,
+        model,
+        endpoint,
+        request: redactedRequest,
+        response: {
+          status: "error" as const,
+          httpStatus: error instanceof ValidationError ? 400 : 500,
+          error: {
+            type: error?.name || "UnknownError",
+            message: error?.message || "Failed to generate AI suggestions",
+            code: error?.code,
+            retryable: false,
+          },
+        },
+        metrics: {
+          latencyMs,
+        },
+        retries: 0,
+        security: {
+          redactionRules: redactionResult.appliedRules,
+        },
+        redactionStatus: redactionResult.redactionStatus as "pending" | "completed" | "failed",
+        debug: {
+          requestId,
+        },
+      }).catch((logError) => {
+        // Don't fail the request if logging fails
+        console.error("Failed to log LLM error:", logError);
+      });
+
       if (error instanceof ValidationError || error instanceof InternalServerError) {
         throw error;
       }

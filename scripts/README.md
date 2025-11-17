@@ -114,5 +114,6 @@ npm run migrate:passwords
 Or directly with tsx:
 
 ```bash
-npx tsx server/scripts/migrate-passwords.js
+npx tsx scripts/migrate-passwords.js
 ```
+

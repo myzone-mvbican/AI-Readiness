@@ -28,6 +28,7 @@ import {
   Users,
   Users2,
   Settings,
+  FileText,
 } from "lucide-react";
 
 // This is sample data.
@@ -105,6 +106,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {
           title: "Settings / Tools",
           url: "/dashboard/admin/settings",
+          icon: Settings,
+        },
+      ]
+    : [];
+
+  // LLM's menu items (admin only)
+  const llmNavItems = isAdmin
+    ? [
+        {
+          title: "Logs",
+          url: "/dashboard/admin/llm/logs",
+          icon: FileText,
+        },
+        {
+          title: "Settings",
+          url: "/dashboard/admin/llm/settings",
           icon: Settings,
         },
       ]
@@ -194,6 +211,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain
           items={navItems}
           adminItems={adminNavItems}
+          llmItems={llmNavItems}
           isRouteActive={isRouteActive}
         />
         <SidebarMenu className="py-2 px-2 mt-auto">

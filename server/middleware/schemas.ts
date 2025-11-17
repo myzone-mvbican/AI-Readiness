@@ -338,3 +338,128 @@ export const assessmentUpdateSchema = z.object({
   score: z.number().optional(),
   completedOn: z.string().datetime().optional(),
 });
+
+/**
+ * LLM Log Creation Schema
+ */
+export const llmLogCreateSchema = z.object({
+  environment: z.string().min(1, "Environment is required"),
+  route: z.string().optional(),
+  featureName: z.string().min(1, "Feature name is required"),
+  provider: z.string().min(1, "Provider is required"),
+  model: z.string().min(1, "Model is required"),
+  endpoint: z.string().optional(),
+  request: z.any(), // JSONB - flexible structure
+  response: z.any().optional(), // JSONB
+  metrics: z.any().optional(), // JSONB
+  retries: z.number().int().min(0).optional(),
+  security: z.any().optional(), // JSONB
+  redactionStatus: z.enum(["pending", "completed", "failed"]).optional(),
+  debug: z.any().optional(), // JSONB
+  stableTrace: z.any().optional(), // JSONB
+  timestamp: z.string().datetime().optional(),
+});
+
+/**
+ * LLM Log Query Schema
+ */
+export const llmLogQuerySchema = z.object({
+  page: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val) : 1)),
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val) : 50)),
+  sortBy: z.string().optional(),
+  sortOrder: z.enum(["asc", "desc"]).optional(),
+  userId: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val) : undefined)),
+  organizationId: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val) : undefined)),
+  provider: z.string().optional(),
+  model: z.string().optional(),
+  environment: z.string().optional(),
+  route: z.string().optional(),
+  featureName: z.string().optional(),
+  status: z.enum(["success", "error"]).optional(),
+  startTime: z.string().datetime().optional(),
+  endTime: z.string().datetime().optional(),
+  includeDeleted: z.string().optional().transform((val) => val === "true"),
+});
+
+/**
+ * LLM Provider Schemas
+ */
+export const providerCreateSchema = z.object({
+  name: z.string().min(1).max(50).regex(/^[a-z0-9_-]+$/, "Name must contain only lowercase letters, numbers, hyphens, and underscores"),
+  displayName: z.string().min(1).max(100),
+  description: z.string().optional(),
+  apiBaseUrl: z.string().url().optional().or(z.literal("")),
+  availableModels: z.array(z.string()).min(1, "At least one model is required"),
+  defaultModel: z.string().optional(),
+  isActive: z.boolean().optional().default(true),
+});
+
+export const providerUpdateSchema = z.object({
+  displayName: z.string().min(1).max(100).optional(),
+  description: z.string().optional(),
+  apiBaseUrl: z.string().url().optional().or(z.literal("")),
+  availableModels: z.array(z.string()).min(1).optional(),
+  defaultModel: z.string().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const apiKeySchema = z.object({
+  apiKey: z.string().min(10).max(500, "API key is too long"),
+});
+
+/**
+ * LLM Settings Schemas
+ */
+export const settingsCreateSchema = z.object({
+  providerId: z.number().int().positive(),
+  preferredModel: z.string().optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  maxTokens: z.number().int().min(1).max(100000).optional(),
+  topP: z.number().min(0).max(1).optional(),
+  frequencyPenalty: z.number().min(-2).max(2).optional(),
+  presencePenalty: z.number().min(-2).max(2).optional(),
+  maxRetries: z.number().int().min(0).max(10).optional(),
+  retryBackoffMs: z.number().int().min(100).max(10000).optional(),
+  requestTimeoutMs: z.number().int().min(1000).max(300000).optional(),
+  enableLogging: z.boolean().optional(),
+  logLevel: z.enum(["full", "minimal", "errors_only"]).optional(),
+  logRequestData: z.boolean().optional(),
+  logResponseData: z.boolean().optional(),
+});
+
+export const settingsUpdateSchema = z.object({
+  preferredModel: z.string().optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  maxTokens: z.number().int().min(1).max(100000).optional(),
+  topP: z.number().min(0).max(1).optional(),
+  frequencyPenalty: z.number().min(-2).max(2).optional(),
+  presencePenalty: z.number().min(-2).max(2).optional(),
+  maxRetries: z.number().int().min(0).max(10).optional(),
+  retryBackoffMs: z.number().int().min(100).max(10000).optional(),
+  requestTimeoutMs: z.number().int().min(1000).max(300000).optional(),
+  enableLogging: z.boolean().optional(),
+  logLevel: z.enum(["full", "minimal", "errors_only"]).optional(),
+  logRequestData: z.boolean().optional(),
+  logResponseData: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const settingsQuerySchema = z.object({
+  providerId: z.string().transform((val) => {
+    const num = parseInt(val);
+    if (isNaN(num)) throw new Error("Invalid provider ID");
+    return num;
+  }).optional(),
+});

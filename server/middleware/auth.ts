@@ -33,6 +33,63 @@ export const requireAdmin = (
   next();
 };
 
+/**
+ * Optional authentication middleware
+ * Tries to authenticate but doesn't fail if no token is present
+ * Useful for endpoints that support both authenticated and guest users
+ */
+export const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Get access token from HttpOnly cookie
+    const accessToken = TokenService.getTokenFromRequest(req, 'access');
+
+    if (!accessToken) {
+      // No token, continue without setting req.user (guest user)
+      return next();
+    }
+
+    // Verify the access token
+    const decoded = TokenService.verifyAccessToken(accessToken);
+
+    if (!decoded) {
+      // Invalid token, continue without setting req.user (guest user)
+      return next();
+    }
+
+    // Get user from database
+    const user = await UserService.getById(decoded.userId);
+
+    if (!user) {
+      // User not found, continue without setting req.user (guest user)
+      return next();
+    }
+
+    // Add user ID to request, safely handling role
+    let role = "client";
+    try {
+      // @ts-ignore - Handle if role property doesn't exist on user
+      if (user.role) {
+        role = user.role;
+      } else if (UserService.isAdmin(user.email)) {
+        role = "admin";
+      }
+    } catch (e) {
+      // Fallback to client if there's any error
+    }
+
+    req.user = {
+      id: user.id,
+      role,
+    };
+
+    next();
+  } catch (error) {
+    // On error, continue without authentication (don't block the request)
+    console.error("Optional authentication error:", error);
+    next();
+  }
+};
+
 export const auth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     // Get access token from HttpOnly cookie
