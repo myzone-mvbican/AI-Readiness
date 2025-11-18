@@ -47,6 +47,8 @@ export default function SurveyCompleted({
   const isAuthenticated = !!user;
   // State for PDF generation and tracking recommendations request
   const [isLoading, setIsLoading] = useState(false);
+  // State for active tab
+  const [activeTab, setActiveTab] = useState("results");
   // Access query client for mutations
   const queryClient = useQueryClient();
 
@@ -266,7 +268,7 @@ export default function SurveyCompleted({
         </div>
       </div>
 
-      <Tabs defaultValue="results" className="mt-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
         <TabsList className="grid w-full grid-cols-4 h-auto">
           <TabsTrigger value="results">
             <Tooltip>
@@ -323,7 +325,7 @@ export default function SurveyCompleted({
         </TabsList>
 
         <TabsContent value="results">
-          <ScreenResults assessment={assessment} />
+          <ScreenResults assessment={assessment} onTabChange={setActiveTab} />
         </TabsContent>
 
         <TabsContent value="responses">

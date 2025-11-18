@@ -10,16 +10,18 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { InfoIcon } from "lucide-react";
+import { InfoIcon, ArrowRight, Calendar } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Survey, Assessment } from "@shared/types";
 import { isV2Recommendations } from "./recommendations";
 import CategoriesRadarChart from "../radar";
 
 interface ScreenResultsData {
   assessment: Assessment & { survey?: Survey };
+  onTabChange?: (tab: string) => void;
 }
 
-export default function ScreenResults({ assessment }: ScreenResultsData) {
+export default function ScreenResults({ assessment, onTabChange }: ScreenResultsData) {
   const recommendations = assessment.recommendations;
   const isV2Template = isV2Recommendations(recommendations);
 
@@ -65,10 +67,37 @@ export default function ScreenResults({ assessment }: ScreenResultsData) {
               Executive Summary
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <p className="text-muted-foreground text-xs leading-relaxed">
               {recommendations.intro}
             </p>
+            
+            {/* Button Group */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                onClick={() => onTabChange?.("suggestions")}
+                className="flex-1"
+                data-testid="button-view-recommendations"
+              >
+                View Recommendations
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="flex-1"
+                data-testid="button-get-help"
+              >
+                <a
+                  href="https://calendly.com/keeranmfj/30min"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Calendar className="mr-2 h-4 w-4" />
+                  Get Help
+                </a>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
