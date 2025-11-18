@@ -13,6 +13,32 @@ import {
 // Database schema definition
 // Only table definitions - types and validation schemas are in separate files
 
+// Recommendations Type Definitions
+// V1: Legacy string format (markdown text)
+export type RecommendationsV1 = string;
+
+// V2: Structured JSON format
+export interface CategoryPerformance {
+  currentScore: number;
+  benchmark: number;
+  trend?: string;
+}
+
+export interface CategoryRecommendation {
+  name: string;
+  emoji: string;
+  title: string;
+  description: string;
+  performance: CategoryPerformance;
+  bestPractices: string[];
+}
+
+export interface RecommendationsV2 {
+  intro: string;
+  categories: CategoryRecommendation[];
+  outro: string;
+}
+
 export const teams = pgTable("teams", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -95,7 +121,7 @@ export const assessments = pgTable("assessments", {
   status: text("status").default("draft").notNull(),
   score: integer("score"),
   answers: text("answers").notNull(), // JSON string of answers array
-  recommendations: text("recommendations"), // Store AI-generated recommendations
+  recommendations: jsonb("recommendations").$type<RecommendationsV1 | RecommendationsV2>(), // AI-generated recommendations (v1: string, v2: structured JSON)
   pdfPath: text("pdf_path"), // Store relative path to generated PDF file
   completedOn: timestamp("completed_on", { withTimezone: true }), 
   // Timestamp when assessment was completed with timezone

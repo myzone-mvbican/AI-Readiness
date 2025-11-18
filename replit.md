@@ -105,6 +105,8 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
+- November 18, 2025. Added Google Tag Manager (GTM-57NCDM8) to track user analytics - script added to index.html head and noscript fallback in body
+- November 18, 2025. Started implementing v2 recommendations system with structured JSON format (intro, categories with performance metrics, outro) - database migrated to jsonb, AI service updated for JSON mode, PDF templates pending
 - November 15, 2025. Changed PDF filename format from report-{id}.pdf to {company-name}-{date}.pdf with stable completion dates for deterministic regeneration
 - November 15, 2025. Updated PDF recovery system to support new filename format via pdfPath database lookup with legacy format fallback
 - November 15, 2025. Removed download button from assessment completion emails - PDFs now only available as email attachment

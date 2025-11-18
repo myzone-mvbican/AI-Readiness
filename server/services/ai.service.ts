@@ -171,13 +171,14 @@ Return only the NAICS code that best represents this business.`;
         ...(company && { company }),
       });
 
-      // Make API request to OpenAI
+      // Make API request to OpenAI with JSON mode for structured output
       const completion = await openai.chat.completions.create({
         model: "gpt-4.1",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPayload },
         ],
+        response_format: { type: "json_object" },
         temperature: 0.7,
         max_tokens: 25000,
       });
@@ -187,6 +188,15 @@ Return only the NAICS code that best represents this business.`;
 
       if (!content) {
         throw new InternalServerError("No content returned from AI");
+      }
+
+      // Parse JSON response
+      let recommendationsData;
+      try {
+        recommendationsData = JSON.parse(content);
+      } catch (parseError) {
+        console.error("Failed to parse AI JSON response:", parseError);
+        throw new InternalServerError("Invalid JSON response from AI");
       }
 
       // Extract guest email if available
@@ -207,7 +217,7 @@ Return only the NAICS code that best represents this business.`;
         const pdfUserId = userId || undefined;
         pdfResult = await this.generateAndSavePDF(
           assessmentWithSurvey,
-          content,
+          recommendationsData,
           pdfUserId,
           guest,
         );
@@ -217,7 +227,7 @@ Return only the NAICS code that best represents this business.`;
       }
 
       return {
-        recommendations: content,
+        recommendations: recommendationsData,
         pdfGenerated: pdfResult?.success || false,
         pdfPath: pdfResult?.relativePath,
       };
@@ -272,7 +282,7 @@ Return only the NAICS code that best represents this business.`;
    */
   private static async generateAndSavePDF(
     assessment: Assessment,
-    content: string,
+    content: string | import("@shared/schema").RecommendationsV2,
     userId: number | undefined,
     guest: string | null,
   ): Promise<{
@@ -422,86 +432,77 @@ Return only the NAICS code that best represents this business.`;
   }
 
   /**
-   * Get intro text for AI prompts
+   * Get intro text for AI prompts (V2 - JSON Format)
    */
   private static getIntroText(): string {
     return `
-You are an intelligent AI assistant designed to support company managers by analyzing performance data across multiple categories. Based on 0 to 10 scores in these categories, generate actionable, prioritized suggestions to improve performance, address weaknesses, and capitalize on strengths. Given the user input, generate a concise, engaging, and actionable report based on the MyZone AI Blueprint. Do not include any EOS (Entrepreneurial Operating System) terminology for legal reasons. Language should be rephrased to be business-generic.
-Produce a Markdown report structured as follows:
+You are an intelligent AI assistant designed to support company managers by analyzing performance data across multiple categories. Based on 0 to 10 scores in these categories, generate actionable, prioritized suggestions to improve performance, address weaknesses, and capitalize on strengths.
 
-Summary (100–150 words) of overall performance, trends, and key insights. Highlight critical areas needing immediate attention and how Keeran Networks can could potentially help with these issues and this is why it's important you get these things fixed.
+Generate a structured JSON report based on the MyZone AI Blueprint. Do not include any EOS (Entrepreneurial Operating System) terminology for legal reasons. Language should be business-generic.
+
+Your response MUST be valid JSON matching this exact structure:
+{
+  "intro": "100-150 word summary of overall performance, trends, and key insights. Highlight critical areas needing immediate attention and how Keeran Networks could potentially help with these issues and why it's important to get these things fixed.",
+  "categories": [
+    {
+      "name": "Category Name",
+      "emoji": "📊",
+      "title": "Category Title",
+      "description": "4-5 sentence summary with tailored recommendations, patterns, and outliers. If scores show critical issues, highlight them with urgency and suggest corrective actions.",
+      "performance": {
+        "currentScore": 7.5,
+        "benchmark": 6.2,
+        "trend": "Up by 1.2 points" or "First-time assessment" or null
+      },
+      "bestPractices": [
+        "Best practice 1 (max 20 words)",
+        "Best practice 2 (max 20 words)",
+        "Best practice 3 (max 20 words)"
+      ]
+    }
+  ],
+  "outro": "Concluding remarks with top 5 highest-impact, easiest-to-implement AI rocks for the next 90 days. Format as markdown with numbered list and rationales (max 30 words each)."
+}
 `;
   }
 
   /**
-   * Get section text for AI prompts
+   * Get section text for AI prompts (V2 - not used in JSON mode)
    */
   private static getSectionText(): string {
-    let systemPrompt = `
-// === START CATEGORY SECTION ===
-// Repeat this block for each category
-## {{emoji}} {{category.name}}
-
-*Generate a 4–5-sentence summary, tailored recommendations, and identify patterns or outliers. If scores show critical issues, highlight them with urgency and suggest corrective actions or resources. All suggestions should be practical, data-driven, and context-aware.*
-
-**How You Performed**
-
-* **Current Score:** {{category.score}} / 10 (percentage%)
-* **Benchmark:** {{category.benchmark}} / 10 (percentage%)
-* **Trend vs. Previous:** Trend (Up by|Down by x points or No change) or First-time assessment
-
-**{{emoji}} Key Best Practices** _(top 3)_`;
-    for (let i = 1; i <= 3; i++) {
-      systemPrompt += `${i}. …`;
-    }
-
-    systemPrompt += `
-// === END CATEGORY SECTION ===
-`;
-
-    return systemPrompt;
+    return ""; // No longer needed - JSON structure defined in getIntroText
   }
 
   /**
-   * Get rocks text for AI prompts
+   * Get rocks text for AI prompts (V2 - not used in JSON mode)
    */
   private static getRocksText(): string {
-    return `
-## 🪨 Top 5 AI Rocks for Next Quarter
-
-Here are your **highest-impact, easiest-to-implement AI rocks** for the next 90 days:
-
-_From the list of all Category Best Practices, choose the 5 highest-impact, easiest to implement "rocks." For each:_
-1. **{{rock.title}}**  
-_Rationale:_ {{rock.rationale}}
-
-…until you list five.
-`;
+    return ""; // No longer needed - included in outro field
   }
 
   /**
-   * Get ensure text for AI prompts
+   * Get ensure text for AI prompts (V2 - JSON Guidelines)
    */
   private static getEnsureText(): string {
     return `
 Inputs:
 - JSON object with:
--- categories, each with name, score, previousScore, and benchmark.
--- company data: name, employeeCount, industry.
--- responses, each with question text and answer (-2 to 2 scale, where -2 is strongly disagree, 0 is neutral and 2 is strongly agree).
-Output/Ensure:
-- Do not create a title for the report - just start with the first category.
-- Do not output lines or long dashes between categories.
-- Bulleted Markdown, ready for PDF conversion.  
-- If 'benchmark' is null, omit that line.
-- If 'previousScore' is null, say "First-time assessment" instead of trend.
-- Infer an appropriate emoji for each category based on its name and theme.
-- Use emoji representing keys for keys best practices headline.
-- Highlight critical areas needing immediate attention.
-- Keep each Best Practice bullet ≤ 20 words, and rationales ≤ 30 words.
-- Tone: Concise, insightful, strategic.
-- Avoid fluff or generic advice.
-- All insights should be practical, data-informed, and professionally relevant for managerial decision-making in the given company industry context.
+  - categories: each with name, score, previousScore, and benchmark
+  - company data: name, employeeCount, industry
+  - responses: each with question text and answer (-2 to 2 scale)
+
+Output Requirements:
+- MUST return valid JSON matching the exact structure provided
+- If benchmark is null/undefined, use null in performance.benchmark
+- If previousScore is null/undefined, set trend to "First-time assessment"
+- Infer appropriate emoji for each category based on its name and theme
+- Highlight critical areas needing immediate attention
+- Keep each best practice ≤ 20 words
+- Keep outro rationales ≤ 30 words each
+- Tone: Concise, insightful, strategic
+- Avoid fluff or generic advice
+- All insights should be practical, data-informed, and professionally relevant for the given industry context
+- The outro should include top 5 AI rocks formatted as markdown numbered list with bold titles and italic rationales
 `;
   }
 
