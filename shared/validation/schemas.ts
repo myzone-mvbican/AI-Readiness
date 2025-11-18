@@ -212,7 +212,7 @@ export const updateAssessmentSchema = createInsertSchema(assessments)
     email: z.string().email().optional(), // For guest assessments
     status: assessmentStatusSchema.optional(),
     answers: z.array(assessmentAnswerSchema).optional(),
-    recommendations: z.string().optional(), // Allow storing AI-generated recommendations
+    recommendations: z.union([z.string(), z.object({}).passthrough()]).optional(), // Allow V1 (string) or V2 (object) recommendations
     pdfPath: z.string().optional(), // Store relative path to generated PDF
     completedOn: z.date().nullable().optional(), // Allow setting completion timestamp
   });
