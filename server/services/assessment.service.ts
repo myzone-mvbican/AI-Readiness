@@ -24,7 +24,7 @@ export interface UpdateAssessmentData {
   status?: string;
   answers?: any[];
   score?: number | null;
-  recommendations?: string;
+  recommendations?: string | object; // Support both V1 (string) and V2 (object) recommendations
   pdfPath?: string | null;
   completedOn?: Date | null;
 }
@@ -310,10 +310,12 @@ export class AssessmentService {
         throw new NotFoundError("Assessment");
       }
 
-      // Check if only updating recommendations (AI service update)
+      // Check if only updating recommendations (AI service update - supports both V1 string and V2 object)
       const isUpdatingOnlyRecommendations = 
         Object.keys(updateData).length === 1 && 
-        typeof updateData.recommendations === "string";
+        updateData.recommendations !== undefined &&
+        (typeof updateData.recommendations === "string" || 
+         (typeof updateData.recommendations === "object" && updateData.recommendations !== null));
 
       // Check ownership (skip for AI updates)
       if (!isUpdatingOnlyRecommendations && existingAssessment.userId !== userId && !isAdmin) {
@@ -406,15 +408,15 @@ export class AssessmentService {
   }
 
   /**
-   * Update guest assessment (restricted to recommendations only)
+   * Update guest assessment (restricted to recommendations only - supports both V1 string and V2 object)
    */
   static async updateGuestAssessment(
     assessmentId: number,
-    recommendations: string
+    recommendations: string | object
   ): Promise<any> {
     try {
-      // Validate required fields
-      if (!recommendations) {
+      // Validate required fields (accept both string and object)
+      if (!recommendations || (typeof recommendations === 'string' && recommendations.trim() === '')) {
         throw new ValidationError("Recommendations are required");
       }
 
