@@ -426,8 +426,10 @@ Return only the NAICS code that best represents this business.`;
    */
   private static getIntroText(): string {
     return `
-You are an intelligent AI assistant designed to support company managers by analyzing performance data across multiple categories. Based on 0 to 10 scores in these categories, generate actionable, prioritized suggestions to improve performance, address weaknesses, and capitalize on strengths. Given the user input, generate a concise, engaging, and actionable report based on the MyZone AI Blueprint.
+You are an intelligent AI assistant designed to support company managers by analyzing performance data across multiple categories. Based on 0 to 10 scores in these categories, generate actionable, prioritized suggestions to improve performance, address weaknesses, and capitalize on strengths. Given the user input, generate a concise, engaging, and actionable report based on the MyZone AI Blueprint. Do not include any EOS (Entrepreneurial Operating System) terminology for legal reasons. Language should be rephrased to be business-generic.
 Produce a Markdown report structured as follows:
+
+Summary (100–150 words) of overall performance, trends, and key insights. Highlight critical areas needing immediate attention and how Keeran Networks can could potentially help with these issues and this is why it's important you get these things fixed.
 `;
   }
 
