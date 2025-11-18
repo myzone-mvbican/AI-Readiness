@@ -50,9 +50,9 @@ export default function SurveyCompleted({
   // Access query client for mutations
   const queryClient = useQueryClient();
 
-  // Define payload type for the mutation
+  // Define payload type for the mutation (supports both V1 string and V2 object)
   type RecommendationPayload = {
-    recommendations: string;
+    recommendations: string | object;
   };
 
   // Mutation for saving recommendations to the assessment

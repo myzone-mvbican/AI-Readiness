@@ -156,7 +156,10 @@ export const guestAssessmentCreationSchema = z.object({
  * Guest assessment update schema
  */
 export const guestAssessmentUpdateSchema = z.object({
-  recommendations: z.string().min(1, "Recommendations are required")
+  recommendations: z.union([
+    z.string().min(1, "Recommendations are required"), 
+    z.object({}).passthrough()
+  ]) // Allow V1 (string) or V2 (object) recommendations
 });
 
 /**
@@ -297,7 +300,7 @@ export const surveyUpdateSchema = z.object({
 export const assessmentUpdateSchema = z.object({
   answers: z.array(z.any()).optional(),
   status: z.enum(["draft", "in-progress", "completed"]).optional(),
-  recommendations: z.string().optional(),
+  recommendations: z.union([z.string(), z.object({}).passthrough()]).optional(), // Allow V1 (string) or V2 (object) recommendations
   score: z.number().optional(),
   completedOn: z.string().datetime().optional()
 });
