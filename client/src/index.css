@@ -156,7 +156,7 @@ h3 {
 
 h4 {
   @apply text-lg md:text-xl lg:text-[24px];
-} 
+}
 
 .form-group {
   @apply mb-4;
@@ -222,7 +222,7 @@ h4 {
   }
 
   p {
-    @apply text-xs lg:text-base text-muted-foreground;
+    @apply text-xs text-muted-foreground;
 
     + :is(ol, ul) {
       margin-top: .5rem;
@@ -231,7 +231,7 @@ h4 {
 
   ol,
   ul {
-    @apply text-xs lg:text-base text-muted-foreground;
+    @apply text-xs text-muted-foreground leading-relaxed;
     padding-left: 1.1em;
     line-height: 1.5;
   }
