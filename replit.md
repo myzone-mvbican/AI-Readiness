@@ -105,6 +105,7 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
+- November 18, 2025. Fixed "Cannot update a completed assessment" error for V2 recommendations - updated UpdateAssessmentData interface, isUpdatingOnlyRecommendations check, and updateGuestAssessment method to accept both string and object types, allowing AI-generated recommendations to be saved on completed assessments
 - November 18, 2025. Fixed validation schemas to accept both V1 (string) and V2 (object) recommendations - updated server/middleware/schemas.ts (assessmentUpdateSchema and guestAssessmentUpdateSchema) and frontend RecommendationPayload type with union types, resolving "Expected string, received object" validation error when saving V2 recommendations
 - November 18, 2025. Completed frontend recommendations tab to display both V1 and V2 formats - card-based UI with executive summary, category analysis with performance metrics/benchmarks/trends, best practices, and next steps; maintains backward compatibility with markdown display for legacy assessments
 - November 18, 2025. Completed v2 recommendations system with structured JSON format - intro/categories/outro structure with performance metrics and best practices, OpenAI JSON mode, dual PDF templates (v1 for legacy markdown, v2 for structured data), version discriminator for reliable format detection, full backward compatibility for 8 existing assessments
