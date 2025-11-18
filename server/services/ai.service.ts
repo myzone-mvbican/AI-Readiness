@@ -157,10 +157,8 @@ Return only the NAICS code that best represents this business.`;
 
       const openai = this.getOpenAI();
 
-      // Prepare system prompt
+      // Prepare system prompt for v2 JSON output
       let systemPrompt = this.getIntroText();
-      systemPrompt += this.getSectionText();
-      systemPrompt += this.getRocksText();
       systemPrompt += this.getEnsureText();
       systemPrompt += this.getBookContext();
 
@@ -442,6 +440,7 @@ Generate a structured JSON report based on the MyZone AI Blueprint. Do not inclu
 
 Your response MUST be valid JSON matching this exact structure:
 {
+  "version": 2,
   "intro": "100-150 word summary of overall performance, trends, and key insights. Highlight critical areas needing immediate attention and how Keeran Networks could potentially help with these issues and why it's important to get these things fixed.",
   "categories": [
     {

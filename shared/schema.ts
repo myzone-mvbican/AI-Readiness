@@ -34,6 +34,7 @@ export interface CategoryRecommendation {
 }
 
 export interface RecommendationsV2 {
+  version: 2;
   intro: string;
   categories: CategoryRecommendation[];
   outro: string;

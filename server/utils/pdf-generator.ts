@@ -4,7 +4,9 @@ import path from "path";
 import { Assessment } from "@shared/types";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { AssessmentPDF } from "../../client/src/pdfs/assessment";
+import { AssessmentPDFV2 } from "../../client/src/pdfs/assessment-v2";
 import { getProjectRoot } from "./environment";
+import type { RecommendationsV2 } from "@shared/schema";
 
 export interface PDFGenerationResult {
   success: boolean;
@@ -100,9 +102,28 @@ export class PDFGenerator {
         "client/src/assets/logo-keeran.png",
       );
 
-      // Generate PDF using React PDF
+      // Detect v1 (string) vs v2 (JSON object) recommendations format
+      // Use version field for reliable detection, fallback to structural checks
+      const recommendationsObj = assessment.recommendations as any;
+      const isV2 = 
+        assessment.recommendations && 
+        typeof assessment.recommendations === 'object' &&
+        !Array.isArray(assessment.recommendations) &&
+        (
+          recommendationsObj.version === 2 ||
+          (
+            'intro' in recommendationsObj &&
+            'categories' in recommendationsObj &&
+            Array.isArray(recommendationsObj.categories) &&
+            'outro' in recommendationsObj
+          )
+        );
+
+      // Generate PDF using React PDF with appropriate template
       const pdfBuffer = await renderToBuffer(
-        React.createElement(AssessmentPDF, { assessment, logoUrl: logoPath }),
+        isV2 
+          ? React.createElement(AssessmentPDFV2, { assessment, logoUrl: logoPath })
+          : React.createElement(AssessmentPDF, { assessment, logoUrl: logoPath }),
       );
 
       // Write PDF to file
