@@ -461,23 +461,15 @@ Your response MUST be valid JSON matching this exact structure:
       ]
     }
   ],
+  "rocks": "## 🪨 Top 5 AI Rocks for Next Quarter
+  Here are your **highest-impact, easiest-to-implement AI rocks** for the next 90 days:
+  _From the list of all Category Best Practices, choose the 5 highest-impact, easiest to implement "rocks." For each:_
+  1. **{{rock.title}}**  
+  _Rationale:_ {{rock.rationale}}
+  …until you list five.",
   "outro": "Concluding remarks with top 5 highest-impact, easiest-to-implement AI rocks for the next 90 days. Format as markdown with numbered list and rationales (max 30 words each)."
 }
 `;
-  }
-
-  /**
-   * Get section text for AI prompts (V2 - not used in JSON mode)
-   */
-  private static getSectionText(): string {
-    return ""; // No longer needed - JSON structure defined in getIntroText
-  }
-
-  /**
-   * Get rocks text for AI prompts (V2 - not used in JSON mode)
-   */
-  private static getRocksText(): string {
-    return ""; // No longer needed - included in outro field
   }
 
   /**
