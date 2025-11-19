@@ -124,9 +124,8 @@ export function validateHttpsCertificate(
 const helmetConfig = {
   // Content Security Policy - Development friendly
   contentSecurityPolicy: {
-    dangerouslyDisableDefaultSrc: true,
     directives: {
-      // defaultSrc: null,
+      defaultSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https:"],
       scriptSrc: [
         "'self'",
@@ -134,6 +133,10 @@ const helmetConfig = {
         "https://www.googletagmanager.com",
         "https://accounts.google.com",
         "https://login.microsoftonline.com",
+        "https://www.google-analytics.com",
+        "https://ssl.google-analytics.com",
+        "https://cdn.callrail.com",
+        "https://pi.pardot.com",
       ],
       styleSrc: [
         "'self'",
@@ -150,15 +153,28 @@ const helmetConfig = {
         "https://fonts.googleapis.com",
         "https://fonts.gstatic.com",
       ],
-      // connectSrc: [
-      //   "'self'",
-      //   "https://login.microsoftonline.com",
-      //   "https://*.microsoftonline.com",
-      //   "https://graph.microsoft.com",
-      //   "https://accounts.google.com",
-      //   "https://*.googleapis.com",
-      // ],
-      mediaSrc: ["'self'"], // Allow media access for microphone
+      connectSrc: [
+        "'self'",
+        "https://login.microsoftonline.com",
+        "https://*.microsoftonline.com",
+        "https://graph.microsoft.com",
+        "https://accounts.google.com",
+        "https://*.googleapis.com",
+        "https://www.google-analytics.com",
+        "https://analytics.google.com",
+        "https://region1.analytics.google.com",
+        "https://region1.google-analytics.com",
+        "https://www.googletagmanager.com",
+        "https://pi.pardot.com",
+        "https://cdn.callrail.com",
+      ],
+      frameSrc: [
+        "'self'",
+        "https://www.googletagmanager.com",
+        "https://accounts.google.com",
+        "https://login.microsoftonline.com",
+      ],
+      mediaSrc: ["'self'"],
       frameAncestors: ["'none'"],
       baseUri: ["'self'"],
       formAction: ["'self'"],
