@@ -105,6 +105,8 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
+- November 19, 2025. Updated recommendations UI to match PDF structure - changed outro section from "Next Steps" to "Top 5 AI Rocks for Next Quarter" with descriptive subtitle for consistency across PDF and web interface
+- November 19, 2025. Enhanced AI prompt to emphasize company name usage - category descriptions now reference company name frequently throughout analysis for more personalized recommendations tailored to specific organizational context
 - November 18, 2025. Enhanced assessment completion email with personalized AI-generated intro summary and removed generic bullet points - email now uses V2 recommendations intro text for personalized messaging, removed "🎯 Your comprehensive AI readiness report includes" section
 - November 18, 2025. Enhanced V2 recommendations with Calendly CTAs and improved content - added "Schedule a Consultation" button to UI outro section, removed emojis from PDF template, added centered Calendly CTAs to PDF intro and outro sections, increased AI-generated category descriptions from 4-5 to 7-9 sentences (70% increase) for more detailed analysis
 - November 18, 2025. Added button group to Results/summary tab with "View Recommendations" tab switcher and "Get Help" Calendly link (https://calendly.com/keeranmfj/30min) positioned below executive summary intro text

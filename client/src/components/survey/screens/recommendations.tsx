@@ -161,13 +161,16 @@ export default function ScreenRecommendations({
             })}
           </div>
 
-          {/* Outro Section */}
+          {/* Outro Section - Top 5 AI Rocks */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <span className="text-2xl">🚀</span>
-                Next Steps
+                <span className="text-2xl">🪨</span>
+                Top 5 AI Rocks for Next Quarter
               </CardTitle>
+              <CardDescription>
+                Highest-impact, easiest-to-implement priorities for the next 90 days
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="markdown-text text-xs leading-relaxed">

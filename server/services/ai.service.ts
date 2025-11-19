@@ -396,7 +396,11 @@ Return only the NAICS code that best represents this business.`;
 
         // Extract intro from recommendations if available
         let introText = null;
-        if (recommendations && typeof recommendations === 'object' && 'intro' in recommendations) {
+        if (
+          recommendations &&
+          typeof recommendations === "object" &&
+          "intro" in recommendations
+        ) {
           introText = recommendations.intro;
         }
 
@@ -456,7 +460,7 @@ Your response MUST be valid JSON matching this exact structure:
       "name": "Category Name",
       "emoji": "📊",
       "title": "Category Title",
-      "description": "7-9 sentence comprehensive summary with detailed recommendations, patterns, and outliers. If scores show critical issues, highlight them with urgency and suggest corrective actions. Include specific examples and actionable insights.",
+      "description": "7-9 sentence comprehensive summary with detailed recommendations, patterns, and outliers specifically for {{company.name}}. Reference the company by name frequently throughout the description to personalize the analysis. If scores show critical issues, highlight them with urgency and suggest corrective actions tailored to {{company.name}}'s context. Include specific examples and actionable insights that relate to {{company.name}}'s industry and situation.",
       "performance": {
         "currentScore": 7.5,
         "benchmark": 6.2,
@@ -475,7 +479,8 @@ Your response MUST be valid JSON matching this exact structure:
   1. **{{rock.title}}**  
   _Rationale:_ {{rock.rationale}}
   …until you list five.",
-  "outro": "Concluding remarks with top 5 highest-impact, easiest-to-implement AI rocks for the next 90 days. Format as markdown with numbered list and rationales (max 30 words each)."
+  "outro": "To wrap up, the assessment makes it clear that several operational gaps won’t fix themselves. The longer they sit, the more expensive they become—both in performance drag and lost opportunities. The path forward requires disciplined execution, tighter systems, and far better visibility into what’s working and what isn’t. This isn’t about quick wins; it’s about preventing small weaknesses from becoming structural liabilities. Keeran Networks can help stabilize the technical foundation, close reliability gaps, and improve data flow so decisions are driven by facts instead of guesswork. If you want real progress next quarter, this is the moment to act and lock in the changes that will actually move the numbers, not just maintain the status quo.
+"
 }
 `;
   }
