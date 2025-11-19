@@ -143,7 +143,7 @@ export const AssessmentPDFV2 = ({
               {pageCategories.map((category, idx) => (
                 <View key={`category-${i + idx}`} style={{ marginBottom: 20 }}>
                   <Text style={styles.sectionTitle}>
-                    {category.emoji} {category.title || category.name}
+                    {category.title || category.name}
                   </Text>
 
                   <Text style={{ fontSize: 10, lineHeight: 1.5, color: "#374151", marginBottom: 12 }}>
@@ -176,7 +176,7 @@ export const AssessmentPDFV2 = ({
                   {category.bestPractices && category.bestPractices.length > 0 && (
                     <View>
                       <Text style={{ fontSize: 10, fontWeight: "bold", marginBottom: 6 }}>
-                        🔑 Key Best Practices
+                        Key Best Practices
                       </Text>
                       {category.bestPractices.map((practice, practiceIdx) => (
                         <Text key={practiceIdx} style={{ fontSize: 9, marginBottom: 3, marginLeft: 10 }}>
@@ -208,7 +208,7 @@ export const AssessmentPDFV2 = ({
           </View>
 
           <Text style={styles.sectionTitle}>
-            🪨 Top 5 AI Rocks for Next Quarter
+            Top 5 AI Rocks for Next Quarter
           </Text>
           <Text style={styles.sectionSubtitle}>
             Highest-impact, easiest-to-implement priorities for the next 90 days
