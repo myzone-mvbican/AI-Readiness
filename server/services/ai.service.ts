@@ -460,7 +460,7 @@ Your response MUST be valid JSON matching this exact structure:
       "name": "Category Name",
       "emoji": "📊",
       "title": "Category Title",
-      "description": "7-9 sentence comprehensive summary with detailed recommendations, patterns, and outliers specifically for {{company.name}}. Reference the company by name frequently throughout the description to personalize the analysis. If scores show critical issues, highlight them with urgency and suggest corrective actions tailored to {{company.name}}'s context. Include specific examples and actionable insights that relate to {{company.name}}'s industry and situation.",
+      "description": "7-9 sentence comprehensive summary with detailed recommendations, patterns, and outliers. If scores show critical issues, highlight them with urgency and suggest corrective actions. Include specific examples and actionable insights.",
       "performance": {
         "currentScore": 7.5,
         "benchmark": 6.2,
@@ -493,7 +493,7 @@ Your response MUST be valid JSON matching this exact structure:
 Inputs:
 - JSON object with:
   - categories: each with name, score, previousScore, and benchmark
-  - company data: name, employeeCount, industry
+  - company data: name, employeeCount, industry (NAICS code)
   - responses: each with question text and answer (-2 to 2 scale)
 
 Output Requirements:
@@ -503,11 +503,11 @@ Output Requirements:
 - Infer appropriate emoji for each category based on its name and theme
 - Highlight critical areas needing immediate attention
 - Keep each best practice ≤ 20 words
-- Keep outro rationales ≤ 30 words each
+- Keep rationales ≤ 30 words each
 - Tone: Concise, insightful, strategic
 - Avoid fluff or generic advice
 - All insights should be practical, data-informed, and professionally relevant for the given industry context
-- The outro should include top 5 AI rocks formatted as markdown numbered list with bold titles and italic rationales
+- The rationales should include top 5 AI rocks formatted as markdown numbered list with bold titles and italic rationales
 `;
   }
 

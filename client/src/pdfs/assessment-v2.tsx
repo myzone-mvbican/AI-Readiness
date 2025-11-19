@@ -26,7 +26,9 @@ export const AssessmentPDFV2 = ({
   const logoPath = logoUrl || "@/assets/logo-keeran-ai.png";
 
   // Calculate total pages: Cover + Results + Intro + Categories (grouped 2 per page) + Outro + Responses
-  const categoryPages = Math.ceil((recommendationsData.categories?.length || 0) / 2);
+  const categoryPages = Math.ceil(
+    (recommendationsData.categories?.length || 0) / 2,
+  );
   const answerPages = Math.ceil(answers.length / 10);
   const totalPages = 2 + 1 + categoryPages + 1 + answerPages; // cover + results + intro + categories + outro + responses
 
@@ -107,8 +109,8 @@ export const AssessmentPDFV2 = ({
             AI Readiness Assessment Overview
           </Text>
           <Text style={styles.sectionSubtitle}>
-            Based on your assessment score of {score / 10}/10 and insights
-            from "MyZone AI Blueprint"
+            Based on your assessment score of {score / 10}/10 and insights from
+            "MyZone AI Blueprint"
           </Text>
 
           <View style={{ marginTop: 20 }}>
@@ -118,20 +120,44 @@ export const AssessmentPDFV2 = ({
           </View>
 
           {/* Calendly CTA */}
-          <View style={{ 
-            marginTop: 30, 
-            padding: 20, 
-            backgroundColor: "#EFF6FF", 
-            borderRadius: 8,
-            alignItems: "center"
-          }}>
-            <Text style={{ fontSize: 12, fontWeight: "bold", marginBottom: 8, textAlign: "center" }}>
+          <View
+            style={{
+              marginTop: 30,
+              padding: 20,
+              backgroundColor: "#EFF6FF",
+              borderRadius: 8,
+              alignItems: "center",
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 12,
+                fontWeight: "bold",
+                marginBottom: 8,
+                textAlign: "center",
+              }}
+            >
               Ready to Accelerate Your AI Journey?
             </Text>
-            <Text style={{ fontSize: 10, marginBottom: 12, textAlign: "center", color: "#6B7280" }}>
-              Schedule a free 30-minute consultation to discuss your AI readiness strategy
+            <Text
+              style={{
+                fontSize: 10,
+                marginBottom: 12,
+                textAlign: "center",
+                color: "#6B7280",
+              }}
+            >
+              Schedule a free 30-minute consultation to discuss your AI
+              readiness strategy
             </Text>
-            <Text style={{ fontSize: 10, fontWeight: "bold", color: "#2563EB", textAlign: "center" }}>
+            <Text
+              style={{
+                fontSize: 10,
+                fontWeight: "bold",
+                color: "#2563EB",
+                textAlign: "center",
+              }}
+            >
               Book Now: https://calendly.com/keeranmfj/30min
             </Text>
           </View>
@@ -144,79 +170,128 @@ export const AssessmentPDFV2 = ({
       )}
 
       {/* Category Pages (2 categories per page) */}
-      {recommendationsData?.categories && (() => {
-        const categories = recommendationsData.categories;
-        const pages = [];
-        
-        for (let i = 0; i < categories.length; i += 2) {
-          const pageCategories = categories.slice(i, i + 2);
-          const pageNum = 4 + Math.floor(i / 2);
+      {recommendationsData?.categories &&
+        (() => {
+          const categories = recommendationsData.categories;
+          const pages = [];
 
-          pages.push(
-            <Page key={`category-page-${i}`} size="A4" style={styles.page}>
-              <View style={styles.header}>
-                <Image src={logoPath} style={styles.logoBoxSmall} />
-                <Text style={styles.headerTitle}>Category Analysis</Text>
-              </View>
+          for (let i = 0; i < categories.length; i += 2) {
+            const pageCategories = categories.slice(i, i + 2);
+            const pageNum = 4 + Math.floor(i / 2);
 
-              {pageCategories.map((category, idx) => (
-                <View key={`category-${i + idx}`} style={{ marginBottom: 20 }}>
-                  <Text style={styles.sectionTitle}>
-                    {category.title || category.name}
-                  </Text>
-
-                  <Text style={{ fontSize: 10, lineHeight: 1.5, color: "#374151", marginBottom: 12 }}>
-                    {category.description}
-                  </Text>
-
-                  {/* Performance Metrics */}
-                  {category.performance && (
-                    <View style={{ marginBottom: 12, padding: 12, backgroundColor: "#F9FAFB", borderRadius: 4 }}>
-                      <Text style={{ fontSize: 10, fontWeight: "bold", marginBottom: 6 }}>
-                        How You Performed
-                      </Text>
-                      <Text style={{ fontSize: 9, marginBottom: 3 }}>
-                        • Current Score: {category.performance.currentScore} / 10 ({Math.round(category.performance.currentScore * 10)}%)
-                      </Text>
-                      {category.performance.benchmark !== null && category.performance.benchmark !== undefined && (
-                        <Text style={{ fontSize: 9, marginBottom: 3 }}>
-                          • Benchmark: {category.performance.benchmark} / 10 ({Math.round(category.performance.benchmark * 10)}%)
-                        </Text>
-                      )}
-                      {category.performance.trend && (
-                        <Text style={{ fontSize: 9 }}>
-                          • Trend: {category.performance.trend}
-                        </Text>
-                      )}
-                    </View>
-                  )}
-
-                  {/* Best Practices */}
-                  {category.bestPractices && category.bestPractices.length > 0 && (
-                    <View>
-                      <Text style={{ fontSize: 10, fontWeight: "bold", marginBottom: 6 }}>
-                        Key Best Practices
-                      </Text>
-                      {category.bestPractices.map((practice, practiceIdx) => (
-                        <Text key={practiceIdx} style={{ fontSize: 9, marginBottom: 3, marginLeft: 10 }}>
-                          {practiceIdx + 1}. {practice}
-                        </Text>
-                      ))}
-                    </View>
-                  )}
+            pages.push(
+              <Page key={`category-page-${i}`} size="A4" style={styles.page}>
+                <View style={styles.header}>
+                  <Image src={logoPath} style={styles.logoBoxSmall} />
+                  <Text style={styles.headerTitle}>Category Analysis</Text>
                 </View>
-              ))}
 
-              <View style={styles.footer}>
-                <Text style={styles.pageNumber}>© {year} Keeran Networks</Text>
-                <Text style={styles.pageNumber}>Page {pageNum} of {totalPages}</Text>
-              </View>
-            </Page>
-          );
-        }
+                {pageCategories.map((category, idx) => (
+                  <View
+                    key={`category-${i + idx}`}
+                    style={{ marginBottom: 20 }}
+                  >
+                    <Text style={styles.sectionTitle}>
+                      {category.title || category.name}
+                    </Text>
 
-        return pages;
-      })()}
+                    <Text
+                      style={{
+                        fontSize: 10,
+                        lineHeight: 1.5,
+                        color: "#374151",
+                        marginBottom: 12,
+                      }}
+                    >
+                      {category.description}
+                    </Text>
+
+                    {/* Performance Metrics */}
+                    {category.performance && (
+                      <View
+                        style={{
+                          marginBottom: 12,
+                          padding: 12,
+                          backgroundColor: "#F9FAFB",
+                          borderRadius: 4,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 10,
+                            fontWeight: "bold",
+                            marginBottom: 6,
+                          }}
+                        >
+                          How You Performed
+                        </Text>
+                        <Text style={{ fontSize: 9, marginBottom: 3 }}>
+                          • Current Score: {category.performance.currentScore} /
+                          10 (
+                          {Math.round(category.performance.currentScore * 10)}%)
+                        </Text>
+                        {category.performance.benchmark !== null &&
+                          category.performance.benchmark !== undefined && (
+                            <Text style={{ fontSize: 9, marginBottom: 3 }}>
+                              • Benchmark: {category.performance.benchmark} / 10
+                              ({Math.round(category.performance.benchmark * 10)}
+                              %)
+                            </Text>
+                          )}
+                        {category.performance.trend && (
+                          <Text style={{ fontSize: 9 }}>
+                            • Trend: {category.performance.trend}
+                          </Text>
+                        )}
+                      </View>
+                    )}
+
+                    {/* Best Practices */}
+                    {category.bestPractices &&
+                      category.bestPractices.length > 0 && (
+                        <View>
+                          <Text
+                            style={{
+                              fontSize: 10,
+                              fontWeight: "bold",
+                              marginBottom: 6,
+                            }}
+                          >
+                            Key Best Practices
+                          </Text>
+                          {category.bestPractices.map(
+                            (practice, practiceIdx) => (
+                              <Text
+                                key={practiceIdx}
+                                style={{
+                                  fontSize: 9,
+                                  marginBottom: 3,
+                                  marginLeft: 10,
+                                }}
+                              >
+                                {practiceIdx + 1}. {practice}
+                              </Text>
+                            ),
+                          )}
+                        </View>
+                      )}
+                  </View>
+                ))}
+
+                <View style={styles.footer}>
+                  <Text style={styles.pageNumber}>
+                    © {year} Keeran Networks
+                  </Text>
+                  <Text style={styles.pageNumber}>
+                    Page {pageNum} of {totalPages}
+                  </Text>
+                </View>
+              </Page>,
+            );
+          }
+
+          return pages;
+        })()}
 
       {/* Outro/Conclusion Page */}
       {recommendationsData?.outro && (
@@ -234,31 +309,58 @@ export const AssessmentPDFV2 = ({
           </Text>
 
           <View style={{ marginTop: 20 }}>
+            <OutroContent markdown={recommendationsData.rocks} />
             <OutroContent markdown={recommendationsData.outro} />
           </View>
 
           {/* Calendly CTA */}
-          <View style={{ 
-            marginTop: 30, 
-            padding: 20, 
-            backgroundColor: "#EFF6FF", 
-            borderRadius: 8,
-            alignItems: "center"
-          }}>
-            <Text style={{ fontSize: 12, fontWeight: "bold", marginBottom: 8, textAlign: "center" }}>
+          <View
+            style={{
+              marginTop: 30,
+              padding: 20,
+              backgroundColor: "#EFF6FF",
+              borderRadius: 8,
+              alignItems: "center",
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 12,
+                fontWeight: "bold",
+                marginBottom: 8,
+                textAlign: "center",
+              }}
+            >
               Need Help Implementing These Recommendations?
             </Text>
-            <Text style={{ fontSize: 10, marginBottom: 12, textAlign: "center", color: "#6B7280" }}>
-              Book a free consultation to create a customized action plan for your organization
+            <Text
+              style={{
+                fontSize: 10,
+                marginBottom: 12,
+                textAlign: "center",
+                color: "#6B7280",
+              }}
+            >
+              Book a free consultation to create a customized action plan for
+              your organization
             </Text>
-            <Text style={{ fontSize: 10, fontWeight: "bold", color: "#2563EB", textAlign: "center" }}>
+            <Text
+              style={{
+                fontSize: 10,
+                fontWeight: "bold",
+                color: "#2563EB",
+                textAlign: "center",
+              }}
+            >
               Schedule Now: https://calendly.com/keeranmfj/30min
             </Text>
           </View>
 
           <View style={styles.footer}>
             <Text style={styles.pageNumber}>© {year} Keeran Networks</Text>
-            <Text style={styles.pageNumber}>Page {4 + categoryPages} of {totalPages}</Text>
+            <Text style={styles.pageNumber}>
+              Page {4 + categoryPages} of {totalPages}
+            </Text>
           </View>
         </Page>
       )}
@@ -267,7 +369,7 @@ export const AssessmentPDFV2 = ({
       {(() => {
         const pages = [];
         const questionsMap = new Map(
-          (survey?.questions || []).map((q: any) => [String(q.id), q])
+          (survey?.questions || []).map((q: any) => [String(q.id), q]),
         );
 
         for (let i = 0; i < answers.length; i += 10) {
@@ -283,24 +385,46 @@ export const AssessmentPDFV2 = ({
 
               <Text style={styles.sectionTitle}>Your Assessment Responses</Text>
               <Text style={styles.sectionSubtitle}>
-                Detailed breakdown of your answers (Page {Math.floor(i / 10) + 1} of {answerPages})
+                Detailed breakdown of your answers (Page{" "}
+                {Math.floor(i / 10) + 1} of {answerPages})
               </Text>
 
               <View style={{ marginTop: 20 }}>
                 {pageAnswers.map((answer: any, idx: number) => {
                   const question: any = questionsMap.get(String(answer.q));
-                  const questionText = question?.question || `Question ${answer.q}`;
+                  const questionText =
+                    question?.question || `Question ${answer.q}`;
                   const category = question?.category || "General";
 
                   return (
-                    <View key={idx} style={{ marginBottom: 12, paddingBottom: 8, borderBottom: "1px solid #E5E7EB" }}>
-                      <Text style={{ fontSize: 9, fontWeight: "bold", color: "#6B7280", marginBottom: 4 }}>
+                    <View
+                      key={idx}
+                      style={{
+                        marginBottom: 12,
+                        paddingBottom: 8,
+                        borderBottom: "1px solid #E5E7EB",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 9,
+                          fontWeight: "bold",
+                          color: "#6B7280",
+                          marginBottom: 4,
+                        }}
+                      >
                         {category}
                       </Text>
                       <Text style={{ fontSize: 10, marginBottom: 4 }}>
                         {questionText}
                       </Text>
-                      <Text style={{ fontSize: 9, color: "#059669", fontWeight: "bold" }}>
+                      <Text
+                        style={{
+                          fontSize: 9,
+                          color: "#059669",
+                          fontWeight: "bold",
+                        }}
+                      >
                         {getAnswerText(answer.a)}
                       </Text>
                     </View>
@@ -310,9 +434,11 @@ export const AssessmentPDFV2 = ({
 
               <View style={styles.footer}>
                 <Text style={styles.pageNumber}>© {year} Keeran Networks</Text>
-                <Text style={styles.pageNumber}>Page {pageNum} of {totalPages}</Text>
+                <Text style={styles.pageNumber}>
+                  Page {pageNum} of {totalPages}
+                </Text>
               </View>
-            </Page>
+            </Page>,
           );
         }
 
@@ -324,34 +450,46 @@ export const AssessmentPDFV2 = ({
 
 // Component to render outro markdown (primarily numbered lists)
 const OutroContent = ({ markdown }: { markdown: string }) => {
-  const lines = markdown.split(/\r?\n/).filter(line => line.trim());
-  
+  const lines = markdown.split(/\r?\n/).filter((line) => line.trim());
+
   return (
     <View>
       {lines.map((line, idx) => {
         const trimmed = line.trim();
-        
+
         // Check if it's a numbered list item (e.g., "1. **Title**")
         const numberedMatch = trimmed.match(/^(\d+)\.\s+\*\*(.+?)\*\*(.*)$/);
         if (numberedMatch) {
           const [, number, title, rest] = numberedMatch;
           return (
             <View key={idx} style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 10, fontWeight: "bold", marginBottom: 4 }}>
+              <Text
+                style={{ fontSize: 10, fontWeight: "bold", marginBottom: 4 }}
+              >
                 {number}. {title}
               </Text>
               {rest && (
-                <Text style={{ fontSize: 9, marginLeft: 15, fontStyle: "italic", color: "#6B7280" }}>
+                <Text
+                  style={{
+                    fontSize: 9,
+                    marginLeft: 15,
+                    fontStyle: "italic",
+                    color: "#6B7280",
+                  }}
+                >
                   {rest.replace(/_Rationale:_\s*/, "").trim()}
                 </Text>
               )}
             </View>
           );
         }
-        
+
         // Regular paragraph
         return (
-          <Text key={idx} style={{ fontSize: 10, lineHeight: 1.5, marginBottom: 8 }}>
+          <Text
+            key={idx}
+            style={{ fontSize: 10, lineHeight: 1.5, marginBottom: 8 }}
+          >
             {trimmed}
           </Text>
         );

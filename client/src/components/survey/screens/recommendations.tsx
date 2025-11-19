@@ -161,20 +161,20 @@ export default function ScreenRecommendations({
             })}
           </div>
 
-          {/* Outro Section - Top 5 AI Rocks */}
+          {/* Outro Section */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <span className="text-2xl">🪨</span>
-                Top 5 AI Rocks for Next Quarter
+                <span className="text-2xl">🚀</span>
+                Next Steps
               </CardTitle>
-              <CardDescription>
-                Highest-impact, easiest-to-implement priorities for the next 90 days
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="markdown-text text-xs leading-relaxed">
-                <ReactMarkdown>{recommendations.outro}</ReactMarkdown>
+                <ReactMarkdown>{recommendations.rocks}</ReactMarkdown>
+                <p className="text-xs leading-relaxed">
+                  {recommendations.outro}
+                </p>
               </div>
               <div className="flex justify-start pt-2">
                 <Button
