@@ -105,6 +105,7 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
+- November 18, 2025. Enhanced V2 recommendations with Calendly CTAs and improved content - added "Schedule a Consultation" button to UI outro section, removed emojis from PDF template, added centered Calendly CTAs to PDF intro and outro sections, increased AI-generated category descriptions from 4-5 to 7-9 sentences (70% increase) for more detailed analysis
 - November 18, 2025. Added button group to Results/summary tab with "View Recommendations" tab switcher and "Get Help" Calendly link (https://calendly.com/keeranmfj/30min) positioned below executive summary intro text
 - November 18, 2025. Fixed "Cannot update a completed assessment" error for V2 recommendations - updated UpdateAssessmentData interface, isUpdatingOnlyRecommendations check, and updateGuestAssessment method to accept both string and object types, allowing AI-generated recommendations to be saved on completed assessments
 - November 18, 2025. Fixed validation schemas to accept both V1 (string) and V2 (object) recommendations - updated server/middleware/schemas.ts (assessmentUpdateSchema and guestAssessmentUpdateSchema) and frontend RecommendationPayload type with union types, resolving "Expected string, received object" validation error when saving V2 recommendations
