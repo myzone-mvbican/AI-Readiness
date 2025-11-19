@@ -447,7 +447,7 @@ Your response MUST be valid JSON matching this exact structure:
       "name": "Category Name",
       "emoji": "📊",
       "title": "Category Title",
-      "description": "4-5 sentence summary with tailored recommendations, patterns, and outliers. If scores show critical issues, highlight them with urgency and suggest corrective actions.",
+      "description": "7-9 sentence comprehensive summary with detailed recommendations, patterns, and outliers. If scores show critical issues, highlight them with urgency and suggest corrective actions. Include specific examples and actionable insights.",
       "performance": {
         "currentScore": 7.5,
         "benchmark": 6.2,
