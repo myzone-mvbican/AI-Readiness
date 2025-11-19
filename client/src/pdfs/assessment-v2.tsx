@@ -237,6 +237,25 @@ export const AssessmentPDFV2 = ({
             <OutroContent markdown={recommendationsData.outro} />
           </View>
 
+          {/* Calendly CTA */}
+          <View style={{ 
+            marginTop: 30, 
+            padding: 20, 
+            backgroundColor: "#EFF6FF", 
+            borderRadius: 8,
+            alignItems: "center"
+          }}>
+            <Text style={{ fontSize: 12, fontWeight: "bold", marginBottom: 8, textAlign: "center" }}>
+              Need Help Implementing These Recommendations?
+            </Text>
+            <Text style={{ fontSize: 10, marginBottom: 12, textAlign: "center", color: "#6B7280" }}>
+              Book a free consultation to create a customized action plan for your organization
+            </Text>
+            <Text style={{ fontSize: 10, fontWeight: "bold", color: "#2563EB", textAlign: "center" }}>
+              Schedule Now: https://calendly.com/keeranmfj/30min
+            </Text>
+          </View>
+
           <View style={styles.footer}>
             <Text style={styles.pageNumber}>© {year} Keeran Networks</Text>
             <Text style={styles.pageNumber}>Page {4 + categoryPages} of {totalPages}</Text>
