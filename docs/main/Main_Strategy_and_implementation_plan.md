@@ -15,7 +15,7 @@ Owner: Andrej (Architecture & Development Lead), Mike Schwarz (Product & Strateg
 - ⏳ Structured logging with Logtail/Pino; error tracking with Sentry
 
 ### M1 — Core Infrastructure
-- ⏳ **M1.1** — LLM Service & Logging System
+- ✅ **M1.1** — LLM Service & Logging System
 - ⏳ **M1.2** — Background Jobs System
 - ⏳ **M1.3** — R2 Bucket File Storage Integration
 
