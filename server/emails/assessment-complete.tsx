@@ -19,6 +19,7 @@ interface AssessmentCompleteEmailProps {
   downloadUrl?: string;
   companyName?: string;
   logoUrl?: string;
+  introText?: string | null;
 }
 
 export const AssessmentCompleteEmail = ({
@@ -27,6 +28,7 @@ export const AssessmentCompleteEmail = ({
   downloadUrl = "#",
   companyName = "your organization",
   logoUrl = "https://www.keeran.ca/wp-content/uploads/2023/05/keeran_logo_inverted_rgb_400px@72ppi.png",
+  introText = null,
 }: AssessmentCompleteEmailProps) => (
   <Html>
     <Head />
@@ -46,24 +48,9 @@ export const AssessmentCompleteEmail = ({
         <Text style={text}>Hello {recipientName},</Text>
 
         <Text style={text}>
-          Thank you for completing the AI Readiness Assessment. We noticed a
-          couple of important AI readiness considerations that you scored low
-          on, and we would love to discuss these with you.
+          Thank you for completing the AI Readiness Assessment.{" "}
+          {introText || "We noticed a couple of important AI readiness considerations that you scored low on, and we would love to discuss these with you."}
         </Text>
-
-        <Section style={highlightBox}>
-          <Text style={highlightText}>
-            🎯 Your comprehensive AI readiness report includes:
-          </Text>
-          <Text style={bulletText}>
-            • Detailed analysis of your AI readiness across 8 key pillars
-            <br />
-            • Personalized recommendations powered by AI
-            <br />
-            • Visual radar chart showing your strengths and opportunities
-            <br />• Actionable next steps for AI implementation
-          </Text>
-        </Section>
 
         <Text style={text}>
           Your detailed assessment report is attached to this email. Thanks again. We hope you found this useful and would love to help{" "}
@@ -148,30 +135,6 @@ const text = {
   lineHeight: "24px",
   textAlign: "left" as const,
   margin: "16px 32px",
-};
-
-const highlightBox = {
-  backgroundColor: "#f8fafc",
-  border: "1px solid #e2e8f0",
-  borderRadius: "8px",
-  margin: "24px 32px",
-  padding: "20px",
-  maxWidth: "536px",
-};
-
-const highlightText = {
-  color: "#1a202c",
-  fontSize: "16px",
-  fontWeight: "600",
-  lineHeight: "24px",
-  margin: "0 0 12px 0",
-};
-
-const bulletText = {
-  color: "#525f7f",
-  fontSize: "14px",
-  lineHeight: "20px",
-  margin: "0",
 };
 
 const buttonContainer = {

@@ -335,6 +335,7 @@ Return only the NAICS code that best represents this business.`;
             pdfResult.fileName!,
             guest,
             userId,
+            content,
           );
         } catch (emailError) {
           console.error(
@@ -362,6 +363,7 @@ Return only the NAICS code that best represents this business.`;
     fileName: string,
     guest: string | null,
     userId: number | undefined,
+    recommendations?: string | import("@shared/schema").RecommendationsV2,
   ): Promise<void> {
     try {
       let recipientEmail = null;
@@ -392,6 +394,12 @@ Return only the NAICS code that best represents this business.`;
         // Build download URL - use REPLIT_DOMAINS if available, otherwise localhost
         const downloadUrl = `${env.FRONTEND_URL}${pdfRelativePath}`;
 
+        // Extract intro from recommendations if available
+        let introText = null;
+        if (recommendations && typeof recommendations === 'object' && 'intro' in recommendations) {
+          introText = recommendations.intro;
+        }
+
         // Render email template
         const emailHtml = await render(
           AssessmentCompleteEmail({
@@ -399,6 +407,7 @@ Return only the NAICS code that best represents this business.`;
             recipientEmail,
             downloadUrl,
             companyName,
+            introText,
           }),
         );
 

@@ -1,5 +1,11 @@
 import ReactMarkdown from "react-markdown";
-import { Loader2, TrendingUp, TrendingDown, Minus, Calendar } from "lucide-react";
+import {
+  Loader2,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Calendar,
+} from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import {
@@ -167,7 +173,7 @@ export default function ScreenRecommendations({
               <div className="markdown-text text-xs leading-relaxed">
                 <ReactMarkdown>{recommendations.outro}</ReactMarkdown>
               </div>
-              <div className="flex justify-center pt-2">
+              <div className="flex justify-start pt-2">
                 <Button
                   asChild
                   size="lg"
