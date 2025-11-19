@@ -1,6 +1,7 @@
 import ReactMarkdown from "react-markdown";
-import { Loader2, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Loader2, TrendingUp, TrendingDown, Minus, Calendar } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -162,8 +163,27 @@ export default function ScreenRecommendations({
                 Next Steps
               </CardTitle>
             </CardHeader>
-            <CardContent className="markdown-text text-xs leading-relaxed">
-              <ReactMarkdown>{recommendations.outro}</ReactMarkdown>
+            <CardContent className="space-y-4">
+              <div className="markdown-text text-xs leading-relaxed">
+                <ReactMarkdown>{recommendations.outro}</ReactMarkdown>
+              </div>
+              <div className="flex justify-center pt-2">
+                <Button
+                  asChild
+                  size="lg"
+                  className="w-full sm:w-auto"
+                  data-testid="button-outro-get-help"
+                >
+                  <a
+                    href="https://calendly.com/keeranmfj/30min"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Schedule a Consultation
+                  </a>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -3,6 +3,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
+  CardFooter,
   CardTitle,
 } from "@/components/ui/card";
 import {
@@ -21,7 +22,10 @@ interface ScreenResultsData {
   onTabChange?: (tab: string) => void;
 }
 
-export default function ScreenResults({ assessment, onTabChange }: ScreenResultsData) {
+export default function ScreenResults({
+  assessment,
+  onTabChange,
+}: ScreenResultsData) {
   const recommendations = assessment.recommendations;
   const isV2Template = isV2Recommendations(recommendations);
 
@@ -60,7 +64,7 @@ export default function ScreenResults({ assessment, onTabChange }: ScreenResults
 
       {/* Intro Section */}
       {isV2Template && (
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <span>🎯</span>
@@ -71,34 +75,30 @@ export default function ScreenResults({ assessment, onTabChange }: ScreenResults
             <p className="text-muted-foreground text-xs leading-relaxed">
               {recommendations.intro}
             </p>
-            
+          </CardContent>
+          <CardFooter className="mt-auto">
             {/* Button Group */}
             <div className="flex flex-col sm:flex-row gap-3">
               <Button
                 onClick={() => onTabChange?.("suggestions")}
                 className="flex-1"
-                data-testid="button-view-recommendations"
+                variant="outline"
               >
                 View Recommendations
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="flex-1"
-                data-testid="button-get-help"
-              >
+              <Button asChild className="flex-1">
                 <a
                   href="https://calendly.com/keeranmfj/30min"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
                   <Calendar className="mr-2 h-4 w-4" />
-                  Get Help
+                  Get Personalized Help
                 </a>
               </Button>
             </div>
-          </CardContent>
+          </CardFooter>
         </Card>
       )}
     </div>
