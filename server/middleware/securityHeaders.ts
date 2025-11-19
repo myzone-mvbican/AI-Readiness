@@ -124,25 +124,17 @@ export function validateHttpsCertificate(
 const helmetConfig = {
   // Content Security Policy - Development friendly
   contentSecurityPolicy: {
+    dangerouslyDisableDefaultSrc: true,
     directives: {
-      defaultSrc: ["'self'"],
+      // defaultSrc: null,
       imgSrc: ["'self'", "data:", "https:"],
-      scriptSrc:
-        env.NODE_ENV === "production"
-          ? [
-              "'self'",
-              "'unsafe-inline'",
-              "https://accounts.google.com",
-              "https://login.microsoftonline.com",
-              "https://www.googletagmanager.com",
-            ]
-          : [
-              "'self'",
-              "'unsafe-inline'",
-              "'unsafe-eval'",
-              "https://accounts.google.com",
-              "https://www.googletagmanager.com",
-            ],
+      scriptSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "https://www.googletagmanager.com",
+        "https://accounts.google.com",
+        "https://login.microsoftonline.com",
+      ],
       styleSrc: [
         "'self'",
         "'unsafe-inline'",
@@ -158,14 +150,14 @@ const helmetConfig = {
         "https://fonts.googleapis.com",
         "https://fonts.gstatic.com",
       ],
-      connectSrc: [
-        "'self'",
-        "https://login.microsoftonline.com",
-        "https://*.microsoftonline.com",
-        "https://graph.microsoft.com",
-        "https://accounts.google.com",
-        "https://*.googleapis.com",
-      ],
+      // connectSrc: [
+      //   "'self'",
+      //   "https://login.microsoftonline.com",
+      //   "https://*.microsoftonline.com",
+      //   "https://graph.microsoft.com",
+      //   "https://accounts.google.com",
+      //   "https://*.googleapis.com",
+      // ],
       mediaSrc: ["'self'"], // Allow media access for microphone
       frameAncestors: ["'none'"],
       baseUri: ["'self'"],
