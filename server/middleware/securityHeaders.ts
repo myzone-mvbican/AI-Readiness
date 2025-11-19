@@ -130,13 +130,7 @@ const helmetConfig = {
       scriptSrc: [
         "'self'",
         "'unsafe-inline'",
-        "https://www.googletagmanager.com",
-        "https://accounts.google.com",
-        "https://login.microsoftonline.com",
-        "https://www.google-analytics.com",
-        "https://ssl.google-analytics.com",
-        "https://cdn.callrail.com",
-        "https://pi.pardot.com",
+        "https:",
       ],
       styleSrc: [
         "'self'",
