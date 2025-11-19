@@ -117,6 +117,25 @@ export const AssessmentPDFV2 = ({
             </Text>
           </View>
 
+          {/* Calendly CTA */}
+          <View style={{ 
+            marginTop: 30, 
+            padding: 20, 
+            backgroundColor: "#EFF6FF", 
+            borderRadius: 8,
+            alignItems: "center"
+          }}>
+            <Text style={{ fontSize: 12, fontWeight: "bold", marginBottom: 8, textAlign: "center" }}>
+              Ready to Accelerate Your AI Journey?
+            </Text>
+            <Text style={{ fontSize: 10, marginBottom: 12, textAlign: "center", color: "#6B7280" }}>
+              Schedule a free 30-minute consultation to discuss your AI readiness strategy
+            </Text>
+            <Text style={{ fontSize: 10, fontWeight: "bold", color: "#2563EB", textAlign: "center" }}>
+              Book Now: https://calendly.com/keeranmfj/30min
+            </Text>
+          </View>
+
           <View style={styles.footer}>
             <Text style={styles.pageNumber}>© {year} Keeran Networks</Text>
             <Text style={styles.pageNumber}>Page 3 of {totalPages}</Text>
