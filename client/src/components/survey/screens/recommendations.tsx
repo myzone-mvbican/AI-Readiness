@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Survey, Assessment } from "@shared/types";
 import { RecommendationsV2 } from "@shared/schema";
+import { extractV1Content } from "@/lib/utils";
 
 interface ScreenRecommendations {
   assessment: Assessment & { survey?: Survey };
@@ -201,14 +202,14 @@ export default function ScreenRecommendations({
   }
 
   // V1 format - display as markdown
+  const v1Content = extractV1Content(assessment.recommendations);
+  
   return (
     <ScrollArea className="h-[calc(100dvh-330px)] rounded-md border p-4">
       <div className="space-y-6">
         <div className="markdown-text">
           <ReactMarkdown>
-            {typeof assessment.recommendations === "string"
-              ? assessment.recommendations
-              : "No recommendations found."}
+            {v1Content || "No recommendations found."}
           </ReactMarkdown>
         </div>
       </div>

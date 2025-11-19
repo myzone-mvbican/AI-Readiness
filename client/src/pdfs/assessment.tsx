@@ -1,6 +1,6 @@
 import React from "react";
 import { Document, Page, Text, View, Image } from "@react-pdf/renderer";
-import { formatDate, getRadarChartData } from "@/lib/utils";
+import { formatDate, getRadarChartData, extractV1Content } from "@/lib/utils";
 import { CsvQuestion } from "@shared/types";
 import styles from "./styles";
 import RadarChart from "./radar";
@@ -282,9 +282,10 @@ export const AssessmentPDF = ({
 
       {/* Recommendation Pages */}
       {(() => {
-        if (assessment.recommendations) {
+        const v1Content = extractV1Content(assessment.recommendations);
+        if (v1Content) {
           // Parse markdown into sections (each section starts with ## heading)
-          const sections = assessment.recommendations
+          const sections = v1Content
             .split(/##\s+/)
             .filter(Boolean);
 

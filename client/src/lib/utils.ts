@@ -61,7 +61,7 @@ export function getCategoryScores(
     // Group questions by category
     const categoryMap = new Map<string, number[]>();
 
-    questions.forEach((question: CsvQuestion, index: number) => {
+    (questions || []).forEach((question: CsvQuestion, index: number) => {
         const category = question.category;
         if (!category) {
             return;
@@ -112,6 +112,25 @@ interface RadarChartData {
     name: string;
     score: number;
     fullMark: number;
+}
+
+/**
+ * Extract V1 recommendations content from string or { content: string } format
+ */
+export function extractV1Content(recommendations: string | { content: string } | null | undefined): string | null {
+    if (!recommendations) return null;
+    
+    // If it's already a string, return it
+    if (typeof recommendations === "string") {
+        return recommendations;
+    }
+    
+    // If it's an object with content property, extract it
+    if (typeof recommendations === "object" && "content" in recommendations) {
+        return recommendations.content;
+    }
+    
+    return null;
 }
 
 // Function to prepare data for radar chart

@@ -14,8 +14,8 @@ import {
 // Only table definitions - types and validation schemas are in separate files
 
 // Recommendations Type Definitions
-// V1: Legacy string format (markdown text)
-export type RecommendationsV1 = string;
+// V1: Legacy string format (markdown text) or JSONB with content key
+export type RecommendationsV1 = string | { content: string };
 
 // V2: Structured JSON format
 export interface CategoryPerformance {

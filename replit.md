@@ -105,6 +105,7 @@ MyZone AI is a comprehensive full-stack application designed to evaluate and ben
 
 ```
 Changelog:
+- November 19, 2025. Modified V1 recommendations schema to support both string and JSONB with content key - updated RecommendationsV1 type to accept string | { content: string }, created extractV1Content helper function in utils.ts, updated recommendations.tsx and assessment.tsx PDF to use helper for backward compatibility
 - November 19, 2025. Updated recommendations UI to match PDF structure - changed outro section from "Next Steps" to "Top 5 AI Rocks for Next Quarter" with descriptive subtitle for consistency across PDF and web interface
 - November 19, 2025. Enhanced AI prompt to emphasize company name usage - category descriptions now reference company name frequently throughout analysis for more personalized recommendations tailored to specific organizational context
 - November 18, 2025. Enhanced assessment completion email with personalized AI-generated intro summary and removed generic bullet points - email now uses V2 recommendations intro text for personalized messaging, removed "🎯 Your comprehensive AI readiness report includes" section
