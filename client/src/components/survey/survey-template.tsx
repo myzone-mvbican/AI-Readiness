@@ -308,15 +308,41 @@ export default function SurveyTemplate({
               <ArrowLeft className="size-4 md:mr-2" />
               <span className="hidden md:block">Previous</span>
             </Button>
-            <Button
-              onClick={() =>
-                setCurrentStep(Math.min(questions.length - 1, currentStep + 1))
-              }
-              disabled={currentStep === questions.length - 1}
-            >
-              <span className="hidden md:block">Next</span>
-              <ArrowRight className="size-4 md:ml-2" />
-            </Button>
+            {allQuestionsAnswered() ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="inline-block">
+                    <Button
+                      onClick={handleComplete}
+                      disabled={isSubmitting || !allQuestionsAnswered()}
+                      className={!allQuestionsAnswered() ? "opacity-50" : ""}
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                      <div className="hidden md:block ms-2">
+                        Complete Assessment
+                      </div>
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="p-2">
+                  {!allQuestionsAnswered()
+                    ? "Please answer all questions to complete"
+                    : "Complete assessment and view results"}
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <Button
+                onClick={() =>
+                  setCurrentStep(
+                    Math.min(questions.length - 1, currentStep + 1),
+                  )
+                }
+                disabled={currentStep === questions.length - 1}
+              >
+                <span className="hidden md:block">Next</span>
+                <ArrowRight className="size-4 md:ml-2" />
+              </Button>
+            )}
           </CardFooter>
         </Card>
 
@@ -334,9 +360,11 @@ export default function SurveyTemplate({
       </div>
 
       <div className="flex justify-between border-t py-4">
-        <Button variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
+        {onCancel && (
+          <Button variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
 
         <div className="flex gap-2">
           {isAdmin && !isGuestMode && (
@@ -372,28 +400,6 @@ export default function SurveyTemplate({
               <div className="hidden md:block ms-2">Save Progress</div>
             </Button>
           )}
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="inline-block">
-                <Button
-                  onClick={handleComplete}
-                  disabled={isSubmitting || !allQuestionsAnswered()}
-                  className={!allQuestionsAnswered() ? "opacity-50" : ""}
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  <div className="hidden md:block ms-2">
-                    Complete Assessment
-                  </div>
-                </Button>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent className="p-2">
-              {!allQuestionsAnswered()
-                ? "Please answer all questions to complete"
-                : "Complete assessment and view results"}
-            </TooltipContent>
-          </Tooltip>
         </div>
       </div>
 

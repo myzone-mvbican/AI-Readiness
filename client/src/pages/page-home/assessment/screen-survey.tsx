@@ -76,12 +76,10 @@ export default function GuestSurvey({
       }
 
       // Initialize answers to match questions
-      const initialAnswers = survey.questions.map(
-        (question: CsvQuestion) => ({
-          q: question.id,
-          a: null,
-        }),
-      );
+      const initialAnswers = survey.questions.map((question: CsvQuestion) => ({
+        q: question.id,
+        a: null,
+      }));
 
       setAnswers(initialAnswers);
     }
@@ -206,7 +204,6 @@ export default function GuestSurvey({
         isGuestMode={true}
         showSaveButton={false}
         isSubmitting={isSubmitting}
-        onCancel={handleCancel}
         onComplete={handleComplete}
         currentStep={currentStep}
         setCurrentStep={(step) => {
