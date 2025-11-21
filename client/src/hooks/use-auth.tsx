@@ -320,11 +320,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Connect Google account to existing user
   const googleConnectMutation = useMutation({
     mutationFn: async (data: GoogleLoginData) => {
+      console.log("[Mutation] Starting google connect request");
       const res = await apiRequest("POST", "/api/user/google/connect", data);
-      return await res.json();
+      const json = await res.json();
+      console.log("[Mutation] Google connect response:", json);
+      return json;
     },
     onSuccess: (data: LoginResponse) => {
+      console.log("[Mutation] Connect onSuccess called with:", data);
       if (data.success && data.data?.user) {
+        console.log("[Mutation] Connect succeeded, updating user data");
         // Update user query data directly
         queryClient.setQueryData(["/api/user"], {
           success: true,
@@ -336,6 +341,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           description: "Your Google account has been connected successfully.",
         });
       } else {
+        console.log("[Mutation] Connect succeeded but data is invalid");
         toast({
           title: "Google connect failed",
           description:
@@ -345,6 +351,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onError: (error: Error) => {
+      console.error("[Mutation] Connect onError called:", error);
       toast({
         title: "Google connect failed",
         description: error.message,
@@ -356,11 +363,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Disconnect Google account from existing user
   const googleDisconnectMutation = useMutation({
     mutationFn: async () => {
+      console.log("[Mutation] Starting google disconnect request");
       const res = await apiRequest("DELETE", "/api/user/google/disconnect", {});
-      return await res.json();
+      const json = await res.json();
+      console.log("[Mutation] Google disconnect response:", json);
+      return json;
     },
     onSuccess: (data: LoginResponse) => {
+      console.log("[Mutation] Disconnect onSuccess called with:", data);
       if (data.success && data.data?.user) {
+        console.log("[Mutation] Disconnect succeeded, updating user data");
         // Update user query data directly
         queryClient.setQueryData(["/api/user"], {
           success: true,
@@ -373,6 +385,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             "Your Google account has been disconnected successfully.",
         });
       } else {
+        console.log("[Mutation] Disconnect succeeded but data is invalid");
         toast({
           title: "Google disconnect failed",
           description:
@@ -382,6 +395,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onError: (error: Error) => {
+      console.error("[Mutation] Disconnect onError called:", error);
       toast({
         title: "Google disconnect failed",
         description: error.message,

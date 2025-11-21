@@ -36,27 +36,36 @@ export default function SettingsPage() {
   // Google connect with useGoogleLogin hook
   const googleConnect = useGoogleLogin({
     onSuccess: async (tokenResponse: any) => {
-      console.log("[Google Connect] Token received");
+      console.log("[Google Connect] Token received", tokenResponse);
+      if (!tokenResponse.id_token) {
+        console.error("[Google Connect] No ID token in response");
+        toast({
+          title: "Connection failed",
+          description: "Could not retrieve ID token",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      console.log("[Google Connect] Starting mutation with ID token");
+      setIsConnectingGoogle(true);
+      
       try {
-        if (tokenResponse.id_token) {
-          setIsConnectingGoogle(true);
-          await googleConnectMutation.mutateAsync({ credential: tokenResponse.id_token });
-          console.log("[Google Connect] Account connected successfully");
-        } else {
-          toast({
-            title: "Connection failed",
-            description: "Could not retrieve ID token",
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("[Google Connect] Error:", error);
+        const result = await googleConnectMutation.mutateAsync({ credential: tokenResponse.id_token });
+        console.log("[Google Connect] Mutation result:", result);
+      } catch (error: any) {
+        console.error("[Google Connect] Mutation error:", error);
+        toast({
+          title: "Connection failed",
+          description: error?.message || "Failed to connect Google account",
+          variant: "destructive",
+        });
       } finally {
         setIsConnectingGoogle(false);
       }
     },
-    onError: () => {
-      console.error("[Google Connect] Failed");
+    onError: (error: any) => {
+      console.error("[Google Connect] OAuth error:", error);
       toast({
         title: "Google Sign-In Failed",
         description: "There was a problem connecting your Google account.",
@@ -67,9 +76,17 @@ export default function SettingsPage() {
   });
 
   const handleDisconnectGoogle = useCallback(() => {
+    console.log("[Account Settings] Disconnect clicked");
     setIsDisconnectingGoogle(true);
     googleDisconnectMutation.mutate(undefined, {
-      onSettled: () => setIsDisconnectingGoogle(false),
+      onSuccess: (data) => {
+        console.log("[Account Settings] Disconnect successful");
+        setIsDisconnectingGoogle(false);
+      },
+      onError: (error) => {
+        console.error("[Account Settings] Disconnect error:", error);
+        setIsDisconnectingGoogle(false);
+      },
     });
   }, [googleDisconnectMutation]);
 
