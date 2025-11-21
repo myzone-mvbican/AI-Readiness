@@ -168,8 +168,8 @@ const helmetConfig = {
   // Cross-Origin Embedder Policy (only in production)
   crossOriginEmbedderPolicy: env.NODE_ENV === "production" ? { policy: "credentialless" as const } : false,
   
-  // Cross-Origin Opener Policy (only in production)
-  crossOriginOpenerPolicy: env.NODE_ENV === 'production' ? { policy: 'same-origin' as const } : false,
+  // Cross-Origin Opener Policy - Allow popups for Google OAuth
+  crossOriginOpenerPolicy: env.NODE_ENV === 'production' ? { policy: 'same-origin-allow-popups' as const } : false,
   
   // Cross-Origin Resource Policy (only in production)
   crossOriginResourcePolicy: env.NODE_ENV === 'production' ? { policy: 'cross-origin' as const } : false,
