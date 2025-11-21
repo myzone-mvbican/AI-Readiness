@@ -141,6 +141,7 @@ export default function AuthPage() {
                       size="large"
                       text={activeTab === "login" ? "signin_with" : "signup_with"}
                       width="100%"
+                      useOneTap={false}
                     />
                   </div>
 

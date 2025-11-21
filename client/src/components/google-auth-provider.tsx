@@ -21,8 +21,12 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({
   return (
     <GoogleOAuthProvider 
       clientId={GOOGLE_CLIENT_ID}
-      onScriptLoadError={() => {}}
-      onScriptLoadSuccess={() => {}}
+      onScriptLoadError={() => {
+        console.error("[GoogleOAuthProvider] Script load error");
+      }}
+      onScriptLoadSuccess={() => {
+        console.log("[GoogleOAuthProvider] Script loaded successfully");
+      }}
     >
       {children}
     </GoogleOAuthProvider>
