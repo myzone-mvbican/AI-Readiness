@@ -39,15 +39,11 @@ export default function AuthPage() {
     onSuccess: async (tokenResponse: any) => {
       console.log("[Google Auth] Login successful, access token received");
       try {
-        const res = await fetch("https://www.googleapis.com/oauth2/v1/userinfo", {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-        });
-        const userInfo = await res.json();
-        console.log("[Google Auth] User info retrieved:", userInfo);
-        
         // Get ID token for authentication
         if (tokenResponse.id_token) {
-          await googleLoginMutation.mutateAsync({ credential: tokenResponse.id_token });
+          const result = await googleLoginMutation.mutateAsync({ credential: tokenResponse.id_token });
+          console.log("[Google Auth] Login mutation completed, redirecting to dashboard");
+          setLocation("/dashboard");
         } else {
           toast({
             title: "Google login failed",

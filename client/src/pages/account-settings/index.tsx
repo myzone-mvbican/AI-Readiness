@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { DashboardLayout } from "@/components/layout/dashboard";
-import { GoogleLogin } from "@react-oauth/google";
+import { useGoogleLogin } from "@react-oauth/google";
 
 import {
   settingsSchema,
@@ -33,27 +33,38 @@ export default function SettingsPage() {
   const [initialFormData, setInitialFormData] =
     useState<SettingsFormValues | null>(null);
 
-  // Google authentication handlers
-  const handleGoogleSuccess = useCallback(
-    (credentialResponse: any) => {
-      setIsConnectingGoogle(true);
-      googleConnectMutation.mutate(
-        { credential: credentialResponse.credential },
-        {
-          onSettled: () => setIsConnectingGoogle(false),
-        },
-      );
+  // Google connect with useGoogleLogin hook
+  const googleConnect = useGoogleLogin({
+    onSuccess: async (tokenResponse: any) => {
+      console.log("[Google Connect] Token received");
+      try {
+        if (tokenResponse.id_token) {
+          setIsConnectingGoogle(true);
+          await googleConnectMutation.mutateAsync({ credential: tokenResponse.id_token });
+          console.log("[Google Connect] Account connected successfully");
+        } else {
+          toast({
+            title: "Connection failed",
+            description: "Could not retrieve ID token",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("[Google Connect] Error:", error);
+      } finally {
+        setIsConnectingGoogle(false);
+      }
     },
-    [googleConnectMutation],
-  );
-
-  const handleGoogleError = useCallback(() => {
-    toast({
-      title: "Google Sign-In Failed",
-      description: "There was a problem connecting your Google account.",
-      variant: "destructive",
-    });
-  }, [toast]);
+    onError: () => {
+      console.error("[Google Connect] Failed");
+      toast({
+        title: "Google Sign-In Failed",
+        description: "There was a problem connecting your Google account.",
+        variant: "destructive",
+      });
+    },
+    flow: "implicit",
+  });
 
   const handleDisconnectGoogle = useCallback(() => {
     setIsDisconnectingGoogle(true);
@@ -520,15 +531,15 @@ export default function SettingsPage() {
                                   isConnectingGoogle ? "opacity-50" : ""
                                 }
                               >
-                                <GoogleLogin
-                                  onSuccess={handleGoogleSuccess}
-                                  onError={handleGoogleError}
-                                  useOneTap
-                                  type="icon"
-                                  shape="circle"
-                                  theme="outline"
-                                  locale="en"
-                                />
+                                <Button
+                                  onClick={() => googleConnect()}
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={isConnectingGoogle}
+                                  className="text-muted-foreground border-muted-foreground"
+                                >
+                                  {isConnectingGoogle ? "Connecting..." : "Connect"}
+                                </Button>
                               </div>
                             </div>
                           </div>
