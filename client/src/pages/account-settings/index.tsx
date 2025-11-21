@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { DashboardLayout } from "@/components/layout/dashboard";
-import { useGoogleLogin } from "@react-oauth/google";
+import { GoogleLogin } from "@react-oauth/google";
 
 import {
   settingsSchema,
@@ -33,60 +33,32 @@ export default function SettingsPage() {
   const [initialFormData, setInitialFormData] =
     useState<SettingsFormValues | null>(null);
 
-  // Google connect with useGoogleLogin hook
-  const googleConnect = useGoogleLogin({
-    onSuccess: async (tokenResponse: any) => {
-      console.log("[Google Connect] Token received", tokenResponse);
-      if (!tokenResponse.id_token) {
-        console.error("[Google Connect] No ID token in response");
-        toast({
-          title: "Connection failed",
-          description: "Could not retrieve ID token",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      console.log("[Google Connect] Starting mutation with ID token");
+  // Google authentication handlers
+  const handleGoogleSuccess = useCallback(
+    (credentialResponse: any) => {
       setIsConnectingGoogle(true);
-      
-      try {
-        const result = await googleConnectMutation.mutateAsync({ credential: tokenResponse.id_token });
-        console.log("[Google Connect] Mutation result:", result);
-      } catch (error: any) {
-        console.error("[Google Connect] Mutation error:", error);
-        toast({
-          title: "Connection failed",
-          description: error?.message || "Failed to connect Google account",
-          variant: "destructive",
-        });
-      } finally {
-        setIsConnectingGoogle(false);
-      }
+      googleConnectMutation.mutate(
+        { credential: credentialResponse.credential },
+        {
+          onSettled: () => setIsConnectingGoogle(false),
+        },
+      );
     },
-    onError: (error: any) => {
-      console.error("[Google Connect] OAuth error:", error);
-      toast({
-        title: "Google Sign-In Failed",
-        description: "There was a problem connecting your Google account.",
-        variant: "destructive",
-      });
-    },
-    flow: "implicit",
-  });
+    [googleConnectMutation],
+  );
+
+  const handleGoogleError = useCallback(() => {
+    toast({
+      title: "Google Sign-In Failed",
+      description: "There was a problem connecting your Google account.",
+      variant: "destructive",
+    });
+  }, [toast]);
 
   const handleDisconnectGoogle = useCallback(() => {
-    console.log("[Account Settings] Disconnect clicked");
     setIsDisconnectingGoogle(true);
     googleDisconnectMutation.mutate(undefined, {
-      onSuccess: (data) => {
-        console.log("[Account Settings] Disconnect successful");
-        setIsDisconnectingGoogle(false);
-      },
-      onError: (error) => {
-        console.error("[Account Settings] Disconnect error:", error);
-        setIsDisconnectingGoogle(false);
-      },
+      onSettled: () => setIsDisconnectingGoogle(false),
     });
   }, [googleDisconnectMutation]);
 
@@ -548,15 +520,15 @@ export default function SettingsPage() {
                                   isConnectingGoogle ? "opacity-50" : ""
                                 }
                               >
-                                <Button
-                                  onClick={() => googleConnect()}
-                                  variant="outline"
-                                  size="sm"
-                                  disabled={isConnectingGoogle}
-                                  className="text-muted-foreground border-muted-foreground"
-                                >
-                                  {isConnectingGoogle ? "Connecting..." : "Connect"}
-                                </Button>
+                                <GoogleLogin
+                                  onSuccess={handleGoogleSuccess}
+                                  onError={handleGoogleError}
+                                  useOneTap={false}
+                                  type="icon"
+                                  shape="circle"
+                                  theme="outline"
+                                  locale="en"
+                                />
                               </div>
                             </div>
                           </div>
