@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { GoogleLogin } from "@react-oauth/google";
+import { useGoogleLogin } from "@react-oauth/google";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -34,27 +34,47 @@ export default function AuthPage() {
   // Check if Google OAuth is configured
   const isGoogleAuthEnabled = !!import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-  // Google login handlers
-  const handleGoogleSuccess = async (credentialResponse: any) => {
-    console.log("[Google Auth] Success callback received", credentialResponse);
-    console.log("[Google Auth] Credential present:", !!credentialResponse?.credential);
-    try {
-      await googleLoginMutation.mutateAsync({ credential: credentialResponse.credential });
-      console.log("[Google Auth] Login mutation completed successfully");
-    } catch (error) {
-      console.error("[Google Auth] Login mutation error:", error);
-    }
-  };
-
-  const handleGoogleError = () => {
-    console.error("[Google Auth] Error callback triggered");
-    toast({
-      title: "Google login failed",
-      description: "There was a problem with your Google login.",
-      variant: "destructive",
-      duration: 3000,
-    });
-  };
+  // Google login with useGoogleLogin hook for popup mode
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse: any) => {
+      console.log("[Google Auth] Login successful, access token received");
+      try {
+        const res = await fetch("https://www.googleapis.com/oauth2/v1/userinfo", {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        });
+        const userInfo = await res.json();
+        console.log("[Google Auth] User info retrieved:", userInfo);
+        
+        // Get ID token for authentication
+        if (tokenResponse.id_token) {
+          await googleLoginMutation.mutateAsync({ credential: tokenResponse.id_token });
+        } else {
+          toast({
+            title: "Google login failed",
+            description: "Could not retrieve ID token",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("[Google Auth] Error:", error);
+        toast({
+          title: "Google login failed",
+          description: "Failed to process Google authentication",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: () => {
+      console.error("[Google Auth] Login failed");
+      toast({
+        title: "Google login failed",
+        description: "There was a problem with your Google login.",
+        variant: "destructive",
+        duration: 3000,
+      });
+    },
+    flow: "implicit",
+  });
 
   // Redirect if user is authenticated
   useEffect(() => {
@@ -134,15 +154,14 @@ export default function AuthPage() {
               {isGoogleAuthEnabled ? (
                 <>
                   <div className="w-full mb-6 flex justify-center">
-                    <GoogleLogin
-                      onSuccess={handleGoogleSuccess}
-                      onError={handleGoogleError}
-                      theme="outline"
-                      size="large"
-                      text={activeTab === "login" ? "signin_with" : "signup_with"}
-                      width="100%"
-                      useOneTap={false}
-                    />
+                    <Button
+                      onClick={() => googleLogin()}
+                      variant="outline"
+                      className="w-full h-10"
+                      type="button"
+                    >
+                      {activeTab === "login" ? "Sign in with Google" : "Sign up with Google"}
+                    </Button>
                   </div>
 
                   {/* Divider */}
