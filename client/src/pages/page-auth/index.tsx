@@ -36,10 +36,18 @@ export default function AuthPage() {
 
   // Google login handlers
   const handleGoogleSuccess = async (credentialResponse: any) => {
-    await googleLoginMutation.mutateAsync({ credential: credentialResponse.credential });
+    console.log("[Google Auth] Success callback received", credentialResponse);
+    console.log("[Google Auth] Credential present:", !!credentialResponse?.credential);
+    try {
+      await googleLoginMutation.mutateAsync({ credential: credentialResponse.credential });
+      console.log("[Google Auth] Login mutation completed successfully");
+    } catch (error) {
+      console.error("[Google Auth] Login mutation error:", error);
+    }
   };
 
   const handleGoogleError = () => {
+    console.error("[Google Auth] Error callback triggered");
     toast({
       title: "Google login failed",
       description: "There was a problem with your Google login.",
@@ -357,7 +365,6 @@ export default function AuthPage() {
                       render={({ field }) => (
                         <IndustrySelect
                           field={field}
-                          error={!!signupErrors.industry}
                           className={
                             signupErrors.industry ? "border-red-500" : ""
                           }
