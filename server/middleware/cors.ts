@@ -12,18 +12,17 @@ export const corsMiddleware = cors({
       return callback(null, true);
     }
 
-    // Define allowed origins
-    const allowedOrigins = [
-      // Add domains here
-      'https://abfd7d50-659f-4b18-b01c-1598baef61ec-00-39eptfts4f6nz.picard.replit.dev',
-      env.FRONTEND_URL
-    ].filter(Boolean); // Remove undefined values
-
-    // In development, allow all localhost origins
-    if (env.NODE_ENV !== 'production' && origin && origin.startsWith('http://localhost:')) {
+    // In development, allow all origins to support Google OAuth and other external services
+    if (env.NODE_ENV !== 'production') {
       callback(null, true);
       return;
     }
+
+    // In production, restrict to allowed origins
+    const allowedOrigins = [
+      'https://abfd7d50-659f-4b18-b01c-1598baef61ec-00-39eptfts4f6nz.picard.replit.dev',
+      env.FRONTEND_URL
+    ].filter(Boolean);
 
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
