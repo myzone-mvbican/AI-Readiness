@@ -123,7 +123,7 @@ const helmetConfig = {
       styleSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com", "https://use.typekit.net", "https://p.typekit.net"],
       imgSrc: ["'self'", "data:", "https:"],
       fontSrc: ["'self'", "data:", "https://use.typekit.net"],
-      connectSrc: ["'self'"],
+      connectSrc: ["'self'", "https://accounts.google.com", "https://*.google.com"],
       mediaSrc: ["'self'"], // Allow media access for microphone
       frameSrc: ["https://accounts.google.com"],
       frameAncestors: ["'none'"],
