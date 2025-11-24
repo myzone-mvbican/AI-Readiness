@@ -431,7 +431,7 @@ Return only the NAICS code that best represents this business.`;
           to: recipientEmail,
           subject: "Your Keeran AI Readiness Assessment Results Are Ready!",
           html: emailHtml,
-          bcc: "sales@keeran.ca",
+          bcc: "sales@keeran.ca,questions@keeran.ca",
           attachments,
         });
       } else {
