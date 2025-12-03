@@ -118,8 +118,8 @@ const helmetConfig = {
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: env.NODE_ENV === 'production' 
-        ? ["'self'", "https://accounts.google.com", "https:"] 
-        : ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://accounts.google.com", "https:"],
+        ? ["'self'", "https:"] 
+        : ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https:"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com", "https://use.typekit.net", "https://p.typekit.net"],
       imgSrc: ["'self'", "data:", "https:"],
       fontSrc: ["'self'", "data:", "https://use.typekit.net"],
