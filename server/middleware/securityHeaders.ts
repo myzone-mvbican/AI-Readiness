@@ -124,26 +124,31 @@ const helmetConfig = {
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc:
-        env.NODE_ENV === "production"
-          ? ["'self'", "'unsafe-inline'", "https:"]
-          : ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https:"],
+      imgSrc: ["'self'", "data:", "https:"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https:"],
       styleSrc: [
         "'self'",
         "'unsafe-inline'",
-        "https://accounts.google.com",
         "https://use.typekit.net",
         "https://p.typekit.net",
+        "https://fonts.googleapis.com",
+        "https://fonts.gstatic.com",
       ],
-      imgSrc: ["'self'", "data:", "https:"],
-      fontSrc: ["'self'", "data:", "https://use.typekit.net"],
-      connectSrc: [
+      fontSrc: [
         "'self'",
-        "https://accounts.google.com",
-        "https://*.google.com",
+        "data:",
+        "https://use.typekit.net",
+        "https://fonts.googleapis.com",
+        "https://fonts.gstatic.com",
       ],
-      mediaSrc: ["'self'"], // Allow media access for microphone
-      frameSrc: ["https://accounts.google.com"],
+      connectSrc: ["'self'", "https:"],
+      frameSrc: [
+        "'self'",
+        "https://www.googletagmanager.com",
+        "https://accounts.google.com",
+        "https://login.microsoftonline.com",
+      ],
+      mediaSrc: ["'self'"],
       frameAncestors: ["'none'"],
       baseUri: ["'self'"],
       formAction: ["'self'"],
@@ -186,17 +191,12 @@ const helmetConfig = {
   // Hide X-Powered-By header
   hidePoweredBy: true,
 
-  // Cross-Origin Embedder Policy (only in production)
-  crossOriginEmbedderPolicy:
-    env.NODE_ENV === "production"
-      ? { policy: "credentialless" as const }
-      : false,
+  // Cross-Origin Embedder Policy (disabled to allow OAuth popups)
+  crossOriginEmbedderPolicy: false,
 
-  // Cross-Origin Opener Policy - Allow popups for Google OAuth
-  crossOriginOpenerPolicy:
-    env.NODE_ENV === "production"
-      ? { policy: "same-origin-allow-popups" as const }
-      : false,
+  // Cross-Origin Opener Policy (disabled to allow OAuth popup communication)
+  // Note: Setting this to "same-origin" breaks Microsoft/Google OAuth popup flows
+  crossOriginOpenerPolicy: false,
 
   // Cross-Origin Resource Policy (only in production)
   crossOriginResourcePolicy:
