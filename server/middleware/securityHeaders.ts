@@ -126,11 +126,12 @@ const helmetConfig = {
       defaultSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https:"],
       scriptSrc: [
-        "'self'", 
-        "'unsafe-inline'", 
+        "'self'",
+        "'unsafe-inline'",
         "https:",
         "https://*.googleapis.com",
-        "https://*.google.com"
+        "https://*.facebook.com",
+        "https://*.google.com",
       ],
       styleSrc: [
         "'self'",
@@ -139,6 +140,7 @@ const helmetConfig = {
         "https://p.typekit.net",
         "https://fonts.googleapis.com",
         "https://fonts.gstatic.com",
+        "https://*.google.com",
       ],
       fontSrc: [
         "'self'",
