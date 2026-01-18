@@ -472,7 +472,7 @@ Return only the NAICS code that best represents this business.`;
       return {
         recommendations: content,
         pdfGenerated: pdfResult?.success || false,
-        pdfPath: pdfResult?.filePath,
+        pdfPath: pdfResult?.relativePath,
       };
     } catch (error: any) {
       const latencyMs = Date.now() - startTime;
