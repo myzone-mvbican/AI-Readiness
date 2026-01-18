@@ -125,7 +125,13 @@ const helmetConfig = {
     directives: {
       defaultSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https:"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https:"],
+      scriptSrc: [
+        "'self'", 
+        "'unsafe-inline'", 
+        "https:",
+        "https://*.googleapis.com",
+        "https://*.google.com"
+      ],
       styleSrc: [
         "'self'",
         "'unsafe-inline'",
