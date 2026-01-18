@@ -126,12 +126,12 @@ const helmetConfig = {
       defaultSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https:"],
       scriptSrc: [
-        "'self'",
-        "'unsafe-inline'",
+        "'self'", 
+        "'unsafe-inline'", 
         "https:",
         "https://*.googleapis.com",
-        "https://*.facebook.com",
         "https://*.google.com",
+        "https://connect.facebook.net", // Facebook SDK scripts (via GTM)
       ],
       styleSrc: [
         "'self'",
@@ -140,7 +140,6 @@ const helmetConfig = {
         "https://p.typekit.net",
         "https://fonts.googleapis.com",
         "https://fonts.gstatic.com",
-        "https://*.google.com",
       ],
       fontSrc: [
         "'self'",
@@ -155,11 +154,15 @@ const helmetConfig = {
         "https://www.googletagmanager.com",
         "https://accounts.google.com",
         "https://login.microsoftonline.com",
+        "https://www.facebook.com", // Facebook iframes (via GTM)
       ],
       mediaSrc: ["'self'"],
       frameAncestors: ["'none'"],
       baseUri: ["'self'"],
-      formAction: ["'self'"],
+      formAction: [
+        "'self'",
+        "https://www.facebook.com", // Facebook tracking form submissions (via GTM)
+      ],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: env.NODE_ENV === "production" ? [] : null,
     },
