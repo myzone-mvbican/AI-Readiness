@@ -31,6 +31,8 @@ import AdminSurveysPage from "@/pages/dashboard-surveys";
 import AdminUsersPage from "@/pages/dashboard-users";
 import AdminTeamsPage from "@/pages/dashboard-teams";
 import AdminSettingsPage from "@/pages/dashboard-admin/settings";
+import LLMLogsPage from "@/pages/dashboard-llm-logs";
+import LLMSettingsPage from "@/pages/dashboard-llm-settings";
 // Account settings page
 import AccountSettingsPage from "./pages/account-settings";
 
@@ -77,6 +79,14 @@ function Router() {
         <AdminProtectedRoute
           path="/dashboard/admin/settings"
           component={AdminSettingsPage}
+        />
+        <AdminProtectedRoute
+          path="/dashboard/admin/llm/logs"
+          component={LLMLogsPage}
+        />
+        <AdminProtectedRoute
+          path="/dashboard/admin/llm/settings"
+          component={LLMSettingsPage}
         />
         <ProtectedRoute path="/dashboard/:rest*" component={DashboardHome} />
         <Route component={NotFound} />

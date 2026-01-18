@@ -26,6 +26,9 @@ const envSchema = z.object({
 
   // PII Encryption
   PII_ENCRYPTION_KEY: z.string().min(32, "PII_ENCRYPTION_KEY must be at least 32 characters").optional(),
+  
+  // LLM API Key Encryption (64 hex characters = 32 bytes for AES-256)
+  LLM_ENCRYPTION_KEY: z.string().length(64, "LLM_ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes)").optional(),
 
   // Email (optional) 
   SMTP_HOST: z.string().optional(),
@@ -68,6 +71,7 @@ const envSchema = z.object({
 
   // Google OAuth
   GOOGLE_CLIENT_ID: z.string().min(1, "GOOGLE_CLIENT_ID is required"),
+  VITE_GOOGLE_CLIENT_ID: z.string().min(1, "VITE_GOOGLE_CLIENT_ID is required"),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

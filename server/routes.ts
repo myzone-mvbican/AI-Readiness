@@ -10,6 +10,8 @@ import { AssessmentController } from "./controllers/assessment.controller";
 import { AIController } from "./controllers/ai.controller";
 import { BenchmarkController } from "./controllers/benchmark.controller";
 import { PasswordResetController } from "./controllers/password-reset.controller";
+import { LLMLogController } from "./controllers/llm-log.controller";
+import { LLMSettingsController } from "./controllers/llm-settings.controller";
 import {
   insertUserSchema,
   updateUserSchema,
@@ -19,7 +21,7 @@ import {
 } from "@shared/validation/schemas";
 
 // Import middleware if needed for protected routes
-import { auth, requireAdmin } from "./middleware/auth";
+import { auth, requireAdmin, optionalAuth } from "./middleware/auth";
 import { upload } from "./middleware/upload";
 import {
   validateBody,
@@ -29,6 +31,7 @@ import {
   validateUrlAnalysis
 } from "./middleware/validation";
 import {
+  idParamSchema,
   teamCreationSchema,
   userTeamAssignmentSchema,
   userRoleUpdateSchema,
@@ -45,7 +48,15 @@ import {
   passwordResetConfirmSchema,
   tokenQuerySchema,
   emailQuerySchema,
-  userSearchByNameQuerySchema
+  userSearchByNameQuerySchema,
+  llmLogCreateSchema,
+  llmLogQuerySchema,
+  providerCreateSchema,
+  providerUpdateSchema,
+  apiKeySchema,
+  settingsCreateSchema,
+  settingsUpdateSchema,
+  settingsQuerySchema
 } from "./middleware/schemas";
 import {
   generalLimiter,
@@ -528,6 +539,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/ai-suggestions",
     requestSizeLimiter,
     validateCSRFToken,
+    optionalAuth,
     generalApiLimiter,
     validateBody(aiSuggestionSchema),
     AIController.generateSuggestions
@@ -537,6 +549,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post(
     "/api/analyze-industry",
     validateCSRFToken,
+    optionalAuth,
     generalApiLimiter,
     validateUrlAnalysis,
     AIController.analyzeIndustry
@@ -551,6 +564,158 @@ export async function registerRoutes(app: Express): Promise<Server> {
     auth,
     requireAdmin,
     BenchmarkController.recalculateStats,
+  );
+
+  // LLM Logs routes
+  
+  // Create a new LLM log entry (internal use, or for external integrations)
+  app.post(
+    "/api/logs/llm",
+    requestSizeLimiter,
+    generalApiLimiter,
+    validateBody(llmLogCreateSchema),
+    LLMLogController.create
+  );
+
+  // Get LLM logs with filters and pagination (admin can see all, users see own)
+  app.get(
+    "/api/logs/llm",
+    generalApiLimiter,
+    auth,
+    validateQuery(llmLogQuerySchema),
+    LLMLogController.getLogs
+  );
+
+  // Get a specific LLM log by ID (admin can see all, users see own)
+  app.get(
+    "/api/logs/llm/:id",
+    generalApiLimiter,
+    auth,
+    validateParams(idParamSchema),
+    LLMLogController.getById
+  );
+
+  // LLM Settings routes
+  
+  // Provider routes (admin only)
+  app.get(
+    "/api/llm/providers",
+    generalApiLimiter,
+    auth,
+    requireAdmin,
+    LLMSettingsController.getAllProviders
+  );
+  
+  app.get(
+    "/api/llm/providers/:id",
+    generalApiLimiter,
+    auth,
+    requireAdmin,
+    validateParams(idParamSchema),
+    LLMSettingsController.getProvider
+  );
+  
+  app.post(
+    "/api/llm/providers",
+    requestSizeLimiter,
+    validateCSRFToken,
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
+    auth,
+    requireAdmin,
+    validateBody(providerCreateSchema),
+    LLMSettingsController.createProvider
+  );
+  
+  app.put(
+    "/api/llm/providers/:id",
+    requestSizeLimiter,
+    validateCSRFToken,
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
+    auth,
+    requireAdmin,
+    validateParams(idParamSchema),
+    validateBody(providerUpdateSchema),
+    LLMSettingsController.updateProvider
+  );
+  
+  app.delete(
+    "/api/llm/providers/:id",
+    validateCSRFToken,
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
+    auth,
+    requireAdmin,
+    validateParams(idParamSchema),
+    LLMSettingsController.deleteProvider
+  );
+  
+  app.post(
+    "/api/llm/providers/:id/api-key",
+    requestSizeLimiter,
+    validateCSRFToken,
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
+    auth,
+    requireAdmin,
+    validateParams(idParamSchema),
+    validateBody(apiKeySchema),
+    LLMSettingsController.setApiKey
+  );
+
+  // Settings routes
+  app.get(
+    "/api/llm/settings",
+    generalApiLimiter,
+    auth,
+    validateQuery(settingsQuerySchema),
+    LLMSettingsController.getEffectiveSettings
+  );
+  
+  app.get(
+    "/api/llm/settings/global",
+    generalApiLimiter,
+    auth,
+    requireAdmin,
+    validateQuery(settingsQuerySchema),
+    LLMSettingsController.getGlobalSettings
+  );
+  
+  app.post(
+    "/api/llm/settings/global",
+    requestSizeLimiter,
+    validateCSRFToken,
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
+    auth,
+    requireAdmin,
+    validateBody(settingsCreateSchema),
+    LLMSettingsController.createGlobalSettings
+  );
+  
+  app.put(
+    "/api/llm/settings/:id",
+    requestSizeLimiter,
+    validateCSRFToken,
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
+    auth,
+    requireAdmin,
+    validateParams(idParamSchema),
+    validateBody(settingsUpdateSchema),
+    LLMSettingsController.updateSettings
+  );
+  
+  app.delete(
+    "/api/llm/settings/:id",
+    validateCSRFToken,
+    sensitiveOperationsProgressiveDelay,
+    sensitiveOperationsRateLimit,
+    auth,
+    requireAdmin,
+    validateParams(idParamSchema),
+    LLMSettingsController.deleteSettings
   );
 
   // Public routes

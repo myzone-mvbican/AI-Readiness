@@ -13,7 +13,8 @@ export class AIController {
     try {
       // Validation handled by middleware
       const { url } = req.body;
-      const result = await AIService.analyzeIndustry(url);
+      const userId = req.user?.id;
+      const result = await AIService.analyzeIndustry(url, userId);
       return ApiResponse.success(res, result);
     } catch (error: any) {
       return ApiResponse.internalError(res, error.message || "Failed to analyze website industry");
@@ -23,7 +24,8 @@ export class AIController {
   static async generateSuggestions(req: Request, res: Response) {
     try {
       const { assessment } = req.body as AIRequestBody;
-      const result = await AIService.generateSuggestions(assessment);
+      const userId = req.user?.id;
+      const result = await AIService.generateSuggestions(assessment, userId);
       return ApiResponse.success(res, result);
     } catch (error: any) {
       return ApiResponse.internalError(res, error.message || "Failed to generate AI suggestions");

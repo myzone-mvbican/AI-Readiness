@@ -32,7 +32,7 @@ export default function AuthPage() {
   const { user, isLoading, loginMutation, registerMutation, googleLoginMutation } = useAuth();
   
   // Check if Google OAuth is configured
-  const isGoogleAuthEnabled = !!import.meta.env.GOOGLE_CLIENT_ID;
+  const isGoogleAuthEnabled = !!import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   // Google login handlers
   const handleGoogleSuccess = async (credentialResponse: any) => {
