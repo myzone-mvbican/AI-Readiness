@@ -19,6 +19,8 @@ import NotFound from "@/pages/page-404";
 import PageHome from "@/pages/page-home";
 import PageAuth from "@/pages/page-auth";
 import PageAbout from "@/pages/page-about";
+import PageL2 from "@/pages/page-l2";
+import PageL3 from "@/pages/page-l3";
 import ForgotPasswordPage from "@/pages/page-auth/password/forgot";
 import ResetPasswordPage from "@/pages/page-auth/password/reset";
 // Dashboard pages
@@ -106,6 +108,10 @@ function Router() {
           <Route path="/auth/forgot" component={ForgotPasswordPage} />
           <Route path="/auth/reset" component={ResetPasswordPage} />
           <Route path="/about" component={PageAbout} />
+          <Route path="/assess/l2" component={PageL2} />
+          <Route path="/departmental" component={PageL2} />
+          <Route path="/assess/l3" component={PageL3} />
+          <Route path="/personal" component={PageL3} />
           <Route component={NotFound} />
         </Switch>
       </main>
