@@ -108,10 +108,10 @@ function Router() {
           <Route path="/auth/forgot" component={ForgotPasswordPage} />
           <Route path="/auth/reset" component={ResetPasswordPage} />
           <Route path="/about" component={PageAbout} />
-          <Route path="/assess/l2" component={PageL2} />
-          <Route path="/departmental" component={PageL2} />
-          <Route path="/assess/l3" component={PageL3} />
-          <Route path="/personal" component={PageL3} />
+          <ProtectedRoute path="/assess/l2" component={PageL2} />
+          <ProtectedRoute path="/departmental" component={PageL2} />
+          <ProtectedRoute path="/assess/l3" component={PageL3} />
+          <ProtectedRoute path="/personal" component={PageL3} />
           <Route component={NotFound} />
         </Switch>
       </main>
