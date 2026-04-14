@@ -140,6 +140,7 @@ const helmetConfig = {
         "https://p.typekit.net",
         "https://fonts.googleapis.com",
         "https://fonts.gstatic.com",
+        "https://accounts.google.com",
       ],
       fontSrc: [
         "'self'",
