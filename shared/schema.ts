@@ -9,6 +9,7 @@ import {
   unique,
   jsonb,
   real,
+  varchar,
 } from "drizzle-orm/pg-core";
 
 // Database schema definition
@@ -32,6 +33,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   role: text("role").default("client"),
   googleId: text("google_id").unique(),
+  orgId: integer("org_id"), // FK to organisations — nullable for backward compat
   resetToken: text("reset_token"),
   resetTokenExpiry: timestamp("reset_token_expiry", { withTimezone: true }),
   // Password security fields
@@ -84,11 +86,12 @@ export const surveyTeams = pgTable(
   },
 );
 
-// Assessment schema
+// Assessment schema (L1 org-level assessments)
 export const assessments = pgTable("assessments", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   userId: integer("user_id").references(() => users.id),  // Removed .notNull() to support guest assessments
+  orgId: integer("org_id"), // FK to organisations — nullable for backward compat
   guest: text("guest"),  // JSON string of guest user data from localStorage
   email: text("email"), // Store email for guest assessments
   surveyTemplateId: integer("survey_template_id").notNull().references(() => surveys.id),
@@ -97,7 +100,7 @@ export const assessments = pgTable("assessments", {
   answers: text("answers").notNull(), // JSON string of answers array
   recommendations: text("recommendations"), // Store AI-generated recommendations
   pdfPath: text("pdf_path"), // Store relative path to generated PDF file
-  completedOn: timestamp("completed_on", { withTimezone: true }), 
+  completedOn: timestamp("completed_on", { withTimezone: true }),
   // Timestamp when assessment was completed with timezone
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
@@ -326,3 +329,156 @@ export const featureLlmOverrides = pgTable(
     };
   }
 );
+
+// ═══════════════════════════════════════════════════════════
+// Organisation & Delegation Tables (Readiness Platform v3)
+// ═══════════════════════════════════════════════════════════
+
+// Organisations — multi-tenancy foundation
+export const organisations = pgTable("organisations", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  naicsCode: text("naics_code"),
+  naicsLabel: text("naics_label"),
+  employeeCount: text("employee_count"), // "1-9", "10-49", "50-99", "100-249", "250+"
+  country: text("country").default("US"),
+  onboardingComplete: boolean("onboarding_complete").default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Org members — links users to organisations with roles
+export const orgMembers = pgTable(
+  "org_members",
+  {
+    id: serial("id").primaryKey(),
+    orgId: integer("org_id").notNull().references(() => organisations.id, { onDelete: "cascade" }),
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    role: text("role").notNull().default("member"),
+    // Roles: "owner" (CEO/admin who created org), "admin", "dept_head", "member"
+    department: text("department"), // For dept_head + member assignment
+    joinedAt: timestamp("joined_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => ({
+    orgUserUnique: unique("org_members_org_user_unq").on(table.orgId, table.userId),
+  })
+);
+
+// Org departments — configurable per organisation
+export const orgDepartments = pgTable(
+  "org_departments",
+  {
+    id: serial("id").primaryKey(),
+    orgId: integer("org_id").notNull().references(() => organisations.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),           // Display name: "Marketing"
+    slug: text("slug").notNull(),           // URL-safe: "marketing"
+    headUserId: integer("head_user_id").references(() => users.id),
+    headName: text("head_name"),            // Name before they register
+    headEmail: text("head_email"),          // Email for invitation
+    l2Status: text("l2_status").default("not_started"),
+    // not_started | invited | in_progress | completed
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    orgSlugUnique: unique("org_departments_org_slug_unq").on(table.orgId, table.slug),
+  })
+);
+
+// Invitations — for dept heads and team members
+export const invitations = pgTable("invitations", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id").notNull().references(() => organisations.id, { onDelete: "cascade" }),
+  invitedByUserId: integer("invited_by_user_id").notNull().references(() => users.id),
+  email: text("email").notNull(),
+  name: text("name"),
+  role: text("role").notNull(),             // "dept_head" | "member"
+  department: text("department"),            // For dept_head invites
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  status: text("status").default("pending"), // pending | accepted | expired
+  acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ═══════════════════════════════════════════════════════════
+// L2 & L3 Assessment Tables
+// ═══════════════════════════════════════════════════════════
+
+// L2 Department Assessments — server-persisted
+export const l2Assessments = pgTable("l2_assessments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  orgId: integer("org_id").references(() => organisations.id),
+  departmentId: integer("department_id").references(() => orgDepartments.id),
+  department: text("department").notNull(), // Slug: "marketing"
+  responses: jsonb("responses").notNull(),  // Raw answer data
+  overallScore: real("overall_score"),
+  maturityStage: text("maturity_stage"),    // Crawl | Walk | Run | Fly
+  categoryScores: jsonb("category_scores"), // [{category, score, band}]
+  topGaps: jsonb("top_gaps"),
+  topStrengths: jsonb("top_strengths"),
+  status: text("status").default("completed"),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// L3 Personal Assessments — server-persisted
+export const l3Assessments = pgTable("l3_assessments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  orgId: integer("org_id").references(() => organisations.id),
+  name: text("name"),
+  department: text("department"),
+  roleLevel: text("role_level"),
+  industry: text("industry"),
+  conversationHistory: jsonb("conversation_history"),
+  dimensionScores: jsonb("dimension_scores"), // [{dimension, score, band, strengths, areas}]
+  overallScore: real("overall_score"),
+  maturityStage: text("maturity_stage"),
+  topStrengths: jsonb("top_strengths"),
+  topAreasForDevelopment: jsonb("top_areas_for_development"),
+  status: text("status").default("completed"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ═══════════════════════════════════════════════════════════
+// AI Rocks & Health Scores
+// ═══════════════════════════════════════════════════════════
+
+// AI Rocks — cross-layer action items
+export const aiRocks = pgTable("ai_rocks", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id").references(() => organisations.id),
+  userId: integer("user_id").references(() => users.id),
+  sourceLayer: text("source_layer").notNull(), // L1 | L2 | L3
+  sourceAssessmentId: integer("source_assessment_id"),
+  sourcePillar: text("source_pillar"),
+  title: text("title").notNull(),
+  rationale: text("rationale"),
+  expectedImpact: text("expected_impact"),     // High | Medium | Low
+  effortBand: text("effort_band"),             // S | M | L
+  acceptanceCriteria: text("acceptance_criteria"),
+  status: text("status").default("active"),    // active | completed | archived
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  quarter: text("quarter"),                    // "2026-Q2"
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Health Scores — cached master score per organisation
+export const healthScores = pgTable("health_scores", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id").notNull().references(() => organisations.id).unique(),
+  l1Score: real("l1_score"),
+  l2AvgScore: real("l2_avg_score"),
+  l3AvgScore: real("l3_avg_score"),
+  masterScore: real("master_score"),           // Equal-weighted average of active layers
+  activeLayers: integer("active_layers"),      // How many layers have data (1-3)
+  industryGrade: text("industry_grade"),       // A through F
+  industryPercentile: integer("industry_percentile"),
+  trend: text("trend"),                        // up | down | flat
+  computedAt: timestamp("computed_at", { withTimezone: true }).defaultNow().notNull(),
+});

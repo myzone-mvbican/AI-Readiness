@@ -12,6 +12,12 @@ import { BenchmarkController } from "./controllers/benchmark.controller";
 import { PasswordResetController } from "./controllers/password-reset.controller";
 import { LLMLogController } from "./controllers/llm-log.controller";
 import { LLMSettingsController } from "./controllers/llm-settings.controller";
+// New controllers for Readiness Platform v3
+import { OrgController } from "./controllers/org.controller";
+import { L2AssessmentController } from "./controllers/l2-assessment.controller";
+import { L3AssessmentController } from "./controllers/l3-assessment.controller";
+import { InvitationController } from "./controllers/invitation.controller";
+import { HubController } from "./controllers/hub.controller";
 import {
   insertUserSchema,
   updateUserSchema,
@@ -729,6 +735,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/public/assessments/:id", generalApiLimiter, validateBody(guestAssessmentUpdateSchema), AssessmentController.updateGuest);
   // Public endpoint for guest users to access survey details
   app.get("/api/public/surveys/detail/:id", generalApiLimiter, SurveyController.getById);
+
+  // ═══════════════════════════════════════════════════════
+  // Organisation Management (Readiness Platform v3)
+  // ═══════════════════════════════════════════════════════
+
+  // Organisation CRUD
+  app.post("/api/org", requestSizeLimiter, auth, generalApiLimiter, OrgController.create);
+  app.get("/api/org", auth, generalApiLimiter, OrgController.get);
+  app.put("/api/org", requestSizeLimiter, auth, generalApiLimiter, OrgController.update);
+
+  // Organisation departments
+  app.post("/api/org/departments", requestSizeLimiter, auth, generalApiLimiter, OrgController.setDepartments);
+  app.get("/api/org/departments", auth, generalApiLimiter, OrgController.getDepartments);
+  app.put("/api/org/departments/:id", requestSizeLimiter, auth, generalApiLimiter, OrgController.updateDepartment);
+
+  // Organisation members
+  app.get("/api/org/members", auth, generalApiLimiter, OrgController.getMembers);
+
+  // Standard departments reference (for onboarding UI)
+  app.get("/api/org/standard-departments", generalApiLimiter, OrgController.getStandardDepartments);
+
+  // ═══════════════════════════════════════════════════════
+  // Invitations
+  // ═══════════════════════════════════════════════════════
+
+  // Org-scoped invitation management (requires auth)
+  app.post("/api/org/invitations", requestSizeLimiter, auth, generalApiLimiter, InvitationController.send);
+  app.get("/api/org/invitations", auth, generalApiLimiter, InvitationController.list);
+  app.post("/api/org/invitations/:id/resend", auth, generalApiLimiter, InvitationController.resend);
+  app.delete("/api/org/invitations/:id", auth, generalApiLimiter, InvitationController.cancel);
+
+  // Public invitation acceptance
+  app.get("/api/invite/:token", generalApiLimiter, InvitationController.validate);
+  app.post("/api/invite/:token/accept", auth, generalApiLimiter, InvitationController.accept);
+
+  // ═══════════════════════════════════════════════════════
+  // L2 Department Assessments
+  // ═══════════════════════════════════════════════════════
+
+  app.post("/api/l2/assessments", requestSizeLimiter, auth, generalApiLimiter, L2AssessmentController.save);
+  app.get("/api/l2/assessments", auth, generalApiLimiter, L2AssessmentController.getAll);
+  app.get("/api/l2/assessments/:id", auth, generalApiLimiter, L2AssessmentController.getById);
+  app.get("/api/l2/summary", auth, generalApiLimiter, L2AssessmentController.getSummary);
+
+  // ═══════════════════════════════════════════════════════
+  // L3 Personal Assessments
+  // ═══════════════════════════════════════════════════════
+
+  app.post("/api/l3/assessments", requestSizeLimiter, auth, generalApiLimiter, L3AssessmentController.save);
+  app.get("/api/l3/assessments", auth, generalApiLimiter, L3AssessmentController.getAll);
+  app.get("/api/l3/assessments/:id", auth, generalApiLimiter, L3AssessmentController.getById);
+  app.get("/api/l3/team-summary", auth, generalApiLimiter, L3AssessmentController.getTeamSummary);
+
+  // ═══════════════════════════════════════════════════════
+  // Assessment Hub (unified 3-layer view)
+  // ═══════════════════════════════════════════════════════
+
+  app.get("/api/hub/status", auth, generalApiLimiter, HubController.getStatus);
+  app.get("/api/hub/history", auth, generalApiLimiter, HubController.getHistory);
 
   const httpServer = createServer(app);
 

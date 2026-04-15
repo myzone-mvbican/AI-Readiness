@@ -293,12 +293,29 @@ export default function PageL2() {
     }
   };
 
-  const finishAssessment = () => {
+  const finishAssessment = async () => {
     if (!selectedDept) return;
     const scored = calculateL2PracticeScores(selectedDept, responses);
     setResult(scored);
     clearDraft();
     setView('results');
+
+    // Persist results to server (fire-and-forget, don't block UI)
+    try {
+      const { apiRequest } = await import('@/lib/queryClient');
+      await apiRequest('POST', '/api/l2/assessments', {
+        department: selectedDept,
+        responses: responses,
+        overallScore: scored.overallScore / 10, // Convert 0-100 to 0-10
+        maturityStage: scored.maturityStage,
+        categoryScores: scored.categoryScores,
+        topGaps: scored.gapPractices,
+        topStrengths: scored.strengthPractices,
+      });
+    } catch (err) {
+      // Silently fail — results are still shown client-side
+      console.warn('Failed to persist L2 results to server:', err);
+    }
   };
 
   const handleTryAnother = () => {

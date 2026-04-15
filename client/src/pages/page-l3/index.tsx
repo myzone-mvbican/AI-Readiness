@@ -525,6 +525,29 @@ export default function PageL3() {
     if (!isStreaming && result && phase === "chat") {
       setPhase("complete");
       setShowConfetti(true);
+
+      // Persist L3 results to server (fire-and-forget)
+      (async () => {
+        try {
+          const { apiRequest } = await import("@/lib/queryClient");
+          const maturity = getMaturityStage(result.overallScore);
+          await apiRequest("POST", "/api/l3/assessments", {
+            name,
+            department,
+            roleLevel,
+            industry,
+            conversationHistory: messages,
+            dimensionScores: result.sections || result.dimensions,
+            overallScore: result.overallScore,
+            maturityStage: maturity.label,
+            topStrengths: result.topStrengths || result.strengths,
+            topAreasForDevelopment: result.topAreasForDevelopment || result.areasForImprovement,
+          });
+        } catch (err) {
+          // Silently fail — results are still shown client-side
+          console.warn("Failed to persist L3 results to server:", err);
+        }
+      })();
     }
   }, [isStreaming, result, phase]);
 
